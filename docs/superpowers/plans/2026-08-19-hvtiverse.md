@@ -1802,7 +1802,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: r-lib/actions/setup-quarto@v2
+      - uses: r-lib/actions/setup-pandoc@v2
+
+      - uses: quarto-dev/quarto-actions/setup@v2
 
       - uses: r-lib/actions/setup-r@v2
         with:
@@ -1814,12 +1816,39 @@ jobs:
           extra-packages: any::rcmdcheck
           needs: check
 
+      # Install the package into the user library so that Quarto's subprocess
+      # can resolve library(hvtiverse) during vignette rendering.
+      - name: Install package for vignette rendering
+        run: Rscript -e "install.packages('.', repos = NULL, type = 'source')"
+
       - uses: r-lib/actions/check-r-package@v2
         with:
           upload-snapshots: true
+          # --no-manual: building the PDF manual on CI needs a LaTeX install
+          # this workflow does not set up. The manual check runs separately
+          # in check-manual.yaml.
+          build_args: 'c("--no-manual","--compact-vignettes=gs+qpdf")'
+          error-on: '"warning"'
 ```
 
-Note `setup-quarto` comes before `setup-r-dependencies` — the vignette will not build without it.
+Three things here are easy to get wrong and all three break CI silently:
+
+- **`r-lib/actions/setup-quarto` does not exist.** That repo ships `setup-r`,
+  `setup-r-dependencies`, `setup-pandoc`, `setup-renv`, `setup-tinytex`,
+  `setup-manifest` and `check-r-package` - nothing for Quarto. The action that
+  exists is `quarto-dev/quarto-actions/setup@v2`, which is what the rest of the
+  family uses. Verify any action you have not used before with
+  `gh api repos/OWNER/REPO/contents/PATH?ref=REF`; a linter will not catch a
+  reference to an action that was never published.
+- **Quarto renders the vignette in a subprocess**, which cannot resolve
+  `library(hvtiverse)` from the checkout alone. Install the package into the user
+  library after `setup-r-dependencies` and before `check-r-package`.
+- **`--no-manual` is deliberate.** Building the PDF manual needs a LaTeX install
+  this workflow does not set up; the family runs that in a separate
+  `check-manual.yaml`. Say so in a comment so it does not read as an oversight.
+
+Order in both workflows: pandoc, then quarto, then setup-r, then
+setup-r-dependencies.
 
 - [ ] **Step 4: Create `.github/workflows/pkgdown.yaml`**
 
@@ -1844,7 +1873,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: r-lib/actions/setup-quarto@v2
+      - uses: r-lib/actions/setup-pandoc@v2
+
+      - uses: quarto-dev/quarto-actions/setup@v2
 
       - uses: r-lib/actions/setup-r@v2
         with:
