@@ -759,7 +759,7 @@ print.hvtiverse_status <- function(x, ...) {
   # testthat::expect_output()). cli_fmt() captures the formatted lines
   # instead of displaying them, so we can cat() them to stdout ourselves.
   lines <- cli::cli_fmt({
-    cli::cli_text("{.strong hvtiverse} — {nrow(x)} member{?s}")
+    cli::cli_text("{.strong hvtiverse} - {nrow(x)} member{?s}")
     cli::cli_verbatim("")
 
     for (i in seq_len(nrow(x))) {
@@ -904,7 +904,7 @@ hvtiverse_doctor <- function(remote = TRUE) {
     current <- getRversion()
     if (current < MIN_R_VERSION) {
       cli::cli_alert_danger(
-        "R version {current} — members require {MIN_R_VERSION} or newer."
+        "R version {current} - members require {MIN_R_VERSION} or newer."
       )
       cli::cli_alert_info(
         "{.pkg ggRandomForests} and {.pkg hvtiRlifetables} will not install."
@@ -1280,7 +1280,7 @@ install_members <- function(packages, force = FALSE) {
 #'
 #' @param force Bypass the loaded-namespace guard. A package whose namespace
 #'   is loaded cannot be safely overwritten; on Windows the write fails and
-#'   leaves a broken library. Unsafe — restart R instead.
+#'   leaves a broken library. Unsafe: restart R instead.
 #' @return The character vector of `"owner/repo"` specs passed to pak,
 #'   invisibly.
 #' @export
@@ -1567,7 +1567,7 @@ hvtiverse_status()
 ```
 
 ```
-hvtiverse — 11 members
+hvtiverse - 11 members
 
   v hvtiRutilities   1.0.10     1.0.10     ok
   v hvtiRdatasets    0.1.1      0.1.1      ok

@@ -47,7 +47,7 @@ hvtiverse_status()
 ```
 
 ```
-hvtiverse — 11 members
+hvtiverse - 11 members
 
   v hvtiRutilities   1.0.10     1.0.10     ok
   v hvtiRdatasets    0.1.1      0.1.1      ok
