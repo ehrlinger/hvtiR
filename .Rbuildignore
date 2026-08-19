@@ -9,4 +9,4 @@
 ^doc$
 ^Meta$
 ^\.superpowers$
-^vignettes/\.quarto$
+^vignettes/\.quarto($|/)
