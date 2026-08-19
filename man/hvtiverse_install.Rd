@@ -9,7 +9,7 @@ hvtiverse_install(force = FALSE)
 \arguments{
 \item{force}{Bypass the loaded-namespace guard. A package whose namespace
 is loaded cannot be safely overwritten; on Windows the write fails and
-leaves a broken library. Unsafe — restart R instead.}
+leaves a broken library. Unsafe: restart R instead.}
 }
 \value{
 The character vector of \code{"owner/repo"} specs passed to pak,

@@ -98,7 +98,7 @@ install_members <- function(packages, force = FALSE) {
 #'
 #' @param force Bypass the loaded-namespace guard. A package whose namespace
 #'   is loaded cannot be safely overwritten; on Windows the write fails and
-#'   leaves a broken library. Unsafe — restart R instead.
+#'   leaves a broken library. Unsafe: restart R instead.
 #' @return The character vector of `"owner/repo"` specs passed to pak,
 #'   invisibly.
 #' @export

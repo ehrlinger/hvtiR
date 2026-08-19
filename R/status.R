@@ -136,7 +136,7 @@ print.hvtiverse_status <- function(x, ...) {
   # testthat::expect_output()). cli_fmt() captures the formatted lines
   # instead of displaying them, so we can cat() them to stdout ourselves.
   lines <- cli::cli_fmt({
-    cli::cli_text("{.strong hvtiverse} — {nrow(x)} member{?s}")
+    cli::cli_text("{.strong hvtiverse} - {nrow(x)} member{?s}")
     cli::cli_verbatim("")
 
     for (i in seq_len(nrow(x))) {
@@ -194,7 +194,7 @@ hvtiverse_doctor <- function(remote = TRUE) {
     current <- getRversion()
     if (current < MIN_R_VERSION) {
       cli::cli_alert_danger(
-        "R version {current} — members require {MIN_R_VERSION} or newer."
+        "R version {current} - members require {MIN_R_VERSION} or newer."
       )
       cli::cli_alert_info(
         "{.pkg ggRandomForests} and {.pkg hvtiRlifetables} will not install."
