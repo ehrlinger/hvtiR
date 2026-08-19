@@ -1,0 +1,33 @@
+Package: hvtiverse
+Type: Package
+Title: Install and Check the HVTI R Package Family
+Version: 1.0.0
+Date: 2026-08-19
+Authors@R: person("John", "Ehrlinger", email = "john.ehrlinger@gmail.com",
+    role = c("aut", "cre"))
+Description: Installs, updates and reports on the Cleveland Clinic Heart and
+    Vascular Institute CORR group's family of R packages in a single step.
+    Members are resolved from public GitHub repositories with 'pak', so that
+    releases held behind the CRAN queue stay available to the group. Provides
+    a status table comparing installed against latest versions, and a
+    diagnostic report for environment problems.
+License: GPL-3
+Encoding: UTF-8
+Depends:
+    R (>= 4.1.0)
+Imports:
+    cli,
+    utils
+Suggests:
+    curl,
+    knitr,
+    pak,
+    quarto,
+    testthat (>= 3.2.0),
+    withr
+VignetteBuilder: quarto
+Config/testthat/edition: 3
+Roxygen: list(markdown = TRUE)
+URL: https://github.com/ehrlinger/hvtiverse, https://ehrlinger.github.io/hvtiverse/
+BugReports: https://github.com/ehrlinger/hvtiverse/issues
+Config/roxygen2/version: 8.1.0
