@@ -9,6 +9,8 @@ test_that("remote_version reads the Version field", {
 })
 
 test_that("remote_version handles DESCRIPTION continuation lines", {
+  # Version is wrapped onto a continuation line: grep("^Version:") would
+  # return an empty value here, read.dcf resolves it to 2.7.6.
   local_mocked_bindings(
     fetch_description = function(repo, ref = "main") {
       read.dcf(test_path("fixtures", "DESCRIPTION-continuation"))

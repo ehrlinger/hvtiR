@@ -2,5 +2,6 @@ Package: hvtiPlotR
 Imports:
     ggplot2 (>= 3.5.0),
     ggupset (>= 0.4.0)
-Version: 2.7.6
+Version:
+    2.7.6
 Title: HVTI ggplot2 Themes
