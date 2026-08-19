@@ -39,6 +39,10 @@ navbar:
       aria-label: LinkedIn
 
 reference:
+- title: Package overview
+  contents:
+  - hvtiverse-package
+
 - title: Installing
   desc: Install and update the package family
   contents:
