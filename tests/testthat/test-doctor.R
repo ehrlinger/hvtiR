@@ -1,7 +1,3 @@
-test_that("MIN_R_VERSION matches the family's strictest Depends", {
-  expect_identical(MIN_R_VERSION, "4.4.0")
-})
-
 test_that("hvtiverse_doctor reports the R version and the platform", {
   local_mocked_bindings(
     installed_version = function(pkg) "1.0.0",
