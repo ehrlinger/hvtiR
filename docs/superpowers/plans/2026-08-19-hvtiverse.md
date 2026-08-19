@@ -20,7 +20,7 @@
 - All 11 members install from GitHub `main`, never CRAN, including `ggRandomForests`.
 - All 11 specs go to `pak` in a **single** call. Never loop. This is a correctness requirement — see Task 7.
 - Every exported object needs a roxygen `@return` block (CRAN Cookbook).
-- The repository is currently local-only with no remote. Commit to local `main` throughout this plan. Once the user creates `ehrlinger/hvtiverse` and pushes, all later changes go through a branch and a PR — never a direct push to `main`.
+- The repository is local-only with no remote. All ten tasks commit to the branch `feat/initial-implementation`; `main` holds only the spec and the plan. When the user creates `ehrlinger/hvtiverse`, the branch becomes a PR to review the whole package before it lands. Never commit implementation work directly to `main`.
 - Run tests with `devtools::test()`; run the full gate with `devtools::check()`.
 
 ## File Structure
@@ -1822,7 +1822,7 @@ git commit -m "ci: pkgdown site and GitHub Actions workflows"
 
 - [ ] **Step 7: Hand back to the user**
 
-The repository is still local-only. Report to the user that the build is complete and check-clean, and that creating `ehrlinger/hvtiverse` on GitHub and the first push are theirs to do. Do not create the remote repository. Once it exists, the first push seeds `main`; every change after that goes through a branch and a PR.
+The repository is still local-only, and all work sits on `feat/initial-implementation`. Report that the build is complete and check-clean. Creating `ehrlinger/hvtiverse` on GitHub is the user's to do — do not create the remote repository. Once it exists, `main` (spec and plan) is pushed first, then the branch, so the package arrives as a reviewable PR.
 
 ---
 
