@@ -870,6 +870,10 @@ Expected: FAIL — object `MIN_R_VERSION` not found.
 
 - [ ] **Step 3: Append to `R/status.R`**
 
+The `cli` calls are wrapped in `cli::cli_fmt()` and written with `cat()`, the same
+pattern `print.hvtiverse_status()` uses. `cli` emits through `message()` to stderr;
+this report belongs on stdout where `capture.output()`, `sink()` and knitr can see it.
+
 ```r
 # The strictest R requirement across the family: ggRandomForests and
 # hvtiRlifetables both declare Depends: R (>= 4.4.0). hvtiverse itself
@@ -892,25 +896,30 @@ MIN_R_VERSION <- "4.4.0"
 #' # Offline: environment checks plus what is installed
 #' hvtiverse_doctor(remote = FALSE)
 hvtiverse_doctor <- function(remote = TRUE) {
-  cli::cli_h1("hvtiverse doctor")
+  lines <- cli::cli_fmt({
+    cli::cli_h1("hvtiverse doctor")
 
-  cli::cli_h2("Environment")
+    cli::cli_h2("Environment")
 
-  current <- getRversion()
-  if (current < MIN_R_VERSION) {
-    cli::cli_alert_danger(
-      "R version {current} — members require {MIN_R_VERSION} or newer."
-    )
-    cli::cli_alert_info(
-      "{.pkg ggRandomForests} and {.pkg hvtiRlifetables} will not install."
-    )
-  } else {
-    cli::cli_alert_success("R version {current} (>= {MIN_R_VERSION} required)")
-  }
+    current <- getRversion()
+    if (current < MIN_R_VERSION) {
+      cli::cli_alert_danger(
+        "R version {current} — members require {MIN_R_VERSION} or newer."
+      )
+      cli::cli_alert_info(
+        "{.pkg ggRandomForests} and {.pkg hvtiRlifetables} will not install."
+      )
+    } else {
+      cli::cli_alert_success("R version {current} (>= {MIN_R_VERSION} required)")
+    }
 
-  cli::cli_alert_info("Platform {R.version$platform}")
+    cli::cli_alert_info("Platform {R.version$platform}")
 
-  cli::cli_h2("Members")
+    cli::cli_h2("Members")
+  })
+
+  cat(lines, sep = "\n")
+
   st <- hvtiverse_status(remote = remote)
   print(st)
 
