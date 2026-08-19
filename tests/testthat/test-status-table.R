@@ -39,7 +39,17 @@ test_that("hvtiverse_status warns once, not per member, when GitHub is unreachab
     remote_version = function(repo, ref = "main") NA_character_
   )
 
-  expect_warning(st <- hvtiverse_status(), "Could not reach GitHub")
+  seen <- character(0)
+  withCallingHandlers(
+    st <- hvtiverse_status(),
+    warning = function(w) {
+      seen <<- c(seen, conditionMessage(w))
+      invokeRestart("muffleWarning")
+    }
+  )
+
+  expect_length(seen, 1L)
+  expect_match(seen, "Could not reach GitHub")
   expect_true(all(st$status == "unknown"))
 })
 
