@@ -1107,6 +1107,15 @@ git commit -m "feat: pure install helpers and the pak seam"
   - `hvtiverse_install(force = FALSE)` — exported. All 11 members.
   - `hvtiverse_update(force = FALSE)` — exported. Only `missing` and `stale` members.
 
+**Two cli details this task hit.** The `{?it/them}` marker in the guard's abort message
+needs `cli::qty(length(blocked))` on its own bullet — a pluralization marker cannot
+borrow a quantity from a different bullet, and cli 3.6.6 errors with
+`Cannot pluralize without a quantity` otherwise. And `hvtiverse_update()` must not
+hand an empty target set to `install_members()` when members are `"unknown"`: that
+path reports "All hvtiverse members are up to date", which contradicts the
+unreachable-GitHub warning printed moments earlier and claims something we cannot
+know. Report the unchecked count instead.
+
 **Why one call matters:** `hvtiRlifetables` declares `Imports: TemporalHazard (>= 1.2.0)` but has no `Remotes:` line, so resolving it alone sends `pak` to CRAN, where TemporalHazard is 1.1.0, and the requirement fails. Passing every spec in one call co-resolves `ehrlinger/temporal_hazard` at 1.2.0. Never loop over specs.
 
 - [ ] **Step 1: Write the failing test**
@@ -1245,7 +1254,10 @@ install_members <- function(packages, force = FALSE) {
   if (length(blocked) > 0L && !force) {
     cli::cli_abort(c(
       "Cannot install {.pkg {blocked}}: already loaded in this session.",
-      i = "Restart R and run this before anything attaches {?it/them}.",
+      i = paste0(
+        "{cli::qty(length(blocked))}Restart R and run this before ",
+        "anything attaches {?it/them}."
+      ),
       i = "Pass {.code force = TRUE} to install anyway (unsafe on Windows)."
     ))
   }
@@ -1296,6 +1308,15 @@ hvtiverse_install <- function(force = FALSE) {
 hvtiverse_update <- function(force = FALSE) {
   st <- hvtiverse_status(remote = TRUE)
   targets <- st$package[st$status %in% c("missing", "stale")]
+
+  unchecked <- sum(st$status == "unknown")
+
+  if (length(targets) == 0L && unchecked > 0L) {
+    cli::cli_alert_warning(
+      "Nothing to update, but {unchecked} member{?s} could not be checked against GitHub."
+    )
+    return(invisible(character(0)))
+  }
 
   install_members(targets, force = force)
 }
