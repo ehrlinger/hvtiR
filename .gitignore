@@ -2,7 +2,9 @@
 .Rhistory
 .RData
 .Ruserdata
-docs/
+# pkgdown output (docs/superpowers/ holds the spec and plan, and is tracked)
+/docs/*
+!/docs/superpowers/
 *.Rcheck/
 *.tar.gz
 .superpowers/

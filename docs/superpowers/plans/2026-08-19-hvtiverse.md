@@ -112,12 +112,19 @@ BugReports: https://github.com/ehrlinger/hvtiverse/issues
 .Rhistory
 .RData
 .Ruserdata
-docs/
+# pkgdown output (docs/superpowers/ holds the spec and plan, and is tracked)
+/docs/*
+!/docs/superpowers/
 *.Rcheck/
 *.tar.gz
+.superpowers/
 ```
 
-Note: `docs/` here is pkgdown's build output. The spec and plan live in `docs/superpowers/`, which is already committed — verify with `git status` that the existing spec is still tracked after adding this file. If git now ignores it, change the line to `/docs/reference/` and `/docs/articles/` instead.
+`docs/` is where pkgdown writes its built site, but the spec and plan live in
+`docs/superpowers/` and are tracked. A bare `docs/` line would ignore the
+directory itself, and no negation inside an excluded directory can bring its
+contents back — so exclude the *contents* with `/docs/*` and re-include the one
+subdirectory. `.superpowers/` is scratch for the build process.
 
 - [ ] **Step 4: Create `R/hvtiverse-package.R`**
 
@@ -287,9 +294,15 @@ Package: hvtiPlotR
 Imports:
     ggplot2 (>= 3.5.0),
     ggupset (>= 0.4.0)
-Version: 2.7.6
+Version:
+    2.7.6
 Title: HVTI ggplot2 Themes
 ```
+
+The `Version` field must itself be wrapped onto a continuation line, or the
+fixture proves nothing: `grep("^Version:")` on it returns the bare field name
+with no version number, while `read.dcf` resolves it to `2.7.6`. A fixture that
+wraps only `Imports:` would parse identically under both approaches.
 
 - [ ] **Step 2: Write the failing test**
 
