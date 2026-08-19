@@ -1,0 +1,12 @@
+^.*\.Rproj$
+^\.Rproj\.user$
+^\.github$
+^_pkgdown\.yml$
+^docs$
+^pkgdown$
+^LICENSE\.md$
+^\.lintr$
+^doc$
+^Meta$
+^\.superpowers$
+^vignettes/\.quarto($|/)

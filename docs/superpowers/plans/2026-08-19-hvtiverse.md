@@ -112,12 +112,19 @@ BugReports: https://github.com/ehrlinger/hvtiverse/issues
 .Rhistory
 .RData
 .Ruserdata
-docs/
+# pkgdown output (docs/superpowers/ holds the spec and plan, and is tracked)
+/docs/*
+!/docs/superpowers/
 *.Rcheck/
 *.tar.gz
+.superpowers/
 ```
 
-Note: `docs/` here is pkgdown's build output. The spec and plan live in `docs/superpowers/`, which is already committed — verify with `git status` that the existing spec is still tracked after adding this file. If git now ignores it, change the line to `/docs/reference/` and `/docs/articles/` instead.
+`docs/` is where pkgdown writes its built site, but the spec and plan live in
+`docs/superpowers/` and are tracked. A bare `docs/` line would ignore the
+directory itself, and no negation inside an excluded directory can bring its
+contents back — so exclude the *contents* with `/docs/*` and re-include the one
+subdirectory. `.superpowers/` is scratch for the build process.
 
 - [ ] **Step 4: Create `R/hvtiverse-package.R`**
 
@@ -287,9 +294,15 @@ Package: hvtiPlotR
 Imports:
     ggplot2 (>= 3.5.0),
     ggupset (>= 0.4.0)
-Version: 2.7.6
+Version:
+    2.7.6
 Title: HVTI ggplot2 Themes
 ```
+
+The `Version` field must itself be wrapped onto a continuation line, or the
+fixture proves nothing: `grep("^Version:")` on it returns the bare field name
+with no version number, while `read.dcf` resolves it to `2.7.6`. A fixture that
+wraps only `Imports:` would parse identically under both approaches.
 
 - [ ] **Step 2: Write the failing test**
 
@@ -591,7 +604,19 @@ test_that("hvtiverse_status warns once, not per member, when GitHub is unreachab
     remote_version = function(repo, ref = "main") NA_character_
   )
 
-  expect_warning(st <- hvtiverse_status(), "Could not reach GitHub")
+  # expect_warning() passes on AT LEAST one match, so it would still pass if
+  # the implementation regressed to warning once per member. Count them.
+  seen <- character(0)
+  withCallingHandlers(
+    st <- hvtiverse_status(),
+    warning = function(w) {
+      seen <<- c(seen, conditionMessage(w))
+      invokeRestart("muffleWarning")
+    }
+  )
+
+  expect_length(seen, 1L)
+  expect_match(seen, "Could not reach GitHub")
   expect_true(all(st$status == "unknown"))
 })
 
@@ -726,31 +751,39 @@ print.hvtiverse_status <- function(x, ...) {
     missing = "x", unknown = "?"
   )
 
-  cli::cli_text("{.strong hvtiverse} — {nrow(x)} member{?s}")
-  cli::cli_verbatim("")
-
   width <- max(nchar(x$package))
-
-  for (i in seq_len(nrow(x))) {
-    cli::cli_verbatim(sprintf(
-      "  %s %-*s  %-10s %-10s %s",
-      symbols[[x$status[i]]],
-      width, x$package[i],
-      ifelse(is.na(x$installed[i]), "-", x$installed[i]),
-      ifelse(is.na(x$latest[i]), "-", x$latest[i]),
-      x$status[i]
-    ))
-  }
-
   stale <- sum(x$status %in% c("stale", "missing"))
-  cli::cli_verbatim("")
-  if (stale > 0L) {
-    cli::cli_alert_info(
-      "{stale} member{?s} need{?s/} updating. Run {.run hvtiverse::hvtiverse_update()}."
-    )
-  } else {
-    cli::cli_alert_success("Everything is up to date.")
-  }
+
+  # cli's default handler writes via message() (stderr), which would make
+  # this invisible to print()'s conventional stdout consumers (and to
+  # testthat::expect_output()). cli_fmt() captures the formatted lines
+  # instead of displaying them, so we can cat() them to stdout ourselves.
+  lines <- cli::cli_fmt({
+    cli::cli_text("{.strong hvtiverse} - {nrow(x)} member{?s}")
+    cli::cli_verbatim("")
+
+    for (i in seq_len(nrow(x))) {
+      cli::cli_verbatim(sprintf(
+        "  %s %-*s  %-10s %-10s %s",
+        symbols[[x$status[i]]],
+        width, x$package[i],
+        ifelse(is.na(x$installed[i]), "-", x$installed[i]),
+        ifelse(is.na(x$latest[i]), "-", x$latest[i]),
+        x$status[i]
+      ))
+    }
+
+    cli::cli_verbatim("")
+    if (stale > 0L) {
+      cli::cli_alert_info(
+        "{stale} member{?s} need{?s/} updating. Run {.run hvtiverse::hvtiverse_update()}."
+      )
+    } else {
+      cli::cli_alert_success("Everything is up to date.")
+    }
+  })
+
+  cat(lines, sep = "\n")
 
   invisible(x)
 }
@@ -837,6 +870,10 @@ Expected: FAIL — object `MIN_R_VERSION` not found.
 
 - [ ] **Step 3: Append to `R/status.R`**
 
+The `cli` calls are wrapped in `cli::cli_fmt()` and written with `cat()`, the same
+pattern `print.hvtiverse_status()` uses. `cli` emits through `message()` to stderr;
+this report belongs on stdout where `capture.output()`, `sink()` and knitr can see it.
+
 ```r
 # The strictest R requirement across the family: ggRandomForests and
 # hvtiRlifetables both declare Depends: R (>= 4.4.0). hvtiverse itself
@@ -859,25 +896,30 @@ MIN_R_VERSION <- "4.4.0"
 #' # Offline: environment checks plus what is installed
 #' hvtiverse_doctor(remote = FALSE)
 hvtiverse_doctor <- function(remote = TRUE) {
-  cli::cli_h1("hvtiverse doctor")
+  lines <- cli::cli_fmt({
+    cli::cli_h1("hvtiverse doctor")
 
-  cli::cli_h2("Environment")
+    cli::cli_h2("Environment")
 
-  current <- getRversion()
-  if (current < MIN_R_VERSION) {
-    cli::cli_alert_danger(
-      "R version {current} — members require {MIN_R_VERSION} or newer."
-    )
-    cli::cli_alert_info(
-      "{.pkg ggRandomForests} and {.pkg hvtiRlifetables} will not install."
-    )
-  } else {
-    cli::cli_alert_success("R version {current} (>= {MIN_R_VERSION} required)")
-  }
+    current <- getRversion()
+    if (current < MIN_R_VERSION) {
+      cli::cli_alert_danger(
+        "R version {current} - members require {MIN_R_VERSION} or newer."
+      )
+      cli::cli_alert_info(
+        "{.pkg ggRandomForests} and {.pkg hvtiRlifetables} will not install."
+      )
+    } else {
+      cli::cli_alert_success("R version {current} (>= {MIN_R_VERSION} required)")
+    }
 
-  cli::cli_alert_info("Platform {R.version$platform}")
+    cli::cli_alert_info("Platform {R.version$platform}")
 
-  cli::cli_h2("Members")
+    cli::cli_h2("Members")
+  })
+
+  cat(lines, sep = "\n")
+
   st <- hvtiverse_status(remote = remote)
   print(st)
 
@@ -1065,6 +1107,15 @@ git commit -m "feat: pure install helpers and the pak seam"
   - `hvtiverse_install(force = FALSE)` — exported. All 11 members.
   - `hvtiverse_update(force = FALSE)` — exported. Only `missing` and `stale` members.
 
+**Two cli details this task hit.** The `{?it/them}` marker in the guard's abort message
+needs `cli::qty(length(blocked))` on its own bullet — a pluralization marker cannot
+borrow a quantity from a different bullet, and cli 3.6.6 errors with
+`Cannot pluralize without a quantity` otherwise. And `hvtiverse_update()` must not
+hand an empty target set to `install_members()` when members are `"unknown"`: that
+path reports "All hvtiverse members are up to date", which contradicts the
+unreachable-GitHub warning printed moments earlier and claims something we cannot
+know. Report the unchecked count instead.
+
 **Why one call matters:** `hvtiRlifetables` declares `Imports: TemporalHazard (>= 1.2.0)` but has no `Remotes:` line, so resolving it alone sends `pak` to CRAN, where TemporalHazard is 1.1.0, and the requirement fails. Passing every spec in one call co-resolves `ehrlinger/temporal_hazard` at 1.2.0. Never loop over specs.
 
 - [ ] **Step 1: Write the failing test**
@@ -1203,7 +1254,10 @@ install_members <- function(packages, force = FALSE) {
   if (length(blocked) > 0L && !force) {
     cli::cli_abort(c(
       "Cannot install {.pkg {blocked}}: already loaded in this session.",
-      i = "Restart R and run this before anything attaches {?it/them}.",
+      i = paste0(
+        "{cli::qty(length(blocked))}Restart R and run this before ",
+        "anything attaches {?it/them}."
+      ),
       i = "Pass {.code force = TRUE} to install anyway (unsafe on Windows)."
     ))
   }
@@ -1226,7 +1280,7 @@ install_members <- function(packages, force = FALSE) {
 #'
 #' @param force Bypass the loaded-namespace guard. A package whose namespace
 #'   is loaded cannot be safely overwritten; on Windows the write fails and
-#'   leaves a broken library. Unsafe — restart R instead.
+#'   leaves a broken library. Unsafe: restart R instead.
 #' @return The character vector of `"owner/repo"` specs passed to pak,
 #'   invisibly.
 #' @export
@@ -1254,6 +1308,15 @@ hvtiverse_install <- function(force = FALSE) {
 hvtiverse_update <- function(force = FALSE) {
   st <- hvtiverse_status(remote = TRUE)
   targets <- st$package[st$status %in% c("missing", "stale")]
+
+  unchecked <- sum(st$status == "unknown")
+
+  if (length(targets) == 0L && unchecked > 0L) {
+    cli::cli_alert_warning(
+      "Nothing to update, but {unchecked} member{?s} could not be checked against GitHub."
+    )
+    return(invisible(character(0)))
+  }
 
   install_members(targets, force = force)
 }
@@ -1324,9 +1387,13 @@ Expected: PASS, 22 expectations. If any repository fails, the registry is wrong 
 
 - [ ] **Step 3: Create `NEWS.md`**
 
-```markdown
-# hvtiverse
+The header is DCF-style, matching `ggRandomForests` — the sibling that carries the
+same version-grep constraint. `Version:` must land on line 2 and match `DESCRIPTION`.
+A markdown H1 with a loose `Version:` line under it matches neither family convention
+and renders badly in pkgdown, which parses `NEWS.md` by heading structure.
 
+```markdown
+Package: hvtiverse
 Version: 1.0.0
 
 ## hvtiverse 1.0.0
@@ -1500,7 +1567,7 @@ hvtiverse_status()
 ```
 
 ```
-hvtiverse — 11 members
+hvtiverse - 11 members
 
   v hvtiRutilities   1.0.10     1.0.10     ok
   v hvtiRdatasets    0.1.1      0.1.1      ok
@@ -1735,7 +1802,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: r-lib/actions/setup-quarto@v2
+      - uses: r-lib/actions/setup-pandoc@v2
+
+      - uses: quarto-dev/quarto-actions/setup@v2
 
       - uses: r-lib/actions/setup-r@v2
         with:
@@ -1747,12 +1816,39 @@ jobs:
           extra-packages: any::rcmdcheck
           needs: check
 
+      # Install the package into the user library so that Quarto's subprocess
+      # can resolve library(hvtiverse) during vignette rendering.
+      - name: Install package for vignette rendering
+        run: Rscript -e "install.packages('.', repos = NULL, type = 'source')"
+
       - uses: r-lib/actions/check-r-package@v2
         with:
           upload-snapshots: true
+          # --no-manual: building the PDF manual on CI needs a LaTeX install
+          # this workflow does not set up. The manual check runs separately
+          # in check-manual.yaml.
+          build_args: 'c("--no-manual","--compact-vignettes=gs+qpdf")'
+          error-on: '"warning"'
 ```
 
-Note `setup-quarto` comes before `setup-r-dependencies` — the vignette will not build without it.
+Three things here are easy to get wrong and all three break CI silently:
+
+- **`r-lib/actions/setup-quarto` does not exist.** That repo ships `setup-r`,
+  `setup-r-dependencies`, `setup-pandoc`, `setup-renv`, `setup-tinytex`,
+  `setup-manifest` and `check-r-package` - nothing for Quarto. The action that
+  exists is `quarto-dev/quarto-actions/setup@v2`, which is what the rest of the
+  family uses. Verify any action you have not used before with
+  `gh api repos/OWNER/REPO/contents/PATH?ref=REF`; a linter will not catch a
+  reference to an action that was never published.
+- **Quarto renders the vignette in a subprocess**, which cannot resolve
+  `library(hvtiverse)` from the checkout alone. Install the package into the user
+  library after `setup-r-dependencies` and before `check-r-package`.
+- **`--no-manual` is deliberate.** Building the PDF manual needs a LaTeX install
+  this workflow does not set up; the family runs that in a separate
+  `check-manual.yaml`. Say so in a comment so it does not read as an oversight.
+
+Order in both workflows: pandoc, then quarto, then setup-r, then
+setup-r-dependencies.
 
 - [ ] **Step 4: Create `.github/workflows/pkgdown.yaml`**
 
@@ -1777,7 +1873,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: r-lib/actions/setup-quarto@v2
+      - uses: r-lib/actions/setup-pandoc@v2
+
+      - uses: quarto-dev/quarto-actions/setup@v2
 
       - uses: r-lib/actions/setup-r@v2
         with:

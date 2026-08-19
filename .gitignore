@@ -1,0 +1,12 @@
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+# pkgdown output (docs/superpowers/ holds the spec and plan, and is tracked)
+/docs/*
+!/docs/superpowers/
+*.Rcheck/
+*.tar.gz
+.superpowers/
+/doc/
+/Meta/
