@@ -93,3 +93,23 @@ test_that("hvtiverse_update installs nothing when everything is current", {
 
   expect_message(hvtiverse_update(), "up to date")
 })
+
+test_that("hvtiverse_update does not claim members are current when GitHub is unreachable", {
+  local_mocked_bindings(
+    installed_version = function(pkg) "1.0.0",
+    remote_version = function(repo, ref = "main") NA_character_,
+    pak_install = function(specs) stop("must not install")
+  )
+
+  msgs <- character(0)
+  withCallingHandlers(
+    suppressWarnings(hvtiverse_update()),
+    message = function(m) {
+      msgs <<- c(msgs, conditionMessage(m))
+      invokeRestart("muffleMessage")
+    }
+  )
+
+  expect_true(any(grepl("could not be checked", msgs)))
+  expect_false(any(grepl("up to date", msgs)))
+})

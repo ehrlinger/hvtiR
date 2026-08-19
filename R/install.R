@@ -113,7 +113,9 @@ hvtiverse_install <- function(force = FALSE) {
 #' Update out-of-date hvtiverse members
 #'
 #' Installs only the members whose status is `"missing"` or `"stale"`. When
-#' everything is current, reports that and installs nothing.
+#' everything is current, reports that and installs nothing. Members whose
+#' version could not be checked against GitHub are reported as unchecked
+#' rather than silently treated as current.
 #'
 #' @param force Bypass the loaded-namespace guard. See [hvtiverse_install()].
 #' @return The character vector of `"owner/repo"` specs passed to pak,
@@ -126,6 +128,15 @@ hvtiverse_install <- function(force = FALSE) {
 hvtiverse_update <- function(force = FALSE) {
   st <- hvtiverse_status(remote = TRUE)
   targets <- st$package[st$status %in% c("missing", "stale")]
+
+  unchecked <- sum(st$status == "unknown")
+
+  if (length(targets) == 0L && unchecked > 0L) {
+    cli::cli_alert_warning(
+      "Nothing to update, but {unchecked} member{?s} could not be checked against GitHub."
+    )
+    return(invisible(character(0)))
+  }
 
   install_members(targets, force = force)
 }

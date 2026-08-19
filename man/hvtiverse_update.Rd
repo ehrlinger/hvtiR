@@ -15,7 +15,9 @@ invisibly. Empty if nothing needed updating.
 }
 \description{
 Installs only the members whose status is \code{"missing"} or \code{"stale"}. When
-everything is current, reports that and installs nothing.
+everything is current, reports that and installs nothing. Members whose
+version could not be checked against GitHub are reported as unchecked
+rather than silently treated as current.
 }
 \examples{
 \dontrun{
