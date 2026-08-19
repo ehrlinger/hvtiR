@@ -113,3 +113,50 @@ test_that("hvtiverse_update does not claim members are current when GitHub is un
   expect_true(any(grepl("could not be checked", msgs)))
   expect_false(any(grepl("up to date", msgs)))
 })
+
+test_that("expand_targets pulls in an in-family dependency", {
+  expect_identical(
+    expand_targets("hvtiRlifetables"),
+    c("hvtiRlifetables", "TemporalHazard")
+  )
+  expect_identical(
+    expand_targets("hvtiRdatasets"),
+    c("hvtiRutilities", "hvtiRdatasets")
+  )
+})
+
+test_that("expand_targets leaves a target set with no in-family deps alone", {
+  expect_identical(expand_targets("hvtiPlotR"), "hvtiPlotR")
+  expect_identical(expand_targets(character(0)), character(0))
+})
+
+test_that("expand_targets does not duplicate a dependency already targeted", {
+  out <- expand_targets(c("hvtiRlifetables", "TemporalHazard"))
+  expect_identical(anyDuplicated(out), 0L)
+  expect_setequal(out, c("hvtiRlifetables", "TemporalHazard"))
+})
+
+test_that("expand_targets returns registry order regardless of input order", {
+  expect_identical(
+    expand_targets(c("ggRandomForests", "hvtiRutilities")),
+    c("hvtiRutilities", "ggRandomForests")
+  )
+})
+
+test_that("hvtiverse_update sends a stale member's in-family dependency too", {
+  captured <- NULL
+  local_mocked_bindings(
+    installed_version = function(pkg) if (pkg == "hvtiRlifetables") "0.0.1" else "1.0.0",
+    remote_version = function(repo, ref = "main") "1.0.0",
+    pak_install = function(specs) {
+      captured <<- specs
+      invisible(specs)
+    },
+    check_loaded = function(targets, loaded = loadedNamespaces()) character(0)
+  )
+
+  hvtiverse_update()
+
+  expect_true("ehrlinger/temporal_hazard" %in% captured)
+  expect_true("ehrlinger/hvtiRlifetables" %in% captured)
+})

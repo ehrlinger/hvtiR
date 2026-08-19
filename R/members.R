@@ -47,3 +47,19 @@ hvtiverse_members <- function() {
     stringsAsFactors = FALSE
   )
 }
+
+#' Dependencies between hvtiverse members
+#'
+#' Members that import another member. Used to close an update's target set:
+#' installing a member without its in-family dependency can send `pak` to CRAN
+#' for that dependency, where the required version may not exist.
+#'
+#' @return A named list. Each name is a member package; each value is a
+#'   character vector of member packages it depends on.
+#' @noRd
+member_deps <- function() {
+  list(
+    hvtiRdatasets = "hvtiRutilities",
+    hvtiRlifetables = "TemporalHazard"
+  )
+}

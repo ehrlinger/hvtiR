@@ -49,6 +49,27 @@ pak_install <- function(specs) {
   invisible(pak::pak(specs, ask = FALSE))
 }
 
+#' Close a target set over in-family dependencies
+#'
+#' @param packages Character vector of member package names.
+#' @param deps Dependency edges, as returned by `member_deps()`.
+#' @param members The registry, used to order the result.
+#' @return `packages` plus every member reachable from it through `deps`,
+#'   ordered as the registry orders them.
+#' @noRd
+expand_targets <- function(packages, deps = member_deps(), members = hvtiverse_members()) {
+  out <- packages
+
+  repeat {
+    extra <- unlist(deps[intersect(out, names(deps))], use.names = FALSE)
+    fresh <- setdiff(extra, out)
+    if (length(fresh) == 0L) break
+    out <- c(out, fresh)
+  }
+
+  members$package[members$package %in% out]
+}
+
 #' Install a set of members
 #'
 #' Every spec goes to [pak::pak()] in one call. This is a correctness
@@ -117,6 +138,13 @@ hvtiverse_install <- function(force = FALSE) {
 #' version could not be checked against GitHub are reported as unchecked
 #' rather than silently treated as current.
 #'
+#' The target set is expanded over in-family dependencies (see
+#' `member_deps()`) before installing, so a stale member's in-family
+#' dependency is sent to pak alongside it even when that dependency is
+#' already current. Without this, installing e.g. just `hvtiRlifetables`
+#' sends pak to CRAN to resolve its `TemporalHazard` import, where the
+#' required version may not exist.
+#'
 #' @param force Bypass the loaded-namespace guard. See [hvtiverse_install()].
 #' @return The character vector of `"owner/repo"` specs passed to pak,
 #'   invisibly. Empty if nothing needed updating.
@@ -137,6 +165,8 @@ hvtiverse_update <- function(force = FALSE) {
     )
     return(invisible(character(0)))
   }
+
+  targets <- expand_targets(targets)
 
   install_members(targets, force = force)
 }

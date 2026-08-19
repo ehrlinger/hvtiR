@@ -19,6 +19,14 @@ everything is current, reports that and installs nothing. Members whose
 version could not be checked against GitHub are reported as unchecked
 rather than silently treated as current.
 }
+\details{
+The target set is expanded over in-family dependencies (see
+\code{member_deps()}) before installing, so a stale member's in-family
+dependency is sent to pak alongside it even when that dependency is
+already current. Without this, installing e.g. just \code{hvtiRlifetables}
+sends pak to CRAN to resolve its \code{TemporalHazard} import, where the
+required version may not exist.
+}
 \examples{
 \dontrun{
 hvtiverse_update()
