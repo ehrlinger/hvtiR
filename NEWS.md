@@ -1,4 +1,4 @@
-# hvtiverse
+Package: hvtiverse
 Version: 1.0.0
 
 ## hvtiverse 1.0.0
