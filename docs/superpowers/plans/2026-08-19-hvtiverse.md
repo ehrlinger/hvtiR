@@ -604,7 +604,19 @@ test_that("hvtiverse_status warns once, not per member, when GitHub is unreachab
     remote_version = function(repo, ref = "main") NA_character_
   )
 
-  expect_warning(st <- hvtiverse_status(), "Could not reach GitHub")
+  # expect_warning() passes on AT LEAST one match, so it would still pass if
+  # the implementation regressed to warning once per member. Count them.
+  seen <- character(0)
+  withCallingHandlers(
+    st <- hvtiverse_status(),
+    warning = function(w) {
+      seen <<- c(seen, conditionMessage(w))
+      invokeRestart("muffleWarning")
+    }
+  )
+
+  expect_length(seen, 1L)
+  expect_match(seen, "Could not reach GitHub")
   expect_true(all(st$status == "unknown"))
 })
 
@@ -739,31 +751,39 @@ print.hvtiverse_status <- function(x, ...) {
     missing = "x", unknown = "?"
   )
 
-  cli::cli_text("{.strong hvtiverse} — {nrow(x)} member{?s}")
-  cli::cli_verbatim("")
-
   width <- max(nchar(x$package))
-
-  for (i in seq_len(nrow(x))) {
-    cli::cli_verbatim(sprintf(
-      "  %s %-*s  %-10s %-10s %s",
-      symbols[[x$status[i]]],
-      width, x$package[i],
-      ifelse(is.na(x$installed[i]), "-", x$installed[i]),
-      ifelse(is.na(x$latest[i]), "-", x$latest[i]),
-      x$status[i]
-    ))
-  }
-
   stale <- sum(x$status %in% c("stale", "missing"))
-  cli::cli_verbatim("")
-  if (stale > 0L) {
-    cli::cli_alert_info(
-      "{stale} member{?s} need{?s/} updating. Run {.run hvtiverse::hvtiverse_update()}."
-    )
-  } else {
-    cli::cli_alert_success("Everything is up to date.")
-  }
+
+  # cli's default handler writes via message() (stderr), which would make
+  # this invisible to print()'s conventional stdout consumers (and to
+  # testthat::expect_output()). cli_fmt() captures the formatted lines
+  # instead of displaying them, so we can cat() them to stdout ourselves.
+  lines <- cli::cli_fmt({
+    cli::cli_text("{.strong hvtiverse} — {nrow(x)} member{?s}")
+    cli::cli_verbatim("")
+
+    for (i in seq_len(nrow(x))) {
+      cli::cli_verbatim(sprintf(
+        "  %s %-*s  %-10s %-10s %s",
+        symbols[[x$status[i]]],
+        width, x$package[i],
+        ifelse(is.na(x$installed[i]), "-", x$installed[i]),
+        ifelse(is.na(x$latest[i]), "-", x$latest[i]),
+        x$status[i]
+      ))
+    }
+
+    cli::cli_verbatim("")
+    if (stale > 0L) {
+      cli::cli_alert_info(
+        "{stale} member{?s} need{?s/} updating. Run {.run hvtiverse::hvtiverse_update()}."
+      )
+    } else {
+      cli::cli_alert_success("Everything is up to date.")
+    }
+  })
+
+  cat(lines, sep = "\n")
 
   invisible(x)
 }
