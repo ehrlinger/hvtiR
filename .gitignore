@@ -5,3 +5,4 @@
 docs/
 *.Rcheck/
 *.tar.gz
+.superpowers/
