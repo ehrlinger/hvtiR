@@ -119,6 +119,7 @@ Status values:
 | `missing` | not installed |
 | `ahead` | installed version is newer than `main` (local dev build) |
 | `unknown` | remote fetch failed (offline, proxy, repo renamed) |
+| `ok-local` | installed, remote not consulted (`remote = FALSE` only) |
 
 `hvtiverse_doctor()` is the "why is this broken" entry point: it reports the
 running R version against the family's strictest `Depends:` (currently 4.4.0)
@@ -126,7 +127,20 @@ plus OS and architecture, then prints the status table. `hvtiverse_status()` is
 the narrower "what is stale" entry point.
 
 `hvtiverse_install()` and `hvtiverse_update()` differ only in which members they
-target; both delegate to one internal `install_members()`.
+target; both delegate to one internal `install_members()`. `hvtiverse_install()`
+targets all 11 members unconditionally, reinstalling ones that are already
+current — it is the fresh-machine command. `hvtiverse_update()` targets only
+members whose status is `missing` or `stale`; if none are, it reports that and
+does nothing.
+
+`force` has one meaning in both functions: **bypass the loaded-namespace guard**.
+It does not mean "reinstall regardless of version" — that is what
+`hvtiverse_install()` already does by virtue of targeting everything.
+
+`remote = FALSE` in `hvtiverse_status()` skips the network entirely: `latest` is
+`NA` for every member and `status` is `missing` or `ok-local` based only on what
+is installed. It exists so `hvtiverse_doctor()` stays useful on a machine with
+no outbound network, and so tests never reach the network by accident.
 
 ## Behaviour
 
