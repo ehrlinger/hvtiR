@@ -13,7 +13,7 @@
 ## Global Constraints
 
 - `DESCRIPTION` declares `Depends: R (>= 4.1.0)` — deliberately looser than the family's strictest member (4.4.0). Never raise this.
-- Hard dependencies are `cli` and `utils` only. `pak`, `testthat`, `withr`, `knitr`, `quarto` go in `Suggests`. Do not add hard dependencies.
+- Hard dependencies are `cli` and `utils` only. `pak`, `testthat (>= 3.2.0)`, `withr`, `knitr`, `quarto`, `curl` go in `Suggests`. Do not add hard dependencies. The testthat floor is 3.2.0 because the suite uses `expect_no_error()` and `expect_no_warning()`; `curl` is what `skip_if_offline()` needs.
 - Version is `1.0.0` — a straight three-digit semantic version. No `.9000`, no fourth digit. Do not roll the minor or major digit; patch-digit bumps only.
 - `NEWS.md` line 2 must carry the exact version string in `DESCRIPTION`.
 - `License: GPL-3`, `Encoding: UTF-8`, `Config/testthat/edition: 3`, `Roxygen: list(markdown = TRUE)` — matching the rest of the family.
@@ -79,10 +79,11 @@ Imports:
     cli,
     utils
 Suggests:
+    curl,
     knitr,
     pak,
     quarto,
-    testthat (>= 3.0.0),
+    testthat (>= 3.2.0),
     withr
 VignetteBuilder: quarto
 Config/testthat/edition: 3
@@ -1344,7 +1345,9 @@ Version: 1.0.0
 
 - [ ] **Step 4: Create `README.md`**
 
-```markdown
+The outer fence below is four backticks; the README's own fenced blocks are three. Write the inner content to the file, not the outer fence.
+
+````markdown
 # hvtiverse
 
 <!-- badges: start -->
@@ -1413,7 +1416,7 @@ queue are still available to the group. One consequence: a later
 
 `hvtiEDAreports` (Python) and the HVTI Recipes book are not R packages and are
 not members.
-```
+````
 
 - [ ] **Step 5: Commit**
 
