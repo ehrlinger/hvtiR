@@ -1387,9 +1387,13 @@ Expected: PASS, 22 expectations. If any repository fails, the registry is wrong 
 
 - [ ] **Step 3: Create `NEWS.md`**
 
-```markdown
-# hvtiverse
+The header is DCF-style, matching `ggRandomForests` — the sibling that carries the
+same version-grep constraint. `Version:` must land on line 2 and match `DESCRIPTION`.
+A markdown H1 with a loose `Version:` line under it matches neither family convention
+and renders badly in pkgdown, which parses `NEWS.md` by heading structure.
 
+```markdown
+Package: hvtiverse
 Version: 1.0.0
 
 ## hvtiverse 1.0.0
