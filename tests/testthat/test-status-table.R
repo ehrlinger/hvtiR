@@ -49,8 +49,28 @@ test_that("hvtiverse_status warns once, not per member, when GitHub is unreachab
   )
 
   expect_length(seen, 1L)
-  expect_match(seen, "Could not reach GitHub")
+  expect_match(seen, "Could not determine the latest version")
   expect_true(all(st$status == "unknown"))
+})
+
+test_that("hvtiverse_status warns when nothing is installed and GitHub is unreachable", {
+  local_mocked_bindings(
+    installed_version = function(pkg) NA_character_,
+    remote_version = function(repo, ref = "main") NA_character_
+  )
+
+  seen <- character(0)
+  withCallingHandlers(
+    st <- hvtiverse_status(),
+    warning = function(w) {
+      seen <<- c(seen, conditionMessage(w))
+      invokeRestart("muffleWarning")
+    }
+  )
+
+  expect_length(seen, 1L)
+  expect_match(seen, "Could not determine the latest version")
+  expect_true(all(st$status == "missing"))
 })
 
 test_that("hvtiverse_status skips the network entirely when remote is FALSE", {

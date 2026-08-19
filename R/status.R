@@ -109,12 +109,16 @@ hvtiverse_status <- function(remote = TRUE) {
     stringsAsFactors = FALSE
   )
 
-  unreachable <- sum(status == "unknown")
-  if (unreachable > 0L) {
-    cli::cli_warn(c(
-      "Could not reach GitHub for {unreachable} member{?s}.",
-      i = "The {.field latest} column is incomplete."
-    ))
+  if (remote) {
+    unresolved <- sum(is.na(latest))
+
+    if (unresolved > 0L) {
+      cli::cli_warn(c(
+        "Could not determine the latest version for {unresolved} member{?s}.",
+        i = "GitHub may be unreachable, or a repository's DESCRIPTION may be unreadable.",
+        i = "The {.field latest} column is incomplete."
+      ))
+    }
   }
 
   class(out) <- c("hvtiverse_status", "data.frame")
