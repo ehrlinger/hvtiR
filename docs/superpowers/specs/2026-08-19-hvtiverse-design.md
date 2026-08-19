@@ -106,9 +106,16 @@ hvtiverse_install(force = FALSE)   # all 11 members; fresh machine
 hvtiverse_update(force = FALSE)    # only missing and stale members
 ```
 
-`hvtiverse_status()` returns its data frame invisibly and prints through a
-`print.hvtiverse_status` method, so it is both scriptable and readable. Columns:
-`package`, `repo`, `installed`, `latest`, `status`.
+`hvtiverse_status()` returns its data frame **visibly**, carrying the class
+`c("hvtiverse_status", "data.frame")`, with a `print.hvtiverse_status` method
+supplying the readable table. Columns: `package`, `repo`, `installed`,
+`latest`, `status`.
+
+The return must be visible, not invisible: R auto-prints only visible top-level
+results, so an invisible return would mean the print method never fires and
+`hvtiverse_status()` at the console displays nothing. A visible classed return
+gives both behaviours — a bare call prints the table, and
+`st <- hvtiverse_status()` captures the data frame silently.
 
 Status values:
 
