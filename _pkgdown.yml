@@ -22,8 +22,8 @@ home:
       badges:
         title: Package badges
         text: |
-          ![](https://img.shields.io/github/r-package/v/ehrlinger/hvtiverse)<br>
-          ![](https://img.shields.io/github/actions/workflow/status/ehrlinger/hvtiverse/pkgdown.yaml)<br>
+          ![R package version](https://img.shields.io/github/r-package/v/ehrlinger/hvtiverse)<br>
+          ![pkgdown build status](https://img.shields.io/github/actions/workflow/status/ehrlinger/hvtiverse/pkgdown.yaml)<br>
 
 navbar:
   structure:

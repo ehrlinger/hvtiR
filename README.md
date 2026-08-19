@@ -1,8 +1,8 @@
 # hvtiverse
 
 <!-- badges: start -->
-![](https://img.shields.io/github/r-package/v/ehrlinger/hvtiverse)
-![](https://img.shields.io/github/actions/workflow/status/ehrlinger/hvtiverse/R-CMD-check.yaml)
+![R package version](https://img.shields.io/github/r-package/v/ehrlinger/hvtiverse)
+![R-CMD-check status](https://img.shields.io/github/actions/workflow/status/ehrlinger/hvtiverse/R-CMD-check.yaml)
 <!-- badges: end -->
 
 One command to install the HVTI R package family, and one command to say
