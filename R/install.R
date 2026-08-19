@@ -166,6 +166,12 @@ hvtiverse_update <- function(force = FALSE) {
     return(invisible(character(0)))
   }
 
+  if (unchecked > 0L) {
+    cli::cli_alert_warning(
+      "{unchecked} member{?s} could not be checked against GitHub."
+    )
+  }
+
   targets <- expand_targets(targets)
 
   install_members(targets, force = force)

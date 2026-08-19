@@ -114,6 +114,42 @@ test_that("hvtiverse_update does not claim members are current when GitHub is un
   expect_false(any(grepl("up to date", msgs)))
 })
 
+test_that("hvtiverse_update reports unchecked members alongside a real install", {
+  captured <- NULL
+  local_mocked_bindings(
+    installed_version = function(pkg) {
+      if (pkg == "hvtiRtables") return("0.9.0")
+      "1.0.0"
+    },
+    remote_version = function(repo, ref = "main") {
+      if (repo %in% c("ehrlinger/hvtiPlotR", "ehrlinger/hvtiRlifetables")) {
+        return(NA_character_)
+      }
+      "1.0.0"
+    },
+    pak_install = function(specs) {
+      captured <<- specs
+      invisible(specs)
+    },
+    check_loaded = function(targets, loaded = loadedNamespaces()) character(0)
+  )
+
+  msgs <- character(0)
+  withCallingHandlers(
+    suppressWarnings(hvtiverse_update()),
+    message = function(m) {
+      msgs <<- c(msgs, conditionMessage(m))
+      invokeRestart("muffleMessage")
+    }
+  )
+
+  # hvtiRtables is stale and gets installed...
+  expect_identical(captured, "ehrlinger/hvtiRtables")
+  # ...and the two members GitHub could not be reached for are still
+  # reported, not silently dropped just because there was work to do.
+  expect_true(any(grepl("2 members could not be checked", msgs)))
+})
+
 test_that("expand_targets pulls in an in-family dependency", {
   expect_identical(
     expand_targets("hvtiRlifetables"),
