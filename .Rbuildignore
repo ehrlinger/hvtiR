@@ -6,3 +6,5 @@
 ^pkgdown$
 ^LICENSE\.md$
 ^\.lintr$
+^doc$
+^Meta$

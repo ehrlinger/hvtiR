@@ -8,3 +8,5 @@
 *.Rcheck/
 *.tar.gz
 .superpowers/
+/doc/
+/Meta/
