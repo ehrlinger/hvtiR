@@ -78,8 +78,26 @@ st$package[st$status == "stale"]
 
 On a machine with no outbound network, skip the remote entirely:
 
-```{r status-local}
+```{r status-local, eval = FALSE}
 hvtiverse_status(remote = FALSE)
+```
+
+```
+hvtiverse - 11 members
+
+  - hvtiRutilities   1.0.10     -          ok-local
+  - hvtiRdatasets    0.1.1      -          ok-local
+  - hvtiRtables      1.0.0      -          ok-local
+  - hvtiRtemplates   1.0.0      -          ok-local
+  - hvtiPlotR        2.7.6      -          ok-local
+  - hvtiRlifetables  1.3.0      -          ok-local
+  - hvtiRbootstrap   0.2.0      -          ok-local
+  - hvtiRpropensity  1.1.0      -          ok-local
+  - hvtiBoostmtree   2.0.1      -          ok-local
+  - TemporalHazard   1.2.0      -          ok-local
+  - ggRandomForests  3.5.1      -          ok-local
+
+i Remote was not consulted; versions shown are installed versions only.
 ```
 
 ## Installing and updating
