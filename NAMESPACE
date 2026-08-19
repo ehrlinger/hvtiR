@@ -2,5 +2,7 @@
 
 S3method(print,hvtiverse_status)
 export(hvtiverse_doctor)
+export(hvtiverse_install)
 export(hvtiverse_members)
 export(hvtiverse_status)
+export(hvtiverse_update)
