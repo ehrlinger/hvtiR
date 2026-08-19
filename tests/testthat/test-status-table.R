@@ -78,3 +78,32 @@ test_that("printing a status object returns it invisibly", {
   expect_invisible(print(st))
   expect_output(print(st), "hvtiRutilities")
 })
+
+make_status <- function(status) {
+  out <- data.frame(
+    package = "hvtiRutilities",
+    repo = "ehrlinger/hvtiRutilities",
+    installed = "1.0.0",
+    latest = if (status %in% c("unknown", "ok-local")) NA_character_ else "1.0.0",
+    status = status,
+    stringsAsFactors = FALSE
+  )
+  class(out) <- c("hvtiverse_status", "data.frame")
+  out
+}
+
+test_that("the footer reports members needing updates when any are stale", {
+  expect_output(print(make_status("stale")), "need.*updating")
+})
+
+test_that("the footer reports unchecked members when any are unknown", {
+  expect_output(print(make_status("unknown")), "could not be checked against GitHub")
+})
+
+test_that("the footer discloses installed-only versions when all are ok-local", {
+  expect_output(print(make_status("ok-local")), "Remote was not consulted")
+})
+
+test_that("the footer claims up to date only when everything is genuinely ok", {
+  expect_output(print(make_status("ok")), "Everything is up to date")
+})

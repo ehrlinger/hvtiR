@@ -130,6 +130,8 @@ print.hvtiverse_status <- function(x, ...) {
 
   width <- max(nchar(x$package))
   stale <- sum(x$status %in% c("stale", "missing"))
+  unknown <- sum(x$status == "unknown")
+  ok_local <- sum(x$status == "ok-local")
 
   # cli's default handler writes via message() (stderr), which would make
   # this invisible to print()'s conventional stdout consumers (and to
@@ -154,6 +156,14 @@ print.hvtiverse_status <- function(x, ...) {
     if (stale > 0L) {
       cli::cli_alert_info(
         "{stale} member{?s} need{?s/} updating. Run {.run hvtiverse::hvtiverse_update()}."
+      )
+    } else if (unknown > 0L) {
+      cli::cli_alert_warning(
+        "{unknown} member{?s} could not be checked against GitHub."
+      )
+    } else if (ok_local > 0L) {
+      cli::cli_alert_info(
+        "Remote was not consulted; versions shown are installed versions only."
       )
     } else {
       cli::cli_alert_success("Everything is up to date.")
