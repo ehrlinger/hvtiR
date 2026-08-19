@@ -1,0 +1,57 @@
+url: https://ehrlinger.github.io/hvtiverse/
+
+template:
+  bootstrap: 5
+  bslib:
+    bootswatch: zephyr
+    base_font:
+      google: Outfit
+    code_font:
+      google: Fira Code
+  light-switch: yes
+  theme: atom-one-light
+  theme-dark: atom-one-dark
+
+home:
+  sidebar:
+    structure:
+    - badges
+    - links
+    - authors
+    components:
+      badges:
+        title: Package badges
+        text: |
+          ![](https://img.shields.io/github/r-package/v/ehrlinger/hvtiverse)<br>
+          ![](https://img.shields.io/github/actions/workflow/status/ehrlinger/hvtiverse/pkgdown.yaml)<br>
+
+navbar:
+  structure:
+    right:
+    - search
+    - github
+    - my_linkedin
+    - lightswitch
+  components:
+    my_linkedin:
+      icon: fa-linkedin
+      href: https://www.linkedin.com/in/ehrlinger/
+      aria-label: LinkedIn
+
+reference:
+- title: Installing
+  desc: Install and update the package family
+  contents:
+  - hvtiverse_install
+  - hvtiverse_update
+
+- title: Checking
+  desc: Report what is installed and diagnose what is wrong
+  contents:
+  - hvtiverse_status
+  - hvtiverse_doctor
+
+- title: The registry
+  desc: Which packages are members, and where they come from
+  contents:
+  - hvtiverse_members
