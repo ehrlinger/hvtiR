@@ -182,10 +182,23 @@ there is no self-update hazard.
 
 `pak::pak(specs, ask = FALSE)` over the `owner/repo` strings.
 
-`pak` rather than `remotes` because three members carry `Remotes:` fields —
-`hvtiRdatasets` -> `hvtiRutilities`, `hvtiRlifetables` -> `TemporalHazard`,
-`hvtiPlotR` -> `davidsjoberg/ggsankey`. `Remotes:` is not transitive under
+`pak` rather than `remotes` because two members carry `Remotes:` fields —
+`hvtiRdatasets` -> `ehrlinger/hvtiRutilities` and `hvtiPlotR` ->
+`davidsjoberg/ggsankey`. `Remotes:` is not transitive under
 `install.packages()`, which would silently fail to resolve them.
+
+**All 11 specs go to `pak` in a single call**, not eleven calls in a loop. This
+is a correctness requirement, not an optimisation. `hvtiRlifetables` declares
+`Imports: TemporalHazard (>= 1.2.0)` but carries **no** `Remotes:` line, so
+resolving it alone sends `pak` to CRAN, where TemporalHazard is still 1.1.0 and
+the requirement fails — that package is currently uninstallable in isolation.
+Passing every spec at once means `ehrlinger/temporal_hazard` is co-resolved at
+1.2.0 and satisfies the import.
+
+That co-resolution is a side effect of batching, not something either package
+declares, so it is fragile. The proper fix is a `Remotes: ehrlinger/temporal_hazard`
+line in `hvtiRlifetables/DESCRIPTION`; it is tracked separately and is not a
+prerequisite for this implementation.
 
 If `pak` is not installed, fail with a message giving the exact command to
 install it.
@@ -208,7 +221,7 @@ edges, so the test suite needs no network.
 | `check_loaded(targets, loaded)` | pure | takes `loaded` as an argument rather than calling `loadedNamespaces()` internally, so the guard is testable without loading anything |
 | `build_specs(members, which)` | pure | asserts the exact repo strings handed to `pak` |
 | `remote_version(repo)` | I/O | mocked with `local_mocked_bindings()` against fixture DESCRIPTION files, including one with continuation lines and one failure case returning `NA` |
-| registry integrity | network, CI only | `skip_if_offline()`; every registry `repo` resolves and its `Package:` field matches the registry `package` — this is what catches a repo rename or a fourth name mismatch |
+| registry integrity | network, CI only | `skip_if_offline()`; every registry `repo` resolves and its `Package:` field matches the registry `package` — this is what catches a repo rename or a third name mismatch |
 
 ## Conventions
 
