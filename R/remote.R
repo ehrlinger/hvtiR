@@ -7,7 +7,9 @@
 #' @param repo GitHub repository, as `"owner/repo"`.
 #' @param ref Branch or tag to read from.
 #' @return A character matrix as returned by [base::read.dcf()], or `NULL` if
-#'   the fetch failed for any reason.
+#'   the fetch failed for any reason. Warnings raised while connecting or
+#'   parsing are muffled rather than discarding a result they did not
+#'   actually invalidate; only a true error yields `NULL`.
 #' @noRd
 fetch_description <- function(repo, ref = "main") {
   address <- sprintf(
@@ -16,13 +18,15 @@ fetch_description <- function(repo, ref = "main") {
   )
 
   tryCatch(
-    {
-      con <- url(address)
-      on.exit(close(con), add = TRUE)
-      read.dcf(con)
-    },
-    error = function(e) NULL,
-    warning = function(w) NULL
+    withCallingHandlers(
+      {
+        con <- url(address)
+        on.exit(close(con), add = TRUE)
+        read.dcf(con)
+      },
+      warning = function(w) invokeRestart("muffleWarning")
+    ),
+    error = function(e) NULL
   )
 }
 
