@@ -164,3 +164,54 @@ print.hvtiverse_status <- function(x, ...) {
 
   invisible(x)
 }
+
+# The strictest R requirement across the family: ggRandomForests and
+# hvtiRlifetables both declare Depends: R (>= 4.4.0). hvtiverse itself
+# deliberately requires only 4.1.0 so that this diagnostic can run on a
+# machine whose R is too old for the members.
+MIN_R_VERSION <- "4.4.0"
+
+#' Diagnose an hvtiverse installation
+#'
+#' Reports the running R version against the strictest requirement in the
+#' package family, the platform, and then the full member status table. This
+#' is the report to run first when a member will not install.
+#'
+#' @param remote Consult GitHub for the latest versions? Passed through to
+#'   [hvtiverse_status()].
+#' @return The [hvtiverse_status()] data frame, invisibly. Called for the
+#'   report it prints.
+#' @export
+#' @examples
+#' # Offline: environment checks plus what is installed
+#' hvtiverse_doctor(remote = FALSE)
+hvtiverse_doctor <- function(remote = TRUE) {
+  lines <- cli::cli_fmt({
+    cli::cli_h1("hvtiverse doctor")
+
+    cli::cli_h2("Environment")
+
+    current <- getRversion()
+    if (current < MIN_R_VERSION) {
+      cli::cli_alert_danger(
+        "R version {current} — members require {MIN_R_VERSION} or newer."
+      )
+      cli::cli_alert_info(
+        "{.pkg ggRandomForests} and {.pkg hvtiRlifetables} will not install."
+      )
+    } else {
+      cli::cli_alert_success("R version {current} (>= {MIN_R_VERSION} required)")
+    }
+
+    cli::cli_alert_info("Platform {R.version$platform}")
+
+    cli::cli_h2("Members")
+  })
+
+  cat(lines, sep = "\n")
+
+  st <- hvtiverse_status(remote = remote)
+  print(st)
+
+  invisible(st)
+}
