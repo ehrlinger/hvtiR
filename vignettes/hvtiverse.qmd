@@ -139,3 +139,11 @@ the group immediately.
 One consequence is worth knowing: because `ggRandomForests` came from GitHub, a
 later `update.packages()` can quietly downgrade it to the CRAN version. If a
 version looks wrong, run `hvtiverse_status()`.
+
+The same downgrade can happen to `TemporalHazard`, which is also on CRAN
+(1.1.0, versus 1.2.0 on GitHub) — and there it is not harmless. `hvtiverse_status()`
+would show `TemporalHazard` as `stale`, and `hvtiRlifetables` requires
+`TemporalHazard (>= 1.2.0)` in its `Imports:` field, a requirement R enforces
+when the namespace loads. A downgraded `TemporalHazard` leaves
+`hvtiRlifetables` unloadable, not just out of date, until
+`hvtiverse_update()` puts `TemporalHazard` back.

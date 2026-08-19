@@ -64,5 +64,13 @@ queue are still available to the group. One consequence: a later
 `update.packages()` can downgrade `ggRandomForests` to its CRAN version. Run
 `hvtiverse_status()` if a version looks wrong.
 
+The same downgrade can happen to `TemporalHazard`, and there it is not
+harmless: `TemporalHazard` is also on CRAN (currently 1.1.0, versus 1.2.0 on
+GitHub), and `hvtiRlifetables` declares `Imports: TemporalHazard (>= 1.2.0)`.
+R enforces that version requirement at namespace load, so a downgrade leaves
+`hvtiRlifetables` unloadable until `TemporalHazard` is put back. If this
+happens, `hvtiverse_status()` will show `TemporalHazard` as `stale`, and
+`hvtiverse_update()` repairs it.
+
 `hvtiEDAreports` (Python) and the HVTI Recipes book are not R packages and are
 not members.
