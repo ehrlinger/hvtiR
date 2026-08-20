@@ -11,3 +11,5 @@
 ^Meta$
 ^\.superpowers$
 ^vignettes/\.quarto($|/)
+^AGENTS\.md$
+^CLAUDE\.md$
