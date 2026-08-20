@@ -62,8 +62,9 @@
 <div class="page-header"><h1 id="hvtiverse">hvtiverse<a class="anchor" aria-label="anchor" href="#hvtiverse"></a>
 </h1></div>
 <!-- badges: start -->
-<p><img src="https://img.shields.io/github/r-package/v/ehrlinger/hvtiverse" alt="R package version"><img src="https://img.shields.io/github/actions/workflow/status/ehrlinger/hvtiverse/R-CMD-check.yaml" alt="R-CMD-check status"><!-- badges: end --></p>
+<p><img src="https://img.shields.io/github/r-package/v/ehrlinger/hvtiverse" alt="R package version"><img src="https://img.shields.io/github/actions/workflow/status/ehrlinger/hvtiverse/R-CMD-check.yaml" alt="R-CMD-check status"><img src="https://img.shields.io/github/actions/workflow/status/ehrlinger/hvtiverse/pkgdown.yaml?label=pkgdown" alt="pkgdown site status"><!-- badges: end --></p>
 <p>One command to install the HVTI R package family, and one command to say whether you are current.</p>
+<p><strong>Documentation:</strong> <a href="https://ehrlinger.github.io/hvtiverse/" class="uri">https://ehrlinger.github.io/hvtiverse/</a></p>
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
@@ -149,6 +150,20 @@
 <p>Members install from GitHub rather than CRAN, so releases waiting in the CRAN queue are still available to the group. One consequence: a later <code><a href="https://rdrr.io/r/utils/update.packages.html" class="external-link">update.packages()</a></code> can downgrade <code>ggRandomForests</code> to its CRAN version. Run <code><a href="reference/hvtiverse_status.html">hvtiverse_status()</a></code> if a version looks wrong.</p>
 <p>The same downgrade can happen to <code>TemporalHazard</code>, and there it is not harmless: <code>TemporalHazard</code> is also on CRAN (currently 1.1.0, versus 1.2.0 on GitHub), and <code>hvtiRlifetables</code> declares <code>Imports: TemporalHazard (&gt;= 1.2.0)</code>. R enforces that version requirement at namespace load, so a downgrade leaves <code>hvtiRlifetables</code> unloadable until <code>TemporalHazard</code> is put back. If this happens, <code><a href="reference/hvtiverse_status.html">hvtiverse_status()</a></code> will show <code>TemporalHazard</code> as <code>stale</code>, and <code><a href="reference/hvtiverse_update.html">hvtiverse_update()</a></code> repairs it.</p>
 <p><code>hvtiEDAreports</code> (Python) and the HVTI Recipes book are not R packages and are not members.</p>
+</div>
+<div class="section level2">
+<h2 id="further-reading">Further reading<a class="anchor" aria-label="anchor" href="#further-reading"></a>
+</h2>
+<ul>
+<li>
+<a href="https://ehrlinger.github.io/hvtiverse/reference/">Reference</a> - every function, with examples.</li>
+<li>
+<a href="https://ehrlinger.github.io/hvtiverse/articles/hvtiverse.html">Getting started</a> - the vignette, including what to do when a member will not install.</li>
+<li>
+<a href="https://ehrlinger.github.io/hvtiverse/news/">Changelog</a> - what changed in each release.</li>
+<li>
+<a href="design/">Design records</a> - the spec and implementation plan, kept because the reasoning behind the design is harder to recover than the code.</li>
+</ul>
 </div>
 </div>
   </main><aside class="col-md-3"><div class="package-badges">
