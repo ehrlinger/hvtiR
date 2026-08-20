@@ -7,7 +7,7 @@
 ## Citation
 
 Source:
-[`DESCRIPTION`](https://github.com/ehrlinger/hvtiverse/blob/main/DESCRIPTION)
+[`DESCRIPTION`](https://github.com/ehrlinger/hvtiverse/blob/v1.0.0/DESCRIPTION)
 
 Ehrlinger J (2026). *hvtiverse: Install and Check the HVTI R Package
 Family*. R package version 1.0.0,
