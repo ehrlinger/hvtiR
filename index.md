@@ -1,0 +1,85 @@
+# hvtiverse
+
+![R package
+version](https://img.shields.io/github/r-package/v/ehrlinger/hvtiverse)![R-CMD-check
+status](https://img.shields.io/github/actions/workflow/status/ehrlinger/hvtiverse/R-CMD-check.yaml)
+
+One command to install the HVTI R package family, and one command to say
+whether you are current.
+
+## Installation
+
+``` r
+
+# install.packages("pak")
+pak::pak("ehrlinger/hvtiverse")
+```
+
+Then install every member:
+
+``` r
+
+hvtiverse::hvtiverse_install()
+```
+
+## Keeping current
+
+``` r
+
+library(hvtiverse)
+
+hvtiverse_status()   # what is installed, what is available
+hvtiverse_update()   # install only what is missing or stale
+```
+
+[`hvtiverse_update()`](https://ehrlinger.github.io/hvtiverse/reference/hvtiverse_update.md)
+will refuse to overwrite a member you have already attached in the
+session, because a loaded package cannot be safely replaced. Restart R
+and run it again before attaching anything.
+
+## When something will not install
+
+``` r
+
+hvtiverse_doctor()
+```
+
+reports your R version against the family’s requirement (4.4.0 or
+newer), your platform, and the full member table.
+
+## Members
+
+| Package         | Repository                     |
+|-----------------|--------------------------------|
+| hvtiRutilities  | ehrlinger/hvtiRutilities       |
+| hvtiRdatasets   | ehrlinger/hvtiRdatasets        |
+| hvtiRtables     | ehrlinger/hvtiRtables          |
+| hvtiRtemplates  | ehrlinger/hvtiRtemplates       |
+| hvtiPlotR       | ehrlinger/hvtiPlotR            |
+| hvtiRlifetables | ehrlinger/hvtiRlifetables      |
+| hvtiRbootstrap  | ehrlinger/hvtiRbootstrap       |
+| hvtiRpropensity | ehrlinger/hvtiPropensityScores |
+| hvtiBoostmtree  | ehrlinger/hvtiBoostmtree       |
+| TemporalHazard  | ehrlinger/temporal_hazard      |
+| ggRandomForests | ehrlinger/ggRandomForests      |
+
+Members install from GitHub rather than CRAN, so releases waiting in the
+CRAN queue are still available to the group. One consequence: a later
+[`update.packages()`](https://rdrr.io/r/utils/update.packages.html) can
+downgrade `ggRandomForests` to its CRAN version. Run
+[`hvtiverse_status()`](https://ehrlinger.github.io/hvtiverse/reference/hvtiverse_status.md)
+if a version looks wrong.
+
+The same downgrade can happen to `TemporalHazard`, and there it is not
+harmless: `TemporalHazard` is also on CRAN (currently 1.1.0, versus
+1.2.0 on GitHub), and `hvtiRlifetables` declares
+`Imports: TemporalHazard (>= 1.2.0)`. R enforces that version
+requirement at namespace load, so a downgrade leaves `hvtiRlifetables`
+unloadable until `TemporalHazard` is put back. If this happens,
+[`hvtiverse_status()`](https://ehrlinger.github.io/hvtiverse/reference/hvtiverse_status.md)
+will show `TemporalHazard` as `stale`, and
+[`hvtiverse_update()`](https://ehrlinger.github.io/hvtiverse/reference/hvtiverse_update.md)
+repairs it.
+
+`hvtiEDAreports` (Python) and the HVTI Recipes book are not R packages
+and are not members.

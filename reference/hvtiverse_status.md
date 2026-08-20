@@ -1,0 +1,72 @@
+# Version status of every hvtiverse member
+
+Compares the version of each member installed locally against the
+version on the `main` branch of its GitHub repository.
+
+## Usage
+
+``` r
+hvtiverse_status(remote = TRUE)
+```
+
+## Arguments
+
+- remote:
+
+  Consult GitHub for the latest versions? When `FALSE`, no network
+  request is made, `latest` is `NA` throughout, and installed members
+  report `"ok-local"`.
+
+## Value
+
+A data frame of class `hvtiverse_status`, one row per member, with
+character columns:
+
+- package:
+
+  The package name.
+
+- repo:
+
+  The GitHub repository it installs from.
+
+- installed:
+
+  Installed version, or `NA` if not installed.
+
+- latest:
+
+  Version on GitHub `main`, or `NA`.
+
+- status:
+
+  One of `"ok"`, `"stale"`, `"missing"`, `"ahead"`, `"unknown"` or
+  `"ok-local"`.
+
+## Details
+
+The object is returned visibly and has a `print` method, so a bare call
+displays the table while `st <- hvtiverse_status()` captures the data
+frame for scripting.
+
+## Examples
+
+``` r
+# Offline: reports what is installed without contacting GitHub
+hvtiverse_status(remote = FALSE)
+#> hvtiverse - 11 members
+#> 
+#>   x hvtiRutilities   -          -          missing
+#>   x hvtiRdatasets    -          -          missing
+#>   x hvtiRtables      -          -          missing
+#>   x hvtiRtemplates   -          -          missing
+#>   x hvtiPlotR        -          -          missing
+#>   x hvtiRlifetables  -          -          missing
+#>   x hvtiRbootstrap   -          -          missing
+#>   x hvtiRpropensity  -          -          missing
+#>   x hvtiBoostmtree   -          -          missing
+#>   x TemporalHazard   -          -          missing
+#>   x ggRandomForests  -          -          missing
+#> 
+#> ℹ 11 members need updating. Run `hvtiverse::hvtiverse_update()`.
+```
