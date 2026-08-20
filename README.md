@@ -3,10 +3,13 @@
 <!-- badges: start -->
 ![R package version](https://img.shields.io/github/r-package/v/ehrlinger/hvtiverse)
 ![R-CMD-check status](https://img.shields.io/github/actions/workflow/status/ehrlinger/hvtiverse/R-CMD-check.yaml)
+![pkgdown site status](https://img.shields.io/github/actions/workflow/status/ehrlinger/hvtiverse/pkgdown.yaml?label=pkgdown)
 <!-- badges: end -->
 
 One command to install the HVTI R package family, and one command to say
 whether you are current.
+
+**Documentation:** <https://ehrlinger.github.io/hvtiverse/>
 
 ## Installation
 
@@ -74,3 +77,12 @@ happens, `hvtiverse_status()` will show `TemporalHazard` as `stale`, and
 
 `hvtiEDAreports` (Python) and the HVTI Recipes book are not R packages and are
 not members.
+
+## Further reading
+
+- [Reference](https://ehrlinger.github.io/hvtiverse/reference/) - every function, with examples.
+- [Getting started](https://ehrlinger.github.io/hvtiverse/articles/hvtiverse.html) - the vignette,
+  including what to do when a member will not install.
+- [Changelog](https://ehrlinger.github.io/hvtiverse/news/) - what changed in each release.
+- [Design records](design/) - the spec and implementation plan, kept because the reasoning
+  behind the design is harder to recover than the code.
