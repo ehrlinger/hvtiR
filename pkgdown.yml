@@ -3,7 +3,7 @@ pkgdown: 2.2.1
 pkgdown_sha: ~
 articles:
   hvtiverse: hvtiverse.html
-last_built: 2026-08-20T13:07Z
+last_built: 2026-08-20T16:26Z
 urls:
   reference: https://ehrlinger.github.io/hvtiverse/reference
   article: https://ehrlinger.github.io/hvtiverse/articles
