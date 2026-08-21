@@ -17,7 +17,7 @@ test_that("check_loaded handles an empty target set", {
 })
 
 test_that("build_specs maps package names to repositories", {
-  m <- hvtiverse_members()
+  m <- members()
 
   expect_identical(
     build_specs(m, c("hvtiRutilities", "hvtiPlotR")),
@@ -26,7 +26,7 @@ test_that("build_specs maps package names to repositories", {
 })
 
 test_that("build_specs resolves the two name mismatches", {
-  m <- hvtiverse_members()
+  m <- members()
 
   expect_identical(
     build_specs(m, c("TemporalHazard", "hvtiRpropensity")),
@@ -35,7 +35,7 @@ test_that("build_specs resolves the two name mismatches", {
 })
 
 test_that("build_specs preserves the order it was given", {
-  m <- hvtiverse_members()
+  m <- members()
 
   expect_identical(
     build_specs(m, c("ggRandomForests", "hvtiRutilities")),
@@ -44,7 +44,7 @@ test_that("build_specs preserves the order it was given", {
 })
 
 test_that("build_specs errors on a package that is not a member", {
-  m <- hvtiverse_members()
+  m <- members()
 
-  expect_error(build_specs(m, "dplyr"), "not an hvtiverse member")
+  expect_error(build_specs(m, "dplyr"), "not an hvtiR member")
 })

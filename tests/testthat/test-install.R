@@ -45,7 +45,7 @@ test_that("install_members does nothing when there is nothing to install", {
   expect_message(install_members(character(0)), "up to date")
 })
 
-test_that("hvtiverse_install targets every member", {
+test_that("install targets every member", {
   captured <- NULL
   local_mocked_bindings(
     pak_install = function(specs) {
@@ -55,12 +55,12 @@ test_that("hvtiverse_install targets every member", {
     check_loaded = function(targets, loaded = loadedNamespaces()) character(0)
   )
 
-  hvtiverse_install()
+  install()
 
-  expect_identical(captured, hvtiverse_members()$repo)
+  expect_identical(captured, members()$repo)
 })
 
-test_that("hvtiverse_update targets only missing and stale members", {
+test_that("update targets only missing and stale members", {
   captured <- NULL
   local_mocked_bindings(
     installed_version = function(pkg) {
@@ -76,7 +76,7 @@ test_that("hvtiverse_update targets only missing and stale members", {
     check_loaded = function(targets, loaded = loadedNamespaces()) character(0)
   )
 
-  hvtiverse_update()
+  update()
 
   expect_setequal(
     captured,
@@ -84,17 +84,17 @@ test_that("hvtiverse_update targets only missing and stale members", {
   )
 })
 
-test_that("hvtiverse_update installs nothing when everything is current", {
+test_that("update installs nothing when everything is current", {
   local_mocked_bindings(
     installed_version = function(pkg) "1.0.0",
     remote_version = function(repo, ref = "main") "1.0.0",
     pak_install = function(specs) stop("must not install")
   )
 
-  expect_message(hvtiverse_update(), "up to date")
+  expect_message(update(), "up to date")
 })
 
-test_that("hvtiverse_update does not claim members are current when GitHub is unreachable", {
+test_that("update does not claim members are current when GitHub is unreachable", {
   local_mocked_bindings(
     installed_version = function(pkg) "1.0.0",
     remote_version = function(repo, ref = "main") NA_character_,
@@ -103,7 +103,7 @@ test_that("hvtiverse_update does not claim members are current when GitHub is un
 
   msgs <- character(0)
   withCallingHandlers(
-    suppressWarnings(hvtiverse_update()),
+    suppressWarnings(update()),
     message = function(m) {
       msgs <<- c(msgs, conditionMessage(m))
       invokeRestart("muffleMessage")
@@ -114,7 +114,7 @@ test_that("hvtiverse_update does not claim members are current when GitHub is un
   expect_false(any(grepl("up to date", msgs)))
 })
 
-test_that("hvtiverse_update reports unchecked members alongside a real install", {
+test_that("update reports unchecked members alongside a real install", {
   captured <- NULL
   local_mocked_bindings(
     installed_version = function(pkg) {
@@ -136,7 +136,7 @@ test_that("hvtiverse_update reports unchecked members alongside a real install",
 
   msgs <- character(0)
   withCallingHandlers(
-    suppressWarnings(hvtiverse_update()),
+    suppressWarnings(update()),
     message = function(m) {
       msgs <<- c(msgs, conditionMessage(m))
       invokeRestart("muffleMessage")
@@ -179,7 +179,7 @@ test_that("expand_targets returns registry order regardless of input order", {
   )
 })
 
-test_that("hvtiverse_update sends a stale member's in-family dependency too", {
+test_that("update sends a stale member's in-family dependency too", {
   captured <- NULL
   local_mocked_bindings(
     installed_version = function(pkg) if (pkg == "hvtiRlifetables") "0.0.1" else "1.0.0",
@@ -191,7 +191,7 @@ test_that("hvtiverse_update sends a stale member's in-family dependency too", {
     check_loaded = function(targets, loaded = loadedNamespaces()) character(0)
   )
 
-  hvtiverse_update()
+  update()
 
   expect_true("ehrlinger/temporal_hazard" %in% captured)
   expect_true("ehrlinger/hvtiRlifetables" %in% captured)

@@ -1,22 +1,22 @@
-test_that("hvtiverse_status returns one row per member with the right columns", {
+test_that("status returns one row per member with the right columns", {
   local_mocked_bindings(
     installed_version = function(pkg) "1.0.0",
     remote_version = function(repo, ref = "main") "1.0.0"
   )
 
-  st <- hvtiverse_status()
+  st <- status()
 
-  expect_s3_class(st, "hvtiverse_status")
+  expect_s3_class(st, "hvtiR_status")
   expect_s3_class(st, "data.frame")
   expect_identical(
     names(st),
     c("package", "repo", "installed", "latest", "status")
   )
-  expect_identical(nrow(st), nrow(hvtiverse_members()))
+  expect_identical(nrow(st), nrow(members()))
   expect_true(all(st$status == "ok"))
 })
 
-test_that("hvtiverse_status marks stale and missing members", {
+test_that("status marks stale and missing members", {
   local_mocked_bindings(
     installed_version = function(pkg) {
       if (pkg == "hvtiPlotR") return(NA_character_)
@@ -26,14 +26,14 @@ test_that("hvtiverse_status marks stale and missing members", {
     remote_version = function(repo, ref = "main") "1.0.0"
   )
 
-  st <- hvtiverse_status()
+  st <- status()
 
   expect_identical(st$status[st$package == "hvtiPlotR"], "missing")
   expect_identical(st$status[st$package == "hvtiRtables"], "stale")
   expect_identical(st$status[st$package == "hvtiRutilities"], "ok")
 })
 
-test_that("hvtiverse_status warns once, not per member, when GitHub is unreachable", {
+test_that("status warns once, not per member, when GitHub is unreachable", {
   local_mocked_bindings(
     installed_version = function(pkg) "1.0.0",
     remote_version = function(repo, ref = "main") NA_character_
@@ -41,7 +41,7 @@ test_that("hvtiverse_status warns once, not per member, when GitHub is unreachab
 
   seen <- character(0)
   withCallingHandlers(
-    st <- hvtiverse_status(),
+    st <- status(),
     warning = function(w) {
       seen <<- c(seen, conditionMessage(w))
       invokeRestart("muffleWarning")
@@ -53,7 +53,7 @@ test_that("hvtiverse_status warns once, not per member, when GitHub is unreachab
   expect_true(all(st$status == "unknown"))
 })
 
-test_that("hvtiverse_status warns when nothing is installed and GitHub is unreachable", {
+test_that("status warns when nothing is installed and GitHub is unreachable", {
   local_mocked_bindings(
     installed_version = function(pkg) NA_character_,
     remote_version = function(repo, ref = "main") NA_character_
@@ -61,7 +61,7 @@ test_that("hvtiverse_status warns when nothing is installed and GitHub is unreac
 
   seen <- character(0)
   withCallingHandlers(
-    st <- hvtiverse_status(),
+    st <- status(),
     warning = function(w) {
       seen <<- c(seen, conditionMessage(w))
       invokeRestart("muffleWarning")
@@ -73,7 +73,7 @@ test_that("hvtiverse_status warns when nothing is installed and GitHub is unreac
   expect_true(all(st$status == "missing"))
 })
 
-test_that("hvtiverse_status skips the network entirely when remote is FALSE", {
+test_that("status skips the network entirely when remote is FALSE", {
   local_mocked_bindings(
     installed_version = function(pkg) "1.0.0",
     remote_version = function(repo, ref = "main") {
@@ -81,7 +81,7 @@ test_that("hvtiverse_status skips the network entirely when remote is FALSE", {
     }
   )
 
-  st <- expect_no_warning(hvtiverse_status(remote = FALSE))
+  st <- expect_no_warning(status(remote = FALSE))
 
   expect_true(all(is.na(st$latest)))
   expect_true(all(st$status == "ok-local"))
@@ -93,7 +93,7 @@ test_that("printing a status object returns it invisibly", {
     remote_version = function(repo, ref = "main") "1.0.0"
   )
 
-  st <- hvtiverse_status()
+  st <- status()
 
   expect_invisible(print(st))
   expect_output(print(st), "hvtiRutilities")
@@ -108,7 +108,7 @@ make_status <- function(status) {
     status = status,
     stringsAsFactors = FALSE
   )
-  class(out) <- c("hvtiverse_status", "data.frame")
+  class(out) <- c("hvtiR_status", "data.frame")
   out
 }
 

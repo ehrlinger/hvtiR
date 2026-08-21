@@ -1,4 +1,4 @@
 library(testthat)
-library(hvtiverse)
+library(hvtiR)
 
-test_check("hvtiverse")
+test_check("hvtiR")

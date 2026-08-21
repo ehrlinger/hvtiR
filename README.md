@@ -1,46 +1,44 @@
-# hvtiverse
+# hvtiR
 
 <!-- badges: start -->
-![R package version](https://img.shields.io/github/r-package/v/ehrlinger/hvtiverse)
-![R-CMD-check status](https://img.shields.io/github/actions/workflow/status/ehrlinger/hvtiverse/R-CMD-check.yaml)
-![pkgdown site status](https://img.shields.io/github/actions/workflow/status/ehrlinger/hvtiverse/pkgdown.yaml?label=pkgdown)
+![R package version](https://img.shields.io/github/r-package/v/ehrlinger/hvtiR)
+![R-CMD-check status](https://img.shields.io/github/actions/workflow/status/ehrlinger/hvtiR/R-CMD-check.yaml)
+![pkgdown site status](https://img.shields.io/github/actions/workflow/status/ehrlinger/hvtiR/pkgdown.yaml?label=pkgdown)
 <!-- badges: end -->
 
 One command to install the HVTI R package family, and one command to say
 whether you are current.
 
-**Documentation:** <https://ehrlinger.github.io/hvtiverse/>
+**Documentation:** <https://ehrlinger.github.io/hvtiR/>
 
 ## Installation
 
 ```r
 # install.packages("pak")
-pak::pak("ehrlinger/hvtiverse")
+pak::pak("ehrlinger/hvtiR")
 ```
 
 Then install every member:
 
 ```r
-hvtiverse::hvtiverse_install()
+hvtiR::install()
 ```
 
 ## Keeping current
 
 ```r
-library(hvtiverse)
-
-hvtiverse_status()   # what is installed, what is available
-hvtiverse_update()   # install only what is missing or stale
+hvtiR::status()   # what is installed, what is available
+hvtiR::update()   # install only what is missing or stale
 ```
 
-`hvtiverse_update()` will refuse to overwrite a member you have already
+`hvtiR::update()` will refuse to overwrite a member you have already
 attached in the session, because a loaded package cannot be safely replaced.
 Restart R and run it again before attaching anything.
 
 ## When something will not install
 
 ```r
-hvtiverse_doctor()
+hvtiR::doctor()
 ```
 
 reports your R version against the family's requirement (4.4.0 or newer),
@@ -65,24 +63,24 @@ your platform, and the full member table.
 Members install from GitHub rather than CRAN, so releases waiting in the CRAN
 queue are still available to the group. One consequence: a later
 `update.packages()` can downgrade `ggRandomForests` to its CRAN version. Run
-`hvtiverse_status()` if a version looks wrong.
+`hvtiR::status()` if a version looks wrong.
 
 The same downgrade can happen to `TemporalHazard`, and there it is not
 harmless: `TemporalHazard` is also on CRAN (currently 1.1.0, versus 1.2.0 on
 GitHub), and `hvtiRlifetables` declares `Imports: TemporalHazard (>= 1.2.0)`.
 R enforces that version requirement at namespace load, so a downgrade leaves
 `hvtiRlifetables` unloadable until `TemporalHazard` is put back. If this
-happens, `hvtiverse_status()` will show `TemporalHazard` as `stale`, and
-`hvtiverse_update()` repairs it.
+happens, `hvtiR::status()` will show `TemporalHazard` as `stale`, and
+`hvtiR::update()` repairs it.
 
 `hvtiEDAreports` (Python) and the HVTI Recipes book are not R packages and are
 not members.
 
 ## Further reading
 
-- [Reference](https://ehrlinger.github.io/hvtiverse/reference/) - every function, with examples.
-- [Getting started](https://ehrlinger.github.io/hvtiverse/articles/hvtiverse.html) - the vignette,
+- [Reference](https://ehrlinger.github.io/hvtiR/reference/) - every function, with examples.
+- [Getting started](https://ehrlinger.github.io/hvtiR/articles/hvtiR.html) - the vignette,
   including what to do when a member will not install.
-- [Changelog](https://ehrlinger.github.io/hvtiverse/news/) - what changed in each release.
+- [Changelog](https://ehrlinger.github.io/hvtiR/news/) - what changed in each release.
 - [Design records](design/) - the spec and implementation plan, kept because the reasoning
   behind the design is harder to recover than the code.

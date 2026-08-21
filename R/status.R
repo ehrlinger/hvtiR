@@ -51,19 +51,19 @@ installed_version <- function(pkg) {
   as.character(utils::packageVersion(pkg))
 }
 
-#' Version status of every hvtiverse member
+#' Version status of every hvtiR member
 #'
 #' Compares the version of each member installed locally against the version
 #' on the `main` branch of its GitHub repository.
 #'
 #' The object is returned visibly and has a `print` method, so a bare call
-#' displays the table while `st <- hvtiverse_status()` captures the data frame
+#' displays the table while `st <- status()` captures the data frame
 #' for scripting.
 #'
 #' @param remote Consult GitHub for the latest versions? When `FALSE`, no
 #'   network request is made, `latest` is `NA` throughout, and installed
 #'   members report `"ok-local"`.
-#' @return A data frame of class `hvtiverse_status`, one row per member, with
+#' @return A data frame of class `hvtiR_status`, one row per member, with
 #'   character columns:
 #'   \describe{
 #'     \item{package}{The package name.}
@@ -76,36 +76,36 @@ installed_version <- function(pkg) {
 #' @export
 #' @examples
 #' # Offline: reports what is installed without contacting GitHub
-#' hvtiverse_status(remote = FALSE)
-hvtiverse_status <- function(remote = TRUE) {
-  members <- hvtiverse_members()
+#' status(remote = FALSE)
+status <- function(remote = TRUE) {
+  registry <- members()
 
   installed <- vapply(
-    members$package, installed_version,
+    registry$package, installed_version,
     FUN.VALUE = character(1), USE.NAMES = FALSE
   )
 
   latest <- if (remote) {
     vapply(
-      members$repo, remote_version,
+      registry$repo, remote_version,
       FUN.VALUE = character(1), USE.NAMES = FALSE
     )
   } else {
-    rep(NA_character_, nrow(members))
+    rep(NA_character_, nrow(registry))
   }
 
-  status <- vapply(
-    seq_len(nrow(members)),
+  state <- vapply(
+    seq_len(nrow(registry)),
     function(i) classify_status(installed[i], latest[i], remote = remote),
     FUN.VALUE = character(1)
   )
 
   out <- data.frame(
-    package = members$package,
-    repo = members$repo,
+    package = registry$package,
+    repo = registry$repo,
     installed = installed,
     latest = latest,
-    status = status,
+    status = state,
     stringsAsFactors = FALSE
   )
 
@@ -121,12 +121,12 @@ hvtiverse_status <- function(remote = TRUE) {
     }
   }
 
-  class(out) <- c("hvtiverse_status", "data.frame")
+  class(out) <- c("hvtiR_status", "data.frame")
   out
 }
 
 #' @export
-print.hvtiverse_status <- function(x, ...) {
+print.hvtiR_status <- function(x, ...) {
   symbols <- c(
     ok = "v", `ok-local` = "-", stale = "!", ahead = "^",
     missing = "x", unknown = "?"
@@ -142,7 +142,7 @@ print.hvtiverse_status <- function(x, ...) {
   # testthat::expect_output()). cli_fmt() captures the formatted lines
   # instead of displaying them, so we can cat() them to stdout ourselves.
   lines <- cli::cli_fmt({
-    cli::cli_text("{.strong hvtiverse} - {nrow(x)} member{?s}")
+    cli::cli_text("{.strong hvtiR} - {nrow(x)} member{?s}")
     cli::cli_verbatim("")
 
     for (i in seq_len(nrow(x))) {
@@ -159,7 +159,7 @@ print.hvtiverse_status <- function(x, ...) {
     cli::cli_verbatim("")
     if (stale > 0L) {
       cli::cli_alert_info(
-        "{stale} member{?s} need{?s/} updating. Run {.run hvtiverse::hvtiverse_update()}."
+        "{stale} member{?s} need{?s/} updating. Run {.run hvtiR::update()}."
       )
     } else if (unknown > 0L) {
       cli::cli_alert_warning(
@@ -180,28 +180,28 @@ print.hvtiverse_status <- function(x, ...) {
 }
 
 # The strictest R requirement across the family: ggRandomForests and
-# hvtiRlifetables both declare Depends: R (>= 4.4.0). hvtiverse itself
+# hvtiRlifetables both declare Depends: R (>= 4.4.0). hvtiR itself
 # deliberately requires only 4.1.0 so that this diagnostic can run on a
 # machine whose R is too old for the members.
 MIN_R_VERSION <- "4.4.0"
 
-#' Diagnose an hvtiverse installation
+#' Diagnose an hvtiR installation
 #'
 #' Reports the running R version against the strictest requirement in the
 #' package family, the platform, and then the full member status table. This
 #' is the report to run first when a member will not install.
 #'
 #' @param remote Consult GitHub for the latest versions? Passed through to
-#'   [hvtiverse_status()].
-#' @return The [hvtiverse_status()] data frame, invisibly. Called for the
+#'   [hvtiR::status()].
+#' @return The [hvtiR::status()] data frame, invisibly. Called for the
 #'   report it prints.
 #' @export
 #' @examples
 #' # Offline: environment checks plus what is installed
-#' hvtiverse_doctor(remote = FALSE)
-hvtiverse_doctor <- function(remote = TRUE) {
+#' doctor(remote = FALSE)
+doctor <- function(remote = TRUE) {
   lines <- cli::cli_fmt({
-    cli::cli_h1("hvtiverse doctor")
+    cli::cli_h1("hvtiR doctor")
 
     cli::cli_h2("Environment")
 
@@ -224,7 +224,7 @@ hvtiverse_doctor <- function(remote = TRUE) {
 
   cat(lines, sep = "\n")
 
-  st <- hvtiverse_status(remote = remote)
+  st <- status(remote = remote)
   print(st)
 
   invisible(st)

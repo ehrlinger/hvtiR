@@ -2,7 +2,7 @@ test_that("every registry repo resolves and its Package matches", {
   skip_on_cran()
   skip_if_offline()
 
-  m <- hvtiverse_members()
+  m <- members()
 
   for (i in seq_len(nrow(m))) {
     dcf <- fetch_description(m$repo[i])
@@ -52,7 +52,7 @@ test_that("MIN_R_VERSION matches the strictest R requirement across the family",
   skip_on_cran()
   skip_if_offline()
 
-  m <- hvtiverse_members()
+  m <- members()
   reqs <- character(0)
 
   for (i in seq_len(nrow(m))) {
@@ -76,7 +76,7 @@ test_that("MIN_R_VERSION matches the strictest R requirement across the family",
   }
 
   if (length(reqs) == 0L) {
-    fail("No hvtiverse member declares an R (>= x.y.z) requirement.")
+    fail("No hvtiR member declares an R (>= x.y.z) requirement.")
   }
 
   strictest <- max(package_version(reqs))
@@ -93,7 +93,7 @@ test_that("member_deps matches the live Depends/Imports fields of each member", 
   skip_on_cran()
   skip_if_offline()
 
-  m <- hvtiverse_members()
+  m <- members()
   deps <- member_deps()
 
   for (i in seq_len(nrow(m))) {

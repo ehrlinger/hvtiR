@@ -1,10 +1,10 @@
 ---
-title: "Getting Started with hvtiverse"
+title: "Getting Started with hvtiR"
 author: "John Ehrlinger"
 date: today
 format: html
 vignette: >
-  %\VignetteIndexEntry{Getting Started with hvtiverse}
+  %\VignetteIndexEntry{Getting Started with hvtiR}
   %\VignetteEngine{quarto::html}
   %\VignetteEncoding{UTF-8}
 ---
@@ -14,7 +14,6 @@ knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>"
 )
-library(hvtiverse)
 ```
 
 ## The problem
@@ -25,7 +24,7 @@ an order you had to know, against repository names that do not always match
 the package names — `TemporalHazard` lives in `ehrlinger/temporal_hazard`, and
 `hvtiRpropensity` lives in `ehrlinger/hvtiPropensityScores`.
 
-`hvtiverse` reduces that to one call, and adds a way to ask whether you are
+`hvtiR` reduces that to one call, and adds a way to ask whether you are
 current.
 
 ## The members
@@ -34,20 +33,20 @@ The registry is the package's only piece of data. It maps each package to the
 repository it installs from:
 
 ```{r members}
-hvtiverse_members()
+hvtiR::members()
 ```
 
 ## What you have
 
-`hvtiverse_status()` compares what is installed against what is on each
+`hvtiR::status()` compares what is installed against what is on each
 repository's `main` branch:
 
 ```{r status, eval = FALSE}
-hvtiverse_status()
+hvtiR::status()
 ```
 
 ```
-hvtiverse - 11 members
+hvtiR - 11 members
 
   v hvtiRutilities   1.0.10     1.0.10     ok
   v hvtiRdatasets    0.1.1      0.1.1      ok
@@ -55,7 +54,7 @@ hvtiverse - 11 members
   x hvtiPlotR        -          2.7.6      missing
   ...
 
-i 2 members need updating. Run hvtiverse::hvtiverse_update().
+i 2 members need updating. Run hvtiR::update().
 ```
 
 The status column takes one of six values:
@@ -72,18 +71,18 @@ The status column takes one of six values:
 The object is a plain data frame underneath, so you can use it in a script:
 
 ```{r status-df, eval = FALSE}
-st <- hvtiverse_status()
+st <- hvtiR::status()
 st$package[st$status == "stale"]
 ```
 
 On a machine with no outbound network, skip the remote entirely:
 
 ```{r status-local, eval = FALSE}
-hvtiverse_status(remote = FALSE)
+status(remote = FALSE)
 ```
 
 ```
-hvtiverse - 11 members
+hvtiR - 11 members
 
   - hvtiRutilities   1.0.10     -          ok-local
   - hvtiRdatasets    0.1.1      -          ok-local
@@ -105,18 +104,18 @@ i Remote was not consulted; versions shown are installed versions only.
 On a new machine, install everything:
 
 ```{r install, eval = FALSE}
-hvtiverse_install()
+hvtiR::install()
 ```
 
 Thereafter, install only what has fallen behind:
 
 ```{r update, eval = FALSE}
-hvtiverse_update()
+hvtiR::update()
 ```
 
 ### Why it may refuse
 
-`hvtiverse_update()` stops if a member you are about to update is already
+`hvtiR::update()` stops if a member you are about to update is already
 attached in the session:
 
 ```
@@ -132,14 +131,14 @@ library. Restart R and run the update before you attach anything.
 ## When something will not install
 
 ```{r doctor, eval = FALSE}
-hvtiverse_doctor()
+hvtiR::doctor()
 ```
 
 The doctor adds two environment checks ahead of the status table: your R
 version against the family's strictest requirement, and your platform.
 
 `ggRandomForests` and `hvtiRlifetables` both need R 4.4.0 or newer, which is
-the single most common reason a member will not install. Note that `hvtiverse`
+the single most common reason a member will not install. Note that `hvtiR`
 itself requires only R 4.1.0 — deliberately, so that the diagnostic still runs
 on a machine whose R is too old for the members it is reporting on.
 
@@ -156,12 +155,12 @@ the group immediately.
 
 One consequence is worth knowing: because `ggRandomForests` came from GitHub, a
 later `update.packages()` can quietly downgrade it to the CRAN version. If a
-version looks wrong, run `hvtiverse_status()`.
+version looks wrong, run `hvtiR::status()`.
 
 The same downgrade can happen to `TemporalHazard`, which is also on CRAN
-(1.1.0, versus 1.2.0 on GitHub) — and there it is not harmless. `hvtiverse_status()`
+(1.1.0, versus 1.2.0 on GitHub) — and there it is not harmless. `hvtiR::status()`
 would show `TemporalHazard` as `stale`, and `hvtiRlifetables` requires
 `TemporalHazard (>= 1.2.0)` in its `Imports:` field, a requirement R enforces
 when the namespace loads. A downgraded `TemporalHazard` leaves
 `hvtiRlifetables` unloadable, not just out of date, until
-`hvtiverse_update()` puts `TemporalHazard` back.
+`hvtiR::update()` puts `TemporalHazard` back.

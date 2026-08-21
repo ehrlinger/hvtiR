@@ -1,4 +1,4 @@
-#' Members of the hvtiverse
+#' Members of the hvtiR
 #'
 #' The registry of R packages that make up the HVTI package family, together
 #' with the GitHub repository each one installs from.
@@ -15,8 +15,8 @@
 #'   }
 #' @export
 #' @examples
-#' hvtiverse_members()
-hvtiverse_members <- function() {
+#' members()
+members <- function() {
   data.frame(
     package = c(
       "hvtiRutilities",
@@ -48,7 +48,7 @@ hvtiverse_members <- function() {
   )
 }
 
-#' Dependencies between hvtiverse members
+#' Dependencies between hvtiR members
 #'
 #' Members that import another member. Used to close an update's target set:
 #' installing a member without its in-family dependency can send `pak` to CRAN

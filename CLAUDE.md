@@ -10,7 +10,7 @@ affordances live here.
 
 `AGENTS.md` says to orient before editing. In Claude Code the way to do that is the codemap:
 it lives in the Obsidian vault under `Claude/repomaps/` and is read via the `read-codemap`
-skill (`/codemap hvtiverse`). If the codemap looks stale, say so and offer to refresh it
+skill (`/codemap hvtiR`). If the codemap looks stale, say so and offer to refresh it
 (`/regenerate-codemap`) rather than working from a guess.
 
 If the vault is not available, say so rather than staying quiet about it, then orient from the
@@ -22,7 +22,7 @@ repo itself — this package is small enough to read: five exports across `R/mem
 `AGENTS.md` requires that installation changes be proved through the mocked seam rather than
 by running an install. In practice that means `testthat::local_mocked_bindings()` over
 `fetch_description()` in `R/remote.R`, and capturing the specs handed to `pak_install()`.
-Do not run `hvtiverse_install()` against the live family to check a change — it rewrites the
+Do not run `hvtiR::install()` against the live family to check a change — it rewrites the
 working library, and the one-call invariant is already pinned by a test.
 
 ## Prose
