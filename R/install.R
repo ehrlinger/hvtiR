@@ -14,20 +14,20 @@ check_loaded <- function(targets, loaded = loadedNamespaces()) {
 
 #' Map member package names to their GitHub specs
 #'
-#' @param members The registry, as returned by [hvtiverse_members()].
+#' @param registry The registry, as returned by [hvtiR::members()].
 #' @param packages Character vector of member package names.
 #' @return A character vector of `"owner/repo"` strings, in the order of
 #'   `packages`.
 #' @noRd
-build_specs <- function(members, packages) {
-  index <- match(packages, members$package)
+build_specs <- function(registry, packages) {
+  index <- match(packages, registry$package)
 
   if (anyNA(index)) {
     unknown <- packages[is.na(index)]
-    cli::cli_abort("{.pkg {unknown}} {?is/are} not an hvtiverse member.")
+    cli::cli_abort("{.pkg {unknown}} {?is/are} not an hvtiR member.")
   }
 
-  members$repo[index]
+  registry$repo[index]
 }
 
 #' Install specs with pak
@@ -41,7 +41,7 @@ build_specs <- function(members, packages) {
 pak_install <- function(specs) {
   if (!requireNamespace("pak", quietly = TRUE)) {
     cli::cli_abort(c(
-      "The {.pkg pak} package is required to install hvtiverse members.",
+      "The {.pkg pak} package is required to install hvtiR members.",
       i = 'Install it with {.code install.packages("pak")}, then try again.'
     ))
   }
@@ -53,11 +53,11 @@ pak_install <- function(specs) {
 #'
 #' @param packages Character vector of member package names.
 #' @param deps Dependency edges, as returned by `member_deps()`.
-#' @param members The registry, used to order the result.
+#' @param registry The registry, used to order the result.
 #' @return `packages` plus every member reachable from it through `deps`,
 #'   ordered as the registry orders them.
 #' @noRd
-expand_targets <- function(packages, deps = member_deps(), members = hvtiverse_members()) {
+expand_targets <- function(packages, deps = member_deps(), registry = members()) {
   out <- packages
 
   repeat {
@@ -67,7 +67,7 @@ expand_targets <- function(packages, deps = member_deps(), members = hvtiverse_m
     out <- c(out, fresh)
   }
 
-  members$package[members$package %in% out]
+  registry$package[registry$package %in% out]
 }
 
 #' Install a set of members
@@ -84,7 +84,7 @@ expand_targets <- function(packages, deps = member_deps(), members = hvtiverse_m
 #' @noRd
 install_members <- function(packages, force = FALSE) {
   if (length(packages) == 0L) {
-    cli::cli_alert_success("All hvtiverse members are up to date.")
+    cli::cli_alert_success("All hvtiR members are up to date.")
     return(invisible(character(0)))
   }
 
@@ -101,17 +101,17 @@ install_members <- function(packages, force = FALSE) {
     ))
   }
 
-  specs <- build_specs(hvtiverse_members(), packages)
+  specs <- build_specs(members(), packages)
   pak_install(specs)
 
   cli::cli_alert_success("Installed {length(specs)} member{?s}.")
   invisible(specs)
 }
 
-#' Install every hvtiverse member
+#' Install every hvtiR member
 #'
 #' Installs all members from GitHub `main`, whether or not they are already
-#' present. This is the fresh-machine command; use [hvtiverse_update()] to
+#' present. This is the fresh-machine command; use [hvtiR::update()] to
 #' install only what is missing or out of date.
 #'
 #' Members are installed from GitHub rather than CRAN so that releases held
@@ -125,13 +125,13 @@ install_members <- function(packages, force = FALSE) {
 #' @export
 #' @examples
 #' \dontrun{
-#' hvtiverse_install()
+#' install()
 #' }
-hvtiverse_install <- function(force = FALSE) {
-  install_members(hvtiverse_members()$package, force = force)
+install <- function(force = FALSE) {
+  install_members(members()$package, force = force)
 }
 
-#' Update out-of-date hvtiverse members
+#' Update out-of-date hvtiR members
 #'
 #' Installs only the members whose status is `"missing"` or `"stale"`. When
 #' everything is current, reports that and installs nothing. Members whose
@@ -145,16 +145,16 @@ hvtiverse_install <- function(force = FALSE) {
 #' sends pak to CRAN to resolve its `TemporalHazard` import, where the
 #' required version may not exist.
 #'
-#' @param force Bypass the loaded-namespace guard. See [hvtiverse_install()].
+#' @param force Bypass the loaded-namespace guard. See [hvtiR::install()].
 #' @return The character vector of `"owner/repo"` specs passed to pak,
 #'   invisibly. Empty if nothing needed updating.
 #' @export
 #' @examples
 #' \dontrun{
-#' hvtiverse_update()
+#' update()
 #' }
-hvtiverse_update <- function(force = FALSE) {
-  st <- hvtiverse_status(remote = TRUE)
+update <- function(force = FALSE) {
+  st <- status(remote = TRUE)
   targets <- st$package[st$status %in% c("missing", "stale")]
 
   unchecked <- sum(st$status == "unknown")

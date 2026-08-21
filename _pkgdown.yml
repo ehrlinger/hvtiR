@@ -1,4 +1,4 @@
-url: https://ehrlinger.github.io/hvtiverse/
+url: https://ehrlinger.github.io/hvtiR/
 
 template:
   bootstrap: 5
@@ -22,8 +22,8 @@ home:
       badges:
         title: Package badges
         text: |
-          ![R package version](https://img.shields.io/github/r-package/v/ehrlinger/hvtiverse)<br>
-          ![pkgdown build status](https://img.shields.io/github/actions/workflow/status/ehrlinger/hvtiverse/pkgdown.yaml)<br>
+          ![R package version](https://img.shields.io/github/r-package/v/ehrlinger/hvtiR)<br>
+          ![pkgdown build status](https://img.shields.io/github/actions/workflow/status/ehrlinger/hvtiR/pkgdown.yaml)<br>
 
 navbar:
   structure:
@@ -41,21 +41,21 @@ navbar:
 reference:
 - title: Package overview
   contents:
-  - hvtiverse-package
+  - hvtiR-package
 
 - title: Installing
   desc: Install and update the package family
   contents:
-  - hvtiverse_install
-  - hvtiverse_update
+  - install
+  - update
 
 - title: Checking
   desc: Report what is installed and diagnose what is wrong
   contents:
-  - hvtiverse_status
-  - hvtiverse_doctor
+  - status
+  - doctor
 
 - title: The registry
   desc: Which packages are members, and where they come from
   contents:
-  - hvtiverse_members
+  - members

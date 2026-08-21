@@ -44,7 +44,7 @@ jobs:
       - uses: r-lib/actions/setup-tinytex@v2
 
       # Install the package into the user library so that Quarto's subprocess
-      # can resolve library(hvtiverse) during vignette rendering.
+      # can resolve library(hvtiR) during vignette rendering.
       - name: Install package for vignette rendering
         run: Rscript -e "install.packages('.', repos = NULL, type = 'source')"
 

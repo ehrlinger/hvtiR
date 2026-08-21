@@ -1,8 +1,8 @@
-# hvtiverse
+# hvtiR
 
 The one-command installer and diagnostic for the HVTI R package family:
-`hvtiverse_install()`, `hvtiverse_update()`, `hvtiverse_status()`, `hvtiverse_doctor()` and
-`hvtiverse_members()`. Five exports across five source files, with `cli` as its only import.
+`install()`, `update()`, `status()`, `doctor()` and
+`members()`. Five exports across five source files, with `cli` as its only import.
 
 **It is the entry point everyone installs through**, so a defect here is the first thing a
 new user meets and the last thing they can diagnose. It is also the only package in the
@@ -71,9 +71,9 @@ automatically. Do not read a green PR as broader assurance than it gives.
 ## Gotchas
 
 - **A later `update.packages()` can silently downgrade `ggRandomForests`** to its CRAN
-  version, because that member exists on CRAN as well as GitHub. `hvtiverse_status()` is how
+  version, because that member exists on CRAN as well as GitHub. `status()` is how
   a user notices; nothing prevents it.
-- **`hvtiverse_update()` refuses to overwrite a member whose namespace is already loaded**,
+- **`update()` refuses to overwrite a member whose namespace is already loaded**,
   and `force` bypasses that guard. A user reporting "update did nothing" has probably loaded
   the package in the same session.
 - `pak` is not a hard dependency — `pak_install()` checks for it and aborts with an install
@@ -85,7 +85,7 @@ automatically. Do not read a green PR as broader assurance than it gives.
 - **Never push to `main`.** Branch, then open a PR and let the maintainer merge.
 - **`main` is protected by a GitHub ruleset, and nothing in this repo records that.** A clone
   shows no trace of it, so it is stated here. The ruleset is named `protect main`, is
-  identical across all twelve hvtiverse repositories, and enforces four rules on the default
+  identical across all twelve hvtiR repositories, and enforces four rules on the default
   branch: no deletion, no force-push, pull-request-only, and an **automatic Copilot code
   review** on every PR. A rejected push comes from the server, not a local hook.
   ⚠️ It currently requires **zero approvals**. `require_code_owner_review` is set but inert
