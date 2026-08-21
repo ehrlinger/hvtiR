@@ -5,7 +5,7 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<title>Install and Check the HVTI R Package Family • hvtiverse</title>
+<title>Install and Check the HVTI R Package Family • hvtiR</title>
 <script src="lightswitch.js"></script><script src="deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
 <script src="deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="deps/Outfit-0.4.10/font.css" rel="stylesheet">
@@ -22,9 +22,9 @@
 
     <nav class="navbar navbar-expand-lg fixed-top " aria-label="Site navigation"><div class="container">
 
-    <a class="navbar-brand me-2" href="index.html">hvtiverse</a>
+    <a class="navbar-brand me-2" href="index.html">hvtiR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -33,7 +33,7 @@
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto">
-<li class="nav-item"><a class="nav-link" href="articles/hvtiverse.html">Get started</a></li>
+<li class="nav-item"><a class="nav-link" href="articles/hvtiR.html">Get started</a></li>
 <li class="nav-item"><a class="nav-link" href="reference/index.html">Reference</a></li>
 <li class="nav-item"><a class="nav-link" href="news/index.html">Changelog</a></li>
       </ul>
@@ -41,7 +41,7 @@
 <li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="search.json">
 </form></li>
-<li class="nav-item"><a class="external-link nav-link" href="https://github.com/ehrlinger/hvtiverse/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
+<li class="nav-item"><a class="external-link nav-link" href="https://github.com/ehrlinger/hvtiR/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
 <li class="nav-item"><a class="external-link nav-link" href="https://www.linkedin.com/in/ehrlinger/" aria-label="LinkedIn"><span class="fa fa-linkedin"></span></a></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-lightswitch" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true" aria-label="Light switch"><span class="fa fa-sun"></span></button>
@@ -59,37 +59,35 @@
 </nav><div class="container template-home">
 <div class="row">
   <main id="main" class="col-md-9"><div class="section level1">
-<div class="page-header"><h1 id="hvtiverse">hvtiverse<a class="anchor" aria-label="anchor" href="#hvtiverse"></a>
+<div class="page-header"><h1 id="hvtir">hvtiR<a class="anchor" aria-label="anchor" href="#hvtir"></a>
 </h1></div>
 <!-- badges: start -->
-<p><img src="https://img.shields.io/github/r-package/v/ehrlinger/hvtiverse" alt="R package version"><img src="https://img.shields.io/github/actions/workflow/status/ehrlinger/hvtiverse/R-CMD-check.yaml" alt="R-CMD-check status"><img src="https://img.shields.io/github/actions/workflow/status/ehrlinger/hvtiverse/pkgdown.yaml?label=pkgdown" alt="pkgdown site status"><!-- badges: end --></p>
+<p><img src="https://img.shields.io/github/r-package/v/ehrlinger/hvtiR" alt="R package version"><img src="https://img.shields.io/github/actions/workflow/status/ehrlinger/hvtiR/R-CMD-check.yaml" alt="R-CMD-check status"><img src="https://img.shields.io/github/actions/workflow/status/ehrlinger/hvtiR/pkgdown.yaml?label=pkgdown" alt="pkgdown site status"><!-- badges: end --></p>
 <p>One command to install the HVTI R package family, and one command to say whether you are current.</p>
-<p><strong>Documentation:</strong> <a href="https://ehrlinger.github.io/hvtiverse/" class="uri">https://ehrlinger.github.io/hvtiverse/</a></p>
+<p><strong>Documentation:</strong> <a href="https://ehrlinger.github.io/hvtiR/" class="uri">https://ehrlinger.github.io/hvtiR/</a></p>
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># install.packages("pak")</span></span>
-<span><span class="fu">pak</span><span class="fu">::</span><span class="fu"><a href="https://pak.r-lib.org/reference/pak.html" class="external-link">pak</a></span><span class="op">(</span><span class="st">"ehrlinger/hvtiverse"</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu">pak</span><span class="fu">::</span><span class="fu"><a href="https://pak.r-lib.org/reference/pak.html" class="external-link">pak</a></span><span class="op">(</span><span class="st">"ehrlinger/hvtiR"</span><span class="op">)</span></span></code></pre></div>
 <p>Then install every member:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">hvtiverse</span><span class="fu">::</span><span class="fu"><a href="reference/hvtiverse_install.html">hvtiverse_install</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu">hvtiR</span><span class="fu">::</span><span class="fu"><a href="reference/install.html">install</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="keeping-current">Keeping current<a class="anchor" aria-label="anchor" href="#keeping-current"></a>
 </h2>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/ehrlinger/hvtiverse" class="external-link">hvtiverse</a></span><span class="op">)</span></span>
-<span></span>
-<span><span class="fu"><a href="reference/hvtiverse_status.html">hvtiverse_status</a></span><span class="op">(</span><span class="op">)</span>   <span class="co"># what is installed, what is available</span></span>
-<span><span class="fu"><a href="reference/hvtiverse_update.html">hvtiverse_update</a></span><span class="op">(</span><span class="op">)</span>   <span class="co"># install only what is missing or stale</span></span></code></pre></div>
-<p><code><a href="reference/hvtiverse_update.html">hvtiverse_update()</a></code> will refuse to overwrite a member you have already attached in the session, because a loaded package cannot be safely replaced. Restart R and run it again before attaching anything.</p>
+<code class="sourceCode R"><span><span class="fu">hvtiR</span><span class="fu">::</span><span class="fu"><a href="reference/status.html">status</a></span><span class="op">(</span><span class="op">)</span>   <span class="co"># what is installed, what is available</span></span>
+<span><span class="fu">hvtiR</span><span class="fu">::</span><span class="fu"><a href="reference/update.html">update</a></span><span class="op">(</span><span class="op">)</span>   <span class="co"># install only what is missing or stale</span></span></code></pre></div>
+<p><code><a href="reference/update.html">hvtiR::update()</a></code> will refuse to overwrite a member you have already attached in the session, because a loaded package cannot be safely replaced. Restart R and run it again before attaching anything.</p>
 </div>
 <div class="section level2">
 <h2 id="when-something-will-not-install">When something will not install<a class="anchor" aria-label="anchor" href="#when-something-will-not-install"></a>
 </h2>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="reference/hvtiverse_doctor.html">hvtiverse_doctor</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu">hvtiR</span><span class="fu">::</span><span class="fu"><a href="reference/doctor.html">doctor</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <p>reports your R version against the family’s requirement (4.4.0 or newer), your platform, and the full member table.</p>
 </div>
 <div class="section level2">
@@ -147,8 +145,8 @@
 </tr>
 </tbody>
 </table>
-<p>Members install from GitHub rather than CRAN, so releases waiting in the CRAN queue are still available to the group. One consequence: a later <code><a href="https://rdrr.io/r/utils/update.packages.html" class="external-link">update.packages()</a></code> can downgrade <code>ggRandomForests</code> to its CRAN version. Run <code><a href="reference/hvtiverse_status.html">hvtiverse_status()</a></code> if a version looks wrong.</p>
-<p>The same downgrade can happen to <code>TemporalHazard</code>, and there it is not harmless: <code>TemporalHazard</code> is also on CRAN (currently 1.1.0, versus 1.2.0 on GitHub), and <code>hvtiRlifetables</code> declares <code>Imports: TemporalHazard (&gt;= 1.2.0)</code>. R enforces that version requirement at namespace load, so a downgrade leaves <code>hvtiRlifetables</code> unloadable until <code>TemporalHazard</code> is put back. If this happens, <code><a href="reference/hvtiverse_status.html">hvtiverse_status()</a></code> will show <code>TemporalHazard</code> as <code>stale</code>, and <code><a href="reference/hvtiverse_update.html">hvtiverse_update()</a></code> repairs it.</p>
+<p>Members install from GitHub rather than CRAN, so releases waiting in the CRAN queue are still available to the group. One consequence: a later <code><a href="https://rdrr.io/r/utils/update.packages.html" class="external-link">update.packages()</a></code> can downgrade <code>ggRandomForests</code> to its CRAN version. Run <code><a href="reference/status.html">hvtiR::status()</a></code> if a version looks wrong.</p>
+<p>The same downgrade can happen to <code>TemporalHazard</code>, and there it is not harmless: <code>TemporalHazard</code> is also on CRAN (currently 1.1.0, versus 1.2.0 on GitHub), and <code>hvtiRlifetables</code> declares <code>Imports: TemporalHazard (&gt;= 1.2.0)</code>. R enforces that version requirement at namespace load, so a downgrade leaves <code>hvtiRlifetables</code> unloadable until <code>TemporalHazard</code> is put back. If this happens, <code><a href="reference/status.html">hvtiR::status()</a></code> will show <code>TemporalHazard</code> as <code>stale</code>, and <code><a href="reference/update.html">hvtiR::update()</a></code> repairs it.</p>
 <p><code>hvtiEDAreports</code> (Python) and the HVTI Recipes book are not R packages and are not members.</p>
 </div>
 <div class="section level2">
@@ -156,11 +154,11 @@
 </h2>
 <ul>
 <li>
-<a href="https://ehrlinger.github.io/hvtiverse/reference/">Reference</a> - every function, with examples.</li>
+<a href="https://ehrlinger.github.io/hvtiR/reference/">Reference</a> - every function, with examples.</li>
 <li>
-<a href="https://ehrlinger.github.io/hvtiverse/articles/hvtiverse.html">Getting started</a> - the vignette, including what to do when a member will not install.</li>
+<a href="https://ehrlinger.github.io/hvtiR/articles/hvtiR.html">Getting started</a> - the vignette, including what to do when a member will not install.</li>
 <li>
-<a href="https://ehrlinger.github.io/hvtiverse/news/">Changelog</a> - what changed in each release.</li>
+<a href="https://ehrlinger.github.io/hvtiR/news/">Changelog</a> - what changed in each release.</li>
 <li>
 <a href="design/">Design records</a> - the spec and implementation plan, kept because the reasoning behind the design is harder to recover than the code.</li>
 </ul>
@@ -169,15 +167,15 @@
   </main><aside class="col-md-3"><div class="package-badges">
 <h2 data-toc-skip>Package badges</h2>
 <ul class="list-unstyled">
-<li><p><img src="https://img.shields.io/github/r-package/v/ehrlinger/hvtiverse" alt="R package version"><br><img src="https://img.shields.io/github/actions/workflow/status/ehrlinger/hvtiverse/pkgdown.yaml" alt="pkgdown build status"><br></p></li>
+<li><p><img src="https://img.shields.io/github/r-package/v/ehrlinger/hvtiR" alt="R package version"><br><img src="https://img.shields.io/github/actions/workflow/status/ehrlinger/hvtiR/pkgdown.yaml" alt="pkgdown build status"><br></p></li>
 </ul>
 </div>
 
 <div class="links">
 <h2 data-toc-skip>Links</h2>
 <ul class="list-unstyled">
-<li><a href="https://github.com/ehrlinger/hvtiverse/" class="external-link">Browse source code</a></li>
-<li><a href="https://github.com/ehrlinger/hvtiverse/issues" class="external-link">Report a bug</a></li>
+<li><a href="https://github.com/ehrlinger/hvtiR/" class="external-link">Browse source code</a></li>
+<li><a href="https://github.com/ehrlinger/hvtiR/issues" class="external-link">Report a bug</a></li>
 </ul>
 </div>
 

@@ -2,31 +2,31 @@
 
 ## Package overview
 
-- [`hvtiverse`](https://ehrlinger.github.io/hvtiverse/reference/hvtiverse-package.md)
-  [`hvtiverse-package`](https://ehrlinger.github.io/hvtiverse/reference/hvtiverse-package.md)
-  : hvtiverse: Install and Check the HVTI R Package Family
+- [`hvtiR`](https://ehrlinger.github.io/hvtiR/reference/hvtiR-package.md)
+  [`hvtiR-package`](https://ehrlinger.github.io/hvtiR/reference/hvtiR-package.md)
+  : hvtiR: Install and Check the HVTI R Package Family
 
 ## Installing
 
 Install and update the package family
 
-- [`hvtiverse_install()`](https://ehrlinger.github.io/hvtiverse/reference/hvtiverse_install.md)
-  : Install every hvtiverse member
-- [`hvtiverse_update()`](https://ehrlinger.github.io/hvtiverse/reference/hvtiverse_update.md)
-  : Update out-of-date hvtiverse members
+- [`install()`](https://ehrlinger.github.io/hvtiR/reference/install.md)
+  : Install every hvtiR member
+- [`update()`](https://ehrlinger.github.io/hvtiR/reference/update.md) :
+  Update out-of-date hvtiR members
 
 ## Checking
 
 Report what is installed and diagnose what is wrong
 
-- [`hvtiverse_status()`](https://ehrlinger.github.io/hvtiverse/reference/hvtiverse_status.md)
-  : Version status of every hvtiverse member
-- [`hvtiverse_doctor()`](https://ehrlinger.github.io/hvtiverse/reference/hvtiverse_doctor.md)
-  : Diagnose an hvtiverse installation
+- [`status()`](https://ehrlinger.github.io/hvtiR/reference/status.md) :
+  Version status of every hvtiR member
+- [`doctor()`](https://ehrlinger.github.io/hvtiR/reference/doctor.md) :
+  Diagnose an hvtiR installation
 
 ## The registry
 
 Which packages are members, and where they come from
 
-- [`hvtiverse_members()`](https://ehrlinger.github.io/hvtiverse/reference/hvtiverse_members.md)
-  : Members of the hvtiverse
+- [`members()`](https://ehrlinger.github.io/hvtiR/reference/members.md)
+  : Members of the hvtiR

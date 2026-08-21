@@ -2,8 +2,8 @@ pandoc: 3.8.3
 pkgdown: 2.2.1
 pkgdown_sha: ~
 articles:
-  hvtiverse: hvtiverse.html
-last_built: 2026-08-20T20:07Z
+  hvtiR: hvtiR.html
+last_built: 2026-08-21T16:53Z
 urls:
-  reference: https://ehrlinger.github.io/hvtiverse/reference
-  article: https://ehrlinger.github.io/hvtiverse/articles
+  reference: https://ehrlinger.github.io/hvtiR/reference
+  article: https://ehrlinger.github.io/hvtiR/articles

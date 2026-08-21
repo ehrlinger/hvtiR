@@ -2,7 +2,7 @@
 
 @AGENTS.md
 
-[`AGENTS.md`](https://ehrlinger.github.io/hvtiverse/AGENTS.md), imported
+[`AGENTS.md`](https://ehrlinger.github.io/hvtiR/AGENTS.md), imported
 above, is the operational contract and applies in full. It is written to
 be tool neutral so that Codex and other agents read the same rules. Only
 the Claude Code affordances live here.
@@ -12,7 +12,7 @@ the Claude Code affordances live here.
 `AGENTS.md` says to orient before editing. In Claude Code the way to do
 that is the codemap: it lives in the Obsidian vault under
 `Claude/repomaps/` and is read via the `read-codemap` skill
-(`/codemap hvtiverse`). If the codemap looks stale, say so and offer to
+(`/codemap hvtiR`). If the codemap looks stale, say so and offer to
 refresh it (`/regenerate-codemap`) rather than working from a guess.
 
 If the vault is not available, say so rather than staying quiet about
@@ -27,7 +27,7 @@ mocked seam rather than by running an install. In practice that means
 [`testthat::local_mocked_bindings()`](https://testthat.r-lib.org/reference/local_mocked_bindings.html)
 over `fetch_description()` in `R/remote.R`, and capturing the specs
 handed to `pak_install()`. Do not run
-[`hvtiverse_install()`](https://ehrlinger.github.io/hvtiverse/reference/hvtiverse_install.md)
+[`hvtiR::install()`](https://ehrlinger.github.io/hvtiR/reference/install.md)
 against the live family to check a change — it rewrites the working
 library, and the one-call invariant is already pinned by a test.
 

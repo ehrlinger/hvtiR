@@ -1,12 +1,11 @@
-# hvtiverse
+# hvtiR
 
 The one-command installer and diagnostic for the HVTI R package family:
-[`hvtiverse_install()`](https://ehrlinger.github.io/hvtiverse/reference/hvtiverse_install.md),
-[`hvtiverse_update()`](https://ehrlinger.github.io/hvtiverse/reference/hvtiverse_update.md),
-[`hvtiverse_status()`](https://ehrlinger.github.io/hvtiverse/reference/hvtiverse_status.md),
-[`hvtiverse_doctor()`](https://ehrlinger.github.io/hvtiverse/reference/hvtiverse_doctor.md)
-and
-[`hvtiverse_members()`](https://ehrlinger.github.io/hvtiverse/reference/hvtiverse_members.md).
+[`install()`](https://ehrlinger.github.io/hvtiR/reference/install.md),
+[`update()`](https://ehrlinger.github.io/hvtiR/reference/update.md),
+[`status()`](https://ehrlinger.github.io/hvtiR/reference/status.md),
+[`doctor()`](https://ehrlinger.github.io/hvtiR/reference/doctor.md) and
+[`members()`](https://ehrlinger.github.io/hvtiR/reference/members.md).
 Five exports across five source files, with `cli` as its only import.
 
 **It is the entry point everyone installs through**, so a defect here is
@@ -96,9 +95,9 @@ PR as broader assurance than it gives.
   [`update.packages()`](https://rdrr.io/r/utils/update.packages.html)
   can silently downgrade `ggRandomForests`** to its CRAN version,
   because that member exists on CRAN as well as GitHub.
-  [`hvtiverse_status()`](https://ehrlinger.github.io/hvtiverse/reference/hvtiverse_status.md)
-  is how a user notices; nothing prevents it.
-- **[`hvtiverse_update()`](https://ehrlinger.github.io/hvtiverse/reference/hvtiverse_update.md)
+  [`status()`](https://ehrlinger.github.io/hvtiR/reference/status.md) is
+  how a user notices; nothing prevents it.
+- **[`update()`](https://ehrlinger.github.io/hvtiR/reference/update.md)
   refuses to overwrite a member whose namespace is already loaded**, and
   `force` bypasses that guard. A user reporting “update did nothing” has
   probably loaded the package in the same session.
@@ -114,10 +113,10 @@ PR as broader assurance than it gives.
 - **`main` is protected by a GitHub ruleset, and nothing in this repo
   records that.** A clone shows no trace of it, so it is stated here.
   The ruleset is named `protect main`, is identical across all twelve
-  hvtiverse repositories, and enforces four rules on the default branch:
-  no deletion, no force-push, pull-request-only, and an **automatic
-  Copilot code review** on every PR. A rejected push comes from the
-  server, not a local hook. ⚠️ It currently requires **zero approvals**.
+  hvtiR repositories, and enforces four rules on the default branch: no
+  deletion, no force-push, pull-request-only, and an **automatic Copilot
+  code review** on every PR. A rejected push comes from the server, not
+  a local hook. ⚠️ It currently requires **zero approvals**.
   `require_code_owner_review` is set but inert because no repository in
   the family has a `CODEOWNERS` file, so a PR can merge unreviewed.
   Adding `CODEOWNERS` makes that flag live.

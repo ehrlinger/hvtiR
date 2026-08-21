@@ -1,42 +1,40 @@
-# hvtiverse
+# hvtiR
 
 ![R package
-version](https://img.shields.io/github/r-package/v/ehrlinger/hvtiverse)![R-CMD-check
-status](https://img.shields.io/github/actions/workflow/status/ehrlinger/hvtiverse/R-CMD-check.yaml)![pkgdown
+version](https://img.shields.io/github/r-package/v/ehrlinger/hvtiR)![R-CMD-check
+status](https://img.shields.io/github/actions/workflow/status/ehrlinger/hvtiR/R-CMD-check.yaml)![pkgdown
 site
-status](https://img.shields.io/github/actions/workflow/status/ehrlinger/hvtiverse/pkgdown.yaml?label=pkgdown)
+status](https://img.shields.io/github/actions/workflow/status/ehrlinger/hvtiR/pkgdown.yaml?label=pkgdown)
 
 One command to install the HVTI R package family, and one command to say
 whether you are current.
 
-**Documentation:** <https://ehrlinger.github.io/hvtiverse/>
+**Documentation:** <https://ehrlinger.github.io/hvtiR/>
 
 ## Installation
 
 ``` r
 
 # install.packages("pak")
-pak::pak("ehrlinger/hvtiverse")
+pak::pak("ehrlinger/hvtiR")
 ```
 
 Then install every member:
 
 ``` r
 
-hvtiverse::hvtiverse_install()
+hvtiR::install()
 ```
 
 ## Keeping current
 
 ``` r
 
-library(hvtiverse)
-
-hvtiverse_status()   # what is installed, what is available
-hvtiverse_update()   # install only what is missing or stale
+hvtiR::status()   # what is installed, what is available
+hvtiR::update()   # install only what is missing or stale
 ```
 
-[`hvtiverse_update()`](https://ehrlinger.github.io/hvtiverse/reference/hvtiverse_update.md)
+[`hvtiR::update()`](https://ehrlinger.github.io/hvtiR/reference/update.md)
 will refuse to overwrite a member you have already attached in the
 session, because a loaded package cannot be safely replaced. Restart R
 and run it again before attaching anything.
@@ -45,7 +43,7 @@ and run it again before attaching anything.
 
 ``` r
 
-hvtiverse_doctor()
+hvtiR::doctor()
 ```
 
 reports your R version against the family’s requirement (4.4.0 or
@@ -71,7 +69,7 @@ Members install from GitHub rather than CRAN, so releases waiting in the
 CRAN queue are still available to the group. One consequence: a later
 [`update.packages()`](https://rdrr.io/r/utils/update.packages.html) can
 downgrade `ggRandomForests` to its CRAN version. Run
-[`hvtiverse_status()`](https://ehrlinger.github.io/hvtiverse/reference/hvtiverse_status.md)
+[`hvtiR::status()`](https://ehrlinger.github.io/hvtiR/reference/status.md)
 if a version looks wrong.
 
 The same downgrade can happen to `TemporalHazard`, and there it is not
@@ -80,9 +78,9 @@ harmless: `TemporalHazard` is also on CRAN (currently 1.1.0, versus
 `Imports: TemporalHazard (>= 1.2.0)`. R enforces that version
 requirement at namespace load, so a downgrade leaves `hvtiRlifetables`
 unloadable until `TemporalHazard` is put back. If this happens,
-[`hvtiverse_status()`](https://ehrlinger.github.io/hvtiverse/reference/hvtiverse_status.md)
+[`hvtiR::status()`](https://ehrlinger.github.io/hvtiR/reference/status.md)
 will show `TemporalHazard` as `stale`, and
-[`hvtiverse_update()`](https://ehrlinger.github.io/hvtiverse/reference/hvtiverse_update.md)
+[`hvtiR::update()`](https://ehrlinger.github.io/hvtiR/reference/update.md)
 repairs it.
 
 `hvtiEDAreports` (Python) and the HVTI Recipes book are not R packages
@@ -90,13 +88,13 @@ and are not members.
 
 ## Further reading
 
-- [Reference](https://ehrlinger.github.io/hvtiverse/reference/) - every
+- [Reference](https://ehrlinger.github.io/hvtiR/reference/) - every
   function, with examples.
 - [Getting
-  started](https://ehrlinger.github.io/hvtiverse/articles/hvtiverse.html) -
-  the vignette, including what to do when a member will not install.
-- [Changelog](https://ehrlinger.github.io/hvtiverse/news/) - what
-  changed in each release.
-- [Design records](https://ehrlinger.github.io/hvtiverse/design/) - the
-  spec and implementation plan, kept because the reasoning behind the
-  design is harder to recover than the code.
+  started](https://ehrlinger.github.io/hvtiR/articles/hvtiR.html) - the
+  vignette, including what to do when a member will not install.
+- [Changelog](https://ehrlinger.github.io/hvtiR/news/) - what changed in
+  each release.
+- [Design records](https://ehrlinger.github.io/hvtiR/design/) - the spec
+  and implementation plan, kept because the reasoning behind the design
+  is harder to recover than the code.

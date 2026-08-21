@@ -1,0 +1,55 @@
+# Diagnose an hvtiR installation
+
+Reports the running R version against the strictest requirement in the
+package family, the platform, and then the full member status table.
+This is the report to run first when a member will not install.
+
+## Usage
+
+``` r
+doctor(remote = TRUE)
+```
+
+## Arguments
+
+- remote:
+
+  Consult GitHub for the latest versions? Passed through to
+  [`status()`](https://ehrlinger.github.io/hvtiR/reference/status.md).
+
+## Value
+
+The [`status()`](https://ehrlinger.github.io/hvtiR/reference/status.md)
+data frame, invisibly. Called for the report it prints.
+
+## Examples
+
+``` r
+# Offline: environment checks plus what is installed
+doctor(remote = FALSE)
+#> 
+#> ── hvtiR doctor ────────────────────────────────────────────────────────────────
+#> 
+#> ── Environment ──
+#> 
+#> ✔ R version 4.6.1 (>= 4.4.0 required)
+#> ℹ Platform x86_64-pc-linux-gnu
+#> 
+#> ── Members ──
+#> 
+#> hvtiR - 11 members
+#> 
+#>   x hvtiRutilities   -          -          missing
+#>   x hvtiRdatasets    -          -          missing
+#>   x hvtiRtables      -          -          missing
+#>   x hvtiRtemplates   -          -          missing
+#>   x hvtiPlotR        -          -          missing
+#>   x hvtiRlifetables  -          -          missing
+#>   x hvtiRbootstrap   -          -          missing
+#>   x hvtiRpropensity  -          -          missing
+#>   x hvtiBoostmtree   -          -          missing
+#>   x TemporalHazard   -          -          missing
+#>   x ggRandomForests  -          -          missing
+#> 
+#> ℹ 11 members need updating. Run `hvtiR::update()`.
+```
