@@ -2,8 +2,8 @@
 
 Installs, updates and reports on the Cleveland Clinic Heart and Vascular
 Institute CORR group's family of R packages in a single step. Members
-are resolved from public GitHub repositories with 'pak', so that
-releases held behind the CRAN queue stay available to the group.
+are resolved from public GitHub repositories with 'pak', keeping
+installations aligned with the source where family releases land first.
 Provides a status table comparing installed against latest versions, and
 a diagnostic report for environment problems.
 

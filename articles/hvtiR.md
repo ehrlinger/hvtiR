@@ -80,7 +80,7 @@ On a machine with no outbound network, skip the remote entirely:
 
 ``` r
 
-status(remote = FALSE)
+hvtiR::status(remote = FALSE)
 ```
 
     hvtiR - 11 members
@@ -151,11 +151,9 @@ is reporting on.
 Every member installs from GitHub `main`, including `ggRandomForests`,
 which is also published on CRAN.
 
-The reason is that a finished release is not the same as an available
-one. In August 2026, `TemporalHazard` 1.2.0 and `ggRandomForests` 3.5.1
-were both complete but waiting on the CRAN queue, and `hvtiRlifetables`
-requires `TemporalHazard (>= 1.2.0)`. Installing from GitHub delivered
-those releases to the group immediately.
+Development flows from the family repositories to CRAN, not the other
+way around. GitHub `main` is therefore the leading release source, while
+CRAN is a downstream republication for members that are published there.
 
 One consequence is worth knowing: because `ggRandomForests` came from
 GitHub, a later
@@ -163,12 +161,10 @@ GitHub, a later
 quietly downgrade it to the CRAN version. If a version looks wrong, run
 [`hvtiR::status()`](https://ehrlinger.github.io/hvtiR/reference/status.md).
 
-The same downgrade can happen to `TemporalHazard`, which is also on CRAN
-(1.1.0, versus 1.2.0 on GitHub) — and there it is not harmless.
-[`hvtiR::status()`](https://ehrlinger.github.io/hvtiR/reference/status.md)
-would show `TemporalHazard` as `stale`, and `hvtiRlifetables` requires
-`TemporalHazard (>= 1.2.0)` in its `Imports:` field, a requirement R
-enforces when the namespace loads. A downgraded `TemporalHazard` leaves
-`hvtiRlifetables` unloadable, not just out of date, until
+The same replacement can happen to `TemporalHazard`, and there it may
+not be harmless. `hvtiRlifetables` requires `TemporalHazard (>= 1.2.0)`
+in its `Imports:` field, a requirement R enforces when the namespace
+loads. If a CRAN downgrade no longer satisfies that requirement,
+`hvtiRlifetables` will not load until
 [`hvtiR::update()`](https://ehrlinger.github.io/hvtiR/reference/update.md)
-puts `TemporalHazard` back.
+puts the GitHub release back.

@@ -24,7 +24,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">hvtiR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -65,7 +65,7 @@
       <p class="author">John Ehrlinger</p>
       <p class="date">2026-08-25</p>
 
-      <small class="dont-index">Source: <a href="https://github.com/ehrlinger/hvtiR/blob/v1.0.1/vignettes/hvtiR.qmd" class="external-link"><code>vignettes/hvtiR.qmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/ehrlinger/hvtiR/blob/main/vignettes/hvtiR.qmd" class="external-link"><code>vignettes/hvtiR.qmd</code></a></small>
       <div class="d-none name"><code></code></div>
     </div>
 
@@ -155,7 +155,7 @@ i 2 members need updating. Run hvtiR::update().</code></pre>
 <p>On a machine with no outbound network, skip the remote entirely:</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/status.html">status</a></span><span class="op">(</span>remote <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu">hvtiR</span><span class="fu">::</span><span class="fu"><a href="../reference/status.html">status</a></span><span class="op">(</span>remote <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
 </div>
 <pre><code>hvtiR - 11 members
 
@@ -202,9 +202,9 @@ i Pass `force = TRUE` to install anyway (unsafe on Windows).</code></pre>
 </section><section class="level2"><h2 id="why-github-and-not-cran">Why GitHub and not CRAN<a class="anchor" aria-label="anchor" href="#why-github-and-not-cran"></a>
 </h2>
 <p>Every member installs from GitHub <code>main</code>, including <code>ggRandomForests</code>, which is also published on CRAN.</p>
-<p>The reason is that a finished release is not the same as an available one. In August 2026, <code>TemporalHazard</code> 1.2.0 and <code>ggRandomForests</code> 3.5.1 were both complete but waiting on the CRAN queue, and <code>hvtiRlifetables</code> requires <code>TemporalHazard (&gt;= 1.2.0)</code>. Installing from GitHub delivered those releases to the group immediately.</p>
+<p>Development flows from the family repositories to CRAN, not the other way around. GitHub <code>main</code> is therefore the leading release source, while CRAN is a downstream republication for members that are published there.</p>
 <p>One consequence is worth knowing: because <code>ggRandomForests</code> came from GitHub, a later <code><a href="https://rdrr.io/r/utils/update.packages.html" class="external-link">update.packages()</a></code> can quietly downgrade it to the CRAN version. If a version looks wrong, run <code><a href="../reference/status.html">hvtiR::status()</a></code>.</p>
-<p>The same downgrade can happen to <code>TemporalHazard</code>, which is also on CRAN (1.1.0, versus 1.2.0 on GitHub) — and there it is not harmless. <code><a href="../reference/status.html">hvtiR::status()</a></code> would show <code>TemporalHazard</code> as <code>stale</code>, and <code>hvtiRlifetables</code> requires <code>TemporalHazard (&gt;= 1.2.0)</code> in its <code>Imports:</code> field, a requirement R enforces when the namespace loads. A downgraded <code>TemporalHazard</code> leaves <code>hvtiRlifetables</code> unloadable, not just out of date, until <code><a href="../reference/update.html">hvtiR::update()</a></code> puts <code>TemporalHazard</code> back.</p>
+<p>The same replacement can happen to <code>TemporalHazard</code>, and there it may not be harmless. <code>hvtiRlifetables</code> requires <code>TemporalHazard (&gt;= 1.2.0)</code> in its <code>Imports:</code> field, a requirement R enforces when the namespace loads. If a CRAN downgrade no longer satisfies that requirement, <code>hvtiRlifetables</code> will not load until <code><a href="../reference/update.html">hvtiR::update()</a></code> puts the GitHub release back.</p>
 </section><script id="quarto-html-after-body" type="application/javascript">
   window.document.addEventListener("DOMContentLoaded", function (event) {
       var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);

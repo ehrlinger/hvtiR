@@ -1,7 +1,10 @@
 # Diagnose an hvtiR installation
 
 Reports the running R version against the strictest requirement in the
-package family, the platform, and then the full member status table.
+package family, whether `pak` is installed, the platform, and then the
+full member status table. When a remote check fails, reports the reason
+retained by
+[`status()`](https://ehrlinger.github.io/hvtiR/reference/status.md).
 This is the report to run first when a member will not install.
 
 ## Usage
@@ -34,6 +37,7 @@ doctor(remote = FALSE)
 #> 
 #> ✔ R version 4.6.1 (>= 4.4.0 required)
 #> ℹ Platform x86_64-pc-linux-gnu
+#> ✔ pak is installed
 #> 
 #> ── Members ──
 #> 

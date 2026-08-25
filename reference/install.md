@@ -25,8 +25,9 @@ The character vector of `"owner/repo"` specs passed to pak, invisibly.
 
 ## Details
 
-Members are installed from GitHub rather than CRAN so that releases held
-behind the CRAN queue remain available.
+Members are installed from GitHub rather than CRAN because GitHub is
+where family releases land first. CRAN is a downstream republication for
+members that are published there.
 
 ## Examples
 

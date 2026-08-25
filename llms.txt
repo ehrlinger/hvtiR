@@ -47,7 +47,9 @@ hvtiR::doctor()
 ```
 
 reports your R version against the family’s requirement (4.4.0 or
-newer), your platform, and the full member table.
+newer), your platform, whether `pak` is available, and the full member
+table. When a GitHub check fails, it also reports the
+repository-specific reason.
 
 ## Members
 
@@ -65,19 +67,17 @@ newer), your platform, and the full member table.
 | TemporalHazard  | ehrlinger/temporal_hazard      |
 | ggRandomForests | ehrlinger/ggRandomForests      |
 
-Members install from GitHub rather than CRAN, so releases waiting in the
-CRAN queue are still available to the group. One consequence: a later
-[`update.packages()`](https://rdrr.io/r/utils/update.packages.html) can
-downgrade `ggRandomForests` to its CRAN version. Run
-[`hvtiR::status()`](https://ehrlinger.github.io/hvtiR/reference/status.md)
-if a version looks wrong.
+Members install from GitHub `main` because that is where family releases
+land first. CRAN is a downstream republication for members that are
+published there.
 
-The same downgrade can happen to `TemporalHazard`, and there it is not
-harmless: `TemporalHazard` is also on CRAN (currently 1.1.0, versus
-1.2.0 on GitHub), and `hvtiRlifetables` declares
-`Imports: TemporalHazard (>= 1.2.0)`. R enforces that version
-requirement at namespace load, so a downgrade leaves `hvtiRlifetables`
-unloadable until `TemporalHazard` is put back. If this happens,
+A later
+[`update.packages()`](https://rdrr.io/r/utils/update.packages.html) can
+replace a GitHub installation with an older CRAN release. This matters
+especially for `TemporalHazard`: `hvtiRlifetables` declares
+`Imports: TemporalHazard (>= 1.2.0)`, and R enforces that requirement at
+namespace load. If a CRAN downgrade no longer satisfies it,
+`hvtiRlifetables` will not load.
 [`hvtiR::status()`](https://ehrlinger.github.io/hvtiR/reference/status.md)
 will show `TemporalHazard` as `stale`, and
 [`hvtiR::update()`](https://ehrlinger.github.io/hvtiR/reference/update.md)
