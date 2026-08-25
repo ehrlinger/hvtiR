@@ -12,11 +12,11 @@
 
   | was | now |
   |----|----|
-  | [`hvtiverse::hvtiverse_install()`](https://ehrlinger.github.io/hvtiverse/reference/hvtiverse_install.html) | [`hvtiR::install()`](https://ehrlinger.github.io/hvtiR/reference/install.md) |
-  | [`hvtiverse::hvtiverse_update()`](https://ehrlinger.github.io/hvtiverse/reference/hvtiverse_update.html) | [`hvtiR::update()`](https://ehrlinger.github.io/hvtiR/reference/update.md) |
-  | [`hvtiverse::hvtiverse_status()`](https://ehrlinger.github.io/hvtiverse/reference/hvtiverse_status.html) | [`hvtiR::status()`](https://ehrlinger.github.io/hvtiR/reference/status.md) |
-  | [`hvtiverse::hvtiverse_doctor()`](https://ehrlinger.github.io/hvtiverse/reference/hvtiverse_doctor.html) | [`hvtiR::doctor()`](https://ehrlinger.github.io/hvtiR/reference/doctor.md) |
-  | [`hvtiverse::hvtiverse_members()`](https://ehrlinger.github.io/hvtiverse/reference/hvtiverse_members.html) | [`hvtiR::members()`](https://ehrlinger.github.io/hvtiR/reference/members.md) |
+  | [`hvtiverse::hvtiverse_install()`](https://rdrr.io/pkg/hvtiverse/man/hvtiverse_install.html) | [`hvtiR::install()`](https://ehrlinger.github.io/hvtiR/reference/install.md) |
+  | [`hvtiverse::hvtiverse_update()`](https://rdrr.io/pkg/hvtiverse/man/hvtiverse_update.html) | [`hvtiR::update()`](https://ehrlinger.github.io/hvtiR/reference/update.md) |
+  | [`hvtiverse::hvtiverse_status()`](https://rdrr.io/pkg/hvtiverse/man/hvtiverse_status.html) | [`hvtiR::status()`](https://ehrlinger.github.io/hvtiR/reference/status.md) |
+  | [`hvtiverse::hvtiverse_doctor()`](https://rdrr.io/pkg/hvtiverse/man/hvtiverse_doctor.html) | [`hvtiR::doctor()`](https://ehrlinger.github.io/hvtiR/reference/doctor.md) |
+  | [`hvtiverse::hvtiverse_members()`](https://rdrr.io/pkg/hvtiverse/man/hvtiverse_members.html) | [`hvtiR::members()`](https://ehrlinger.github.io/hvtiR/reference/members.md) |
 
 - The class returned by
   [`status()`](https://ehrlinger.github.io/hvtiR/reference/status.md) is

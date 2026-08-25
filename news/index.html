@@ -37,7 +37,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Changelog</h1>
-      <small>Source: <a href="https://github.com/ehrlinger/hvtiR/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
+      <small>Source: <a href="https://github.com/ehrlinger/hvtiR/blob/v1.0.1/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
     <div class="section level2">
@@ -47,15 +47,15 @@
 <p><strong>Every exported function is renamed</strong>, dropping the package-name prefix that no other family package carries. The package is meant to be called with <code>::</code> rather than attached:</p>
 <table class="table"><thead><tr><th>was</th>
 <th>now</th>
-</tr></thead><tbody><tr><td><code><a href="https://ehrlinger.github.io/hvtiverse/reference/hvtiverse_install.html" class="external-link">hvtiverse::hvtiverse_install()</a></code></td>
+</tr></thead><tbody><tr><td><code><a href="https://rdrr.io/pkg/hvtiverse/man/hvtiverse_install.html" class="external-link">hvtiverse::hvtiverse_install()</a></code></td>
 <td><code><a href="../reference/install.html">hvtiR::install()</a></code></td>
-</tr><tr><td><code><a href="https://ehrlinger.github.io/hvtiverse/reference/hvtiverse_update.html" class="external-link">hvtiverse::hvtiverse_update()</a></code></td>
+</tr><tr><td><code><a href="https://rdrr.io/pkg/hvtiverse/man/hvtiverse_update.html" class="external-link">hvtiverse::hvtiverse_update()</a></code></td>
 <td><code><a href="../reference/update.html">hvtiR::update()</a></code></td>
-</tr><tr><td><code><a href="https://ehrlinger.github.io/hvtiverse/reference/hvtiverse_status.html" class="external-link">hvtiverse::hvtiverse_status()</a></code></td>
+</tr><tr><td><code><a href="https://rdrr.io/pkg/hvtiverse/man/hvtiverse_status.html" class="external-link">hvtiverse::hvtiverse_status()</a></code></td>
 <td><code><a href="../reference/status.html">hvtiR::status()</a></code></td>
-</tr><tr><td><code><a href="https://ehrlinger.github.io/hvtiverse/reference/hvtiverse_doctor.html" class="external-link">hvtiverse::hvtiverse_doctor()</a></code></td>
+</tr><tr><td><code><a href="https://rdrr.io/pkg/hvtiverse/man/hvtiverse_doctor.html" class="external-link">hvtiverse::hvtiverse_doctor()</a></code></td>
 <td><code><a href="../reference/doctor.html">hvtiR::doctor()</a></code></td>
-</tr><tr><td><code><a href="https://ehrlinger.github.io/hvtiverse/reference/hvtiverse_members.html" class="external-link">hvtiverse::hvtiverse_members()</a></code></td>
+</tr><tr><td><code><a href="https://rdrr.io/pkg/hvtiverse/man/hvtiverse_members.html" class="external-link">hvtiverse::hvtiverse_members()</a></code></td>
 <td><code><a href="../reference/members.html">hvtiR::members()</a></code></td>
 </tr></tbody></table></li>
 <li><p>The class returned by <code><a href="../reference/status.html">status()</a></code> is renamed <code>hvtiR_status</code>. Unlike the functions it stays package-qualified, because S3 classes are matched by string and a bare <code>status</code> class would collide.</p></li>
