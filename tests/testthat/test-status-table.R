@@ -73,6 +73,30 @@ test_that("status warns when nothing is installed and GitHub is unreachable", {
   expect_true(all(st$status == "missing"))
 })
 
+test_that("status retains per-member remote failure details", {
+  local_mocked_bindings(
+    installed_version = function(pkg) "1.0.0",
+    remote_version = function(repo, ref = "main") {
+      if (repo == "ehrlinger/hvtiPlotR") {
+        return(structure(
+          NA_character_,
+          remote_error = paste("could not fetch", repo)
+        ))
+      }
+      "1.0.0"
+    }
+  )
+
+  st <- suppressWarnings(status())
+  failures <- attr(st, "remote_errors")
+
+  expect_s3_class(failures, "data.frame")
+  expect_identical(names(failures), c("package", "repo", "error"))
+  expect_identical(nrow(failures), 1L)
+  expect_identical(failures$package, "hvtiPlotR")
+  expect_match(failures$error, failures$repo, fixed = TRUE)
+})
+
 test_that("status skips the network entirely when remote is FALSE", {
   local_mocked_bindings(
     installed_version = function(pkg) "1.0.0",

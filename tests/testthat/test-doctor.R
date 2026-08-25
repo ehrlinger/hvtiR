@@ -28,6 +28,41 @@ test_that("doctor works with no network", {
     }
   )
 
-  st <- expect_no_error(suppressMessages(doctor(remote = FALSE)))
+  output <- capture.output(
+    st <- expect_no_error(suppressMessages(doctor(remote = FALSE)))
+  )
   expect_true(all(st$status == "ok-local"))
+  expect_true(any(grepl("pak", output)))
+  expect_false(any(grepl("Remote checks", output)))
+})
+
+test_that("doctor reports when pak is not installed", {
+  local_mocked_bindings(
+    installed_version = function(pkg) "1.0.0",
+    remote_version = function(repo, ref = "main") "1.0.0",
+    pak_available = function() FALSE
+  )
+
+  expect_output(doctor(), "pak.*not installed")
+})
+
+test_that("doctor prints the reason a remote check failed", {
+  local_mocked_bindings(
+    installed_version = function(pkg) "1.0.0",
+    remote_version = function(repo, ref = "main") {
+      if (repo == "ehrlinger/hvtiPlotR") {
+        return(structure(
+          NA_character_,
+          remote_error = "connection timed out"
+        ))
+      }
+      "1.0.0"
+    },
+    pak_available = function() TRUE
+  )
+
+  expect_warning(
+    expect_output(doctor(), "hvtiPlotR.*connection timed out"),
+    "Could not determine the latest version"
+  )
 })

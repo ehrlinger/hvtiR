@@ -9,7 +9,7 @@ How `hvtiverse` was specified and built.
 
 These are historical records of the v1.0.0 build, kept because the reasoning behind
 the design is harder to recover than the code. They are not user documentation --
-start with the README or `vignette("hvtiverse")` for that.
+start with the README or `vignette("hvtiR")` for that.
 
 They live here rather than under `docs/`, which belongs to pkgdown: pkgdown refuses
 to build into a directory it did not create, so anything of ours in `docs/` breaks

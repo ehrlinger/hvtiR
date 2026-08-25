@@ -1,6 +1,6 @@
 test_that("remote_version reads the Version field", {
   local_mocked_bindings(
-    fetch_description = function(repo, ref = "main") {
+    fetch_description = function(repo, ref = "main", ...) {
       read.dcf(test_path("fixtures", "DESCRIPTION-simple"))
     }
   )
@@ -12,7 +12,7 @@ test_that("remote_version handles DESCRIPTION continuation lines", {
   # Version is wrapped onto a continuation line: grep("^Version:") would
   # return an empty value here, read.dcf resolves it to 2.7.6.
   local_mocked_bindings(
-    fetch_description = function(repo, ref = "main") {
+    fetch_description = function(repo, ref = "main", ...) {
       read.dcf(test_path("fixtures", "DESCRIPTION-continuation"))
     }
   )
@@ -22,7 +22,7 @@ test_that("remote_version handles DESCRIPTION continuation lines", {
 
 test_that("remote_version returns NA when the fetch fails", {
   local_mocked_bindings(
-    fetch_description = function(repo, ref = "main") NULL
+    fetch_description = function(repo, ref = "main", ...) NULL
   )
 
   expect_identical(remote_version("ehrlinger/nope"), NA_character_)
@@ -30,10 +30,82 @@ test_that("remote_version returns NA when the fetch fails", {
 
 test_that("remote_version returns NA when DESCRIPTION has no Version field", {
   local_mocked_bindings(
-    fetch_description = function(repo, ref = "main") {
+    fetch_description = function(repo, ref = "main", ...) {
       read.dcf(textConnection("Package: broken\nTitle: No Version Here\n"))
     }
   )
 
-  expect_identical(remote_version("ehrlinger/broken"), NA_character_)
+  expect_true(is.na(remote_version("ehrlinger/broken")))
+})
+
+test_that("remote requests use the bounded timeout", {
+  old <- getOption("timeout")
+  on.exit(options(timeout = old), add = TRUE)
+  options(timeout = 60)
+
+  observed <- with_remote_timeout(5, getOption("timeout"))
+
+  expect_identical(observed, 5)
+})
+
+test_that("fetch_description reads under the bounded timeout", {
+  old <- getOption("timeout")
+  on.exit(options(timeout = old), add = TRUE)
+  options(timeout = 60)
+
+  observed <- NULL
+  fixture <- base::read.dcf(
+    test_path("fixtures", "DESCRIPTION-simple")
+  )
+  local_mocked_bindings(
+    url = function(...) "mock connection",
+    close = function(con) NULL,
+    read.dcf = function(con) {
+      observed <<- getOption("timeout")
+      fixture
+    },
+    .package = "base"
+  )
+
+  dcf <- fetch_description("ehrlinger/hvtiRutilities", timeout = 5)
+
+  expect_identical(observed, 5)
+  expect_identical(unname(dcf[1L, "Version"]), "1.0.10")
+  expect_identical(getOption("timeout"), 60)
+})
+
+test_that("remote timeout is restored after an error", {
+  old <- getOption("timeout")
+  on.exit(options(timeout = old), add = TRUE)
+  options(timeout = 60)
+
+  expect_error(with_remote_timeout(5, stop("request failed")))
+
+  expect_identical(getOption("timeout"), 60)
+})
+
+test_that("remote_version retains the fetch failure reason", {
+  local_mocked_bindings(
+    fetch_description = function(repo, ref = "main", on_error = NULL) {
+      on_error(simpleError("connection timed out"))
+    }
+  )
+
+  version <- remote_version("ehrlinger/unreachable")
+
+  expect_true(is.na(version))
+  expect_identical(attr(version, "remote_error"), "connection timed out")
+})
+
+test_that("remote_version explains a missing Version field", {
+  local_mocked_bindings(
+    fetch_description = function(repo, ref = "main", on_error = NULL) {
+      read.dcf(textConnection("Package: broken\nTitle: No Version Here\n"))
+    }
+  )
+
+  version <- remote_version("ehrlinger/broken")
+
+  expect_true(is.na(version))
+  expect_match(attr(version, "remote_error"), "no Version field")
 })
