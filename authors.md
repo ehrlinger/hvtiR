@@ -7,7 +7,7 @@
 ## Citation
 
 Source:
-[`DESCRIPTION`](https://github.com/ehrlinger/hvtiR/blob/main/DESCRIPTION)
+[`DESCRIPTION`](https://github.com/ehrlinger/hvtiR/blob/v1.0.2/DESCRIPTION)
 
 Ehrlinger J (2026). *hvtiR: Install and Check the HVTI R Package
 Family*. R package version 1.0.2, <https://github.com/ehrlinger/hvtiR>.
