@@ -1,5 +1,19 @@
 Package: hvtiR
-Version: 1.0.1
+Version: 1.0.2
+
+## hvtiR 1.0.2
+
+* Remote version checks now use a five-second connection timeout and retain
+  per-repository failure reasons for `doctor()` to report.
+* `doctor()` now reports whether `pak` is available before showing member
+  status.
+* Documentation now explains GitHub as the family's leading release source
+  without hard-coded CRAN or GitHub versions, and the offline vignette example
+  uses the qualified `hvtiR::status()` call.
+* The pkgdown site is validated on pull requests with read-only permissions,
+  and deployments remove pages retired by the `hvtiverse` to `hvtiR` rename.
+* Source-package tarballs and linked-worktree Git metadata are excluded from
+  package builds.
 
 ## hvtiR 1.0.1
 

@@ -114,8 +114,9 @@ install_members <- function(packages, force = FALSE) {
 #' present. This is the fresh-machine command; use [hvtiR::update()] to
 #' install only what is missing or out of date.
 #'
-#' Members are installed from GitHub rather than CRAN so that releases held
-#' behind the CRAN queue remain available.
+#' Members are installed from GitHub rather than CRAN because GitHub is where
+#' family releases land first. CRAN is a downstream republication for members
+#' that are published there.
 #'
 #' @param force Bypass the loaded-namespace guard. A package whose namespace
 #'   is loaded cannot be safely overwritten; on Windows the write fails and

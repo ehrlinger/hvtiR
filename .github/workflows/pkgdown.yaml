@@ -3,12 +3,14 @@ name: pkgdown
 on:
   push:
     branches: [main]
+  pull_request:
+    branches: [main]
   release:
     types: [published]
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   pkgdown:
@@ -35,9 +37,31 @@ jobs:
         run: pkgdown::build_site_github_pages(new_process = FALSE, install = FALSE)
         shell: Rscript {0}
 
+      - name: Store site
+        uses: actions/upload-artifact@v4
+        with:
+          name: pkgdown-site
+          path: docs
+          retention-days: 1
+
+  deploy:
+    if: github.event_name != 'pull_request'
+    needs: pkgdown
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Retrieve site
+        uses: actions/download-artifact@v4
+        with:
+          name: pkgdown-site
+          path: docs
+
       - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4.5.0
         with:
-          clean: false
+          clean: true
           branch: gh-pages
           folder: docs

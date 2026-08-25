@@ -85,14 +85,25 @@ status <- function(remote = TRUE) {
     FUN.VALUE = character(1), USE.NAMES = FALSE
   )
 
-  latest <- if (remote) {
-    vapply(
-      registry$repo, remote_version,
-      FUN.VALUE = character(1), USE.NAMES = FALSE
-    )
+  checks <- if (remote) {
+    lapply(registry$repo, remote_version)
   } else {
-    rep(NA_character_, nrow(registry))
+    rep(list(NA_character_), nrow(registry))
   }
+
+  latest <- vapply(
+    checks, as.character,
+    FUN.VALUE = character(1), USE.NAMES = FALSE
+  )
+
+  remote_error <- vapply(
+    checks,
+    function(x) {
+      error <- attr(x, "remote_error")
+      if (is.null(error)) NA_character_ else error
+    },
+    FUN.VALUE = character(1), USE.NAMES = FALSE
+  )
 
   state <- vapply(
     seq_len(nrow(registry)),
@@ -106,6 +117,14 @@ status <- function(remote = TRUE) {
     installed = installed,
     latest = latest,
     status = state,
+    stringsAsFactors = FALSE
+  )
+
+  failed <- !is.na(remote_error)
+  attr(out, "remote_errors") <- data.frame(
+    package = registry$package[failed],
+    repo = registry$repo[failed],
+    error = remote_error[failed],
     stringsAsFactors = FALSE
   )
 
@@ -185,11 +204,21 @@ print.hvtiR_status <- function(x, ...) {
 # machine whose R is too old for the members.
 MIN_R_VERSION <- "4.4.0"
 
+#' Is pak available for installation commands?
+#'
+#' @return A length-1 logical value.
+#' @noRd
+pak_available <- function() {
+  requireNamespace("pak", quietly = TRUE)
+}
+
 #' Diagnose an hvtiR installation
 #'
 #' Reports the running R version against the strictest requirement in the
-#' package family, the platform, and then the full member status table. This
-#' is the report to run first when a member will not install.
+#' package family, whether `pak` is installed, the platform, and then the full
+#' member status table. When a remote check fails, reports the reason retained
+#' by [hvtiR::status()]. This is the report to run first when a member will not
+#' install.
 #'
 #' @param remote Consult GitHub for the latest versions? Passed through to
 #'   [hvtiR::status()].
@@ -219,6 +248,18 @@ doctor <- function(remote = TRUE) {
 
     cli::cli_alert_info("Platform {R.version$platform}")
 
+    if (pak_available()) {
+      cli::cli_alert_success("{.pkg pak} is installed")
+    } else {
+      cli::cli_alert_danger("{.pkg pak} is not installed")
+      cli::cli_alert_info(
+        paste0(
+          "Install it with {.code install.packages(\"pak\")} ",
+          "before installing members."
+        )
+      )
+    }
+
     cli::cli_h2("Members")
   })
 
@@ -226,6 +267,20 @@ doctor <- function(remote = TRUE) {
 
   st <- status(remote = remote)
   print(st)
+
+  failures <- attr(st, "remote_errors")
+  if (!is.null(failures) && nrow(failures) > 0L) {
+    lines <- cli::cli_fmt({
+      cli::cli_h2("Remote checks")
+
+      for (i in seq_len(nrow(failures))) {
+        cli::cli_alert_warning(
+          "{.pkg {failures$package[i]}}: {failures$error[i]}"
+        )
+      }
+    })
+    cat(lines, sep = "\n")
+  }
 
   invisible(st)
 }

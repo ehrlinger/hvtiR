@@ -13,3 +13,5 @@
 ^vignettes/\.quarto($|/)
 ^AGENTS\.md$
 ^CLAUDE\.md$
+^\.git$
+^.*\.tar\.gz$
