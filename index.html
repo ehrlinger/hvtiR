@@ -13,8 +13,8 @@
 <link href="deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="deps/headroom-0.11.0/headroom.min.js"></script><script src="deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="deps/search-1.0.0/fuse.min.js"></script><script src="deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="pkgdown.js"></script><meta property="og:title" content="Install and Check the HVTI R Package Family">
-<meta name="description" content="Installs, updates and reports on the Cleveland Clinic Heart and Vascular Institute CORR groups family of R packages in a single step. Members are resolved from public GitHub repositories with pak', keeping installations aligned with the source where family releases land first. Provides a status table comparing installed against latest versions, and a diagnostic report for environment problems.">
-<meta property="og:description" content="Installs, updates and reports on the Cleveland Clinic Heart and Vascular Institute CORR groups family of R packages in a single step. Members are resolved from public GitHub repositories with pak', keeping installations aligned with the source where family releases land first. Provides a status table comparing installed against latest versions, and a diagnostic report for environment problems.">
+<meta name="description" content="Installs, updates and reports on the Cleveland Clinic Heart and Vascular Institute CORR groups family of R packages in a single step. Members are resolved from public GitHub repositories with pak, keeping installations aligned with the source where family releases land first. Provides a status table comparing installed versions and source commits against GitHub main', and a diagnostic report for environment problems.">
+<meta property="og:description" content="Installs, updates and reports on the Cleveland Clinic Heart and Vascular Institute CORR groups family of R packages in a single step. Members are resolved from public GitHub repositories with pak, keeping installations aligned with the source where family releases land first. Provides a status table comparing installed versions and source commits against GitHub main', and a diagnostic report for environment problems.">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -24,7 +24,7 @@
 
     <a class="navbar-brand me-2" href="index.html">hvtiR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -81,6 +81,7 @@
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">hvtiR</span><span class="fu">::</span><span class="fu"><a href="reference/status.html">status</a></span><span class="op">(</span><span class="op">)</span>   <span class="co"># what is installed, what is available</span></span>
 <span><span class="fu">hvtiR</span><span class="fu">::</span><span class="fu"><a href="reference/update.html">update</a></span><span class="op">(</span><span class="op">)</span>   <span class="co"># install only what is missing or stale</span></span></code></pre></div>
+<p>When pak recorded an installed package’s GitHub commit, <code><a href="reference/status.html">status()</a></code> also catches new commits on <code>main</code> that keep the same package version. The five-column table stays version-focused; commit provenance is used internally to decide whether an equal-version install is current.</p>
 <p><code><a href="reference/update.html">hvtiR::update()</a></code> will refuse to overwrite a member you have already attached in the session, because a loaded package cannot be safely replaced. Restart R and run it again before attaching anything.</p>
 </div>
 <div class="section level2">

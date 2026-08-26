@@ -39,7 +39,8 @@ hvtiR::members()
 
 [`hvtiR::status()`](https://ehrlinger.github.io/hvtiR/reference/status.md)
 compares what is installed against what is on each repository’s `main`
-branch:
+branch. When pak recorded the installed GitHub commit, the comparison
+catches new commits even when the package version did not change:
 
 ``` r
 
@@ -58,14 +59,18 @@ hvtiR::status()
 
 The status column takes one of six values:
 
-| Status     | Meaning                                 |
-|------------|-----------------------------------------|
-| `ok`       | installed version equals the latest     |
-| `stale`    | installed version is behind             |
-| `missing`  | not installed                           |
-| `ahead`    | you have a local development build      |
-| `unknown`  | GitHub could not be reached             |
-| `ok-local` | installed; the remote was not consulted |
+| Status     | Meaning                                           |
+|------------|---------------------------------------------------|
+| `ok`       | installed version and recorded commit are current |
+| `stale`    | installed version or recorded commit is behind    |
+| `missing`  | not installed                                     |
+| `ahead`    | you have a local development build                |
+| `unknown`  | GitHub could not be reached                       |
+| `ok-local` | installed; the remote was not consulted           |
+
+Packages installed without GitHub commit provenance fall back to the
+version comparison. The table stays version-focused; commit SHAs are
+used internally only to resolve a tie between equal versions.
 
 The object is a plain data frame underneath, so you can use it in a
 script:

@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">hvtiR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -37,9 +37,15 @@
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Changelog</h1>
-      <small>Source: <a href="https://github.com/ehrlinger/hvtiR/blob/v1.0.2/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
+      <small>Source: <a href="https://github.com/ehrlinger/hvtiR/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.3" id="hvtir-103">hvtiR 1.0.3<a class="anchor" aria-label="anchor" href="#hvtir-103"></a></h2>
+<ul><li>
+<code><a href="../reference/status.html">status()</a></code> now detects an older GitHub installation when its version matches <code>main</code> but pak’s recorded <code>RemoteSha</code> does not. The member reports as <code>"stale"</code>, so <code><a href="../reference/update.html">update()</a></code> reinstalls it. Installs without GitHub commit provenance continue to use version comparison alone.</li>
+<li>Commit checks use GitHub’s public Atom feeds rather than its rate-limited API. A failed commit check reports <code>"unknown"</code> and its reason is retained for <code><a href="../reference/doctor.html">doctor()</a></code>.</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.0.2" id="hvtir-102">hvtiR 1.0.2<a class="anchor" aria-label="anchor" href="#hvtir-102"></a></h2>
 <ul><li>Remote version checks now use a five-second connection timeout and retain per-repository failure reasons for <code><a href="../reference/doctor.html">doctor()</a></code> to report.</li>

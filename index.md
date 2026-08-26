@@ -34,6 +34,12 @@ hvtiR::status()   # what is installed, what is available
 hvtiR::update()   # install only what is missing or stale
 ```
 
+When pak recorded an installed package’s GitHub commit,
+[`status()`](https://ehrlinger.github.io/hvtiR/reference/status.md) also
+catches new commits on `main` that keep the same package version. The
+five-column table stays version-focused; commit provenance is used
+internally to decide whether an equal-version install is current.
+
 [`hvtiR::update()`](https://ehrlinger.github.io/hvtiR/reference/update.md)
 will refuse to overwrite a member you have already attached in the
 session, because a loaded package cannot be safely replaced. Restart R

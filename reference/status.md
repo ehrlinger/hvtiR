@@ -1,7 +1,9 @@
 # Version status of every hvtiR member
 
-Compares the version of each member installed locally against the
-version on the `main` branch of its GitHub repository.
+Compares each member installed locally against the version and, when pak
+recorded its GitHub commit, the commit on the `main` branch of its
+repository. The returned table remains version-focused; commit
+provenance is an internal tie-breaker when versions match.
 
 ## Usage
 
@@ -41,7 +43,8 @@ columns:
 - status:
 
   One of `"ok"`, `"stale"`, `"missing"`, `"ahead"`, `"unknown"` or
-  `"ok-local"`.
+  `"ok-local"`. A member is also `"stale"` when its version matches
+  `main` but its recorded GitHub commit does not.
 
 ## Details
 

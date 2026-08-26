@@ -7,15 +7,15 @@
 ## Citation
 
 Source:
-[`DESCRIPTION`](https://github.com/ehrlinger/hvtiR/blob/v1.0.2/DESCRIPTION)
+[`DESCRIPTION`](https://github.com/ehrlinger/hvtiR/blob/main/DESCRIPTION)
 
 Ehrlinger J (2026). *hvtiR: Install and Check the HVTI R Package
-Family*. R package version 1.0.2, <https://github.com/ehrlinger/hvtiR>.
+Family*. R package version 1.0.3, <https://github.com/ehrlinger/hvtiR>.
 
     @Manual{,
       title = {hvtiR: Install and Check the HVTI R Package Family},
       author = {John Ehrlinger},
       year = {2026},
-      note = {R package version 1.0.2},
+      note = {R package version 1.0.3},
       url = {https://github.com/ehrlinger/hvtiR},
     }

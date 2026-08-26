@@ -1,5 +1,19 @@
 # Changelog
 
+## hvtiR 1.0.3
+
+- [`status()`](https://ehrlinger.github.io/hvtiR/reference/status.md)
+  now detects an older GitHub installation when its version matches
+  `main` but pak’s recorded `RemoteSha` does not. The member reports as
+  `"stale"`, so
+  [`update()`](https://ehrlinger.github.io/hvtiR/reference/update.md)
+  reinstalls it. Installs without GitHub commit provenance continue to
+  use version comparison alone.
+- Commit checks use GitHub’s public Atom feeds rather than its
+  rate-limited API. A failed commit check reports `"unknown"` and its
+  reason is retained for
+  [`doctor()`](https://ehrlinger.github.io/hvtiR/reference/doctor.md).
+
 ## hvtiR 1.0.2
 
 - Remote version checks now use a five-second connection timeout and
