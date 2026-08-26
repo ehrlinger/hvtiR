@@ -33,6 +33,59 @@ test_that("status marks stale and missing members", {
   expect_identical(st$status[st$package == "hvtiRutilities"], "ok")
 })
 
+test_that("status marks a same-version older GitHub install stale", {
+  old_sha <- "1111111111111111111111111111111111111111"
+  current_sha <- "2222222222222222222222222222222222222222"
+  checked <- character(0)
+  local_mocked_bindings(
+    installed_version = function(pkg) {
+      if (pkg == "hvtiRtables") {
+        return(structure("1.0.0", remote_sha = old_sha))
+      }
+      "1.0.0"
+    },
+    remote_version = function(repo, ref = "main") "1.0.0",
+    remote_commit = function(repo, ref = "main") {
+      checked <<- c(checked, repo)
+      current_sha
+    }
+  )
+
+  st <- status()
+
+  expect_identical(
+    names(st),
+    c("package", "repo", "installed", "latest", "status")
+  )
+  expect_identical(st$status[st$package == "hvtiRtables"], "stale")
+  expect_true(all(st$status[st$package != "hvtiRtables"] == "ok"))
+  expect_identical(checked, "ehrlinger/hvtiRtables")
+})
+
+test_that("status reports a failed same-version commit check as unknown", {
+  sha <- "1111111111111111111111111111111111111111"
+  local_mocked_bindings(
+    installed_version = function(pkg) {
+      if (pkg == "hvtiRtables") {
+        return(structure("1.0.0", remote_sha = sha))
+      }
+      "1.0.0"
+    },
+    remote_version = function(repo, ref = "main") "1.0.0",
+    remote_commit = function(repo, ref = "main") {
+      structure(NA_character_, remote_error = "feed timed out")
+    }
+  )
+
+  st <- NULL
+  expect_warning(st <- status(), "latest version or commit")
+  failures <- attr(st, "remote_errors")
+
+  expect_identical(st$status[st$package == "hvtiRtables"], "unknown")
+  expect_identical(failures$package, "hvtiRtables")
+  expect_identical(failures$error, "feed timed out")
+})
+
 test_that("status warns once, not per member, when GitHub is unreachable", {
   local_mocked_bindings(
     installed_version = function(pkg) "1.0.0",

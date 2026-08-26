@@ -136,8 +136,8 @@ install <- function(force = FALSE) {
 #'
 #' Installs only the members whose status is `"missing"` or `"stale"`. When
 #' everything is current, reports that and installs nothing. Members whose
-#' version could not be checked against GitHub are reported as unchecked
-#' rather than silently treated as current.
+#' version or commit could not be checked against GitHub are reported as
+#' unchecked rather than silently treated as current.
 #'
 #' The target set is expanded over in-family dependencies (see
 #' `member_deps()`) before installing, so a stale member's in-family

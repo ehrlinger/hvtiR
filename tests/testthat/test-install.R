@@ -84,6 +84,32 @@ test_that("update targets only missing and stale members", {
   )
 })
 
+test_that("update installs a same-version older commit in one pak call", {
+  old_sha <- "1111111111111111111111111111111111111111"
+  current_sha <- "2222222222222222222222222222222222222222"
+  calls <- list()
+  local_mocked_bindings(
+    installed_version = function(pkg) {
+      if (pkg == "hvtiRtables") {
+        return(structure("1.0.0", remote_sha = old_sha))
+      }
+      "1.0.0"
+    },
+    remote_version = function(repo, ref = "main") "1.0.0",
+    remote_commit = function(repo, ref = "main") current_sha,
+    pak_install = function(specs) {
+      calls[[length(calls) + 1L]] <<- specs
+      invisible(specs)
+    },
+    check_loaded = function(targets, loaded = loadedNamespaces()) character(0)
+  )
+
+  update()
+
+  expect_length(calls, 1L)
+  expect_identical(calls[[1L]], "ehrlinger/hvtiRtables")
+})
+
 test_that("update installs nothing when everything is current", {
   local_mocked_bindings(
     installed_version = function(pkg) "1.0.0",

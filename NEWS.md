@@ -1,5 +1,15 @@
 Package: hvtiR
-Version: 1.0.2
+Version: 1.0.3
+
+## hvtiR 1.0.3
+
+* `status()` now detects an older GitHub installation when its version matches
+  `main` but pak's recorded `RemoteSha` does not. The member reports as
+  `"stale"`, so `update()` reinstalls it. Installs without GitHub commit
+  provenance continue to use version comparison alone.
+* Commit checks use GitHub's public Atom feeds rather than its rate-limited
+  API. A failed commit check reports `"unknown"` and its reason is retained
+  for `doctor()`.
 
 ## hvtiR 1.0.2
 
