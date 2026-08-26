@@ -6,7 +6,7 @@
 \alias{hvtiR-package}
 \title{hvtiR: Install and Check the HVTI R Package Family}
 \description{
-Installs, updates and reports on the Cleveland Clinic Heart and Vascular Institute CORR group's family of R packages in a single step. Members are resolved from public GitHub repositories with 'pak', keeping installations aligned with the source where family releases land first. Provides a status table comparing installed against latest versions, and a diagnostic report for environment problems.
+Installs, updates and reports on the Cleveland Clinic Heart and Vascular Institute CORR group's family of R packages in a single step. Members are resolved from public GitHub repositories with 'pak', keeping installations aligned with the source where family releases land first. Provides a status table comparing installed versions and source commits against GitHub 'main', and a diagnostic report for environment problems.
 }
 \seealso{
 Useful links:

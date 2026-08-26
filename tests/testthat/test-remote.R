@@ -109,3 +109,45 @@ test_that("remote_version explains a missing Version field", {
   expect_true(is.na(version))
   expect_match(attr(version, "remote_error"), "no Version field")
 })
+
+test_that("remote_commit reads the first commit from the branch feed", {
+  sha <- "1234567890abcdef1234567890abcdef12345678"
+  feed <- c(
+    "<feed>",
+    "  <entry>",
+    paste0("    <id>tag:github.com,2008:Grit::Commit/", sha, "</id>"),
+    "  </entry>",
+    "</feed>"
+  )
+  local_mocked_bindings(
+    fetch_commit_feed = function(repo, ref = "main", ...) feed
+  )
+
+  expect_identical(remote_commit("ehrlinger/hvtiRutilities"), sha)
+})
+
+test_that("remote_commit retains a feed failure reason", {
+  local_mocked_bindings(
+    fetch_commit_feed = function(repo, ref = "main", on_error = NULL, ...) {
+      on_error(simpleError("feed timed out"))
+    }
+  )
+
+  commit <- remote_commit("ehrlinger/unreachable")
+
+  expect_true(is.na(commit))
+  expect_identical(attr(commit, "remote_error"), "feed timed out")
+})
+
+test_that("remote_commit rejects a feed without a commit id", {
+  local_mocked_bindings(
+    fetch_commit_feed = function(repo, ref = "main", ...) {
+      c("<feed>", "<title>No commits here</title>", "</feed>")
+    }
+  )
+
+  commit <- remote_commit("ehrlinger/empty")
+
+  expect_true(is.na(commit))
+  expect_match(attr(commit, "remote_error"), "no commit SHA")
+})

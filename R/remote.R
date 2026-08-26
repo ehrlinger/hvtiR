@@ -60,6 +60,75 @@ fetch_description <- function(
   )
 }
 
+#' Fetch a repository's branch commit feed
+#'
+#' Uses GitHub's public Atom feed rather than the rate-limited API.
+#'
+#' @param repo GitHub repository, as `"owner/repo"`.
+#' @param ref Branch or tag whose latest commit is needed.
+#' @param on_error Function applied to a connection error.
+#' @param timeout Maximum number of seconds for the request.
+#' @return Character lines from the Atom feed, or the value produced by
+#'   `on_error` if the fetch failed.
+#' @noRd
+fetch_commit_feed <- function(
+  repo,
+  ref = "main",
+  on_error = function(e) NULL,
+  timeout = remote_timeout
+) {
+  address <- sprintf("https://github.com/%s/commits/%s.atom", repo, ref)
+
+  with_remote_timeout(
+    timeout,
+    tryCatch(
+      withCallingHandlers(
+        {
+          con <- url(address)
+          on.exit(close(con), add = TRUE)
+          readLines(con, warn = FALSE)
+        },
+        warning = function(w) invokeRestart("muffleWarning")
+      ),
+      error = on_error
+    )
+  )
+}
+
+#' Latest commit of a GitHub branch
+#'
+#' @param repo GitHub repository, as `"owner/repo"`.
+#' @param ref Branch or tag to inspect.
+#' @return A length-1 commit SHA, or `NA_character_` with a `remote_error`
+#'   attribute if it could not be determined.
+#' @noRd
+remote_commit <- function(repo, ref = "main") {
+  feed <- fetch_commit_feed(repo, ref, on_error = identity)
+
+  if (inherits(feed, "condition")) {
+    return(structure(
+      NA_character_,
+      remote_error = conditionMessage(feed)
+    ))
+  }
+
+  pattern <- "Grit::Commit/[[:xdigit:]]{40}</id>"
+  entry <- grep(pattern, feed, value = TRUE)
+
+  if (length(entry) == 0L) {
+    return(structure(
+      NA_character_,
+      remote_error = "Commit feed contains no commit SHA."
+    ))
+  }
+
+  tolower(sub(
+    ".*Grit::Commit/([[:xdigit:]]{40})</id>.*",
+    "\\1",
+    entry[1L]
+  ))
+}
+
 #' Latest version of a member on GitHub
 #'
 #' @param repo GitHub repository, as `"owner/repo"`.

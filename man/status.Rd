@@ -20,12 +20,15 @@ character columns:
 \item{installed}{Installed version, or \code{NA} if not installed.}
 \item{latest}{Version on GitHub \code{main}, or \code{NA}.}
 \item{status}{One of \code{"ok"}, \code{"stale"}, \code{"missing"}, \code{"ahead"},
-\code{"unknown"} or \code{"ok-local"}.}
+\code{"unknown"} or \code{"ok-local"}. A member is also \code{"stale"} when its
+version matches \code{main} but its recorded GitHub commit does not.}
 }
 }
 \description{
-Compares the version of each member installed locally against the version
-on the \code{main} branch of its GitHub repository.
+Compares each member installed locally against the version and, when pak
+recorded its GitHub commit, the commit on the \code{main} branch of its
+repository. The returned table remains version-focused; commit provenance
+is an internal tie-breaker when versions match.
 }
 \details{
 The object is returned visibly and has a \code{print} method, so a bare call

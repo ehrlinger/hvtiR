@@ -1,8 +1,9 @@
 #' Classify one member's installed version against the latest
 #'
-#' Pure: takes two version strings and returns a status. Checking whether the
-#' package is installed comes first, so a member that is absent reports as
-#' `"missing"` whether or not the remote was reachable.
+#' Pure: takes two version strings, including optional commit attributes, and
+#' returns a status. Checking whether the package is installed comes first, so
+#' a member that is absent reports as `"missing"` whether or not the remote was
+#' reachable.
 #'
 #' @param installed Installed version string, or `NA_character_` if absent.
 #' @param latest Latest version string, or `NA_character_` if unavailable.
@@ -30,6 +31,18 @@ classify_status <- function(installed, latest, remote = TRUE) {
     "stale"
   } else if (comparison > 0L) {
     "ahead"
+  } else if (!is.null(attr(installed, "remote_sha")) &&
+               isTRUE(attr(latest, "commit_checked"))) {
+    installed_sha <- attr(installed, "remote_sha")
+    latest_sha <- attr(latest, "remote_sha")
+
+    if (is.null(latest_sha) || is.na(latest_sha)) {
+      "unknown"
+    } else if (identical(tolower(installed_sha), tolower(latest_sha))) {
+      "ok"
+    } else {
+      "stale"
+    }
   } else {
     "ok"
   }
@@ -38,8 +51,9 @@ classify_status <- function(installed, latest, remote = TRUE) {
 #' Installed version of a package
 #'
 #' @param pkg Package name.
-#' @return A length-1 character version string, or `NA_character_` if the
-#'   package is not installed in any library on the search path.
+#' @return A length-1 character version string, optionally carrying pak's
+#'   `RemoteSha` as a `remote_sha` attribute, or `NA_character_` if the package
+#'   is not installed in any library on the search path.
 #' @noRd
 installed_version <- function(pkg) {
   found <- suppressWarnings(find.package(pkg, quiet = TRUE))
@@ -48,13 +62,28 @@ installed_version <- function(pkg) {
     return(NA_character_)
   }
 
-  as.character(utils::packageVersion(pkg))
+  description <- read.dcf(
+    file.path(found[1L], "DESCRIPTION"),
+    fields = c("Version", "RemoteType", "RemoteSha")
+  )
+  version <- as.character(description[1L, "Version"])
+  remote_type <- description[1L, "RemoteType"]
+  sha <- description[1L, "RemoteSha"]
+
+  if (!is.na(remote_type) && tolower(remote_type) == "github" &&
+      !is.na(sha) && grepl("^[[:xdigit:]]{40}$", sha)) {
+    attr(version, "remote_sha") <- tolower(as.character(sha))
+  }
+
+  version
 }
 
 #' Version status of every hvtiR member
 #'
-#' Compares the version of each member installed locally against the version
-#' on the `main` branch of its GitHub repository.
+#' Compares each member installed locally against the version and, when pak
+#' recorded its GitHub commit, the commit on the `main` branch of its
+#' repository. The returned table remains version-focused; commit provenance
+#' is an internal tie-breaker when versions match.
 #'
 #' The object is returned visibly and has a `print` method, so a bare call
 #' displays the table while `st <- status()` captures the data frame
@@ -71,7 +100,8 @@ installed_version <- function(pkg) {
 #'     \item{installed}{Installed version, or `NA` if not installed.}
 #'     \item{latest}{Version on GitHub `main`, or `NA`.}
 #'     \item{status}{One of `"ok"`, `"stale"`, `"missing"`, `"ahead"`,
-#'       `"unknown"` or `"ok-local"`.}
+#'       `"unknown"` or `"ok-local"`. A member is also `"stale"` when its
+#'       version matches `main` but its recorded GitHub commit does not.}
 #'   }
 #' @export
 #' @examples
@@ -80,8 +110,10 @@ installed_version <- function(pkg) {
 status <- function(remote = TRUE) {
   registry <- members()
 
+  installed_checks <- lapply(registry$package, installed_version)
+
   installed <- vapply(
-    registry$package, installed_version,
+    installed_checks, as.character,
     FUN.VALUE = character(1), USE.NAMES = FALSE
   )
 
@@ -96,6 +128,29 @@ status <- function(remote = TRUE) {
     FUN.VALUE = character(1), USE.NAMES = FALSE
   )
 
+  if (remote) {
+    commit_candidates <- vapply(
+      seq_len(nrow(registry)),
+      function(i) {
+        sha <- attr(installed_checks[[i]], "remote_sha")
+        !is.null(sha) && !is.na(latest[i]) &&
+          utils::compareVersion(installed[i], latest[i]) == 0L
+      },
+      FUN.VALUE = logical(1)
+    )
+
+    for (i in which(commit_candidates)) {
+      commit <- remote_commit(registry$repo[i])
+      attr(checks[[i]], "remote_sha") <- as.character(commit)
+      attr(checks[[i]], "commit_checked") <- TRUE
+
+      commit_error <- attr(commit, "remote_error")
+      if (!is.null(commit_error)) {
+        attr(checks[[i]], "remote_error") <- commit_error
+      }
+    }
+  }
+
   remote_error <- vapply(
     checks,
     function(x) {
@@ -107,7 +162,11 @@ status <- function(remote = TRUE) {
 
   state <- vapply(
     seq_len(nrow(registry)),
-    function(i) classify_status(installed[i], latest[i], remote = remote),
+    function(i) {
+      classify_status(
+        installed_checks[[i]], checks[[i]], remote = remote
+      )
+    },
     FUN.VALUE = character(1)
   )
 
@@ -129,13 +188,19 @@ status <- function(remote = TRUE) {
   )
 
   if (remote) {
-    unresolved <- sum(is.na(latest))
+    unresolved <- sum(is.na(latest) | state == "unknown")
 
     if (unresolved > 0L) {
       cli::cli_warn(c(
-        "Could not determine the latest version for {unresolved} member{?s}.",
-        i = "GitHub may be unreachable, or a repository's DESCRIPTION may be unreadable.",
-        i = "The {.field latest} column is incomplete."
+        paste0(
+          "Could not determine the latest version or commit for ",
+          "{unresolved} member{?s}."
+        ),
+        i = paste0(
+          "GitHub may be unreachable, or a remote response may be ",
+          "unreadable."
+        ),
+        i = "The remote check is incomplete."
       ))
     }
   }
