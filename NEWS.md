@@ -9,6 +9,8 @@ Version: 1.0.5
   A renamed repository fails exactly as before, only later: retrying separates
   a transient stall from a persistent one by how long it lasts, which is the
   only signal available when both surface as the same failed connection.
+* `fetch_description()` rejects a non-positive or malformed `attempts` count
+  instead of failing later with an unbound-object error.
 * `status()` and `doctor()` are unchanged. They keep the single-attempt
   default, so a member that cannot be reached still resolves inside the
   five-second budget rather than three times over.

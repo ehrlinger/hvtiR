@@ -215,3 +215,28 @@ test_that("remote_commit rejects a feed without a commit id", {
   expect_true(is.na(commit))
   expect_match(attr(commit, "remote_error"), "no commit SHA")
 })
+
+test_that("a non-positive attempts count is rejected rather than crashing", {
+  # With attempts = 0 the retry loop never runs, so `result` is never bound.
+  # The default on_error ignores its argument and R's laziness hides that, but
+  # remote_version() passes on_error = identity, which forces it -- the caller
+  # would see "object 'result' not found" instead of a usable message.
+  expect_error(
+    fetch_description("ehrlinger/hvtiRutilities", attempts = 0L),
+    "attempts"
+  )
+  expect_error(
+    fetch_description("ehrlinger/hvtiRutilities", attempts = 0L,
+                      on_error = identity),
+    "attempts"
+  )
+})
+
+test_that("a malformed attempts count is rejected with a message naming it", {
+  for (bad in list(NA_integer_, -1L, c(1L, 2L), "3")) {
+    expect_error(
+      fetch_description("ehrlinger/hvtiRutilities", attempts = bad),
+      "attempts"
+    )
+  }
+})

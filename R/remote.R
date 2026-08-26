@@ -48,6 +48,17 @@ fetch_description <- function(
   timeout = remote_timeout,
   attempts = 1L
 ) {
+  # Guard before the loop: at attempts = 0 `seq_len()` yields nothing, so
+  # `result` is never bound and the closing `on_error(result)` reaches for a
+  # missing object. The default `on_error` ignores its argument and R's lazy
+  # evaluation hides the mistake, but `remote_version()` passes
+  # `on_error = identity`, which forces it.
+  if (!is.numeric(attempts) || length(attempts) != 1L || is.na(attempts) ||
+      attempts < 1) {
+    cli::cli_abort("{.arg attempts} must be a single positive number.")
+  }
+  attempts <- as.integer(attempts)
+
   address <- sprintf(
     "https://raw.githubusercontent.com/%s/%s/DESCRIPTION",
     repo, ref
