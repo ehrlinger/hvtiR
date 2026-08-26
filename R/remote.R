@@ -1,6 +1,9 @@
 # Maximum time a member's DESCRIPTION fetch may hold up diagnostics.
 remote_timeout <- 5
 
+# Base seconds between retried attempts, scaled by the attempt just failed.
+remote_retry_wait <- 1
+
 #' Evaluate an expression with a bounded connection timeout
 #'
 #' Restores the caller's timeout even when `code` errors.
@@ -28,8 +31,13 @@ with_remote_timeout <- function(timeout, code) {
 #' @param on_error Function applied to a connection or parsing error. The
 #'   default preserves the existing `NULL`-on-failure contract.
 #' @param timeout Maximum number of seconds for the request.
+#' @param attempts Number of times to try the request before giving up,
+#'   waiting `remote_retry_wait` seconds times the attempt just failed in
+#'   between. The default of one keeps `status()` and `doctor()` inside the
+#'   latency `remote_timeout` promises; callers that would rather wait than
+#'   read a throttled host as a missing repository ask for more.
 #' @return A character matrix as returned by [base::read.dcf()], or the value
-#'   produced by `on_error` if the fetch failed. Warnings raised while
+#'   produced by `on_error` if every attempt failed. Warnings raised while
 #'   connecting or parsing are muffled rather than discarding a result they
 #'   did not actually invalidate.
 #' @noRd
@@ -37,27 +45,56 @@ fetch_description <- function(
   repo,
   ref = "main",
   on_error = function(e) NULL,
-  timeout = remote_timeout
+  timeout = remote_timeout,
+  attempts = 1L
 ) {
+  # Guard before the loop: at attempts = 0 `seq_len()` yields nothing, so
+  # `result` is never bound and the closing `on_error(result)` reaches for a
+  # missing object. The default `on_error` ignores its argument and R's lazy
+  # evaluation hides the mistake, but `remote_version()` passes
+  # `on_error = identity`, which forces it.
+  if (!is.numeric(attempts) || length(attempts) != 1L || is.na(attempts) ||
+      attempts < 1) {
+    cli::cli_abort("{.arg attempts} must be a single positive number.")
+  }
+  attempts <- as.integer(attempts)
+
   address <- sprintf(
     "https://raw.githubusercontent.com/%s/%s/DESCRIPTION",
     repo, ref
   )
 
-  with_remote_timeout(
-    timeout,
-    tryCatch(
-      withCallingHandlers(
-        {
-          con <- url(address)
-          on.exit(close(con), add = TRUE)
-          read.dcf(con)
-        },
-        warning = function(w) invokeRestart("muffleWarning")
-      ),
-      error = on_error
+  # Scoped to its own frame so each attempt closes its own connection: an
+  # `on.exit()` registered in the loop would stack against `fetch_description`
+  # and re-close the last connection once per attempt made.
+  read_once <- function() {
+    con <- url(address)
+    on.exit(close(con), add = TRUE)
+    read.dcf(con)
+  }
+
+  for (attempt in seq_len(attempts)) {
+    result <- with_remote_timeout(
+      timeout,
+      tryCatch(
+        withCallingHandlers(
+          read_once(),
+          warning = function(w) invokeRestart("muffleWarning")
+        ),
+        error = identity
+      )
     )
-  )
+
+    if (!inherits(result, "condition")) {
+      return(result)
+    }
+
+    if (attempt < attempts) {
+      Sys.sleep(remote_retry_wait * attempt)
+    }
+  }
+
+  on_error(result)
 }
 
 #' Fetch a repository's branch commit feed
