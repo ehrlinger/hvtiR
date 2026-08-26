@@ -9,3 +9,5 @@
 .superpowers/
 /doc/
 /Meta/
+__pycache__/
+*.pyc
