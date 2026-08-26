@@ -1,5 +1,23 @@
 # Changelog
 
+## hvtiR 1.0.5
+
+- The live registry test no longer reports a throttled CI runner as a
+  defect. `fetch_description()` gained an `attempts` argument that
+  retries a failed request with a widening wait, and the live test asks
+  for three attempts. A renamed repository fails exactly as before, only
+  later: retrying separates a transient stall from a persistent one by
+  how long it lasts, which is the only signal available when both
+  surface as the same failed connection.
+- `fetch_description()` rejects a non-positive or malformed `attempts`
+  count instead of failing later with an unbound-object error.
+- [`status()`](https://ehrlinger.github.io/hvtiR/reference/status.md)
+  and
+  [`doctor()`](https://ehrlinger.github.io/hvtiR/reference/doctor.md)
+  are unchanged. They keep the single-attempt default, so a member that
+  cannot be reached still resolves inside the five-second budget rather
+  than three times over.
+
 ## hvtiR 1.0.4
 
 - Added `inst/extdata/catalog.csv`, presentation metadata for every

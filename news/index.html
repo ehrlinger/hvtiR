@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">hvtiR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.4</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.5</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -40,6 +40,14 @@
       <small>Source: <a href="https://github.com/ehrlinger/hvtiR/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.5" id="hvtir-105">hvtiR 1.0.5<a class="anchor" aria-label="anchor" href="#hvtir-105"></a></h2>
+<ul><li>The live registry test no longer reports a throttled CI runner as a defect. <code>fetch_description()</code> gained an <code>attempts</code> argument that retries a failed request with a widening wait, and the live test asks for three attempts. A renamed repository fails exactly as before, only later: retrying separates a transient stall from a persistent one by how long it lasts, which is the only signal available when both surface as the same failed connection.</li>
+<li>
+<code>fetch_description()</code> rejects a non-positive or malformed <code>attempts</code> count instead of failing later with an unbound-object error.</li>
+<li>
+<code><a href="../reference/status.html">status()</a></code> and <code><a href="../reference/doctor.html">doctor()</a></code> are unchanged. They keep the single-attempt default, so a member that cannot be reached still resolves inside the five-second budget rather than three times over.</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.0.4" id="hvtir-104">hvtiR 1.0.4<a class="anchor" aria-label="anchor" href="#hvtir-104"></a></h2>
 <ul><li><p>Added <code>inst/extdata/catalog.csv</code>, presentation metadata for every published artifact: the family members from <code><a href="../reference/members.html">members()</a></code>, plus the SAS/C <code>hazard</code> code and the HVTI Recipes book, which are not R packages. <code>status</code>, <code>cran</code> and <code>role</code> are stored as fields rather than folded into the blurb, so each consumer can render them in its own house style.</p></li>
