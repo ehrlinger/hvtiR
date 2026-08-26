@@ -1,0 +1,144 @@
+{
+  "generated_from": "hvtiR 1.0.4",
+  "counts": {
+    "members": 11,
+    "members_on_cran": 2,
+    "members_github_only": 9
+  },
+  "cran_member_names": [
+    "ggRandomForests",
+    "TemporalHazard"
+  ],
+  "packages": [
+    {
+      "package": "ggRandomForests",
+      "repo": "ehrlinger/ggRandomForests",
+      "url": "https://github.com/ehrlinger/ggRandomForests",
+      "family": "member",
+      "blurb": "Visual exploration of random forest models -- graphical analysis of survival, regression, and classification forests.",
+      "cran": "ggRandomForests",
+      "status": "stable",
+      "role": null
+    },
+    {
+      "package": "TemporalHazard",
+      "repo": "ehrlinger/temporal_hazard",
+      "url": "https://github.com/ehrlinger/temporal_hazard",
+      "family": "member",
+      "blurb": "R port of the C computational core underlying the Cleveland Clinic Hazard SAS module.",
+      "cran": "TemporalHazard",
+      "status": "stable",
+      "role": null
+    },
+    {
+      "package": "hvtiBoostmtree",
+      "repo": "ehrlinger/hvtiBoostmtree",
+      "url": "https://github.com/ehrlinger/hvtiBoostmtree",
+      "family": "member",
+      "blurb": "Boosted multivariate trees for longitudinal data; an extended fork of boostmtree.",
+      "cran": null,
+      "status": "stable",
+      "role": null
+    },
+    {
+      "package": "hvtiPlotR",
+      "repo": "ehrlinger/hvtiPlotR",
+      "url": "https://github.com/ehrlinger/hvtiPlotR",
+      "family": "member",
+      "blurb": "HVTI-standard publication graphics for reproducible clinical research figures.",
+      "cran": null,
+      "status": "stable",
+      "role": null
+    },
+    {
+      "package": "hvtiRbootstrap",
+      "repo": "ehrlinger/hvtiRbootstrap",
+      "url": "https://github.com/ehrlinger/hvtiRbootstrap",
+      "family": "member",
+      "blurb": "Bootstrap model building -- fit across many replicates and report how often each variable survives selection; an R port of the bootreg, SUMBOOT and cluster SAS macros.",
+      "cran": null,
+      "status": "wip",
+      "role": null
+    },
+    {
+      "package": "hvtiRdatasets",
+      "repo": "ehrlinger/hvtiRdatasets",
+      "url": "https://github.com/ehrlinger/hvtiRdatasets",
+      "family": "member",
+      "blurb": "Analysis-ready clinical datasets for HVTI CORR studies, verified against the legacy SAS datasets they replace.",
+      "cran": null,
+      "status": "wip",
+      "role": null
+    },
+    {
+      "package": "hvtiRlifetables",
+      "repo": "ehrlinger/hvtiRlifetables",
+      "url": "https://github.com/ehrlinger/hvtiRlifetables",
+      "family": "member",
+      "blurb": "Age-, sex- and race-matched US reference survival; replaces the usmatchd SAS macro by evaluating a stored three-phase parametric hazard fit rather than interpolating a life table.",
+      "cran": null,
+      "status": "wip",
+      "role": null
+    },
+    {
+      "package": "hvtiRpropensity",
+      "repo": "ehrlinger/hvtiPropensityScores",
+      "url": "https://github.com/ehrlinger/hvtiPropensityScores",
+      "family": "member",
+      "blurb": "Propensity score estimation, matching and IPTW with standardized balance diagnostics, for cardiac surgery comparative-effectiveness research.",
+      "cran": null,
+      "status": "wip",
+      "role": null
+    },
+    {
+      "package": "hvtiRtables",
+      "repo": "ehrlinger/hvtiRtables",
+      "url": "https://github.com/ehrlinger/hvtiRtables",
+      "family": "member",
+      "blurb": "Manuscript-compliant Word tables from gtsummary objects, following HVTI CORR table construction standards, with a JTCVS submission mode.",
+      "cran": null,
+      "status": "stable",
+      "role": null
+    },
+    {
+      "package": "hvtiRtemplates",
+      "repo": "ehrlinger/hvtiRtemplates",
+      "url": "https://github.com/ehrlinger/hvtiRtemplates",
+      "family": "member",
+      "blurb": "Versioned analysis job templates and the analysis-prefix taxonomy the CORR group organizes jobs by, so a study binds to a versioned template rather than to a copy.",
+      "cran": null,
+      "status": "stable",
+      "role": null
+    },
+    {
+      "package": "hvtiRutilities",
+      "repo": "ehrlinger/hvtiRutilities",
+      "url": "https://github.com/ehrlinger/hvtiRutilities",
+      "family": "member",
+      "blurb": "Utility functions supporting reproducible HVTI research workflows.",
+      "cran": null,
+      "status": "stable",
+      "role": null
+    },
+    {
+      "package": "hazard",
+      "repo": "ehrlinger/hazard",
+      "url": "https://github.com/ehrlinger/hazard",
+      "family": "standalone",
+      "blurb": "SAS and C implementation of multi-phase hazard analysis for time-to-event decomposition.",
+      "cran": null,
+      "status": "stable",
+      "role": "Maintainer"
+    },
+    {
+      "package": "HVTI Recipes",
+      "repo": "ehrlinger/hvti_graphics",
+      "url": "https://ehrlinger.github.io/hvti_graphics/",
+      "family": "book",
+      "blurb": "Catalog of publication-ready figures, tables, and datasets for clinical outcomes research -- Kaplan-Meier, propensity balance, CONSORT, random-forest visualizations -- each paired with reproducible code.",
+      "cran": null,
+      "status": "stable",
+      "role": null
+    }
+  ]
+}

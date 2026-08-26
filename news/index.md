@@ -1,5 +1,27 @@
 # Changelog
 
+## hvtiR 1.0.4
+
+- Added `inst/extdata/catalog.csv`, presentation metadata for every
+  published artifact: the family members from
+  [`members()`](https://ehrlinger.github.io/hvtiR/reference/members.md),
+  plus the SAS/C `hazard` code and the HVTI Recipes book, which are not
+  R packages. `status`, `cran` and `role` are stored as fields rather
+  than folded into the blurb, so each consumer can render them in its
+  own house style.
+
+- Added `tests/testthat/test-catalog.R`, which ties the catalog’s member
+  rows to
+  [`members()`](https://ehrlinger.github.io/hvtiR/reference/members.md)
+  exactly. A package added to the registry without a catalog entry now
+  fails `R CMD check` rather than silently shortening the package lists
+  published downstream.
+
+- Added `tools/catalog_to_json.py`, which the pkgdown workflow runs to
+  publish `members.json` alongside the site. Member counts are derived
+  there, so the family-count sentence used by downstream documents is
+  arithmetic rather than prose maintained by hand.
+
 ## hvtiR 1.0.3
 
 - [`status()`](https://ehrlinger.github.io/hvtiR/reference/status.md)
