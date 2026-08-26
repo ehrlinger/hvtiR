@@ -1,3 +1,9 @@
+# Every fetch below crosses the network, and a busy shared-IP CI runner is
+# throttled rather than unreachable, which `skip_if_offline()` does not catch.
+# Retry so a transient stall is not reported as a defect: a renamed repository
+# fails the same way a timeout does, so only persistence separates the two.
+live_attempts <- 3L
+
 test_that("every registry repo resolves and its Package matches", {
   skip_on_cran()
   skip_if_offline()
@@ -5,7 +11,7 @@ test_that("every registry repo resolves and its Package matches", {
   m <- members()
 
   for (i in seq_len(nrow(m))) {
-    dcf <- fetch_description(m$repo[i])
+    dcf <- fetch_description(m$repo[i], attempts = live_attempts)
 
     expect_false(
       is.null(dcf),
@@ -56,7 +62,7 @@ test_that("MIN_R_VERSION matches the strictest R requirement across the family",
   reqs <- character(0)
 
   for (i in seq_len(nrow(m))) {
-    dcf <- fetch_description(m$repo[i])
+    dcf <- fetch_description(m$repo[i], attempts = live_attempts)
 
     expect_false(
       is.null(dcf),
@@ -98,7 +104,7 @@ test_that("member_deps matches the live Depends/Imports fields of each member", 
 
   for (i in seq_len(nrow(m))) {
     pkg <- m$package[i]
-    dcf <- fetch_description(m$repo[i])
+    dcf <- fetch_description(m$repo[i], attempts = live_attempts)
 
     expect_false(
       is.null(dcf),
