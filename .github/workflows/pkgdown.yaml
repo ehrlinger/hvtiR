@@ -20,6 +20,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Fails fast on a malformed catalog, before the R toolchain is set up.
+      # A short or broken package list must never reach the CV sinks.
+      - name: Test the catalog converter
+        run: python3 -m unittest discover -s tools -p 'test_*.py'
+
       - uses: r-lib/actions/setup-pandoc@v2
 
       - uses: quarto-dev/quarto-actions/setup@v2
@@ -36,6 +41,9 @@ jobs:
       - name: Build site
         run: pkgdown::build_site_github_pages(new_process = FALSE, install = FALSE)
         shell: Rscript {0}
+
+      - name: Publish members.json
+        run: python3 tools/catalog_to_json.py --out docs/members.json
 
       - name: Store site
         uses: actions/upload-artifact@v4
