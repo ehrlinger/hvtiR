@@ -10,6 +10,7 @@
 ^doc$
 ^Meta$
 ^\.superpowers$
+^\.remember$
 ^vignettes/\.quarto($|/)
 ^AGENTS\.md$
 ^CLAUDE\.md$
