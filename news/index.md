@@ -1,5 +1,22 @@
 # Changelog
 
+## hvtiR 1.0.8
+
+- The registry now names three repositories by the names GitHub actually
+  serves. `hvtiRdatasets` became `hvtiRdatabuild`, and its repository
+  moved with it; `ehrlinger/hvtiPropensityScores` became
+  `ehrlinger/hvtiRpropensity`; and `ehrlinger/temporal_hazard` became
+  `ehrlinger/TemporalHazard`.
+- Only the first of those broke anything. `test-registry-live.R` fetches
+  each member’s `DESCRIPTION` and compares its `Package` field, so the
+  renamed package failed while the two renamed repositories kept passing
+  on GitHub’s redirect – staleness that works until the redirect stops
+  working.
+- Every member’s package name now matches its repository name. The
+  mapping is still stored rather than derived, because these three names
+  moved in one week and a derived repo would fail silently the next time
+  one does.
+
 ## hvtiR 1.0.7
 
 - A pull request whose `Version:` has not moved past `main` now

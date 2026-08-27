@@ -5,10 +5,10 @@
 The HVTI R package family is eleven packages spread across eleven GitHub
 repositories. Setting up a machine used to mean eleven
 [`pak::pak()`](https://pak.r-lib.org/reference/pak.html) calls, in an
-order you had to know, against repository names that do not always match
-the package names — `TemporalHazard` lives in
-`ehrlinger/temporal_hazard`, and `hvtiRpropensity` lives in
-`ehrlinger/hvtiPropensityScores`.
+order you had to know, against repository names that have not always
+matched the package names: `hvtiRpropensity` lived in
+`ehrlinger/hvtiPropensityScores` and `TemporalHazard` in
+`ehrlinger/temporal_hazard` until the 2026-08 renames.
 
 `hvtiR` reduces that to one call, and adds a way to ask whether you are
 current.
@@ -21,18 +21,18 @@ to the repository it installs from:
 ``` r
 
 hvtiR::members()
-#>            package                           repo
-#> 1   hvtiRutilities       ehrlinger/hvtiRutilities
-#> 2    hvtiRdatasets        ehrlinger/hvtiRdatasets
-#> 3      hvtiRtables          ehrlinger/hvtiRtables
-#> 4   hvtiRtemplates       ehrlinger/hvtiRtemplates
-#> 5        hvtiPlotR            ehrlinger/hvtiPlotR
-#> 6  hvtiRlifetables      ehrlinger/hvtiRlifetables
-#> 7   hvtiRbootstrap       ehrlinger/hvtiRbootstrap
-#> 8  hvtiRpropensity ehrlinger/hvtiPropensityScores
-#> 9   hvtiBoostmtree       ehrlinger/hvtiBoostmtree
-#> 10  TemporalHazard      ehrlinger/temporal_hazard
-#> 11 ggRandomForests      ehrlinger/ggRandomForests
+#>            package                      repo
+#> 1   hvtiRutilities  ehrlinger/hvtiRutilities
+#> 2   hvtiRdatabuild  ehrlinger/hvtiRdatabuild
+#> 3      hvtiRtables     ehrlinger/hvtiRtables
+#> 4   hvtiRtemplates  ehrlinger/hvtiRtemplates
+#> 5        hvtiPlotR       ehrlinger/hvtiPlotR
+#> 6  hvtiRlifetables ehrlinger/hvtiRlifetables
+#> 7   hvtiRbootstrap  ehrlinger/hvtiRbootstrap
+#> 8  hvtiRpropensity ehrlinger/hvtiRpropensity
+#> 9   hvtiBoostmtree  ehrlinger/hvtiBoostmtree
+#> 10  TemporalHazard  ehrlinger/TemporalHazard
+#> 11 ggRandomForests ehrlinger/ggRandomForests
 ```
 
 ## What you have
@@ -50,7 +50,7 @@ hvtiR::status()
     hvtiR - 11 members
 
       v hvtiRutilities   1.0.10     1.0.10     ok
-      v hvtiRdatasets    0.1.1      0.1.1      ok
+      v hvtiRdatabuild    0.1.1      0.1.1      ok
       ! hvtiRtables      0.9.0      1.0.0      stale
       x hvtiPlotR        -          2.7.6      missing
       ...
@@ -91,7 +91,7 @@ hvtiR::status(remote = FALSE)
     hvtiR - 11 members
 
       - hvtiRutilities   1.0.10     -          ok-local
-      - hvtiRdatasets    0.1.1      -          ok-local
+      - hvtiRdatabuild    0.1.1      -          ok-local
       - hvtiRtables      1.0.0      -          ok-local
       - hvtiRtemplates   1.0.0      -          ok-local
       - hvtiPlotR        2.7.6      -          ok-local

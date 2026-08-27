@@ -24,7 +24,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">hvtiR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.7</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.8</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -76,7 +76,7 @@
 
     <section class="level2"><h2 id="the-problem">The problem<a class="anchor" aria-label="anchor" href="#the-problem"></a>
 </h2>
-<p>The HVTI R package family is eleven packages spread across eleven GitHub repositories. Setting up a machine used to mean eleven <code><a href="https://pak.r-lib.org/reference/pak.html" class="external-link">pak::pak()</a></code> calls, in an order you had to know, against repository names that do not always match the package names — <code>TemporalHazard</code> lives in <code>ehrlinger/temporal_hazard</code>, and <code>hvtiRpropensity</code> lives in <code>ehrlinger/hvtiPropensityScores</code>.</p>
+<p>The HVTI R package family is eleven packages spread across eleven GitHub repositories. Setting up a machine used to mean eleven <code><a href="https://pak.r-lib.org/reference/pak.html" class="external-link">pak::pak()</a></code> calls, in an order you had to know, against repository names that have not always matched the package names: <code>hvtiRpropensity</code> lived in <code>ehrlinger/hvtiPropensityScores</code> and <code>TemporalHazard</code> in <code>ehrlinger/temporal_hazard</code> until the 2026-08 renames.</p>
 <p><code>hvtiR</code> reduces that to one call, and adds a way to ask whether you are current.</p>
 </section><section class="level2"><h2 id="the-members">The members<a class="anchor" aria-label="anchor" href="#the-members"></a>
 </h2>
@@ -84,18 +84,18 @@
 <div class="cell">
 <div class="sourceCode cell-code" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">hvtiR</span><span class="fu">::</span><span class="fu"><a href="../reference/members.html">members</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt;            package                           repo</span></span>
-<span><span class="co">#&gt; 1   hvtiRutilities       ehrlinger/hvtiRutilities</span></span>
-<span><span class="co">#&gt; 2    hvtiRdatasets        ehrlinger/hvtiRdatasets</span></span>
-<span><span class="co">#&gt; 3      hvtiRtables          ehrlinger/hvtiRtables</span></span>
-<span><span class="co">#&gt; 4   hvtiRtemplates       ehrlinger/hvtiRtemplates</span></span>
-<span><span class="co">#&gt; 5        hvtiPlotR            ehrlinger/hvtiPlotR</span></span>
-<span><span class="co">#&gt; 6  hvtiRlifetables      ehrlinger/hvtiRlifetables</span></span>
-<span><span class="co">#&gt; 7   hvtiRbootstrap       ehrlinger/hvtiRbootstrap</span></span>
-<span><span class="co">#&gt; 8  hvtiRpropensity ehrlinger/hvtiPropensityScores</span></span>
-<span><span class="co">#&gt; 9   hvtiBoostmtree       ehrlinger/hvtiBoostmtree</span></span>
-<span><span class="co">#&gt; 10  TemporalHazard      ehrlinger/temporal_hazard</span></span>
-<span><span class="co">#&gt; 11 ggRandomForests      ehrlinger/ggRandomForests</span></span></code></pre></div>
+<span><span class="co">#&gt;            package                      repo</span></span>
+<span><span class="co">#&gt; 1   hvtiRutilities  ehrlinger/hvtiRutilities</span></span>
+<span><span class="co">#&gt; 2   hvtiRdatabuild  ehrlinger/hvtiRdatabuild</span></span>
+<span><span class="co">#&gt; 3      hvtiRtables     ehrlinger/hvtiRtables</span></span>
+<span><span class="co">#&gt; 4   hvtiRtemplates  ehrlinger/hvtiRtemplates</span></span>
+<span><span class="co">#&gt; 5        hvtiPlotR       ehrlinger/hvtiPlotR</span></span>
+<span><span class="co">#&gt; 6  hvtiRlifetables ehrlinger/hvtiRlifetables</span></span>
+<span><span class="co">#&gt; 7   hvtiRbootstrap  ehrlinger/hvtiRbootstrap</span></span>
+<span><span class="co">#&gt; 8  hvtiRpropensity ehrlinger/hvtiRpropensity</span></span>
+<span><span class="co">#&gt; 9   hvtiBoostmtree  ehrlinger/hvtiBoostmtree</span></span>
+<span><span class="co">#&gt; 10  TemporalHazard  ehrlinger/TemporalHazard</span></span>
+<span><span class="co">#&gt; 11 ggRandomForests ehrlinger/ggRandomForests</span></span></code></pre></div>
 </div>
 </section><section class="level2"><h2 id="what-you-have">What you have<a class="anchor" aria-label="anchor" href="#what-you-have"></a>
 </h2>
@@ -107,7 +107,7 @@
 <pre><code>hvtiR - 11 members
 
   v hvtiRutilities   1.0.10     1.0.10     ok
-  v hvtiRdatasets    0.1.1      0.1.1      ok
+  v hvtiRdatabuild    0.1.1      0.1.1      ok
   ! hvtiRtables      0.9.0      1.0.0      stale
   x hvtiPlotR        -          2.7.6      missing
   ...
@@ -161,7 +161,7 @@ i 2 members need updating. Run hvtiR::update().</code></pre>
 <pre><code>hvtiR - 11 members
 
   - hvtiRutilities   1.0.10     -          ok-local
-  - hvtiRdatasets    0.1.1      -          ok-local
+  - hvtiRdatabuild    0.1.1      -          ok-local
   - hvtiRtables      1.0.0      -          ok-local
   - hvtiRtemplates   1.0.0      -          ok-local
   - hvtiPlotR        2.7.6      -          ok-local

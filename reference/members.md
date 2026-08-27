@@ -23,25 +23,27 @@ A data frame with one row per member and two character columns:
 
 ## Details
 
-Two members carry a package name that differs from their repository
-name: `hvtiRpropensity` lives in `ehrlinger/hvtiPropensityScores`, and
-`TemporalHazard` lives in `ehrlinger/temporal_hazard`. The mapping is
-therefore stored rather than derived.
+Every member's package name currently matches its repository name, but
+the mapping is stored rather than derived. The two diverged until the
+2026-08 renames – `hvtiRpropensity` lived in
+`ehrlinger/hvtiPropensityScores` and `TemporalHazard` in
+`ehrlinger/temporal_hazard` – and a derived repo would fail silently the
+next time a name moves.
 
 ## Examples
 
 ``` r
 members()
-#>            package                           repo
-#> 1   hvtiRutilities       ehrlinger/hvtiRutilities
-#> 2    hvtiRdatasets        ehrlinger/hvtiRdatasets
-#> 3      hvtiRtables          ehrlinger/hvtiRtables
-#> 4   hvtiRtemplates       ehrlinger/hvtiRtemplates
-#> 5        hvtiPlotR            ehrlinger/hvtiPlotR
-#> 6  hvtiRlifetables      ehrlinger/hvtiRlifetables
-#> 7   hvtiRbootstrap       ehrlinger/hvtiRbootstrap
-#> 8  hvtiRpropensity ehrlinger/hvtiPropensityScores
-#> 9   hvtiBoostmtree       ehrlinger/hvtiBoostmtree
-#> 10  TemporalHazard      ehrlinger/temporal_hazard
-#> 11 ggRandomForests      ehrlinger/ggRandomForests
+#>            package                      repo
+#> 1   hvtiRutilities  ehrlinger/hvtiRutilities
+#> 2   hvtiRdatabuild  ehrlinger/hvtiRdatabuild
+#> 3      hvtiRtables     ehrlinger/hvtiRtables
+#> 4   hvtiRtemplates  ehrlinger/hvtiRtemplates
+#> 5        hvtiPlotR       ehrlinger/hvtiPlotR
+#> 6  hvtiRlifetables ehrlinger/hvtiRlifetables
+#> 7   hvtiRbootstrap  ehrlinger/hvtiRbootstrap
+#> 8  hvtiRpropensity ehrlinger/hvtiRpropensity
+#> 9   hvtiBoostmtree  ehrlinger/hvtiBoostmtree
+#> 10  TemporalHazard  ehrlinger/TemporalHazard
+#> 11 ggRandomForests ehrlinger/ggRandomForests
 ```

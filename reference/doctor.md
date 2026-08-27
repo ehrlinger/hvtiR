@@ -44,7 +44,7 @@ doctor(remote = FALSE)
 #> hvtiR - 11 members
 #> 
 #>   x hvtiRutilities   -          -          missing
-#>   x hvtiRdatasets    -          -          missing
+#>   x hvtiRdatabuild   -          -          missing
 #>   x hvtiRtables      -          -          missing
 #>   x hvtiRtemplates   -          -          missing
 #>   x hvtiPlotR        -          -          missing

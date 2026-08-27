@@ -59,19 +59,19 @@ repository-specific reason.
 
 ## Members
 
-| Package         | Repository                     |
-|-----------------|--------------------------------|
-| hvtiRutilities  | ehrlinger/hvtiRutilities       |
-| hvtiRdatasets   | ehrlinger/hvtiRdatasets        |
-| hvtiRtables     | ehrlinger/hvtiRtables          |
-| hvtiRtemplates  | ehrlinger/hvtiRtemplates       |
-| hvtiPlotR       | ehrlinger/hvtiPlotR            |
-| hvtiRlifetables | ehrlinger/hvtiRlifetables      |
-| hvtiRbootstrap  | ehrlinger/hvtiRbootstrap       |
-| hvtiRpropensity | ehrlinger/hvtiPropensityScores |
-| hvtiBoostmtree  | ehrlinger/hvtiBoostmtree       |
-| TemporalHazard  | ehrlinger/temporal_hazard      |
-| ggRandomForests | ehrlinger/ggRandomForests      |
+| Package         | Repository                |
+|-----------------|---------------------------|
+| hvtiRutilities  | ehrlinger/hvtiRutilities  |
+| hvtiRdatabuild  | ehrlinger/hvtiRdatabuild  |
+| hvtiRtables     | ehrlinger/hvtiRtables     |
+| hvtiRtemplates  | ehrlinger/hvtiRtemplates  |
+| hvtiPlotR       | ehrlinger/hvtiPlotR       |
+| hvtiRlifetables | ehrlinger/hvtiRlifetables |
+| hvtiRbootstrap  | ehrlinger/hvtiRbootstrap  |
+| hvtiRpropensity | ehrlinger/hvtiRpropensity |
+| hvtiBoostmtree  | ehrlinger/hvtiBoostmtree  |
+| TemporalHazard  | ehrlinger/TemporalHazard  |
+| ggRandomForests | ehrlinger/ggRandomForests |
 
 Members install from GitHub `main` because that is where family releases
 land first. CRAN is a downstream republication for members that are

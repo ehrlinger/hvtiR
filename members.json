@@ -1,5 +1,5 @@
 {
-  "generated_from": "hvtiR 1.0.7",
+  "generated_from": "hvtiR 1.0.8",
   "counts": {
     "members": 11,
     "members_on_cran": 2,
@@ -22,8 +22,8 @@
     },
     {
       "package": "TemporalHazard",
-      "repo": "ehrlinger/temporal_hazard",
-      "url": "https://github.com/ehrlinger/temporal_hazard",
+      "repo": "ehrlinger/TemporalHazard",
+      "url": "https://github.com/ehrlinger/TemporalHazard",
       "family": "member",
       "blurb": "R port of the C computational core underlying the Cleveland Clinic Hazard SAS module.",
       "cran": "TemporalHazard",
@@ -61,9 +61,9 @@
       "role": null
     },
     {
-      "package": "hvtiRdatasets",
-      "repo": "ehrlinger/hvtiRdatasets",
-      "url": "https://github.com/ehrlinger/hvtiRdatasets",
+      "package": "hvtiRdatabuild",
+      "repo": "ehrlinger/hvtiRdatabuild",
+      "url": "https://github.com/ehrlinger/hvtiRdatabuild",
       "family": "member",
       "blurb": "Analysis-ready clinical datasets for HVTI CORR studies, verified against the legacy SAS datasets they replace.",
       "cran": null,
@@ -82,8 +82,8 @@
     },
     {
       "package": "hvtiRpropensity",
-      "repo": "ehrlinger/hvtiPropensityScores",
-      "url": "https://github.com/ehrlinger/hvtiPropensityScores",
+      "repo": "ehrlinger/hvtiRpropensity",
+      "url": "https://github.com/ehrlinger/hvtiRpropensity",
       "family": "member",
       "blurb": "Propensity score estimation, matching and IPTW with standardized balance diagnostics, for cardiac surgery comparative-effectiveness research.",
       "cran": null,
