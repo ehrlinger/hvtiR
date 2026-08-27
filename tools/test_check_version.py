@@ -89,25 +89,34 @@ class NewsAgreementTests(unittest.TestCase):
 
 
 class DateTests(unittest.TestCase):
-    """A version bump that leaves Date stale slipped past the first guard.
+    """Date must not go backwards or into the future.
 
-    Caught in review on #12: Version moved to 1.0.6 while Date still read the
-    previous release's day. The guard checked Version and NEWS but not Date.
+    It deliberately does NOT have to advance. This package cut 1.0.3, 1.0.4,
+    1.0.5 and 1.0.6 all on 2026-08-26; requiring a new day would have blocked
+    every one of them. Same-day releases are normal here, so the rule catches
+    a Date left behind from an earlier day, not one shared with the release
+    before it.
     """
 
     BASE = "Package: hvtiR\nVersion: 1.0.5\nDate: 2026-08-26\n"
     NEWS = "Package: hvtiR\nVersion: 1.0.6\n\n## hvtiR 1.0.6\n"
 
-    def test_a_bump_that_moves_the_date_passes(self):
+    def test_a_later_date_passes(self):
         head = "Package: hvtiR\nVersion: 1.0.6\nDate: 2026-08-27\n"
         self.assertEqual(main_with(self.BASE, head, self.NEWS), 0)
 
-    def test_a_bump_that_leaves_the_date_stale_fails(self):
+    def test_the_same_day_passes_because_same_day_releases_are_normal(self):
         head = "Package: hvtiR\nVersion: 1.0.6\nDate: 2026-08-26\n"
-        self.assertEqual(main_with(self.BASE, head, self.NEWS), 1)
+        self.assertEqual(main_with(self.BASE, head, self.NEWS), 0)
 
     def test_a_date_going_backwards_fails(self):
         head = "Package: hvtiR\nVersion: 1.0.6\nDate: 2026-08-25\n"
+        self.assertEqual(main_with(self.BASE, head, self.NEWS), 1)
+
+    def test_a_future_date_fails(self):
+        import datetime
+        ahead = (datetime.date.today() + datetime.timedelta(days=2)).isoformat()
+        head = f"Package: hvtiR\nVersion: 1.0.6\nDate: {ahead}\n"
         self.assertEqual(main_with(self.BASE, head, self.NEWS), 1)
 
     def test_a_malformed_date_is_rejected(self):

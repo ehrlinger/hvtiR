@@ -56,16 +56,23 @@ def parse_date(value: str) -> datetime.date:
         raise ValueError(f"Date {value!r} is not an ISO date (YYYY-MM-DD)") from None
 
 
-def compare_dates(base: str, head: str) -> list:
-    """A release dated before or on the previous one is a stale Date field."""
-    if parse_date(head) > parse_date(base):
-        return []
-    if base == head:
-        return [
-            f"DESCRIPTION Date is still {head}, unchanged from the base branch. "
-            "A version bump should carry the day it was made."
-        ]
-    return [f"DESCRIPTION Date {head} is earlier than the base branch's {base}."]
+def compare_dates(base: str, head: str, today: datetime.date = None) -> list:
+    """Date must not go backwards, and must not be in the future.
+
+    It deliberately need not advance. This package cut 1.0.3 through 1.0.6 all
+    on 2026-08-26, so requiring a new day would block same-day releases, which
+    are normal here. The rule therefore catches a Date left behind from an
+    earlier day rather than one shared with the release before it.
+    """
+    head_date, base_date = parse_date(head), parse_date(base)
+    problems = []
+    if head_date < base_date:
+        problems.append(
+            f"DESCRIPTION Date {head} is earlier than the base branch's {base}."
+        )
+    if head_date > (today or datetime.date.today()):
+        problems.append(f"DESCRIPTION Date {head} is in the future.")
+    return problems
 
 
 def compare(base: str, head: str) -> list:
