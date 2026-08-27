@@ -3,10 +3,11 @@
 #' The registry of R packages that make up the HVTI package family, together
 #' with the GitHub repository each one installs from.
 #'
-#' Two members carry a package name that differs from their repository name:
-#' `hvtiRpropensity` lives in `ehrlinger/hvtiPropensityScores`, and
-#' `TemporalHazard` lives in `ehrlinger/temporal_hazard`. The mapping is
-#' therefore stored rather than derived.
+#' Every member's package name currently matches its repository name, but the
+#' mapping is stored rather than derived. The two diverged until the 2026-08
+#' renames -- `hvtiRpropensity` lived in `ehrlinger/hvtiPropensityScores` and
+#' `TemporalHazard` in `ehrlinger/temporal_hazard` -- and a derived repo would
+#' fail silently the next time a name moves.
 #'
 #' @return A data frame with one row per member and two character columns:
 #'   \describe{
@@ -20,7 +21,7 @@ members <- function() {
   data.frame(
     package = c(
       "hvtiRutilities",
-      "hvtiRdatasets",
+      "hvtiRdatabuild",
       "hvtiRtables",
       "hvtiRtemplates",
       "hvtiPlotR",
@@ -33,15 +34,15 @@ members <- function() {
     ),
     repo = c(
       "ehrlinger/hvtiRutilities",
-      "ehrlinger/hvtiRdatasets",
+      "ehrlinger/hvtiRdatabuild",
       "ehrlinger/hvtiRtables",
       "ehrlinger/hvtiRtemplates",
       "ehrlinger/hvtiPlotR",
       "ehrlinger/hvtiRlifetables",
       "ehrlinger/hvtiRbootstrap",
-      "ehrlinger/hvtiPropensityScores",
+      "ehrlinger/hvtiRpropensity",
       "ehrlinger/hvtiBoostmtree",
-      "ehrlinger/temporal_hazard",
+      "ehrlinger/TemporalHazard",
       "ehrlinger/ggRandomForests"
     ),
     stringsAsFactors = FALSE
@@ -59,7 +60,7 @@ members <- function() {
 #' @noRd
 member_deps <- function() {
   list(
-    hvtiRdatasets = "hvtiRutilities",
+    hvtiRdatabuild = "hvtiRutilities",
     hvtiRlifetables = "TemporalHazard",
     hvtiRtemplates = "hvtiRutilities"
   )

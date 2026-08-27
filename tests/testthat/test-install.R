@@ -12,7 +12,7 @@ test_that("install_members passes every spec to pak in a single call", {
   expect_length(calls, 1L)
   expect_identical(
     calls[[1]],
-    c("ehrlinger/hvtiRutilities", "ehrlinger/temporal_hazard")
+    c("ehrlinger/hvtiRutilities", "ehrlinger/TemporalHazard")
   )
 })
 
@@ -182,8 +182,8 @@ test_that("expand_targets pulls in an in-family dependency", {
     c("hvtiRlifetables", "TemporalHazard")
   )
   expect_identical(
-    expand_targets("hvtiRdatasets"),
-    c("hvtiRutilities", "hvtiRdatasets")
+    expand_targets("hvtiRdatabuild"),
+    c("hvtiRutilities", "hvtiRdatabuild")
   )
   expect_identical(
     expand_targets("hvtiRtemplates"),
@@ -223,6 +223,6 @@ test_that("update sends a stale member's in-family dependency too", {
 
   update()
 
-  expect_true("ehrlinger/temporal_hazard" %in% captured)
+  expect_true("ehrlinger/TemporalHazard" %in% captured)
   expect_true("ehrlinger/hvtiRlifetables" %in% captured)
 })
