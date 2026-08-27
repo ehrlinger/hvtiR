@@ -1,5 +1,5 @@
 {
-  "generated_from": "hvtiR 1.0.9",
+  "generated_from": "hvtiR 1.0.10",
   "counts": {
     "members": 11,
     "members_on_cran": 2,
@@ -132,8 +132,8 @@
     },
     {
       "package": "HVTI Recipes",
-      "repo": "ehrlinger/hvti_graphics",
-      "url": "https://ehrlinger.github.io/hvti_graphics/",
+      "repo": "ehrlinger/hvtiGraphics",
+      "url": "https://ehrlinger.github.io/hvtiGraphics/",
       "family": "book",
       "blurb": "Catalog of publication-ready figures, tables, and datasets for clinical outcomes research -- Kaplan-Meier, propensity balance, CONSORT, random-forest visualizations -- each paired with reproducible code.",
       "cran": null,

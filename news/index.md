@@ -1,5 +1,16 @@
 # Changelog
 
+## hvtiR 1.0.10
+
+- The `HVTI Recipes` row in `inst/extdata/catalog.csv` now points at
+  `ehrlinger/hvtiGraphics`, and its homepage at
+  <https://ehrlinger.github.io/hvtiGraphics/>. The book’s repository was
+  renamed from `hvti_graphics`; GitHub redirects the repository, but
+  GitHub Pages does not, so the homepage was a dead link rather than a
+  redirected one. The book is not an R package, so it sits outside
+  [`members()`](https://ehrlinger.github.io/hvtiR/reference/members.md)
+  and was missed when the registry was repointed in 1.0.8.
+
 ## hvtiR 1.0.9
 
 - `.remember/`, the scratch directory written by the `remember` skill,
