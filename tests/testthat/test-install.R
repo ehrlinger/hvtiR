@@ -185,6 +185,10 @@ test_that("expand_targets pulls in an in-family dependency", {
     expand_targets("hvtiRdatasets"),
     c("hvtiRutilities", "hvtiRdatasets")
   )
+  expect_identical(
+    expand_targets("hvtiRtemplates"),
+    c("hvtiRutilities", "hvtiRtemplates")
+  )
 })
 
 test_that("expand_targets leaves a target set with no in-family deps alone", {
