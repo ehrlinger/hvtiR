@@ -76,7 +76,7 @@ expand_targets <- function(packages, deps = member_deps(), registry = members())
 #' requirement, not an optimisation: `hvtiRlifetables` imports
 #' `TemporalHazard (>= 1.2.0)` without a `Remotes:` line, so resolving it on
 #' its own sends pak to CRAN and the requirement fails. Passing every spec at
-#' once co-resolves `ehrlinger/temporal_hazard` and satisfies the import.
+#' once co-resolves `ehrlinger/TemporalHazard` and satisfies the import.
 #'
 #' @param packages Character vector of member package names.
 #' @param force Bypass the loaded-namespace guard.

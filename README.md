@@ -55,15 +55,15 @@ GitHub check fails, it also reports the repository-specific reason.
 | Package | Repository |
 |---|---|
 | hvtiRutilities | ehrlinger/hvtiRutilities |
-| hvtiRdatasets | ehrlinger/hvtiRdatasets |
+| hvtiRdatabuild | ehrlinger/hvtiRdatabuild |
 | hvtiRtables | ehrlinger/hvtiRtables |
 | hvtiRtemplates | ehrlinger/hvtiRtemplates |
 | hvtiPlotR | ehrlinger/hvtiPlotR |
 | hvtiRlifetables | ehrlinger/hvtiRlifetables |
 | hvtiRbootstrap | ehrlinger/hvtiRbootstrap |
-| hvtiRpropensity | ehrlinger/hvtiPropensityScores |
+| hvtiRpropensity | ehrlinger/hvtiRpropensity |
 | hvtiBoostmtree | ehrlinger/hvtiBoostmtree |
-| TemporalHazard | ehrlinger/temporal_hazard |
+| TemporalHazard | ehrlinger/TemporalHazard |
 | ggRandomForests | ehrlinger/ggRandomForests |
 
 Members install from GitHub `main` because that is where family releases land

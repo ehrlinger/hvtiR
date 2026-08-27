@@ -26,10 +26,10 @@ test_that("the two name mismatches are recorded", {
 
   expect_identical(
     m$repo[m$package == "hvtiRpropensity"],
-    "ehrlinger/hvtiPropensityScores"
+    "ehrlinger/hvtiRpropensity"
   )
   expect_identical(
     m$repo[m$package == "TemporalHazard"],
-    "ehrlinger/temporal_hazard"
+    "ehrlinger/TemporalHazard"
   )
 })

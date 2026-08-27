@@ -30,7 +30,7 @@ test_that("build_specs resolves the two name mismatches", {
 
   expect_identical(
     build_specs(m, c("TemporalHazard", "hvtiRpropensity")),
-    c("ehrlinger/temporal_hazard", "ehrlinger/hvtiPropensityScores")
+    c("ehrlinger/TemporalHazard", "ehrlinger/hvtiRpropensity")
   )
 })
 

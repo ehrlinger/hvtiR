@@ -20,9 +20,9 @@ knitr::opts_chunk$set(
 
 The HVTI R package family is eleven packages spread across eleven GitHub
 repositories. Setting up a machine used to mean eleven `pak::pak()` calls, in
-an order you had to know, against repository names that do not always match
-the package names — `TemporalHazard` lives in `ehrlinger/temporal_hazard`, and
-`hvtiRpropensity` lives in `ehrlinger/hvtiPropensityScores`.
+an order you had to know, against repository names that have not always matched
+the package names: `hvtiRpropensity` lived in `ehrlinger/hvtiPropensityScores`
+and `TemporalHazard` in `ehrlinger/temporal_hazard` until the 2026-08 renames.
 
 `hvtiR` reduces that to one call, and adds a way to ask whether you are
 current.
@@ -50,7 +50,7 @@ hvtiR::status()
 hvtiR - 11 members
 
   v hvtiRutilities   1.0.10     1.0.10     ok
-  v hvtiRdatasets    0.1.1      0.1.1      ok
+  v hvtiRdatabuild    0.1.1      0.1.1      ok
   ! hvtiRtables      0.9.0      1.0.0      stale
   x hvtiPlotR        -          2.7.6      missing
   ...
@@ -90,7 +90,7 @@ hvtiR::status(remote = FALSE)
 hvtiR - 11 members
 
   - hvtiRutilities   1.0.10     -          ok-local
-  - hvtiRdatasets    0.1.1      -          ok-local
+  - hvtiRdatabuild    0.1.1      -          ok-local
   - hvtiRtables      1.0.0      -          ok-local
   - hvtiRtemplates   1.0.0      -          ok-local
   - hvtiPlotR        2.7.6      -          ok-local
