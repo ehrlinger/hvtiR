@@ -11,4 +11,4 @@ hvtiRtables,ehrlinger/hvtiRtables,member,"Manuscript-compliant Word tables from 
 hvtiRtemplates,ehrlinger/hvtiRtemplates,member,"Versioned analysis job templates and the analysis-prefix taxonomy the CORR group organizes jobs by, so a study binds to a versioned template rather than to a copy.",,stable,,
 hvtiRutilities,ehrlinger/hvtiRutilities,member,"Utility functions supporting reproducible HVTI research workflows.",,stable,,
 hazard,ehrlinger/hazard,standalone,"SAS and C implementation of multi-phase hazard analysis for time-to-event decomposition.",,stable,Maintainer,
-HVTI Recipes,ehrlinger/hvti_graphics,book,"Catalog of publication-ready figures, tables, and datasets for clinical outcomes research -- Kaplan-Meier, propensity balance, CONSORT, random-forest visualizations -- each paired with reproducible code.",,stable,,https://ehrlinger.github.io/hvti_graphics/
+HVTI Recipes,ehrlinger/hvtiGraphics,book,"Catalog of publication-ready figures, tables, and datasets for clinical outcomes research -- Kaplan-Meier, propensity balance, CONSORT, random-forest visualizations -- each paired with reproducible code.",,stable,,https://ehrlinger.github.io/hvtiGraphics/
