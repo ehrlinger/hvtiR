@@ -1,5 +1,13 @@
 Package: hvtiR
-Version: 1.0.7
+Version: 1.0.8
+
+## hvtiR 1.0.8
+
+* `.remember/`, the scratch directory written by the `remember` skill, is now
+  excluded from the build and from git. It was listed in neither ignore file, so
+  `R CMD build` copied it into the tarball and `R CMD check` reported a "hidden
+  files and directories" NOTE against the working tree. Nothing an installed
+  package exposes changes.
 
 ## hvtiR 1.0.7
 
