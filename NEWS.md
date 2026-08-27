@@ -1,5 +1,12 @@
 Package: hvtiR
-Version: 1.0.5
+Version: 1.0.6
+
+## hvtiR 1.0.6
+
+* `member_deps()` records that `hvtiRtemplates` imports `hvtiRutilities`.
+  The dependency was added upstream on 2026-08-27; without the entry an
+  update that names only `hvtiRtemplates` leaves `pak` to resolve
+  `hvtiRutilities` from CRAN, where it does not exist.
 
 ## hvtiR 1.0.5
 

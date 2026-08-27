@@ -60,6 +60,7 @@ members <- function() {
 member_deps <- function() {
   list(
     hvtiRdatasets = "hvtiRutilities",
-    hvtiRlifetables = "TemporalHazard"
+    hvtiRlifetables = "TemporalHazard",
+    hvtiRtemplates = "hvtiRutilities"
   )
 }
