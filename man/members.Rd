@@ -18,10 +18,11 @@ The registry of R packages that make up the HVTI package family, together
 with the GitHub repository each one installs from.
 }
 \details{
-Two members carry a package name that differs from their repository name:
-\code{hvtiRpropensity} lives in \code{ehrlinger/hvtiPropensityScores}, and
-\code{TemporalHazard} lives in \code{ehrlinger/temporal_hazard}. The mapping is
-therefore stored rather than derived.
+Every member's package name currently matches its repository name, but the
+mapping is stored rather than derived. The two diverged until the 2026-08
+renames -- \code{hvtiRpropensity} lived in \code{ehrlinger/hvtiPropensityScores} and
+\code{TemporalHazard} in \code{ehrlinger/temporal_hazard} -- and a derived repo would
+fail silently the next time a name moves.
 }
 \examples{
 members()

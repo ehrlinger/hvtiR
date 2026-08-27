@@ -39,14 +39,15 @@ automatically. Do not read a green PR as broader assurance than it gives.
 - **Every spec goes to `pak::pak()` in ONE call. This is correctness, not optimisation.**
   `hvtiRlifetables` imports `TemporalHazard (>= 1.2.0)`; resolving it alone sends pak to CRAN,
   where that version does not exist, and the requirement fails. Passing every spec at once
-  co-resolves `ehrlinger/temporal_hazard` and satisfies the import. `test-install.R` pins this
+  co-resolves `ehrlinger/TemporalHazard` and satisfies the import. `test-install.R` pins this
   with `expect_length(calls, 1L)` — a change that installs "only what is needed" one package
   at a time reintroduces the bug that shipped in 1.0.0 and was fixed before release.
 - **Members resolve from GitHub `main`, never from CRAN.** That is the whole point: the CRAN
   queue must not be able to block the family. A spec that reaches CRAN is a defect.
-- **The registry is stored, not derived.** Two members' package names differ from their
-  repositories — `hvtiRpropensity` lives in `ehrlinger/hvtiPropensityScores`, and
-  `TemporalHazard` in `ehrlinger/temporal_hazard`. Never infer a repo from a package name.
+- **The registry is stored, not derived.** Every member's package name currently matches its
+  repository, but they diverged until the 2026-08 renames — `hvtiRpropensity` lived in
+  `ehrlinger/hvtiPropensityScores`, `TemporalHazard` in `ehrlinger/temporal_hazard`. Never
+  infer a repo from a package name.
 - **`R/remote.R` is the single network seam**, isolated so tests can replace it with
   `testthat::local_mocked_bindings()` and never reach the network. Keep it that way: a second
   network call somewhere else makes the suite flaky and slow, and it will not be obvious why.
