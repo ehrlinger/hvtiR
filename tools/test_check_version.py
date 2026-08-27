@@ -53,8 +53,9 @@ class CompareTests(unittest.TestCase):
 
 
 class NewsAgreementTests(unittest.TestCase):
-    DESC = "Package: hvtiR\nVersion: 1.0.6\n"
-    BASE = "Package: hvtiR\nVersion: 1.0.5\n"
+    # Dates present and moving, so these exercise NEWS agreement alone.
+    DESC = "Package: hvtiR\nVersion: 1.0.6\nDate: 2026-08-27\n"
+    BASE = "Package: hvtiR\nVersion: 1.0.5\nDate: 2026-08-26\n"
 
     def test_matching_news_and_description_pass(self):
         news = "Package: hvtiR\nVersion: 1.0.6\n\n## hvtiR 1.0.6\n"
@@ -72,6 +73,11 @@ class NewsAgreementTests(unittest.TestCase):
         news = "Package: hvtiR\nVersion: 1.0.5\n\n## hvtiR 1.0.5\n"
         self.assertEqual(main_with(self.BASE, self.BASE, news), 1)
 
+    def test_a_bumped_version_with_a_moved_date_and_matching_news_passes(self):
+        # The happy path, asserted once with every rule satisfied.
+        news = "Package: hvtiR\nVersion: 1.0.6\n\n## hvtiR 1.0.6\n"
+        self.assertEqual(main_with(self.BASE, self.DESC, news), 0)
+
     def test_all_three_problems_are_reported_together(self):
         # One run should surface every problem, not stop at the first.
         news = "Package: hvtiR\nVersion: 9.9.9\n\n## hvtiR 8.8.8\n"
@@ -80,6 +86,37 @@ class NewsAgreementTests(unittest.TestCase):
         with contextlib.redirect_stderr(err):
             main_with(self.BASE, self.BASE, news)
         self.assertGreaterEqual(err.getvalue().count("- "), 2)
+
+
+class DateTests(unittest.TestCase):
+    """A version bump that leaves Date stale slipped past the first guard.
+
+    Caught in review on #12: Version moved to 1.0.6 while Date still read the
+    previous release's day. The guard checked Version and NEWS but not Date.
+    """
+
+    BASE = "Package: hvtiR\nVersion: 1.0.5\nDate: 2026-08-26\n"
+    NEWS = "Package: hvtiR\nVersion: 1.0.6\n\n## hvtiR 1.0.6\n"
+
+    def test_a_bump_that_moves_the_date_passes(self):
+        head = "Package: hvtiR\nVersion: 1.0.6\nDate: 2026-08-27\n"
+        self.assertEqual(main_with(self.BASE, head, self.NEWS), 0)
+
+    def test_a_bump_that_leaves_the_date_stale_fails(self):
+        head = "Package: hvtiR\nVersion: 1.0.6\nDate: 2026-08-26\n"
+        self.assertEqual(main_with(self.BASE, head, self.NEWS), 1)
+
+    def test_a_date_going_backwards_fails(self):
+        head = "Package: hvtiR\nVersion: 1.0.6\nDate: 2026-08-25\n"
+        self.assertEqual(main_with(self.BASE, head, self.NEWS), 1)
+
+    def test_a_malformed_date_is_rejected(self):
+        head = "Package: hvtiR\nVersion: 1.0.6\nDate: Aug 27 2026\n"
+        self.assertEqual(main_with(self.BASE, head, self.NEWS), 1)
+
+    def test_a_missing_date_field_is_reported_not_ignored(self):
+        head = "Package: hvtiR\nVersion: 1.0.6\n"
+        self.assertEqual(main_with(self.BASE, head, self.NEWS), 1)
 
 
 if __name__ == "__main__":

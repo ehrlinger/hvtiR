@@ -13,6 +13,7 @@ Standard library only -- no pip install step on the runner.
 from __future__ import annotations
 
 import argparse
+import datetime
 import re
 import sys
 from pathlib import Path
@@ -41,6 +42,32 @@ def parse_version(version: str) -> tuple:
     return tuple(int(p) for p in parts)
 
 
+def read_date(text: str, label: str) -> str:
+    match = re.search(r"^Date:\s*(\S+)", text, re.M)
+    if not match:
+        raise ValueError(f"no Date: field found in {label}")
+    return match.group(1)
+
+
+def parse_date(value: str) -> datetime.date:
+    try:
+        return datetime.date.fromisoformat(value)
+    except ValueError:
+        raise ValueError(f"Date {value!r} is not an ISO date (YYYY-MM-DD)") from None
+
+
+def compare_dates(base: str, head: str) -> list:
+    """A release dated before or on the previous one is a stale Date field."""
+    if parse_date(head) > parse_date(base):
+        return []
+    if base == head:
+        return [
+            f"DESCRIPTION Date is still {head}, unchanged from the base branch. "
+            "A version bump should carry the day it was made."
+        ]
+    return [f"DESCRIPTION Date {head} is earlier than the base branch's {base}."]
+
+
 def compare(base: str, head: str) -> list:
     """Problems with the head version relative to base. Empty means fine."""
     if parse_version(head) > parse_version(base):
@@ -63,6 +90,14 @@ def main_with(base_desc: str, head_desc: str, head_news: str) -> int:
     except ValueError as exc:
         problems.append(str(exc))
         return _report(problems)
+
+    try:
+        problems += compare_dates(
+            read_date(base_desc, "the base branch's DESCRIPTION"),
+            read_date(head_desc, "DESCRIPTION"),
+        )
+    except ValueError as exc:
+        problems.append(str(exc))
 
     try:
         news = read_version(head_news, "NEWS.md")

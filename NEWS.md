@@ -8,7 +8,7 @@ Version: 1.0.7
   identical line merges silently and only `NEWS.md` shows a conflict -- so
   the collision was invisible until someone read the release notes. The
   guard also checks that `NEWS.md`'s `Version:` line and its per-release
-  heading agree with `DESCRIPTION`.
+  heading agree with `DESCRIPTION`, and that `Date` moved with the version.
 
 ## hvtiR 1.0.6
 
