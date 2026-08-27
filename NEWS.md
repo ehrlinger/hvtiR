@@ -1,7 +1,7 @@
 Package: hvtiR
-Version: 1.0.8
+Version: 1.0.9
 
-## hvtiR 1.0.8
+## hvtiR 1.0.9
 
 * `.remember/`, the scratch directory written by the `remember` skill, is now
   excluded from the build and from git. It was listed in neither ignore file, so
