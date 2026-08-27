@@ -1,5 +1,14 @@
 Package: hvtiR
-Version: 1.0.6
+Version: 1.0.7
+
+## hvtiR 1.0.7
+
+* A pull request whose `Version:` has not moved past `main` now fails CI.
+  Two branches bumping to the same version do not conflict in git -- the
+  identical line merges silently and only `NEWS.md` shows a conflict -- so
+  the collision was invisible until someone read the release notes. The
+  guard also checks that `NEWS.md`'s `Version:` line and its per-release
+  heading agree with `DESCRIPTION`.
 
 ## hvtiR 1.0.6
 
