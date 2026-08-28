@@ -3,7 +3,7 @@
 ^\.github$
 ^_pkgdown\.yml$
 ^docs$
-^design$
+^dev$
 ^pkgdown$
 ^LICENSE\.md$
 ^\.lintr$

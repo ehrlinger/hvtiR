@@ -2,7 +2,7 @@
 .Rhistory
 .RData
 .Ruserdata
-# pkgdown build output. The spec and plan live in design/, outside pkgdown's way.
+# pkgdown build output. The spec and plan live in dev/specs/, outside pkgdown's way.
 /docs/
 *.Rcheck/
 *.tar.gz

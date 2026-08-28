@@ -8,7 +8,7 @@
 
 **Tech Stack:** R (>= 4.1.0), `cli` for output, `utils` for version handling, `pak` (Suggests) for installation, `testthat` 3e for tests, Quarto for vignettes, pkgdown for the site.
 
-**Spec:** `design/2026-08-19-design.md`
+**Spec:** `dev/specs/2026-08-19-hvtiverse-design.md`
 
 ## Global Constraints
 
@@ -120,8 +120,9 @@ BugReports: https://github.com/ehrlinger/hvtiverse/issues
 .superpowers/
 ```
 
-`docs/` is where pkgdown writes its built site, but the spec and plan live in
-`design/` and are tracked. A bare `docs/` line would ignore the
+`docs/` is where pkgdown writes its built site, but the spec and plan are
+tracked — they lived in `design/` when this plan was written and are in
+`dev/specs/` now. A bare `docs/` line would ignore the
 directory itself, and no negation inside an excluded directory can bring its
 contents back — so exclude the *contents* with `/docs/*` and re-include the one
 subdirectory. `.superpowers/` is scratch for the build process.
