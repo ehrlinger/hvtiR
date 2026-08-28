@@ -1,5 +1,13 @@
 Package: hvtiR
-Version: 1.0.12
+Version: 1.0.13
+
+## hvtiR 1.0.13
+
+* Recomposed `.claude/house-style.md` against `house-style-v1` at `64c9e23`
+  (archived `standard-2026-08-28-2`). Wording only: the Development records
+  section now separates the `.Rbuildignore` exclusion from git tracking, and
+  says that "one directory" contrasts against the `specs/` + `specs/plans/` pair
+  rather than implying a per-repository subdirectory. The rule is unchanged.
 
 ## hvtiR 1.0.12
 
