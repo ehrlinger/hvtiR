@@ -101,6 +101,6 @@ are not R packages and are not members.
   vignette, including what to do when a member will not install.
 - [Changelog](https://ehrlinger.github.io/hvtiR/news/) - what changed in
   each release.
-- [Design records](https://ehrlinger.github.io/hvtiR/design/) - the spec
-  and implementation plan, kept because the reasoning behind the design
-  is harder to recover than the code.
+- [Design records](https://ehrlinger.github.io/hvtiR/dev/specs/) - the
+  spec and implementation plan, kept because the reasoning behind the
+  design is harder to recover than the code.

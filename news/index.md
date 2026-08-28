@@ -1,5 +1,15 @@
 # Changelog
 
+## hvtiR 1.0.12
+
+- Development records moved from `design/` to `dev/specs/`, adopting the
+  portfolio convention settled in `ehrlinger/house-style`. Both gain an
+  `hvtiverse` slug, since the house style names a file
+  `<date>-<slug>-<kind>.md` and `2026-08-19-design.md` carried a date
+  and a kind with nothing in between. `^design$` became `^dev$` in
+  `.Rbuildignore`, and the README link, a `.gitignore` comment and the
+  directory’s own README table were repointed.
+
 ## hvtiR 1.0.11
 
 - This repo now carries the composed house style and the CI check that

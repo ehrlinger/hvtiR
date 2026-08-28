@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">hvtiR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.11</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.12</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -40,6 +40,10 @@
       <small>Source: <a href="https://github.com/ehrlinger/hvtiR/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.0.12" id="hvtir-1012">hvtiR 1.0.12<a class="anchor" aria-label="anchor" href="#hvtir-1012"></a></h2>
+<ul><li>Development records moved from <code>design/</code> to <code>dev/specs/</code>, adopting the portfolio convention settled in <code>ehrlinger/house-style</code>. Both gain an <code>hvtiverse</code> slug, since the house style names a file <code>&lt;date&gt;-&lt;slug&gt;-&lt;kind&gt;.md</code> and <code>2026-08-19-design.md</code> carried a date and a kind with nothing in between. <code>^design$</code> became <code>^dev$</code> in <code>.Rbuildignore</code>, and the README link, a <code>.gitignore</code> comment and the directory’s own README table were repointed.</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.0.11" id="hvtir-1011">hvtiR 1.0.11<a class="anchor" aria-label="anchor" href="#hvtir-1011"></a></h2>
 <ul><li>This repo now carries the composed house style and the CI check that enforces it, having been added to the <code>house-style</code> registry. The check fails when <code>.claude/house-style.md</code> drifts from the vault sources it was composed from.</li>
