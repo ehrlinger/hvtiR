@@ -86,5 +86,5 @@ R packages and are not members.
 - [Getting started](https://ehrlinger.github.io/hvtiR/articles/hvtiR.html) - the vignette,
   including what to do when a member will not install.
 - [Changelog](https://ehrlinger.github.io/hvtiR/news/) - what changed in each release.
-- [Design records](design/) - the spec and implementation plan, kept because the reasoning
+- [Design records](dev/specs/) - the spec and implementation plan, kept because the reasoning
   behind the design is harder to recover than the code.
