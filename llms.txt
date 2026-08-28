@@ -89,8 +89,8 @@ will show `TemporalHazard` as `stale`, and
 [`hvtiR::update()`](https://ehrlinger.github.io/hvtiR/reference/update.md)
 repairs it.
 
-`hvtiEDAreports` (Python) and the HVTI Recipes book are not R packages
-and are not members.
+`hvtiEDAreports` (Python, archived 2026-08-27) and the HVTI Recipes book
+are not R packages and are not members.
 
 ## Further reading
 

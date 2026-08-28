@@ -24,7 +24,7 @@
 
     <a class="navbar-brand me-2" href="index.html">hvtiR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.10</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.11</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -148,7 +148,7 @@
 </table>
 <p>Members install from GitHub <code>main</code> because that is where family releases land first. CRAN is a downstream republication for members that are published there.</p>
 <p>A later <code><a href="https://rdrr.io/r/utils/update.packages.html" class="external-link">update.packages()</a></code> can replace a GitHub installation with an older CRAN release. This matters especially for <code>TemporalHazard</code>: <code>hvtiRlifetables</code> declares <code>Imports: TemporalHazard (&gt;= 1.2.0)</code>, and R enforces that requirement at namespace load. If a CRAN downgrade no longer satisfies it, <code>hvtiRlifetables</code> will not load. <code><a href="reference/status.html">hvtiR::status()</a></code> will show <code>TemporalHazard</code> as <code>stale</code>, and <code><a href="reference/update.html">hvtiR::update()</a></code> repairs it.</p>
-<p><code>hvtiEDAreports</code> (Python) and the HVTI Recipes book are not R packages and are not members.</p>
+<p><code>hvtiEDAreports</code> (Python, archived 2026-08-27) and the HVTI Recipes book are not R packages and are not members.</p>
 </div>
 <div class="section level2">
 <h2 id="further-reading">Further reading<a class="anchor" aria-label="anchor" href="#further-reading"></a>

@@ -1,5 +1,14 @@
 # Changelog
 
+## hvtiR 1.0.11
+
+- This repo now carries the composed house style and the CI check that
+  enforces it, having been added to the `house-style` registry. The
+  check fails when `.claude/house-style.md` drifts from the vault
+  sources it was composed from.
+- `hvtiEDAreports` is recorded as archived (2026-08-27) in the README
+  and the two design documents that list it as a non-member.
+
 ## hvtiR 1.0.10
 
 - The `HVTI Recipes` row in `inst/extdata/catalog.csv` now points at
