@@ -77,8 +77,8 @@ that requirement at namespace load. If a CRAN downgrade no longer satisfies
 it, `hvtiRlifetables` will not load. `hvtiR::status()` will show
 `TemporalHazard` as `stale`, and `hvtiR::update()` repairs it.
 
-`hvtiEDAreports` (Python) and the HVTI Recipes book are not R packages and are
-not members.
+`hvtiEDAreports` (Python, archived 2026-08-27) and the HVTI Recipes book are not
+R packages and are not members.
 
 ## Further reading
 
