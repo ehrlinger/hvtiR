@@ -66,3 +66,59 @@ test_that("doctor prints the reason a remote check failed", {
     "Could not determine the latest version"
   )
 })
+
+test_that("renv_state classifies the three renv situations", {
+  expect_equal(
+    renv_state(installed = TRUE, project = "/home/u/study"), "active"
+  )
+  expect_equal(renv_state(installed = TRUE, project = ""), "installed")
+  expect_equal(renv_state(installed = FALSE, project = ""), "absent")
+})
+
+test_that("renv_state reports absent when renv is gone but a project is set", {
+  expect_equal(
+    renv_state(installed = FALSE, project = "/home/u/study"), "absent"
+  )
+})
+
+# doctor() wraps its cli output to the console width, so collapse the captured
+# lines before matching a phrase that may have been broken across two of them.
+doctor_text <- function() {
+  paste(
+    capture.output(suppressMessages(doctor(remote = FALSE))),
+    collapse = " "
+  )
+}
+
+test_that("doctor reports an active renv project and asks for nothing", {
+  local_mocked_bindings(
+    installed_version = function(pkg) "1.0.0",
+    renv_state = function(...) "active"
+  )
+
+  out <- doctor_text()
+  expect_match(out, "renv project is active")
+  expect_no_match(out, "not pinned")
+})
+
+test_that("doctor reports renv present but no project, and versions float", {
+  local_mocked_bindings(
+    installed_version = function(pkg) "1.0.0",
+    renv_state = function(...) "installed"
+  )
+
+  out <- doctor_text()
+  expect_match(out, "not an renv project")
+  expect_match(out, "not pinned")
+})
+
+test_that("doctor reports renv missing, and says versions float", {
+  local_mocked_bindings(
+    installed_version = function(pkg) "1.0.0",
+    renv_state = function(...) "absent"
+  )
+
+  out <- doctor_text()
+  expect_match(out, "renv is not installed")
+  expect_match(out, "not pinned")
+})

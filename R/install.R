@@ -108,6 +108,67 @@ install_members <- function(packages, force = FALSE) {
   invisible(specs)
 }
 
+# hvtiR is deliberately not a member of its own registry -- an installer that
+# resolved itself would be circular -- so its repository is named here rather
+# than looked up in members().
+SELF_REPO <- "ehrlinger/hvtiR"
+
+#' Check hvtiR itself against its own repository
+#'
+#' Because `hvtiR` is absent from [hvtiR::members()], nothing else in the
+#' package looks at it. Without this, `update()` can leave a user current on
+#' every member and silently stale on the tool that installed them.
+#'
+#' Pure given its arguments, following `classify_status()`, so every state is
+#' testable without a network call.
+#'
+#' @param installed Installed `hvtiR` version, or `NA_character_`.
+#' @param latest Version on the repository's `main`, or `NA_character_`.
+#' @return A list with `installed`, `latest`, and a `state` as returned by
+#'   `classify_status()`.
+#' @noRd
+self_check <- function(installed = installed_version("hvtiR"),
+                       latest = remote_version(SELF_REPO)) {
+  list(
+    installed = as.character(installed),
+    latest = as.character(latest),
+    state = classify_status(installed, latest, remote = TRUE)
+  )
+}
+
+#' Report hvtiR's own version
+#'
+#' `update()` cannot update `hvtiR` in place: calling it means the namespace is
+#' already loaded, so the guard in `install_members()` would refuse. Reporting
+#' is therefore the whole remedy, and the message names the bootstrap command
+#' rather than offering to run it.
+#'
+#' @param self A list as returned by `self_check()`.
+#' @return `NULL`, invisibly. Called for the message.
+#' @noRd
+report_self <- function(self) {
+  if (self$state == "stale") {
+    cli::cli_alert_warning(
+      "hvtiR {self$installed} is behind {self$latest} on GitHub."
+    )
+    cli::cli_alert_info(
+      "Update the installer with {.code pak::pak(\"ehrlinger/hvtiR\")}."
+    )
+  } else if (self$state == "ahead") {
+    cli::cli_alert_info(
+      "hvtiR {self$installed} is ahead of {self$latest} on GitHub."
+    )
+  } else if (self$state %in% c("unknown", "missing")) {
+    cli::cli_alert_info(
+      "hvtiR {self$installed} - could not be checked against GitHub."
+    )
+  } else {
+    cli::cli_alert_info("hvtiR {self$installed} is current.")
+  }
+
+  invisible(NULL)
+}
+
 #' Install every hvtiR member
 #'
 #' Installs all members from GitHub `main`, whether or not they are already
@@ -146,6 +207,12 @@ install <- function(force = FALSE) {
 #' sends pak to CRAN to resolve its `TemporalHazard` import, where the
 #' required version may not exist.
 #'
+#' `hvtiR` itself is reported but never installed. It is not a member of its
+#' own registry, so nothing else would mention it, and it cannot be updated
+#' from inside a running session anyway: calling `update()` means its namespace
+#' is loaded, which the loaded-namespace guard refuses. When the installer is
+#' behind, the report names `pak::pak("ehrlinger/hvtiR")` as the remedy.
+#'
 #' @param force Bypass the loaded-namespace guard. See [hvtiR::install()].
 #' @return The character vector of `"owner/repo"` specs passed to pak,
 #'   invisibly. Empty if nothing needed updating.
@@ -156,6 +223,8 @@ install <- function(force = FALSE) {
 #' }
 update <- function(force = FALSE) {
   st <- status(remote = TRUE)
+
+  report_self(self_check())
   targets <- st$package[st$status %in% c("missing", "stale")]
 
   unchecked <- sum(st$status == "unknown")

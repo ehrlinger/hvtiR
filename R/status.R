@@ -277,6 +277,43 @@ pak_available <- function() {
   requireNamespace("pak", quietly = TRUE)
 }
 
+#' Is renv available for pinning package versions?
+#'
+#' Uses [base::find.package()] rather than [base::requireNamespace()]: this
+#' package never calls `renv`, it only reports on it, so there is no reason to
+#' load the namespace or to declare a dependency the package does not use.
+#'
+#' @return A length-1 logical value.
+#' @noRd
+renv_available <- function() {
+  length(suppressWarnings(find.package("renv", quiet = TRUE))) > 0L
+}
+
+#' Classify the renv situation
+#'
+#' Pure: `installed` and `project` are parameters rather than calls made in
+#' the body, so every situation is testable without installing `renv` or
+#' touching the environment.
+#'
+#' `renv` sets `RENV_PROJECT` when it loads a project, so a non-empty value is
+#' what distinguishes an active project from a machine that merely has `renv`
+#' on it. Without `renv` the project variable cannot be acted on, so it does
+#' not change the answer.
+#'
+#' @param installed Is `renv` installed?
+#' @param project The `RENV_PROJECT` environment variable, possibly `""`.
+#' @return A length-1 character state: one of `"active"`, `"installed"` or
+#'   `"absent"`.
+#' @noRd
+renv_state <- function(installed = renv_available(),
+                       project = Sys.getenv("RENV_PROJECT", "")) {
+  if (!installed) {
+    return("absent")
+  }
+
+  if (nzchar(project)) "active" else "installed"
+}
+
 #' Diagnose an hvtiR installation
 #'
 #' Reports the running R version against the strictest requirement in the
@@ -321,6 +358,27 @@ doctor <- function(remote = TRUE) {
         paste0(
           "Install it with {.code install.packages(\"pak\")} ",
           "before installing members."
+        )
+      )
+    }
+
+    renv <- renv_state()
+    if (renv == "active") {
+      cli::cli_alert_success(
+        "{.pkg renv} project is active - it can pin member versions"
+      )
+    } else {
+      if (renv == "installed") {
+        cli::cli_alert_info(
+          "{.pkg renv} is installed, but this is not an {.pkg renv} project"
+        )
+      } else {
+        cli::cli_alert_info("{.pkg renv} is not installed")
+      }
+      cli::cli_alert_info(
+        paste0(
+          "Member versions are not pinned - installs resolve from ",
+          "GitHub {.val main}."
         )
       )
     }
