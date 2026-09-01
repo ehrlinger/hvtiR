@@ -3,6 +3,12 @@ Version: 1.1.0
 
 ## hvtiR 1.1.0
 
+* The vignette described `doctor()` as adding "two environment checks" when it
+  reports four -- R version, platform, `pak`, and now `renv`. It had already
+  omitted the `pak` check before this release. It now also covers reproducible
+  installs and the installer self-report, which the README gained at the same
+  time; the two had drifted apart.
+
 * `update()` now reports `hvtiR`'s own version against GitHub. The installer is
   not a member of its own registry, so nothing previously mentioned it and a
   user could stay current on all eleven members while silently running a stale

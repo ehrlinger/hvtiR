@@ -24,15 +24,18 @@ imports this file.
 
 ## The automated gates
 
-Only three workflows — **fewer than the rest of the family**. There is **no lint job and no
-test-coverage job** here, so nothing catches a style regression or a coverage drop
-automatically. Do not read a green PR as broader assurance than it gives.
+Five workflows — **tied with `hvtiPlotR` for the fewest in the family**, where the rest
+run six to nine. There is **no lint job and no test-coverage job** here, so nothing
+catches a style regression or a coverage drop automatically. Do not read a green PR as
+broader assurance than it gives.
 
 | workflow | fails on |
 |---|---|
 | `R-CMD-check.yaml` | `R CMD check` across platforms |
 | `check-manual.yaml` | the PDF manual build |
 | `pkgdown.yaml` | the site build |
+| `house-style.yaml` | drift between the composed `.claude/house-style.md` and the upstream standard |
+| `version-check.yml` | a PR whose `Version:` has not moved past the base branch, or a `DESCRIPTION`/`NEWS.md` version disagreement |
 
 ## Rules for this repo
 
