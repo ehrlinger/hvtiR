@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">hvtiR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -37,9 +37,15 @@
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Changelog</h1>
-      <small>Source: <a href="https://github.com/ehrlinger/hvtiR/blob/v1.1.0/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
+      <small>Source: <a href="https://github.com/ehrlinger/hvtiR/blob/v1.1.1/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.1.1" id="hvtir-111">hvtiR 1.1.1<a class="anchor" aria-label="anchor" href="#hvtir-111"></a></h2>
+<ul><li><p>Adds <code>lint.yaml</code> and <code>test-coverage.yaml</code>, the two workflows every other member of the family already ran. This repository was the only one without them, so nothing here caught a style regression or a coverage drop.</p></li>
+<li><p>Clears the 26 lints that adding <code>lint.yaml</code> would have failed on. No <code>.lintr</code> is added: <code>hvtiRutilities</code> runs the same job with no configuration file, so lintr’s defaults – including the 80-character line – are demonstrably achievable here, and this repository stays at the strictest setting in the family. Three lints are genuine false positives and carry a <code># nolint</code> with the reason instead: <code>unknown</code> in <code>build_specs()</code> is used inside a cli glue string that lintr cannot parse, and <code>SELF_REPO</code> and <code>MIN_R_VERSION</code> are package constants deliberately spelled in upper case so they do not read as locals at their use sites.</p></li>
+<li><p><code>lint.yaml</code> also brings a <code>docs-current</code> job, which runs <code>roxygenise()</code> and fails on any diff in <code>man/</code>, <code>NAMESPACE</code> or <code>DESCRIPTION</code>. That gate enforces a rule the contributing notes already stated but nothing checked.</p></li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.1.0" id="hvtir-110">hvtiR 1.1.0<a class="anchor" aria-label="anchor" href="#hvtir-110"></a></h2>
 <ul><li><p>The vignette described <code><a href="../reference/doctor.html">doctor()</a></code> as adding “two environment checks” when it reports four – R version, platform, <code>pak</code>, and now <code>renv</code>. It had already omitted the <code>pak</code> check before this release. It now also covers reproducible installs and the installer self-report, which the README gained at the same time; the two had drifted apart.</p></li>

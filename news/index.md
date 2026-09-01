@@ -1,5 +1,28 @@
 # Changelog
 
+## hvtiR 1.1.1
+
+- Adds `lint.yaml` and `test-coverage.yaml`, the two workflows every
+  other member of the family already ran. This repository was the only
+  one without them, so nothing here caught a style regression or a
+  coverage drop.
+
+- Clears the 26 lints that adding `lint.yaml` would have failed on. No
+  `.lintr` is added: `hvtiRutilities` runs the same job with no
+  configuration file, so lintr’s defaults – including the 80-character
+  line – are demonstrably achievable here, and this repository stays at
+  the strictest setting in the family. Three lints are genuine false
+  positives and carry a `# nolint` with the reason instead: `unknown` in
+  `build_specs()` is used inside a cli glue string that lintr cannot
+  parse, and `SELF_REPO` and `MIN_R_VERSION` are package constants
+  deliberately spelled in upper case so they do not read as locals at
+  their use sites.
+
+- `lint.yaml` also brings a `docs-current` job, which runs
+  `roxygenise()` and fails on any diff in `man/`, `NAMESPACE` or
+  `DESCRIPTION`. That gate enforces a rule the contributing notes
+  already stated but nothing checked.
+
 ## hvtiR 1.1.0
 
 - The vignette described
