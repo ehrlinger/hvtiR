@@ -120,7 +120,7 @@ test_that("update installs nothing when everything is current", {
   expect_message(update(), "up to date")
 })
 
-test_that("update does not claim members are current when GitHub is unreachable", {
+test_that("update does not call members current when GitHub is unreachable", {
   local_mocked_bindings(
     installed_version = function(pkg) "1.0.0",
     remote_version = function(repo, ref = "main") NA_character_,
@@ -212,7 +212,9 @@ test_that("expand_targets returns registry order regardless of input order", {
 test_that("update sends a stale member's in-family dependency too", {
   captured <- NULL
   local_mocked_bindings(
-    installed_version = function(pkg) if (pkg == "hvtiRlifetables") "0.0.1" else "1.0.0",
+    installed_version = function(pkg) {
+      if (pkg == "hvtiRlifetables") "0.0.1" else "1.0.0"
+    },
     remote_version = function(repo, ref = "main") "1.0.0",
     pak_install = function(specs) {
       captured <<- specs

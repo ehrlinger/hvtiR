@@ -1,7 +1,7 @@
 Package: hvtiR
 Type: Package
 Title: Install and Check the HVTI R Package Family
-Version: 1.1.0
+Version: 1.1.1
 Date: 2026-09-01
 Authors@R: person("John", "Ehrlinger", email = "john.ehrlinger@gmail.com",
     role = c("aut", "cre"))

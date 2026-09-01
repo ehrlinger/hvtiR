@@ -24,15 +24,10 @@ imports this file.
 
 ## The automated gates
 
-Five workflows — **tied with `hvtiPlotR` for the fewest in the family**, where the rest
-run six to nine. There is **no lint job and no test-coverage job** here, so nothing
-catches a style regression or a coverage drop automatically. ⚠️ This repo is the
-**only** one in the family missing both: all eleven members run `lint.yaml` and
-`test-coverage.yaml`. Measured 2026-09-01, adding `lint.yaml` as-is would fail —
-lintr's defaults report 26 lints, 21 of them line-length over 80. Note
-`hvtiRutilities` carries no `.lintr` either and passes, so 80 is achievable here;
-the three repos that widen to 120 each document why in the file. Do not read a green PR as
-broader assurance than it gives.
+Seven workflows, as of 1.1.1. Until then this was the **only** repository in the family
+with no lint and no coverage job, so nothing caught a style regression or a coverage
+drop; both were added in 1.1.1, together with the 26 lints that adding them surfaced.
+Do not read a green PR as broader assurance than it gives.
 
 | workflow | fails on |
 |---|---|
@@ -41,6 +36,8 @@ broader assurance than it gives.
 | `pkgdown.yaml` | the site build |
 | `house-style.yaml` | drift between the composed `.claude/house-style.md` and the upstream standard |
 | `version-check.yml` | a PR whose `Version:` has not moved past the base branch, or a `DESCRIPTION`/`NEWS.md` version disagreement |
+| `lint.yaml` | `lintr::lint_package()`, **and** a `docs-current` job that reruns `roxygenise()` and fails on any diff in `man/`, `NAMESPACE` or `DESCRIPTION` |
+| `test-coverage.yaml` | test failures under coverage; the codecov upload does not fail CI when no token is configured |
 
 ## Rules for this repo
 
@@ -72,7 +69,13 @@ broader assurance than it gives.
   ⚠️ `hvtiRutilities` and `hvtiRtemplates` have no such field and need Rd markup instead.
   Check `DESCRIPTION` before moving a block between repos.
 - **There is no `.lintr` here**, so lintr's defaults apply — including the 80-character line
-  length. The family uses 80, 120 and 135 in different repos; this one is at the default.
+  length. The family uses 80, 120 and 135 in different repos; this one is at the default,
+  and since 1.1.1 that default is **enforced by `lint.yaml`** rather than merely stated.
+  Keep it that way: `hvtiRutilities` runs the same job with no config file, so the default
+  is achievable here. A genuine false positive belongs behind a `# nolint` carrying its
+  reason — there are three — not behind a widened rule.
+  ⚠️ `# nolint next:` applies to the *literal* next line, so an explanatory comment goes
+  **above** the directive, never between it and the code.
 - **`NEWS.md` uses a DCF header** (`Package:` and `Version:` above the first heading), as
   ggRandomForests does. ⚠️ `hvtiRtemplates` uses plain markdown headings with no `Version:`
   line. Match the local file.

@@ -1,6 +1,9 @@
 test_that("check_loaded finds targets that are already loaded", {
   expect_identical(
-    check_loaded(c("hvtiPlotR", "hvtiRtables"), loaded = c("stats", "hvtiPlotR")),
+    check_loaded(
+      c("hvtiPlotR", "hvtiRtables"),
+      loaded = c("stats", "hvtiPlotR")
+    ),
     "hvtiPlotR"
   )
 })

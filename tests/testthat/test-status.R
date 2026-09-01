@@ -55,14 +55,14 @@ test_that("classify_status reports an unreachable remote", {
   expect_identical(classify_status("1.0.0", NA_character_), "unknown")
 })
 
-test_that("classify_status reports ok-local when the remote was not consulted", {
+test_that("classify_status reports ok-local when the remote is not consulted", {
   expect_identical(
     classify_status("1.0.0", NA_character_, remote = FALSE),
     "ok-local"
   )
 })
 
-test_that("a package that is not installed stays missing when remote is FALSE", {
+test_that("a package not installed stays missing when remote is FALSE", {
   expect_identical(
     classify_status(NA_character_, NA_character_, remote = FALSE),
     "missing"
