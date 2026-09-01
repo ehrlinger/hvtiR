@@ -71,7 +71,7 @@ installed_version <- function(pkg) {
   sha <- description[1L, "RemoteSha"]
 
   if (!is.na(remote_type) && tolower(remote_type) == "github" &&
-      !is.na(sha) && grepl("^[[:xdigit:]]{40}$", sha)) {
+        !is.na(sha) && grepl("^[[:xdigit:]]{40}$", sha)) {
     attr(version, "remote_sha") <- tolower(as.character(sha))
   }
 
@@ -267,6 +267,8 @@ print.hvtiR_status <- function(x, ...) {
 # hvtiRlifetables both declare Depends: R (>= 4.4.0). hvtiR itself
 # deliberately requires only 4.1.0 so that this diagnostic can run on a
 # machine whose R is too old for the members.
+# Package constant; see SELF_REPO in install.R for the same convention.
+# nolint next: object_name_linter.
 MIN_R_VERSION <- "4.4.0"
 
 #' Is pak available for installation commands?
@@ -345,7 +347,9 @@ doctor <- function(remote = TRUE) {
         "{.pkg ggRandomForests} and {.pkg hvtiRlifetables} will not install."
       )
     } else {
-      cli::cli_alert_success("R version {current} (>= {MIN_R_VERSION} required)")
+      cli::cli_alert_success(
+        "R version {current} (>= {MIN_R_VERSION} required)"
+      )
     }
 
     cli::cli_alert_info("Platform {R.version$platform}")

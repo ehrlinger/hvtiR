@@ -23,7 +23,10 @@ test_that("the catalog has the documented columns", {
   expect_s3_class(cat, "data.frame")
   expect_identical(
     names(cat),
-    c("package", "repo", "family", "blurb", "cran", "status", "role", "homepage")
+    c(
+      "package", "repo", "family", "blurb", "cran", "status", "role",
+      "homepage"
+    )
   )
   expect_true(all(vapply(cat, is.character, logical(1))))
 })

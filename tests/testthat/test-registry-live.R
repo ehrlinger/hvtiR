@@ -54,7 +54,7 @@ parse_field_packages <- function(field) {
   entries[nzchar(entries)]
 }
 
-test_that("MIN_R_VERSION matches the strictest R requirement across the family", {
+test_that("MIN_R_VERSION matches the strictest R requirement in the family", {
   skip_on_cran()
   skip_if_offline()
 
@@ -95,7 +95,7 @@ test_that("MIN_R_VERSION matches the strictest R requirement across the family",
   )
 })
 
-test_that("member_deps matches the live Depends/Imports fields of each member", {
+test_that("member_deps matches each member's live Depends/Imports fields", {
   skip_on_cran()
   skip_if_offline()
 
@@ -115,10 +115,14 @@ test_that("member_deps matches the live Depends/Imports fields of each member", 
       next
     }
 
-    depends <- if ("Depends" %in% colnames(dcf)) dcf[1L, "Depends"] else NA_character_
-    imports <- if ("Imports" %in% colnames(dcf)) dcf[1L, "Imports"] else NA_character_
+    field <- function(name) {
+      if (name %in% colnames(dcf)) dcf[1L, name] else NA_character_
+    }
 
-    referenced <- c(parse_field_packages(depends), parse_field_packages(imports))
+    referenced <- c(
+      parse_field_packages(field("Depends")),
+      parse_field_packages(field("Imports"))
+    )
     live_member_deps <- intersect(referenced, m$package)
 
     recorded <- deps[[pkg]]

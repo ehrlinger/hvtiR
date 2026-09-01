@@ -54,7 +54,7 @@ fetch_description <- function(
   # evaluation hides the mistake, but `remote_version()` passes
   # `on_error = identity`, which forces it.
   if (!is.numeric(attempts) || length(attempts) != 1L || is.na(attempts) ||
-      attempts < 1) {
+        attempts < 1) {
     cli::cli_abort("{.arg attempts} must be a single positive number.")
   }
   attempts <- as.integer(attempts)

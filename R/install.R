@@ -23,6 +23,9 @@ build_specs <- function(registry, packages) {
   index <- match(packages, registry$package)
 
   if (anyNA(index)) {
+    # Used in the glue string below; lintr cannot parse cli's {}
+    # interpolation and so reports it as assigned-but-unused.
+    # nolint next: object_usage_linter.
     unknown <- packages[is.na(index)]
     cli::cli_abort("{.pkg {unknown}} {?is/are} not an hvtiR member.")
   }
@@ -57,7 +60,9 @@ pak_install <- function(specs) {
 #' @return `packages` plus every member reachable from it through `deps`,
 #'   ordered as the registry orders them.
 #' @noRd
-expand_targets <- function(packages, deps = member_deps(), registry = members()) {
+expand_targets <- function(packages,
+                           deps = member_deps(),
+                           registry = members()) {
   out <- packages
 
   repeat {
@@ -111,6 +116,9 @@ install_members <- function(packages, force = FALSE) {
 # hvtiR is deliberately not a member of its own registry -- an installer that
 # resolved itself would be circular -- so its repository is named here rather
 # than looked up in members().
+# Package constant, spelled like MIN_R_VERSION so that it reads as a constant
+# and not as a local at its use site.
+# nolint next: object_name_linter.
 SELF_REPO <- "ehrlinger/hvtiR"
 
 #' Check hvtiR itself against its own repository
@@ -231,7 +239,10 @@ update <- function(force = FALSE) {
 
   if (length(targets) == 0L && unchecked > 0L) {
     cli::cli_alert_warning(
-      "Nothing to update, but {unchecked} member{?s} could not be checked against GitHub."
+      paste0(
+        "Nothing to update, but {unchecked} member{?s} could not be ",
+        "checked against GitHub."
+      )
     )
     return(invisible(character(0)))
   }
