@@ -1,5 +1,28 @@
 Package: hvtiR
-Version: 1.0.13
+Version: 1.0.14
+
+## hvtiR 1.0.14
+
+* `doctor()` reports whether an `renv` project is active. When one is not, it
+  says so and adds that member versions are not pinned, because `install()`
+  resolves from GitHub `main` and two runs a week apart can land on different
+  commits under the same version number. Informational, not a failure: `renv`
+  is optional and its absence blocks nothing.
+
+* The README gains a "Reproducible installs" section: `renv::init()`,
+  `hvtiR::install()`, `renv::snapshot()`, and `renv::restore()` on the other
+  machine. It works because pak records the commit it installed from, which is
+  the field `renv` reads -- and it notes the limit, that a member installed
+  from a local working copy carries no commit for `renv` to record.
+
+* `dev/specs/` gains a rejected design record for a `snapshot()`/`restore()`
+  pair that would have pinned members by commit inside this package. It was
+  specified, approved and then rejected once it was clear `renv` reads the same
+  `RemoteSha` field and so has the same ceiling while covering strictly more.
+  The record is kept for the evidence it gathered, including why installing by
+  release or tag was rejected: six of the eleven members have no release at
+  all, and `hvtiRlifetables` imports `TemporalHazard (>= 1.2.0)` whose latest
+  release is v1.1.0.
 
 ## hvtiR 1.0.13
 

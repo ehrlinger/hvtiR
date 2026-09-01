@@ -1,9 +1,44 @@
 # snapshot / restore — design
 
 **Date:** 2026-09-01
-**Status:** approved, ready for implementation planning
-**Supersedes:** the "No pinned manifest or lockfile" exclusion in
-[2026-08-19-hvtiverse-design.md](2026-08-19-hvtiverse-design.md)
+**Status:** rejected 2026-09-01, in favour of `renv`. Not implemented.
+**Effect on prior records:** none. The "No pinned manifest or lockfile"
+exclusion in [2026-08-19-hvtiverse-design.md](2026-08-19-hvtiverse-design.md)
+stands.
+
+## Decision: rejected in favour of renv
+
+This design was taken to approval and then rejected before any implementation.
+Everything below the next heading is the design as it stood at approval, kept
+because the evidence gathered for it answers questions that will be asked
+again. It does not describe anything the package does.
+
+`renv` records a GitHub package's commit in `renv.lock` and reinstalls from it,
+so it already provides what this design was for. Three findings, gathered while
+specifying it, make the case decisive:
+
+1. **`renv` reads the same `RemoteSha` field this design would.** So it has the
+   identical ceiling: a member installed from a local working copy is
+   unpinnable either way. The measurement below, which looked like an edge case
+   in this design, is really proof that the design adds no capability.
+2. **`renv` handles the co-resolution problem better.** The one-call `pak` rule
+   exists because `hvtiR` does not hold the full dependency graph and must let
+   pak co-resolve `hvtiRlifetables`'s `TemporalHazard (>= 1.2.0)` import.
+   `renv` has the whole graph in the lockfile and installs `TemporalHazard`
+   from GitHub at its recorded commit, so the constraint never arises.
+3. **`renv` covers strictly more** -- the CRAN dependency tree, the R version
+   and library isolation -- for none of the two new exports, manifest format,
+   preflight classifier and nine test cases this design costs.
+
+The one thing `renv` does not provide is discoverability: someone running
+`hvtiR::install()` gets no prompt that reproducibility needs `renv`. That was
+addressed instead in 1.0.14 by a `README` section and one line in `doctor()`
+reporting whether an `renv` project is active -- roughly a twentieth of the
+cost, for the only benefit that was actually missing.
+
+The alternatives analysis below stands on its own and is unaffected by this
+rejection: release and tag pinning remain rejected for their own reasons, which
+are about the family's release practice rather than about `renv`.
 
 ## Problem
 

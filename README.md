@@ -40,6 +40,32 @@ an equal-version install is current.
 attached in the session, because a loaded package cannot be safely replaced.
 Restart R and run it again before attaching anything.
 
+## Reproducible installs
+
+`install()` resolves every member from GitHub `main`, so it gives you the
+newest code rather than a fixed one. Two people running it a week apart can end
+up on different commits under the same version number. When an analysis has to
+be reproducible, pin the versions with [renv](https://rstudio.github.io/renv/):
+
+```r
+renv::init()      # once per project
+hvtiR::install()  # installs into the project library
+renv::snapshot()  # records every package, and each member's commit
+```
+
+`renv.lock` then names the exact commit behind each member, and
+
+```r
+renv::restore()
+```
+
+rebuilds that library on another machine. This works because pak records the
+commit it installed from, which is the field renv reads.
+
+A member installed from a local working copy rather than from GitHub carries no
+such commit, so renv has none to record for it. `hvtiR::doctor()` reports
+whether an renv project is active.
+
 ## When something will not install
 
 ```r
@@ -47,8 +73,9 @@ hvtiR::doctor()
 ```
 
 reports your R version against the family's requirement (4.4.0 or newer),
-your platform, whether `pak` is available, and the full member table. When a
-GitHub check fails, it also reports the repository-specific reason.
+your platform, whether `pak` is available, whether an renv project is active,
+and the full member table. When a GitHub check fails, it also reports the
+repository-specific reason.
 
 ## Members
 
