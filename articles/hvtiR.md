@@ -120,6 +120,18 @@ Thereafter, install only what has fallen behind:
 hvtiR::update()
 ```
 
+[`hvtiR::update()`](https://ehrlinger.github.io/hvtiR/reference/update.md)
+also reports `hvtiR`’s own version against GitHub. The installer is not
+a member of its own registry, so nothing else would mention it, and it
+cannot update itself from inside a running session – its namespace is
+already loaded, which is exactly what the guard below refuses. When the
+report says it is behind, reinstall it the way you first installed it:
+
+``` r
+
+pak::pak("ehrlinger/hvtiR")
+```
+
 ### Why it may refuse
 
 [`hvtiR::update()`](https://ehrlinger.github.io/hvtiR/reference/update.md)
@@ -135,6 +147,30 @@ safely overwritten — on Windows the write fails outright and leaves a
 half-installed library. Restart R and run the update before you attach
 anything.
 
+## Reproducible installs
+
+[`hvtiR::install()`](https://ehrlinger.github.io/hvtiR/reference/install.md)
+resolves every member from GitHub `main`, so it gives you the newest
+code rather than a fixed one. Two people running it a week apart can end
+up on different commits under the same version number. When an analysis
+has to be reproducible, pin the versions with
+[renv](https://rstudio.github.io/renv/):
+
+``` r
+
+renv::init()      # once per project
+hvtiR::install()  # installs into the project library
+renv::snapshot()  # records every package, and each member's commit
+```
+
+`renv.lock` then names the exact commit behind each member, and
+`renv::restore()` rebuilds that library on another machine. This works
+because pak records the commit it installed from, which is the field
+renv reads.
+
+A member installed from a local working copy rather than from GitHub
+carries no such commit, so renv has none to record for it.
+
 ## When something will not install
 
 ``` r
@@ -142,8 +178,10 @@ anything.
 hvtiR::doctor()
 ```
 
-The doctor adds two environment checks ahead of the status table: your R
-version against the family’s strictest requirement, and your platform.
+The doctor reports four things about your environment ahead of the
+status table: your R version against the family’s strictest requirement,
+your platform, whether `pak` is installed to install members with, and
+whether an `renv` project is active.
 
 `ggRandomForests` and `hvtiRlifetables` both need R 4.4.0 or newer,
 which is the single most common reason a member will not install. Note

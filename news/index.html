@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">hvtiR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.13</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -40,6 +40,14 @@
       <small>Source: <a href="https://github.com/ehrlinger/hvtiR/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.1.0" id="hvtir-110">hvtiR 1.1.0<a class="anchor" aria-label="anchor" href="#hvtir-110"></a></h2>
+<ul><li><p>The vignette described <code><a href="../reference/doctor.html">doctor()</a></code> as adding “two environment checks” when it reports four – R version, platform, <code>pak</code>, and now <code>renv</code>. It had already omitted the <code>pak</code> check before this release. It now also covers reproducible installs and the installer self-report, which the README gained at the same time; the two had drifted apart.</p></li>
+<li><p><code><a href="../reference/update.html">update()</a></code> now reports <code>hvtiR</code>’s own version against GitHub. The installer is not a member of its own registry, so nothing previously mentioned it and a user could stay current on all eleven members while silently running a stale installer. It is reported and never installed: <code><a href="../reference/update.html">update()</a></code> cannot update <code>hvtiR</code> in place, because calling it means the namespace is already loaded and the loaded-namespace guard refuses. When the installer is behind, the report names <code>pak::pak("ehrlinger/hvtiR")</code> as the remedy.</p></li>
+<li><p><code><a href="../reference/doctor.html">doctor()</a></code> reports whether an <code>renv</code> project is active. When one is not, it says so and adds that member versions are not pinned, because <code><a href="../reference/install.html">install()</a></code> resolves from GitHub <code>main</code> and two runs a week apart can land on different commits under the same version number. Informational, not a failure: <code>renv</code> is optional and its absence blocks nothing.</p></li>
+<li><p>The README gains a “Reproducible installs” section: <code>renv::init()</code>, <code><a href="../reference/install.html">hvtiR::install()</a></code>, <code>renv::snapshot()</code>, and <code>renv::restore()</code> on the other machine. It works because pak records the commit it installed from, which is the field <code>renv</code> reads – and it notes the limit, that a member installed from a local working copy carries no commit for <code>renv</code> to record.</p></li>
+<li><p><code>dev/specs/</code> gains a rejected design record for a <code>snapshot()</code>/<code>restore()</code> pair that would have pinned members by commit inside this package. It was specified, approved and then rejected once it was clear <code>renv</code> reads the same <code>RemoteSha</code> field and so has the same ceiling while covering strictly more. The record is kept for the evidence it gathered, including why installing by release or tag was rejected: six of the eleven members have no release at all, and <code>hvtiRlifetables</code> imports <code>TemporalHazard (&gt;= 1.2.0)</code> whose latest release is v1.1.0.</p></li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.0.13" id="hvtir-1013">hvtiR 1.0.13<a class="anchor" aria-label="anchor" href="#hvtir-1013"></a></h2>
 <ul><li>Recomposed <code>.claude/house-style.md</code> against <code>house-style-v1</code> at <code>64c9e23</code> (archived <code>standard-2026-08-28-3</code>). Wording only: the Development records section now separates the <code>.Rbuildignore</code> exclusion from git tracking, and says that “one directory” contrasts against the <code>specs/</code> + <code>specs/plans/</code> pair rather than implying a per-repository subdirectory. The rule is unchanged.</li>

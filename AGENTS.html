@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="index.html">hvtiR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.13</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -57,8 +57,8 @@
 </ul></div>
 <div class="section level2">
 <h2 id="the-automated-gates">The automated gates<a class="anchor" aria-label="anchor" href="#the-automated-gates"></a></h2>
-<p>Only three workflows — <strong>fewer than the rest of the family</strong>. There is <strong>no lint job and no test-coverage job</strong> here, so nothing catches a style regression or a coverage drop automatically. Do not read a green PR as broader assurance than it gives.</p>
-<table class="table"><thead><tr><th>workflow</th>
+<p>Five workflows — <strong>tied with <code>hvtiPlotR</code> for the fewest in the family</strong>, where the rest run six to nine. There is <strong>no lint job and no test-coverage job</strong> here, so nothing catches a style regression or a coverage drop automatically. ⚠️ This repo is the <strong>only</strong> one in the family missing both: all eleven members run <code>lint.yaml</code> and <code>test-coverage.yaml</code>. Measured 2026-09-01, adding <code>lint.yaml</code> as-is would fail — lintr’s defaults report 26 lints, 21 of them line-length over 80. Note <code>hvtiRutilities</code> carries no <code>.lintr</code> either and passes, so 80 is achievable here; the three repos that widen to 120 each document why in the file. Do not read a green PR as broader assurance than it gives.</p>
+<table class="table"><colgroup><col width="50%"><col width="50%"></colgroup><thead><tr><th>workflow</th>
 <th>fails on</th>
 </tr></thead><tbody><tr><td><code>R-CMD-check.yaml</code></td>
 <td>
@@ -67,6 +67,10 @@
 <td>the PDF manual build</td>
 </tr><tr><td><code>pkgdown.yaml</code></td>
 <td>the site build</td>
+</tr><tr><td><code>house-style.yaml</code></td>
+<td>drift between the composed <code>.claude/house-style.md</code> and the upstream standard</td>
+</tr><tr><td><code>version-check.yml</code></td>
+<td>a PR whose <code>Version:</code> has not moved past the base branch, or a <code>DESCRIPTION</code>/<code>NEWS.md</code> version disagreement</td>
 </tr></tbody></table></div>
 <div class="section level2">
 <h2 id="rules-for-this-repo">Rules for this repo<a class="anchor" aria-label="anchor" href="#rules-for-this-repo"></a></h2>

@@ -31,16 +31,25 @@ affordances live in `CLAUDE.md`, which imports this file.
 
 ## The automated gates
 
-Only three workflows — **fewer than the rest of the family**. There is
-**no lint job and no test-coverage job** here, so nothing catches a
-style regression or a coverage drop automatically. Do not read a green
-PR as broader assurance than it gives.
+Five workflows — **tied with `hvtiPlotR` for the fewest in the family**,
+where the rest run six to nine. There is **no lint job and no
+test-coverage job** here, so nothing catches a style regression or a
+coverage drop automatically. ⚠️ This repo is the **only** one in the
+family missing both: all eleven members run `lint.yaml` and
+`test-coverage.yaml`. Measured 2026-09-01, adding `lint.yaml` as-is
+would fail — lintr’s defaults report 26 lints, 21 of them line-length
+over 80. Note `hvtiRutilities` carries no `.lintr` either and passes, so
+80 is achievable here; the three repos that widen to 120 each document
+why in the file. Do not read a green PR as broader assurance than it
+gives.
 
-| workflow            | fails on                       |
-|---------------------|--------------------------------|
-| `R-CMD-check.yaml`  | `R CMD check` across platforms |
-| `check-manual.yaml` | the PDF manual build           |
-| `pkgdown.yaml`      | the site build                 |
+| workflow | fails on |
+|----|----|
+| `R-CMD-check.yaml` | `R CMD check` across platforms |
+| `check-manual.yaml` | the PDF manual build |
+| `pkgdown.yaml` | the site build |
+| `house-style.yaml` | drift between the composed `.claude/house-style.md` and the upstream standard |
+| `version-check.yml` | a PR whose `Version:` has not moved past the base branch, or a `DESCRIPTION`/`NEWS.md` version disagreement |
 
 ## Rules for this repo
 

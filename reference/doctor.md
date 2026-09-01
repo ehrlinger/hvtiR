@@ -38,6 +38,8 @@ doctor(remote = FALSE)
 #> ✔ R version 4.6.1 (>= 4.4.0 required)
 #> ℹ Platform x86_64-pc-linux-gnu
 #> ✔ pak is installed
+#> ℹ renv is not installed
+#> ℹ Member versions are not pinned - installs resolve from GitHub "main".
 #> 
 #> ── Members ──
 #> 

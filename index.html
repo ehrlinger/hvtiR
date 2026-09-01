@@ -24,7 +24,7 @@
 
     <a class="navbar-brand me-2" href="index.html">hvtiR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.13</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -82,14 +82,29 @@
 <code class="sourceCode R"><span><span class="fu">hvtiR</span><span class="fu">::</span><span class="fu"><a href="reference/status.html">status</a></span><span class="op">(</span><span class="op">)</span>   <span class="co"># what is installed, what is available</span></span>
 <span><span class="fu">hvtiR</span><span class="fu">::</span><span class="fu"><a href="reference/update.html">update</a></span><span class="op">(</span><span class="op">)</span>   <span class="co"># install only what is missing or stale</span></span></code></pre></div>
 <p>When pak recorded an installed package’s GitHub commit, <code><a href="reference/status.html">status()</a></code> also catches new commits on <code>main</code> that keep the same package version. The five-column table stays version-focused; commit provenance is used internally to decide whether an equal-version install is current.</p>
+<p><code><a href="reference/update.html">hvtiR::update()</a></code> also reports <code>hvtiR</code>’s own version against GitHub. The installer is not a member of its own registry, so nothing else mentions it, and it cannot update itself from inside a running session – reinstall it with <code>pak::pak("ehrlinger/hvtiR")</code> when the report says it is behind.</p>
 <p><code><a href="reference/update.html">hvtiR::update()</a></code> will refuse to overwrite a member you have already attached in the session, because a loaded package cannot be safely replaced. Restart R and run it again before attaching anything.</p>
+</div>
+<div class="section level2">
+<h2 id="reproducible-installs">Reproducible installs<a class="anchor" aria-label="anchor" href="#reproducible-installs"></a>
+</h2>
+<p><code><a href="reference/install.html">install()</a></code> resolves every member from GitHub <code>main</code>, so it gives you the newest code rather than a fixed one. Two people running it a week apart can end up on different commits under the same version number. When an analysis has to be reproducible, pin the versions with <a href="https://rstudio.github.io/renv/" class="external-link">renv</a>:</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">renv</span><span class="fu">::</span><span class="fu">init</span><span class="op">(</span><span class="op">)</span>      <span class="co"># once per project</span></span>
+<span><span class="fu">hvtiR</span><span class="fu">::</span><span class="fu"><a href="reference/install.html">install</a></span><span class="op">(</span><span class="op">)</span>  <span class="co"># installs into the project library</span></span>
+<span><span class="fu">renv</span><span class="fu">::</span><span class="fu">snapshot</span><span class="op">(</span><span class="op">)</span>  <span class="co"># records every package, and each member's commit</span></span></code></pre></div>
+<p><code>renv.lock</code> then names the exact commit behind each member, and</p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">renv</span><span class="fu">::</span><span class="fu">restore</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<p>rebuilds that library on another machine. This works because pak records the commit it installed from, which is the field renv reads.</p>
+<p>A member installed from a local working copy rather than from GitHub carries no such commit, so renv has none to record for it. <code><a href="reference/doctor.html">hvtiR::doctor()</a></code> reports whether an renv project is active.</p>
 </div>
 <div class="section level2">
 <h2 id="when-something-will-not-install">When something will not install<a class="anchor" aria-label="anchor" href="#when-something-will-not-install"></a>
 </h2>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">hvtiR</span><span class="fu">::</span><span class="fu"><a href="reference/doctor.html">doctor</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-<p>reports your R version against the family’s requirement (4.4.0 or newer), your platform, whether <code>pak</code> is available, and the full member table. When a GitHub check fails, it also reports the repository-specific reason.</p>
+<p>reports your R version against the family’s requirement (4.4.0 or newer), your platform, whether <code>pak</code> is available, whether an renv project is active, and the full member table. When a GitHub check fails, it also reports the repository-specific reason.</p>
 </div>
 <div class="section level2">
 <h2 id="members">Members<a class="anchor" aria-label="anchor" href="#members"></a>

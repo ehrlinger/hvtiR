@@ -24,7 +24,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">hvtiR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.13</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -63,7 +63,7 @@
       <h1>Getting Started with hvtiR</h1>
 
       <p class="author">John Ehrlinger</p>
-      <p class="date">2026-08-28</p>
+      <p class="date">2026-09-01</p>
 
       <small class="dont-index">Source: <a href="https://github.com/ehrlinger/hvtiR/blob/main/vignettes/hvtiR.qmd" class="external-link"><code>vignettes/hvtiR.qmd</code></a></small>
       <div class="d-none name"><code></code></div>
@@ -185,6 +185,11 @@ i Remote was not consulted; versions shown are installed versions only.</code></
 <div class="sourceCode cell-code" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">hvtiR</span><span class="fu">::</span><span class="fu"><a href="../reference/update.html">update</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 </div>
+<p><code><a href="../reference/update.html">hvtiR::update()</a></code> also reports <code>hvtiR</code>’s own version against GitHub. The installer is not a member of its own registry, so nothing else would mention it, and it cannot update itself from inside a running session – its namespace is already loaded, which is exactly what the guard below refuses. When the report says it is behind, reinstall it the way you first installed it:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">pak</span><span class="fu">::</span><span class="fu"><a href="https://pak.r-lib.org/reference/pak.html" class="external-link">pak</a></span><span class="op">(</span><span class="st">"ehrlinger/hvtiR"</span><span class="op">)</span></span></code></pre></div>
+</div>
 <section class="level3"><h3 id="why-it-may-refuse">Why it may refuse<a class="anchor" aria-label="anchor" href="#why-it-may-refuse"></a>
 </h3>
 <p><code><a href="../reference/update.html">hvtiR::update()</a></code> stops if a member you are about to update is already attached in the session:</p>
@@ -192,13 +197,24 @@ i Remote was not consulted; versions shown are installed versions only.</code></
 i Restart R and run this before anything attaches it.
 i Pass `force = TRUE` to install anyway (unsafe on Windows).</code></pre>
 <p>This is not fussiness. A package whose namespace is loaded cannot be safely overwritten — on Windows the write fails outright and leaves a half-installed library. Restart R and run the update before you attach anything.</p>
-</section></section><section class="level2"><h2 id="when-something-will-not-install">When something will not install<a class="anchor" aria-label="anchor" href="#when-something-will-not-install"></a>
+</section></section><section class="level2"><h2 id="reproducible-installs">Reproducible installs<a class="anchor" aria-label="anchor" href="#reproducible-installs"></a>
+</h2>
+<p><code><a href="../reference/install.html">hvtiR::install()</a></code> resolves every member from GitHub <code>main</code>, so it gives you the newest code rather than a fixed one. Two people running it a week apart can end up on different commits under the same version number. When an analysis has to be reproducible, pin the versions with <a href="https://rstudio.github.io/renv/" class="external-link">renv</a>:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">renv</span><span class="fu">::</span><span class="fu">init</span><span class="op">(</span><span class="op">)</span>      <span class="co"># once per project</span></span>
+<span><span class="fu">hvtiR</span><span class="fu">::</span><span class="fu"><a href="../reference/install.html">install</a></span><span class="op">(</span><span class="op">)</span>  <span class="co"># installs into the project library</span></span>
+<span><span class="fu">renv</span><span class="fu">::</span><span class="fu">snapshot</span><span class="op">(</span><span class="op">)</span>  <span class="co"># records every package, and each member's commit</span></span></code></pre></div>
+</div>
+<p><code>renv.lock</code> then names the exact commit behind each member, and <code>renv::restore()</code> rebuilds that library on another machine. This works because pak records the commit it installed from, which is the field renv reads.</p>
+<p>A member installed from a local working copy rather than from GitHub carries no such commit, so renv has none to record for it.</p>
+</section><section class="level2"><h2 id="when-something-will-not-install">When something will not install<a class="anchor" aria-label="anchor" href="#when-something-will-not-install"></a>
 </h2>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">hvtiR</span><span class="fu">::</span><span class="fu"><a href="../reference/doctor.html">doctor</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 </div>
-<p>The doctor adds two environment checks ahead of the status table: your R version against the family’s strictest requirement, and your platform.</p>
+<p>The doctor reports four things about your environment ahead of the status table: your R version against the family’s strictest requirement, your platform, whether <code>pak</code> is installed to install members with, and whether an <code>renv</code> project is active.</p>
 <p><code>ggRandomForests</code> and <code>hvtiRlifetables</code> both need R 4.4.0 or newer, which is the single most common reason a member will not install. Note that <code>hvtiR</code> itself requires only R 4.1.0 — deliberately, so that the diagnostic still runs on a machine whose R is too old for the members it is reporting on.</p>
 </section><section class="level2"><h2 id="why-github-and-not-cran">Why GitHub and not CRAN<a class="anchor" aria-label="anchor" href="#why-github-and-not-cran"></a>
 </h2>
