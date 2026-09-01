@@ -1,9 +1,18 @@
-"""Fail a pull request whose version has not moved past the base branch.
+"""Fail a pull request whose version moved somewhere it should not have.
 
 Two branches bumping to the same version do not conflict in git: the identical
 `Version:` line merges silently and only NEWS.md shows a conflict. Resolving
 just what git shows you then ships two releases claiming one number, which
 happened twice in a single day before this guard existed.
+
+The guard used to require every pull request to bump, because a branch rebased
+onto a main that already took its number looks exactly like one that never
+bumped. Under the house-style cadence most pull requests deliberately leave the
+version alone, so that rule would fail nearly all of them. What separates the
+two cases is NEWS.md: work that is not being versioned lands under the standing
+`## hvtiR (unreleased)` heading, and a branch that bumped has its entry under a
+version heading instead. So an unchanged version is accepted only when the
+unreleased heading is present, which keeps the collision a failure.
 
 Also checks the two places the version is written agree, since NEWS.md carries
 its own `Version:` line and a per-release heading.
@@ -24,6 +33,14 @@ def read_version(text: str, label: str) -> str:
     if not match:
         raise ValueError(f"no Version: field found in {label}")
     return match.group(1)
+
+
+UNRELEASED_RE = re.compile(r"^##\s+hvtiR\s+\(unreleased\)\s*$", re.M)
+
+
+def has_unreleased_heading(news: str) -> bool:
+    """Whether NEWS.md carries the standing unreleased heading."""
+    return bool(UNRELEASED_RE.search(news))
 
 
 def parse_version(version: str) -> tuple:
@@ -75,14 +92,23 @@ def compare_dates(base: str, head: str, today: datetime.date = None) -> list:
     return problems
 
 
-def compare(base: str, head: str) -> list:
-    """Problems with the head version relative to base. Empty means fine."""
+def compare(base: str, head: str, unreleased: bool = False) -> list:
+    """Problems with the head version relative to base. Empty means fine.
+
+    `unreleased` says whether NEWS.md carries the unreleased heading, which is
+    what makes an unchanged version legitimate rather than a silent collision.
+    """
     if parse_version(head) > parse_version(base):
         return []
     if base == head:
+        if unreleased:
+            return []
         return [
-            f"DESCRIPTION Version is still {head}, unchanged from the base branch. "
-            "Two branches claiming one version merge silently -- bump the patch digit."
+            f"DESCRIPTION Version is still {head}, unchanged from the base branch, "
+            "and NEWS.md has no '## hvtiR (unreleased)' heading. File the entry "
+            "under that heading, or bump the patch digit. Without one of the two, "
+            "a branch rebased onto a main that already took this number is "
+            "indistinguishable from one that never bumped."
         ]
     return [f"DESCRIPTION Version {head} is lower than the base branch's {base}."]
 
@@ -93,7 +119,7 @@ def main_with(base_desc: str, head_desc: str, head_news: str) -> int:
     try:
         base = read_version(base_desc, "the base branch's DESCRIPTION")
         head = read_version(head_desc, "DESCRIPTION")
-        problems += compare(base, head)
+        problems += compare(base, head, has_unreleased_heading(head_news))
     except ValueError as exc:
         problems.append(str(exc))
         return _report(problems)

@@ -1,6 +1,14 @@
 Package: hvtiR
 Version: 1.1.1
 
+## hvtiR (unreleased)
+
+* `tools/check_version.py` accepts a pull request that leaves `Version:` alone,
+  provided its entry is filed under this heading. It required every pull
+  request to bump, which the house-style cadence no longer asks for. A version
+  that goes backwards still fails, and an unchanged version with no unreleased
+  heading still fails, which is the rebase collision the guard was built for.
+
 ## hvtiR 1.1.1
 
 * Adds `lint.yaml` and `test-coverage.yaml`, the two workflows every other
