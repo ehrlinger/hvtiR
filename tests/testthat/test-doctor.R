@@ -68,13 +68,17 @@ test_that("doctor prints the reason a remote check failed", {
 })
 
 test_that("renv_state classifies the three renv situations", {
-  expect_equal(renv_state(installed = TRUE, project = "/home/u/study"), "active")
+  expect_equal(
+    renv_state(installed = TRUE, project = "/home/u/study"), "active"
+  )
   expect_equal(renv_state(installed = TRUE, project = ""), "installed")
   expect_equal(renv_state(installed = FALSE, project = ""), "absent")
 })
 
-test_that("renv_state reports absent when renv is gone but the project is set", {
-  expect_equal(renv_state(installed = FALSE, project = "/home/u/study"), "absent")
+test_that("renv_state reports absent when renv is gone but a project is set", {
+  expect_equal(
+    renv_state(installed = FALSE, project = "/home/u/study"), "absent"
+  )
 })
 
 # doctor() wraps its cli output to the console width, so collapse the captured
@@ -97,7 +101,7 @@ test_that("doctor reports an active renv project and asks for nothing", {
   expect_no_match(out, "not pinned")
 })
 
-test_that("doctor reports renv installed but no project, and says versions float", {
+test_that("doctor reports renv present but no project, and versions float", {
   local_mocked_bindings(
     installed_version = function(pkg) "1.0.0",
     renv_state = function(...) "installed"

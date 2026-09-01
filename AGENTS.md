@@ -26,7 +26,12 @@ imports this file.
 
 Five workflows — **tied with `hvtiPlotR` for the fewest in the family**, where the rest
 run six to nine. There is **no lint job and no test-coverage job** here, so nothing
-catches a style regression or a coverage drop automatically. Do not read a green PR as
+catches a style regression or a coverage drop automatically. ⚠️ This repo is the
+**only** one in the family missing both: all eleven members run `lint.yaml` and
+`test-coverage.yaml`. Measured 2026-09-01, adding `lint.yaml` as-is would fail —
+lintr's defaults report 26 lints, 21 of them line-length over 80. Note
+`hvtiRutilities` carries no `.lintr` either and passes, so 80 is achievable here;
+the three repos that widen to 120 each document why in the file. Do not read a green PR as
 broader assurance than it gives.
 
 | workflow | fails on |
