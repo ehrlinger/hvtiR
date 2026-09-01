@@ -226,3 +226,45 @@ test_that("update sends a stale member's in-family dependency too", {
   expect_true("ehrlinger/TemporalHazard" %in% captured)
   expect_true("ehrlinger/hvtiRlifetables" %in% captured)
 })
+
+test_that("self_check classifies hvtiR against its own repository", {
+  expect_equal(self_check(installed = "1.0.0", latest = "1.1.0")$state, "stale")
+  expect_equal(self_check(installed = "1.1.0", latest = "1.1.0")$state, "ok")
+  expect_equal(self_check(installed = "1.2.0", latest = "1.1.0")$state, "ahead")
+  expect_equal(
+    self_check(installed = "1.1.0", latest = NA_character_)$state, "unknown"
+  )
+  expect_equal(
+    self_check(installed = NA_character_, latest = "1.1.0")$state, "missing"
+  )
+})
+
+test_that("update reports the installed hvtiR version", {
+  local_mocked_bindings(
+    installed_version = function(pkg) "1.0.0",
+    remote_version = function(repo, ref = "main") "1.0.0",
+    pak_install = function(specs) stop("must not install")
+  )
+
+  expect_message(update(), "hvtiR 1\\.0\\.0")
+})
+
+test_that("update says how to upgrade hvtiR when the installer is behind", {
+  local_mocked_bindings(
+    installed_version = function(pkg) "1.0.0",
+    remote_version = function(repo, ref = "main") "1.0.0",
+    pak_install = function(specs) stop("must not install"),
+    self_check = function(...) {
+      list(installed = "1.0.0", latest = "1.1.0", state = "stale")
+    }
+  )
+
+  msgs <- character(0)
+  withCallingHandlers(update(), message = function(m) {
+    msgs <<- c(msgs, conditionMessage(m))
+    invokeRestart("muffleMessage")
+  })
+
+  expect_true(any(grepl("1.1.0", msgs, fixed = TRUE)))
+  expect_true(any(grepl("ehrlinger/hvtiR", msgs, fixed = TRUE)))
+})

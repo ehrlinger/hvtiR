@@ -1,7 +1,15 @@
 Package: hvtiR
-Version: 1.0.14
+Version: 1.1.0
 
-## hvtiR 1.0.14
+## hvtiR 1.1.0
+
+* `update()` now reports `hvtiR`'s own version against GitHub. The installer is
+  not a member of its own registry, so nothing previously mentioned it and a
+  user could stay current on all eleven members while silently running a stale
+  installer. It is reported and never installed: `update()` cannot update
+  `hvtiR` in place, because calling it means the namespace is already loaded
+  and the loaded-namespace guard refuses. When the installer is behind, the
+  report names `pak::pak("ehrlinger/hvtiR")` as the remedy.
 
 * `doctor()` reports whether an `renv` project is active. When one is not, it
   says so and adds that member versions are not pinned, because `install()`

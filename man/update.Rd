@@ -26,6 +26,12 @@ dependency is sent to pak alongside it even when that dependency is
 already current. Without this, installing e.g. just \code{hvtiRlifetables}
 sends pak to CRAN to resolve its \code{TemporalHazard} import, where the
 required version may not exist.
+
+\code{hvtiR} itself is reported but never installed. It is not a member of its
+own registry, so nothing else would mention it, and it cannot be updated
+from inside a running session anyway: calling \code{update()} means its namespace
+is loaded, which the loaded-namespace guard refuses. When the installer is
+behind, the report names \code{pak::pak("ehrlinger/hvtiR")} as the remedy.
 }
 \examples{
 \dontrun{

@@ -36,6 +36,11 @@ new commits on `main` that keep the same package version. The five-column table
 stays version-focused; commit provenance is used internally to decide whether
 an equal-version install is current.
 
+`hvtiR::update()` also reports `hvtiR`'s own version against GitHub. The
+installer is not a member of its own registry, so nothing else mentions it, and
+it cannot update itself from inside a running session -- reinstall it with
+`pak::pak("ehrlinger/hvtiR")` when the report says it is behind.
+
 `hvtiR::update()` will refuse to overwrite a member you have already
 attached in the session, because a loaded package cannot be safely replaced.
 Restart R and run it again before attaching anything.
