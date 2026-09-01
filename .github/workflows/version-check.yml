@@ -5,10 +5,14 @@ name: version-check
 # Resolving just what git shows then ships two releases claiming one number.
 # That happened twice in one day, which is why this job exists.
 #
-# Consequence: every pull request must move the patch digit, including
-# CI-only and docs-only ones. That is deliberate. Allowing an unchanged
-# version would let the collision through, because a branch rebased onto a
-# main that already took its number looks exactly like "no bump".
+# The guard used to require every pull request to bump, for that reason: a
+# branch rebased onto a main that already took its number looks exactly like
+# one that never bumped. Under the house-style cadence most pull requests
+# deliberately leave the version alone, so that rule would fail nearly all of
+# them. NEWS.md separates the two cases. Work that is not being versioned
+# lands under the standing "# hvtiR (unreleased)" heading, so an unchanged
+# version passes only when that heading is present and the collision stays a
+# failure.
 on:
   pull_request:
     branches: [main]
@@ -30,5 +34,5 @@ jobs:
       - name: Read the base branch's DESCRIPTION
         run: git show origin/${{ github.base_ref }}:DESCRIPTION > "${RUNNER_TEMP}/base-DESCRIPTION"
 
-      - name: Check the version moved past the base branch
+      - name: Check the version against the base branch
         run: python3 tools/check_version.py --base-description "${RUNNER_TEMP}/base-DESCRIPTION"

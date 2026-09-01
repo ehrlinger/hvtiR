@@ -1,7 +1,22 @@
 Package: hvtiR
 Version: 1.1.1
 
-## hvtiR 1.1.1
+# hvtiR (unreleased)
+
+* `tools/check_version.py` accepts a pull request that leaves `Version:` alone,
+  provided its entry is filed under this heading. It required every pull
+  request to bump, which the house-style cadence no longer asks for. A version
+  that goes backwards still fails, and an unchanged version with no unreleased
+  heading still fails, which is the rebase collision the guard was built for.
+
+* `NEWS.md` version headings move from `##` to `#`, matching every other
+  package in the family. This repository was the only one at level two, which
+  meant the version guard here and the equivalent test in `hvtiRbootstrap`
+  keyed on different heading levels. Both R's news reader and pkgdown parse
+  the file to the same 16 and 15 entries as before, so nothing downstream
+  changes.
+
+# hvtiR 1.1.1
 
 * Adds `lint.yaml` and `test-coverage.yaml`, the two workflows every other
   member of the family already ran. This repository was the only one without
@@ -21,7 +36,7 @@ Version: 1.1.1
   fails on any diff in `man/`, `NAMESPACE` or `DESCRIPTION`. That gate enforces
   a rule the contributing notes already stated but nothing checked.
 
-## hvtiR 1.1.0
+# hvtiR 1.1.0
 
 * The vignette described `doctor()` as adding "two environment checks" when it
   reports four -- R version, platform, `pak`, and now `renv`. It had already
@@ -58,7 +73,7 @@ Version: 1.1.1
   all, and `hvtiRlifetables` imports `TemporalHazard (>= 1.2.0)` whose latest
   release is v1.1.0.
 
-## hvtiR 1.0.13
+# hvtiR 1.0.13
 
 * Recomposed `.claude/house-style.md` against `house-style-v1` at `64c9e23`
   (archived `standard-2026-08-28-3`). Wording only: the Development records
@@ -66,7 +81,7 @@ Version: 1.1.1
   says that "one directory" contrasts against the `specs/` + `specs/plans/` pair
   rather than implying a per-repository subdirectory. The rule is unchanged.
 
-## hvtiR 1.0.12
+# hvtiR 1.0.12
 
 * Development records moved from `design/` to `dev/specs/`, adopting the
   portfolio convention settled in `ehrlinger/house-style`. Both gain an
@@ -76,7 +91,7 @@ Version: 1.1.1
   and the README link, a `.gitignore` comment and the directory's own README
   table were repointed.
 
-## hvtiR 1.0.11
+# hvtiR 1.0.11
 
 * This repo now carries the composed house style and the CI check that
   enforces it, having been added to the `house-style` registry. The check
@@ -85,7 +100,7 @@ Version: 1.1.1
 * `hvtiEDAreports` is recorded as archived (2026-08-27) in the README and the
   two design documents that list it as a non-member.
 
-## hvtiR 1.0.10
+# hvtiR 1.0.10
 
 * The `HVTI Recipes` row in `inst/extdata/catalog.csv` now points at
   `ehrlinger/hvtiGraphics`, and its homepage at
@@ -95,7 +110,7 @@ Version: 1.1.1
   not an R package, so it sits outside `members()` and was missed when the
   registry was repointed in 1.0.8.
 
-## hvtiR 1.0.9
+# hvtiR 1.0.9
 
 * `.remember/`, the scratch directory written by the `remember` skill, is now
   excluded from the build and from git. It was listed in neither ignore file, so
@@ -103,7 +118,7 @@ Version: 1.1.1
   files and directories" NOTE against the working tree. Nothing an installed
   package exposes changes.
 
-## hvtiR 1.0.8
+# hvtiR 1.0.8
 
 * The registry now names three repositories by the names GitHub actually
   serves. `hvtiRdatasets` became `hvtiRdatabuild`, and its repository moved with
@@ -117,7 +132,7 @@ Version: 1.1.1
   still stored rather than derived, because these three names moved in one week
   and a derived repo would fail silently the next time one does.
 
-## hvtiR 1.0.7
+# hvtiR 1.0.7
 
 * A pull request whose `Version:` has not moved past `main` now fails CI.
   Two branches bumping to the same version do not conflict in git -- the
@@ -128,14 +143,14 @@ Version: 1.1.1
   nor sits in the future. `Date` is not required to advance: same-day
   releases are normal here, so demanding a new day would block them.
 
-## hvtiR 1.0.6
+# hvtiR 1.0.6
 
 * `member_deps()` records that `hvtiRtemplates` imports `hvtiRutilities`.
   The dependency was added upstream on 2026-08-27; without the entry an
   update that names only `hvtiRtemplates` leaves `pak` to resolve
   `hvtiRutilities` from CRAN, where it does not exist.
 
-## hvtiR 1.0.5
+# hvtiR 1.0.5
 
 * The live registry test no longer reports a throttled CI runner as a defect.
   `fetch_description()` gained an `attempts` argument that retries a failed
@@ -149,7 +164,7 @@ Version: 1.1.1
   default, so a member that cannot be reached still resolves inside the
   five-second budget rather than three times over.
 
-## hvtiR 1.0.4
+# hvtiR 1.0.4
 
 * Added `inst/extdata/catalog.csv`, presentation metadata for every published
   artifact: the family members from `members()`, plus the SAS/C `hazard` code
@@ -167,7 +182,7 @@ Version: 1.1.1
   family-count sentence used by downstream documents is arithmetic rather than
   prose maintained by hand.
 
-## hvtiR 1.0.3
+# hvtiR 1.0.3
 
 * `status()` now detects an older GitHub installation when its version matches
   `main` but pak's recorded `RemoteSha` does not. The member reports as
@@ -177,7 +192,7 @@ Version: 1.1.1
   API. A failed commit check reports `"unknown"` and its reason is retained
   for `doctor()`.
 
-## hvtiR 1.0.2
+# hvtiR 1.0.2
 
 * Remote version checks now use a five-second connection timeout and retain
   per-repository failure reasons for `doctor()` to report.
@@ -191,7 +206,7 @@ Version: 1.1.1
 * Source-package tarballs and linked-worktree Git metadata are excluded from
   package builds.
 
-## hvtiR 1.0.1
+# hvtiR 1.0.1
 
 * **The package is renamed from `hvtiverse` to `hvtiR`**, matching the `hvtiR*`
   prefix the rest of the family uses. Install from `ehrlinger/hvtiR`.
@@ -214,7 +229,7 @@ Version: 1.1.1
   outside this family, so there is nothing to migrate.
 
 
-## hvtiverse 1.0.0
+# hvtiverse 1.0.0
 
 * First release.
 * `hvtiverse_install()` installs all 11 members of the HVTI R package family
