@@ -105,8 +105,12 @@ Do not read a green PR as broader assurance than it gives.
   Adding `CODEOWNERS` makes that flag live.
 - Versions are **straight three digits** (`1.0.0`). Never a `.9000` suffix or a fourth digit.
 - **Patch-digit bumps only**, as fixes land. Minor and major are the maintainer's decision.
-- Bump `DESCRIPTION`, refresh its `Date`, and add the matching `NEWS.md` entry in the same
-  commit — including the DCF `Version:` line at the top of `NEWS.md`.
+- **Bump when you name a version, not when you merge.** A pull request lands
+  without touching `Version:`. Its entry goes under a standing
+  `# hvtiR (unreleased)` heading in `NEWS.md`, and a separate commit renames that
+  heading, moves `DESCRIPTION` to match and refreshes its `Date`, at most once a day. The bump commit moves the DCF
+  `Version:` line at the top of `NEWS.md` too.
+  `.claude/house-style.md` carries the rule and the reasoning.
 
 ## Change discipline
 
