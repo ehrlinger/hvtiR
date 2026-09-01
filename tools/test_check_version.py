@@ -70,14 +70,20 @@ class CompareTests(unittest.TestCase):
 class UnreleasedHeadingTests(unittest.TestCase):
     def test_the_heading_is_found(self):
         self.assertTrue(
-            has_unreleased_heading("## hvtiR (unreleased)\n\n* merged work\n")
+            has_unreleased_heading("# hvtiR (unreleased)\n\n* merged work\n")
         )
 
     def test_a_version_heading_is_not_mistaken_for_it(self):
-        self.assertFalse(has_unreleased_heading("## hvtiR 1.0.6\n"))
+        self.assertFalse(has_unreleased_heading("# hvtiR 1.0.6\n"))
 
     def test_another_package_s_unreleased_heading_does_not_count(self):
-        self.assertFalse(has_unreleased_heading("## hvtiPlotR (unreleased)\n"))
+        self.assertFalse(has_unreleased_heading("# hvtiPlotR (unreleased)\n"))
+
+    def test_a_level_two_heading_does_not_count(self):
+        # The family settled on level-1 version headings. A "##" heading is the
+        # old shape this repository used alone, and accepting it would let the
+        # inconsistency quietly return.
+        self.assertFalse(has_unreleased_heading("## hvtiR (unreleased)\n"))
 
 
 class NewsAgreementTests(unittest.TestCase):
@@ -86,19 +92,19 @@ class NewsAgreementTests(unittest.TestCase):
     BASE = "Package: hvtiR\nVersion: 1.0.5\nDate: 2026-08-26\n"
 
     def test_matching_news_and_description_pass(self):
-        news = "Package: hvtiR\nVersion: 1.0.6\n\n## hvtiR 1.0.6\n"
+        news = "Package: hvtiR\nVersion: 1.0.6\n\n# hvtiR 1.0.6\n"
         self.assertEqual(main_with(self.BASE, self.DESC, news), 0)
 
     def test_a_news_version_line_that_disagrees_fails(self):
-        news = "Package: hvtiR\nVersion: 1.0.5\n\n## hvtiR 1.0.6\n"
+        news = "Package: hvtiR\nVersion: 1.0.5\n\n# hvtiR 1.0.6\n"
         self.assertEqual(main_with(self.BASE, self.DESC, news), 1)
 
     def test_a_missing_news_heading_for_this_version_fails(self):
-        news = "Package: hvtiR\nVersion: 1.0.6\n\n## hvtiR 1.0.5\n"
+        news = "Package: hvtiR\nVersion: 1.0.6\n\n# hvtiR 1.0.5\n"
         self.assertEqual(main_with(self.BASE, self.DESC, news), 1)
 
     def test_an_unbumped_version_fails_even_when_news_agrees(self):
-        news = "Package: hvtiR\nVersion: 1.0.5\n\n## hvtiR 1.0.5\n"
+        news = "Package: hvtiR\nVersion: 1.0.5\n\n# hvtiR 1.0.5\n"
         self.assertEqual(main_with(self.BASE, self.BASE, news), 1)
 
     def test_an_unbumped_version_passes_when_news_has_an_unreleased_heading(self):
@@ -106,19 +112,19 @@ class NewsAgreementTests(unittest.TestCase):
         # what most pull requests now look like.
         news = (
             "Package: hvtiR\nVersion: 1.0.5\n\n"
-            "## hvtiR (unreleased)\n\n* Merged work awaiting a version.\n\n"
-            "## hvtiR 1.0.5\n"
+            "# hvtiR (unreleased)\n\n* Merged work awaiting a version.\n\n"
+            "# hvtiR 1.0.5\n"
         )
         self.assertEqual(main_with(self.BASE, self.BASE, news), 0)
 
     def test_a_bumped_version_with_a_moved_date_and_matching_news_passes(self):
         # The happy path, asserted once with every rule satisfied.
-        news = "Package: hvtiR\nVersion: 1.0.6\n\n## hvtiR 1.0.6\n"
+        news = "Package: hvtiR\nVersion: 1.0.6\n\n# hvtiR 1.0.6\n"
         self.assertEqual(main_with(self.BASE, self.DESC, news), 0)
 
     def test_all_three_problems_are_reported_together(self):
         # One run should surface every problem, not stop at the first.
-        news = "Package: hvtiR\nVersion: 9.9.9\n\n## hvtiR 8.8.8\n"
+        news = "Package: hvtiR\nVersion: 9.9.9\n\n# hvtiR 8.8.8\n"
         import io, contextlib
         err = io.StringIO()
         with contextlib.redirect_stderr(err):
@@ -137,7 +143,7 @@ class DateTests(unittest.TestCase):
     """
 
     BASE = "Package: hvtiR\nVersion: 1.0.5\nDate: 2026-08-26\n"
-    NEWS = "Package: hvtiR\nVersion: 1.0.6\n\n## hvtiR 1.0.6\n"
+    NEWS = "Package: hvtiR\nVersion: 1.0.6\n\n# hvtiR 1.0.6\n"
 
     def test_a_later_date_passes(self):
         head = "Package: hvtiR\nVersion: 1.0.6\nDate: 2026-08-27\n"

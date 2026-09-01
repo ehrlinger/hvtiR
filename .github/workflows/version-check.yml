@@ -10,7 +10,7 @@ name: version-check
 # one that never bumped. Under the house-style cadence most pull requests
 # deliberately leave the version alone, so that rule would fail nearly all of
 # them. NEWS.md separates the two cases. Work that is not being versioned
-# lands under the standing "## hvtiR (unreleased)" heading, so an unchanged
+# lands under the standing "# hvtiR (unreleased)" heading, so an unchanged
 # version passes only when that heading is present and the collision stays a
 # failure.
 on:

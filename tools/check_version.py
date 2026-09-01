@@ -10,7 +10,7 @@ onto a main that already took its number looks exactly like one that never
 bumped. Under the house-style cadence most pull requests deliberately leave the
 version alone, so that rule would fail nearly all of them. What separates the
 two cases is NEWS.md: work that is not being versioned lands under the standing
-`## hvtiR (unreleased)` heading, and a branch that bumped has its entry under a
+`# hvtiR (unreleased)` heading, and a branch that bumped has its entry under a
 version heading instead. So an unchanged version is accepted only when the
 unreleased heading is present, which keeps the collision a failure.
 
@@ -35,7 +35,7 @@ def read_version(text: str, label: str) -> str:
     return match.group(1)
 
 
-UNRELEASED_RE = re.compile(r"^##\s+hvtiR\s+\(unreleased\)\s*$", re.M)
+UNRELEASED_RE = re.compile(r"^#\s+hvtiR\s+\(unreleased\)\s*$", re.M)
 
 
 def has_unreleased_heading(news: str) -> bool:
@@ -105,7 +105,7 @@ def compare(base: str, head: str, unreleased: bool = False) -> list:
             return []
         return [
             f"DESCRIPTION Version is still {head}, unchanged from the base branch, "
-            "and NEWS.md has no '## hvtiR (unreleased)' heading. File the entry "
+            "and NEWS.md has no '# hvtiR (unreleased)' heading. File the entry "
             "under that heading, or bump the patch digit. Without one of the two, "
             "a branch rebased onto a main that already took this number is "
             "indistinguishable from one that never bumped."
@@ -141,8 +141,8 @@ def main_with(base_desc: str, head_desc: str, head_news: str) -> int:
     except ValueError as exc:
         problems.append(str(exc))
 
-    if not re.search(rf"^##\s+hvtiR\s+{re.escape(head)}\s*$", head_news, re.M):
-        problems.append(f"NEWS.md has no '## hvtiR {head}' heading for this release.")
+    if not re.search(rf"^#\s+hvtiR\s+{re.escape(head)}\s*$", head_news, re.M):
+        problems.append(f"NEWS.md has no '# hvtiR {head}' heading for this release.")
 
     return _report(problems)
 
