@@ -1,7 +1,8 @@
 # GitHub issue templates — design
 
 **Date:** 2026-09-02
-**Status:** approved 2026-09-02.
+**Status:** approved 2026-09-02, implemented the same day in `hvtiR` and
+across the eleven member repositories.
 **Effect on prior records:** none.
 
 ## What this is for
@@ -153,13 +154,48 @@ confirm all three templates and the eleven links appear.
 `.github` is in `.Rbuildignore`, so none of this reaches `R CMD check`,
 `lintr::lint_package()` or the manual build.
 
-## Family rollout
+## Family rollout, and where this design was wrong about it
 
-Approved as a follow-on, not part of this change. `02-bug.yml` is written to be
-repository-agnostic so it can be copied unchanged, and the member repositories
-additionally get a feature-request template that `hvtiR` does not carry.
-`01-installation.yml` and `03-member-change.yml` are specific to `hvtiR` and do
-not travel.
+Done 2026-09-02, one pull request per member repository.
+
+**The claim that `02-bug.yml` is repository-agnostic was false.** It names
+`hvtiR::status()`, `hvtiR::doctor()` and `hvtiR::members()` in a required
+dropdown, and its closing field describes the `ggRandomForests` CRAN
+downgrade. None of that travels. The members got a rewritten bug form rather
+than a copy, and the rollout is the thing that exposed the error — writing
+the substitution made it obvious the file had nothing generic in it.
+
+Each member repository carries three files:
+
+| file | intake |
+|---|---|
+| `01-bug.yml` | The package returning a wrong answer or erroring. |
+| `02-feature.yml` | Enhancements, asking for the problem before the solution. |
+| `config.yml` | Blank issues enabled, plus links routing installs to `hvtiR`. |
+
+`01-installation.yml` and `03-member-change.yml` remain specific to `hvtiR` and
+did not travel, as designed.
+
+Two things the members' bug form has that this design did not anticipate:
+
+- **It asks how the package was installed** — `hvtiR`, GitHub directly, CRAN,
+  or not sure. Family versions land on GitHub first, so a CRAN install can be
+  behind the version a bug was fixed in, and a plain `update.packages()` can
+  move a package back to its CRAN version. That answer is often the diagnosis
+  rather than context for it.
+- **It routes installation failures to `hvtiR` before the reporter types
+  anything**, which is the mirror of the contact links described above.
+
+Two decisions taken during the rollout rather than here:
+
+- **`hvtiPlotR`'s existing templates were deleted.** It was the only member
+  carrying any, both GitHub stock defaults asking an R package's users for
+  their smartphone model and browser version. Left in place they would have
+  sat in the chooser beside the new forms.
+- **No member got a `NEWS.md` entry or a version bump.** No member repository
+  has a version-check workflow, and `.github` content is contributor
+  infrastructure rather than package behaviour. `hvtiR` took a NEWS entry
+  because the templates matter to its front-door role; the members did not.
 
 ## Rejected alternatives
 
