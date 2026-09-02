@@ -64,7 +64,11 @@ body:
   - type: checkboxes
     id: remotes
     attributes:
-      label: Before this can be merged
+      label: Which of these already hold?
+      description: >-
+        Leave a box unticked if it does not hold yet, or does not apply — for a
+        removal, neither does. An unticked box is not a blocker; it just says
+        what still has to happen before the registry change can land.
       options:
         - label: >-
             The package's own DESCRIPTION carries a `Remotes:` line for every
