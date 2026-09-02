@@ -1,0 +1,78 @@
+name: Family member change
+description: Add, rename or remove a package in the hvtiR family registry
+title: "[registry] "
+labels: ["registry"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        The registry in `R/members.R` stores each member's package name **and**
+        its repository, rather than deriving one from the other. They have
+        diverged before: `hvtiRpropensity` lived in
+        `ehrlinger/hvtiPropensityScores`, and `TemporalHazard` in
+        `ehrlinger/temporal_hazard`. Please fill both fields from what is
+        actually there, not from what you expect them to be.
+
+  - type: dropdown
+    id: action
+    attributes:
+      label: What kind of change?
+      options:
+        - Add a new member
+        - Rename an existing member or its repository
+        - Remove a member
+    validations:
+      required: true
+
+  - type: input
+    id: package
+    attributes:
+      label: Package name
+      description: As it appears in `library()` and in the package's DESCRIPTION `Package:` field.
+      placeholder: hvtiRlifetables
+    validations:
+      required: true
+
+  - type: input
+    id: repo
+    attributes:
+      label: GitHub repository
+      description: As `owner/repo`. This may differ from the package name.
+      placeholder: ehrlinger/hvtiRlifetables
+    validations:
+      required: true
+
+  - type: input
+    id: former
+    attributes:
+      label: Former name, for a rename
+      description: The package name or `owner/repo` this is moving from. Leave blank otherwise.
+    validations:
+      required: false
+
+  - type: textarea
+    id: deps
+    attributes:
+      label: Which other family packages does it import?
+      description: >-
+        Family members only, not CRAN packages. These become dependency edges
+        that the installer expands, so that installing this package also
+        installs what it needs from GitHub rather than from CRAN.
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: remotes
+    attributes:
+      label: Before this can be merged
+      options:
+        - label: >-
+            The package's own DESCRIPTION carries a `Remotes:` line for every
+            family package it imports — or it imports none. Without it, that
+            dependency resolves from CRAN, where a family-only version does not
+            exist.
+          required: false
+        - label: >-
+            The repository is public, so that `pak` can reach it without
+            credentials.
+          required: false

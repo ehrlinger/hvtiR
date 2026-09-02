@@ -3,6 +3,15 @@ Version: 1.1.1
 
 # hvtiR (unreleased)
 
+* GitHub issue templates, as YAML forms rather than markdown. Three of them --
+  an installation or update failure, a bug in `status()`, `doctor()` or
+  `members()`, and a change to the family registry -- each requiring the
+  diagnostics its own case needs, so an install report cannot arrive without
+  `doctor()` and `sessionInfo()` output. The chooser also links every member's
+  tracker: this repository is the one everyone installs, so it is where reports
+  about the other eleven packages land. `.github` is in `.Rbuildignore`, so
+  none of it reaches `R CMD check`.
+
 * `tools/check_version.py` accepts a pull request that leaves `Version:` alone,
   provided its entry is filed under this heading. It required every pull
   request to bump, which the house-style cadence no longer asks for. A version

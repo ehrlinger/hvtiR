@@ -1,0 +1,58 @@
+name: Bug report
+description: status(), doctor() or members() returned something wrong
+title: "[bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        For a failed `install()` or `update()`, use the **Installation or
+        update failure** template instead — it asks for the diagnostics that
+        case needs.
+
+  - type: dropdown
+    id: fn
+    attributes:
+      label: Which function?
+      options:
+        - hvtiR::status()
+        - hvtiR::doctor()
+        - hvtiR::members()
+        - Other, described below
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: What you ran, and what you got
+      description: The call and its output, as pasted text rather than a screenshot.
+      render: text
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected instead
+    validations:
+      required: true
+
+  - type: textarea
+    id: sessioninfo
+    attributes:
+      label: Output of sessionInfo()
+      render: text
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Anything else
+      description: >-
+        Optional. One known case worth mentioning if it fits: a plain
+        `update.packages()` can replace `ggRandomForests` with its CRAN
+        version, because that member is on CRAN as well as GitHub.
+    validations:
+      required: false

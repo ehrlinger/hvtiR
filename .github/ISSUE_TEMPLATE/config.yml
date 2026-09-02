@@ -1,0 +1,68 @@
+# The chooser is the only place to redirect a report before it is written.
+# hvtiR is the package everyone installs, so it is where issues about every
+# other family package arrive. These links duplicate the registry in
+# R/members.R and must be updated when a member is renamed -- which is also
+# when test-registry-live.R fails, so those two move together.
+#
+# Blank issues stay enabled on purpose: there is no feature-request template
+# here, so the blank issue is the path for enhancements and for anything the
+# three templates do not fit.
+
+blank_issues_enabled: true
+
+contact_links:
+  - name: Issue with hvtiRutilities
+    url: https://github.com/ehrlinger/hvtiRutilities/issues
+    about: >-
+      hvtiRutilities has its own tracker. Reporting it there reaches the code that
+      needs to change; this repository only installs it.
+  - name: Issue with hvtiRdatabuild
+    url: https://github.com/ehrlinger/hvtiRdatabuild/issues
+    about: >-
+      hvtiRdatabuild has its own tracker. Reporting it there reaches the code that
+      needs to change; this repository only installs it.
+  - name: Issue with hvtiRtables
+    url: https://github.com/ehrlinger/hvtiRtables/issues
+    about: >-
+      hvtiRtables has its own tracker. Reporting it there reaches the code that
+      needs to change; this repository only installs it.
+  - name: Issue with hvtiRtemplates
+    url: https://github.com/ehrlinger/hvtiRtemplates/issues
+    about: >-
+      hvtiRtemplates has its own tracker. Reporting it there reaches the code that
+      needs to change; this repository only installs it.
+  - name: Issue with hvtiPlotR
+    url: https://github.com/ehrlinger/hvtiPlotR/issues
+    about: >-
+      hvtiPlotR has its own tracker. Reporting it there reaches the code that
+      needs to change; this repository only installs it.
+  - name: Issue with hvtiRlifetables
+    url: https://github.com/ehrlinger/hvtiRlifetables/issues
+    about: >-
+      hvtiRlifetables has its own tracker. Reporting it there reaches the code that
+      needs to change; this repository only installs it.
+  - name: Issue with hvtiRbootstrap
+    url: https://github.com/ehrlinger/hvtiRbootstrap/issues
+    about: >-
+      hvtiRbootstrap has its own tracker. Reporting it there reaches the code that
+      needs to change; this repository only installs it.
+  - name: Issue with hvtiRpropensity
+    url: https://github.com/ehrlinger/hvtiRpropensity/issues
+    about: >-
+      hvtiRpropensity has its own tracker. Reporting it there reaches the code that
+      needs to change; this repository only installs it.
+  - name: Issue with hvtiBoostmtree
+    url: https://github.com/ehrlinger/hvtiBoostmtree/issues
+    about: >-
+      hvtiBoostmtree has its own tracker. Reporting it there reaches the code that
+      needs to change; this repository only installs it.
+  - name: Issue with TemporalHazard
+    url: https://github.com/ehrlinger/TemporalHazard/issues
+    about: >-
+      TemporalHazard has its own tracker. Reporting it there reaches the code that
+      needs to change; this repository only installs it.
+  - name: Issue with ggRandomForests
+    url: https://github.com/ehrlinger/ggRandomForests/issues
+    about: >-
+      ggRandomForests has its own tracker. Reporting it there reaches the code that
+      needs to change; this repository only installs it.

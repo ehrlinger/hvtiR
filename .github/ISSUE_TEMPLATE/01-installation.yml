@@ -1,0 +1,88 @@
+name: Installation or update failure
+description: hvtiR::install() or hvtiR::update() failed, or a member did not install
+title: "[install] "
+labels: ["installation"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Run `hvtiR::doctor()` first.** It checks your R version, whether
+        `pak` is available, whether `renv` is active, and how each member's
+        installed version compares with its source. It often reports the cause
+        directly, and its output is the first thing needed here either way.
+
+  - type: dropdown
+    id: call
+    attributes:
+      label: Which call failed?
+      options:
+        - hvtiR::install()
+        - hvtiR::update()
+        - hvtiR::install(force = TRUE)
+        - hvtiR::update(force = TRUE)
+        - First-time install, pak::pak("ehrlinger/hvtiR")
+        - Something else, described below
+    validations:
+      required: true
+
+  - type: textarea
+    id: console
+    attributes:
+      label: Full console output
+      description: >-
+        Everything from the call to the error, not just the last line. The
+        package that failed to resolve is usually named well above the error.
+      render: text
+    validations:
+      required: true
+
+  - type: textarea
+    id: doctor
+    attributes:
+      label: Output of hvtiR::doctor()
+      description: >-
+        If `doctor()` itself errors, paste that error here instead.
+      render: text
+    validations:
+      required: true
+
+  - type: textarea
+    id: sessioninfo
+    attributes:
+      label: Output of sessionInfo()
+      render: text
+    validations:
+      required: true
+
+  - type: dropdown
+    id: pak
+    attributes:
+      label: Is the pak package installed?
+      description: >-
+        `pak` is not a hard dependency of hvtiR. If it is missing, hvtiR stops
+        with a message telling you to install it — that is expected, not a bug.
+      options:
+        - "Yes"
+        - "No"
+        - Not sure
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: network
+    attributes:
+      label: Network
+      options:
+        - label: >-
+            I may be behind a proxy or firewall that blocks github.com. Members
+            install from GitHub by design, so a blocked host looks like a
+            resolution failure.
+          required: false
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Anything else
+      description: Optional.
+    validations:
+      required: false
