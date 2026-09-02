@@ -125,14 +125,30 @@ green PR as broader assurance than it gives.
   maintainer merge.
 - **`main` is protected by a GitHub ruleset, and nothing in this repo
   records that.** A clone shows no trace of it, so it is stated here.
-  The ruleset is named `protect main`, is identical across all twelve
-  hvtiR repositories, and enforces four rules on the default branch: no
-  deletion, no force-push, pull-request-only, and an **automatic Copilot
-  code review** on every PR. A rejected push comes from the server, not
-  a local hook. ⚠️ It currently requires **zero approvals**.
-  `require_code_owner_review` is set but inert because no repository in
-  the family has a `CODEOWNERS` file, so a PR can merge unreviewed.
-  Adding `CODEOWNERS` makes that flag live.
+  The ruleset is named `protect main` and enforces four rules on the
+  default branch: no deletion, no force-push, pull-request-only, and an
+  **automatic Copilot code review** on every PR. A rejected push comes
+  from the server, not a local hook. It requires **one approving
+  review**, with the repository admin role as a bypass actor, so the
+  maintainer merges without waiting while anyone else needs a review.
+  `require_code_owner_review` is **off**. It used to be on and inert —
+  no repository in the family has a `CODEOWNERS` file — which meant
+  adding one for any reason would have silently started requiring
+  reviews the author cannot give themselves. It is off so the flag says
+  what is true; turn it on deliberately, together with a `CODEOWNERS`
+  file, or not at all. ⚠️
+  `require_extra_approval_for_unattributed_changes` is **on**, which
+  adds an approval for commits GitHub cannot attribute to a user
+  account. It does not fire on commits authored by a linked account, and
+  a `Co-Authored-By:` trailer does not trip it. It will fire on a
+  contributor whose git email is not attached to their GitHub account,
+  and the resulting requirement looks unexplained if you do not know the
+  setting is there. ⚠️ The twelve are **not** quite identical, though
+  the pull-request rules above are. `TemporalHazard` and
+  `ggRandomForests` additionally enforce `required_status_checks`, which
+  the other ten do not. Both are CRAN-bound, so the stricter gate
+  belongs there. Read the ruleset rather than assuming, and change all
+  twelve together.
 - Versions are **straight three digits** (`1.0.0`). Never a `.9000`
   suffix or a fourth digit.
 - **Patch-digit bumps only**, as fixes land. Minor and major are the
