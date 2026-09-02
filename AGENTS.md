@@ -102,8 +102,8 @@ Do not read a green PR as broader assurance than it gives.
   push comes from the server, not a local hook.
   It requires **one approving review**, with the repository admin role as a bypass
   actor, so the maintainer merges without waiting while anyone else needs a review.
-  `require_code_owner_review` is **off**. It used to be on and inert -- no repository in
-  the family has a `CODEOWNERS` file -- which meant adding one for any reason would have
+  `require_code_owner_review` is **off**. It used to be on and inert — no repository in
+  the family has a `CODEOWNERS` file — which meant adding one for any reason would have
   silently started requiring reviews the author cannot give themselves. It is off so the
   flag says what is true; turn it on deliberately, together with a `CODEOWNERS` file, or
   not at all.
