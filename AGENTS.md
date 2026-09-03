@@ -44,7 +44,7 @@ green PR as broader assurance than it gives.
 | `pkgdown.yaml` | the site build |
 | `house-style.yaml` | drift between the composed `.claude/house-style.md` and the upstream standard |
 | `version-check.yml` | a PR whose `Version:` has not moved past the base branch, or a `DESCRIPTION`/`NEWS.md` version disagreement |
-| `lint.yaml` | `lintr::lint_package()`, **and** a `docs-current` job that reruns `roxygenise()` and fails on any diff in `man/`, `NAMESPACE` or `DESCRIPTION` |
+| `lint.yaml` | [`lintr::lint_package()`](https://lintr.r-lib.org/reference/lint.html), **and** a `docs-current` job that reruns `roxygenise()` and fails on any diff in `man/`, `NAMESPACE` or `DESCRIPTION` |
 | `test-coverage.yaml` | test failures under coverage; the codecov upload does not fail CI when no token is configured |
 
 ## Rules for this repo

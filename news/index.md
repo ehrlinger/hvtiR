@@ -1,5 +1,43 @@
 # Changelog
 
+## hvtiR 1.1.2
+
+- `ggBoostedTrees` replaces `hvtiBoostmtree` in the registry. The
+  boostmtree work moved out of an HVTI-named fork of the modelling
+  package and into a plotting package that sits beside
+  `ggRandomForests`: it draws `boostmtree` and `BoostMLR` fits rather
+  than re-releasing them. The member count is unchanged at eleven.
+  `hvtiBoostmtree` is retired, so an installed copy is not removed by an
+  update and should be dropped by hand.
+
+- GitHub issue templates, as YAML forms rather than markdown. Three of
+  them – an installation or update failure, a bug in
+  [`status()`](https://ehrlinger.github.io/hvtiR/reference/status.md),
+  [`doctor()`](https://ehrlinger.github.io/hvtiR/reference/doctor.md) or
+  [`members()`](https://ehrlinger.github.io/hvtiR/reference/members.md),
+  and a change to the family registry – each requiring the diagnostics
+  its own case needs, so an install report cannot arrive without
+  [`doctor()`](https://ehrlinger.github.io/hvtiR/reference/doctor.md)
+  and [`sessionInfo()`](https://rdrr.io/r/utils/sessionInfo.html)
+  output. The chooser also links every member’s tracker: this repository
+  is the one everyone installs, so it is where reports about the other
+  eleven packages land. `.github` is in `.Rbuildignore`, so none of it
+  reaches `R CMD check`.
+
+- `tools/check_version.py` accepts a pull request that leaves `Version:`
+  alone, provided its entry is filed under this heading. It required
+  every pull request to bump, which the house-style cadence no longer
+  asks for. A version that goes backwards still fails, and an unchanged
+  version with no unreleased heading still fails, which is the rebase
+  collision the guard was built for.
+
+- `NEWS.md` version headings move from `##` to `#`, matching every other
+  package in the family. This repository was the only one at level two,
+  which meant the version guard here and the equivalent test in
+  `hvtiRbootstrap` keyed on different heading levels. Both R’s news
+  reader and pkgdown parse the file to the same 16 and 15 entries as
+  before, so nothing downstream changes.
+
 ## hvtiR 1.1.1
 
 - Adds `lint.yaml` and `test-coverage.yaml`, the two workflows every
