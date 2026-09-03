@@ -1,6 +1,15 @@
 Package: hvtiR
 Version: 1.1.2
 
+# hvtiR (unreleased)
+
+* `AGENTS.md` records the branch rulesets as they actually stand. It claimed the
+  twelve repositories differed only in `required_status_checks`; verified against
+  the API, the pull-request rules differ too — `hvtiRbootstrap` and `hvtiGraphics`
+  require no approving review, `hvtiRbootstrap` also enforces status checks, and
+  `require_code_owner_review` is on in `hvtiGraphics` with no `CODEOWNERS` file
+  anywhere in the family.
+
 # hvtiR 1.1.2
 
 * `ggBoostedTrees` replaces `hvtiBoostmtree` in the registry. The boostmtree
