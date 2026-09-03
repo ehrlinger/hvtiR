@@ -123,6 +123,7 @@ green PR as broader assurance than it gives.
 
 - **Never push to `main`.** Branch, then open a PR and let the
   maintainer merge.
+
 - **`main` is protected by a GitHub ruleset, and nothing in this repo
   records that.** A clone shows no trace of it, so it is stated here.
   The ruleset is named `protect main` and enforces four rules on the
@@ -131,9 +132,9 @@ green PR as broader assurance than it gives.
   from the server, not a local hook. It requires **one approving
   review**, with the repository admin role as a bypass actor, so the
   maintainer merges without waiting while anyone else needs a review.
-  `require_code_owner_review` is **off**. It used to be on and inert —
-  no repository in the family has a `CODEOWNERS` file — which meant
-  adding one for any reason would have silently started requiring
+  `require_code_owner_review` is **off here**. It used to be on and
+  inert — no repository in the family has a `CODEOWNERS` file — which
+  meant adding one for any reason would have silently started requiring
   reviews the author cannot give themselves. It is off so the flag says
   what is true; turn it on deliberately, together with a `CODEOWNERS`
   file, or not at all. ⚠️
@@ -143,16 +144,35 @@ green PR as broader assurance than it gives.
   a `Co-Authored-By:` trailer does not trip it. It will fire on a
   contributor whose git email is not attached to their GitHub account,
   and the resulting requirement looks unexplained if you do not know the
-  setting is there. ⚠️ The twelve are **not** quite identical, though
-  the pull-request rules above are. `TemporalHazard` and
-  `ggRandomForests` additionally enforce `required_status_checks`, which
-  the other ten do not. Both are CRAN-bound, so the stricter gate
-  belongs there. Read the ruleset rather than assuming, and change all
-  twelve together.
+  setting is there. ⚠️ They are **not** identical, and the pull-request
+  rules vary too — this paragraph used to say they did not. Verified
+  against the API on 2026-09-03 across the thirteen repositories in
+  `house-style/repos.yml`: the twelve packages plus `hvtiGraphics`, the
+  book. Four rules hold everywhere — no deletion, no force-push,
+  pull-request-only and Copilot review — as does
+  `require_extra_approval_for_unattributed_changes`. Three things
+  differ:
+
+  | setting | holds in | exception |
+  |----|----|----|
+  | one approving review | eleven | `hvtiRbootstrap` and `hvtiGraphics` require **none** |
+  | no `required_status_checks` | ten | `TemporalHazard`, `ggRandomForests` **and `hvtiRbootstrap`** enforce them |
+  | `require_code_owner_review` off | twelve | **on in `hvtiGraphics`** |
+
+  The two CRAN-bound packages carry `required_status_checks`
+  deliberately. `hvtiRbootstrap` carrying them *while requiring no
+  approval* is recorded nowhere and may not be intended. `hvtiGraphics`
+  is in exactly the inert-but-armed state described above: the flag is
+  on and the repository has no `CODEOWNERS` file, so adding one would
+  silently start requiring reviews. Read the ruleset rather than
+  assuming, and change them together.
+
 - Versions are **straight three digits** (`1.0.0`). Never a `.9000`
   suffix or a fourth digit.
+
 - **Patch-digit bumps only**, as fixes land. Minor and major are the
   maintainer’s decision.
+
 - **Bump when you name a version, not when you merge.** A pull request
   lands without touching `Version:`. Its entry goes under a
   `# hvtiR (unreleased)` heading in `NEWS.md`, which you add when it is

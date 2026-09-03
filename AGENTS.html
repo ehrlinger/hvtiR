@@ -112,15 +112,31 @@
 </ul></div>
 <div class="section level2">
 <h2 id="git-and-versioning">Git and versioning<a class="anchor" aria-label="anchor" href="#git-and-versioning"></a></h2>
-<ul><li>
-<strong>Never push to <code>main</code>.</strong> Branch, then open a PR and let the maintainer merge.</li>
+<ul><li><p><strong>Never push to <code>main</code>.</strong> Branch, then open a PR and let the maintainer merge.</p></li>
 <li>
-<strong><code>main</code> is protected by a GitHub ruleset, and nothing in this repo records that.</strong> A clone shows no trace of it, so it is stated here. The ruleset is named <code>protect main</code> and enforces four rules on the default branch: no deletion, no force-push, pull-request-only, and an <strong>automatic Copilot code review</strong> on every PR. A rejected push comes from the server, not a local hook. It requires <strong>one approving review</strong>, with the repository admin role as a bypass actor, so the maintainer merges without waiting while anyone else needs a review. <code>require_code_owner_review</code> is <strong>off</strong>. It used to be on and inert — no repository in the family has a <code>CODEOWNERS</code> file — which meant adding one for any reason would have silently started requiring reviews the author cannot give themselves. It is off so the flag says what is true; turn it on deliberately, together with a <code>CODEOWNERS</code> file, or not at all. ⚠️ <code>require_extra_approval_for_unattributed_changes</code> is <strong>on</strong>, which adds an approval for commits GitHub cannot attribute to a user account. It does not fire on commits authored by a linked account, and a <code>Co-Authored-By:</code> trailer does not trip it. It will fire on a contributor whose git email is not attached to their GitHub account, and the resulting requirement looks unexplained if you do not know the setting is there. ⚠️ The twelve are <strong>not</strong> quite identical, though the pull-request rules above are. <code>TemporalHazard</code> and <code>ggRandomForests</code> additionally enforce <code>required_status_checks</code>, which the other ten do not. Both are CRAN-bound, so the stricter gate belongs there. Read the ruleset rather than assuming, and change all twelve together.</li>
-<li>Versions are <strong>straight three digits</strong> (<code>1.0.0</code>). Never a <code>.9000</code> suffix or a fourth digit.</li>
-<li>
-<strong>Patch-digit bumps only</strong>, as fixes land. Minor and major are the maintainer’s decision.</li>
-<li>
-<strong>Bump when you name a version, not when you merge.</strong> A pull request lands without touching <code>Version:</code>. Its entry goes under a <code># hvtiR (unreleased)</code> heading in <code>NEWS.md</code>, which you add when it is not already there. A separate commit then renames that heading to the new version and updates <code>DESCRIPTION</code> and its <code>Date</code>, at most once a day. The heading is gone again after a bump, so the next change re-adds it. <code>.claude/house-style.md</code> carries the rule and the reasoning. That commit updates the DCF <code>Version:</code> line at the top of <code>NEWS.md</code> too.</li>
+<p><strong><code>main</code> is protected by a GitHub ruleset, and nothing in this repo records that.</strong> A clone shows no trace of it, so it is stated here. The ruleset is named <code>protect main</code> and enforces four rules on the default branch: no deletion, no force-push, pull-request-only, and an <strong>automatic Copilot code review</strong> on every PR. A rejected push comes from the server, not a local hook. It requires <strong>one approving review</strong>, with the repository admin role as a bypass actor, so the maintainer merges without waiting while anyone else needs a review. <code>require_code_owner_review</code> is <strong>off here</strong>. It used to be on and inert — no repository in the family has a <code>CODEOWNERS</code> file — which meant adding one for any reason would have silently started requiring reviews the author cannot give themselves. It is off so the flag says what is true; turn it on deliberately, together with a <code>CODEOWNERS</code> file, or not at all. ⚠️ <code>require_extra_approval_for_unattributed_changes</code> is <strong>on</strong>, which adds an approval for commits GitHub cannot attribute to a user account. It does not fire on commits authored by a linked account, and a <code>Co-Authored-By:</code> trailer does not trip it. It will fire on a contributor whose git email is not attached to their GitHub account, and the resulting requirement looks unexplained if you do not know the setting is there. ⚠️ They are <strong>not</strong> identical, and the pull-request rules vary too — this paragraph used to say they did not. Verified against the API on 2026-09-03 across the thirteen repositories in <code>house-style/repos.yml</code>: the twelve packages plus <code>hvtiGraphics</code>, the book. Four rules hold everywhere — no deletion, no force-push, pull-request-only and Copilot review — as does <code>require_extra_approval_for_unattributed_changes</code>. Three things differ:</p>
+<table class="table"><colgroup><col width="33%"><col width="33%"><col width="33%"></colgroup><thead><tr><th>setting</th>
+<th>holds in</th>
+<th>exception</th>
+</tr></thead><tbody><tr><td>one approving review</td>
+<td>eleven</td>
+<td>
+<code>hvtiRbootstrap</code> and <code>hvtiGraphics</code> require <strong>none</strong>
+</td>
+</tr><tr><td>no <code>required_status_checks</code>
+</td>
+<td>ten</td>
+<td>
+<code>TemporalHazard</code>, <code>ggRandomForests</code> <strong>and <code>hvtiRbootstrap</code></strong> enforce them</td>
+</tr><tr><td>
+<code>require_code_owner_review</code> off</td>
+<td>twelve</td>
+<td><strong>on in <code>hvtiGraphics</code></strong></td>
+</tr></tbody></table><p>The two CRAN-bound packages carry <code>required_status_checks</code> deliberately. <code>hvtiRbootstrap</code> carrying them <em>while requiring no approval</em> is recorded nowhere and may not be intended. <code>hvtiGraphics</code> is in exactly the inert-but-armed state described above: the flag is on and the repository has no <code>CODEOWNERS</code> file, so adding one would silently start requiring reviews. Read the ruleset rather than assuming, and change them together.</p>
+</li>
+<li><p>Versions are <strong>straight three digits</strong> (<code>1.0.0</code>). Never a <code>.9000</code> suffix or a fourth digit.</p></li>
+<li><p><strong>Patch-digit bumps only</strong>, as fixes land. Minor and major are the maintainer’s decision.</p></li>
+<li><p><strong>Bump when you name a version, not when you merge.</strong> A pull request lands without touching <code>Version:</code>. Its entry goes under a <code># hvtiR (unreleased)</code> heading in <code>NEWS.md</code>, which you add when it is not already there. A separate commit then renames that heading to the new version and updates <code>DESCRIPTION</code> and its <code>Date</code>, at most once a day. The heading is gone again after a bump, so the next change re-adds it. <code>.claude/house-style.md</code> carries the rule and the reasoning. That commit updates the DCF <code>Version:</code> line at the top of <code>NEWS.md</code> too.</p></li>
 </ul></div>
 <div class="section level2">
 <h2 id="change-discipline">Change discipline<a class="anchor" aria-label="anchor" href="#change-discipline"></a></h2>
