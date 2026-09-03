@@ -1,7 +1,7 @@
 Package: hvtiR
-Version: 1.1.1
+Version: 1.1.2
 
-# hvtiR (unreleased)
+# hvtiR 1.1.2
 
 * `ggBoostedTrees` replaces `hvtiBoostmtree` in the registry. The boostmtree
   work moved out of an HVTI-named fork of the modelling package and into a
