@@ -94,7 +94,7 @@ repository-specific reason.
 | hvtiRlifetables | ehrlinger/hvtiRlifetables |
 | hvtiRbootstrap | ehrlinger/hvtiRbootstrap |
 | hvtiRpropensity | ehrlinger/hvtiRpropensity |
-| hvtiBoostmtree | ehrlinger/hvtiBoostmtree |
+| ggBoostedTrees | ehrlinger/ggBoostedTrees |
 | TemporalHazard | ehrlinger/TemporalHazard |
 | ggRandomForests | ehrlinger/ggRandomForests |
 

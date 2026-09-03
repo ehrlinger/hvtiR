@@ -51,10 +51,10 @@ contact_links:
     about: >-
       hvtiRpropensity has its own tracker. Reporting it there reaches the code that
       needs to change; this repository only installs it.
-  - name: Issue with hvtiBoostmtree
-    url: https://github.com/ehrlinger/hvtiBoostmtree/issues
+  - name: Issue with ggBoostedTrees
+    url: https://github.com/ehrlinger/ggBoostedTrees/issues
     about: >-
-      hvtiBoostmtree has its own tracker. Reporting it there reaches the code that
+      ggBoostedTrees has its own tracker. Reporting it there reaches the code that
       needs to change; this repository only installs it.
   - name: Issue with TemporalHazard
     url: https://github.com/ehrlinger/TemporalHazard/issues

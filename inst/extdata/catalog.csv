@@ -1,7 +1,7 @@
 package,repo,family,blurb,cran,status,role,homepage
 ggRandomForests,ehrlinger/ggRandomForests,member,"Visual exploration of random forest models -- graphical analysis of survival, regression, and classification forests.",ggRandomForests,stable,,
 TemporalHazard,ehrlinger/TemporalHazard,member,"R port of the C computational core underlying the Cleveland Clinic Hazard SAS module.",TemporalHazard,stable,,
-hvtiBoostmtree,ehrlinger/hvtiBoostmtree,member,"Boosted multivariate trees for longitudinal data; an extended fork of boostmtree.",,stable,,
+ggBoostedTrees,ehrlinger/ggBoostedTrees,member,"Visual exploration of boosted tree models -- graphical analysis of boostmtree and BoostMLR fits for longitudinal responses.",,wip,,
 hvtiPlotR,ehrlinger/hvtiPlotR,member,"HVTI-standard publication graphics for reproducible clinical research figures.",,stable,,
 hvtiRbootstrap,ehrlinger/hvtiRbootstrap,member,"Bootstrap model building -- fit across many replicates and report how often each variable survives selection; an R port of the bootreg, SUMBOOT and cluster SAS macros.",,wip,,
 hvtiRdatabuild,ehrlinger/hvtiRdatabuild,member,"Analysis-ready clinical datasets for HVTI CORR studies, verified against the legacy SAS datasets they replace.",,wip,,
