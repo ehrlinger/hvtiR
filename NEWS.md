@@ -1,5 +1,5 @@
 Package: hvtiR
-Version: 1.1.2
+Version: 1.1.1
 
 # hvtiR (unreleased)
 

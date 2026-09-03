@@ -97,7 +97,7 @@ hvtiR - 11 members
   - hvtiRlifetables  1.3.0      -          ok-local
   - hvtiRbootstrap   0.2.0      -          ok-local
   - hvtiRpropensity  1.1.0      -          ok-local
-  - hvtiBoostmtree   2.0.1      -          ok-local
+  - ggBoostedTrees   0.0.1      -          ok-local
   - TemporalHazard   1.2.0      -          ok-local
   - ggRandomForests  3.5.1      -          ok-local
 
