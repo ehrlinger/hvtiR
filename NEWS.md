@@ -3,6 +3,13 @@ Version: 1.1.1
 
 # hvtiR (unreleased)
 
+* `ggBoostedTrees` replaces `hvtiBoostmtree` in the registry. The boostmtree
+  work moved out of an HVTI-named fork of the modelling package and into a
+  plotting package that sits beside `ggRandomForests`: it draws `boostmtree`
+  and `BoostMLR` fits rather than re-releasing them. The member count is
+  unchanged at eleven. `hvtiBoostmtree` is retired, so an installed copy is not
+  removed by an update and should be dropped by hand.
+
 * GitHub issue templates, as YAML forms rather than markdown. Three of them --
   an installation or update failure, a bug in `status()`, `doctor()` or
   `members()`, and a change to the family registry -- each requiring the
