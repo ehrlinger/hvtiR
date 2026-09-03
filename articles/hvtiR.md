@@ -30,7 +30,7 @@ hvtiR::members()
 #> 6  hvtiRlifetables ehrlinger/hvtiRlifetables
 #> 7   hvtiRbootstrap  ehrlinger/hvtiRbootstrap
 #> 8  hvtiRpropensity ehrlinger/hvtiRpropensity
-#> 9   hvtiBoostmtree  ehrlinger/hvtiBoostmtree
+#> 9   ggBoostedTrees  ehrlinger/ggBoostedTrees
 #> 10  TemporalHazard  ehrlinger/TemporalHazard
 #> 11 ggRandomForests ehrlinger/ggRandomForests
 ```
@@ -98,7 +98,7 @@ hvtiR::status(remote = FALSE)
       - hvtiRlifetables  1.3.0      -          ok-local
       - hvtiRbootstrap   0.2.0      -          ok-local
       - hvtiRpropensity  1.1.0      -          ok-local
-      - hvtiBoostmtree   2.0.1      -          ok-local
+      - ggBoostedTrees   0.0.1      -          ok-local
       - TemporalHazard   1.2.0      -          ok-local
       - ggRandomForests  3.5.1      -          ok-local
 

@@ -43,7 +43,7 @@ members()
 #> 6  hvtiRlifetables ehrlinger/hvtiRlifetables
 #> 7   hvtiRbootstrap  ehrlinger/hvtiRbootstrap
 #> 8  hvtiRpropensity ehrlinger/hvtiRpropensity
-#> 9   hvtiBoostmtree  ehrlinger/hvtiBoostmtree
+#> 9   ggBoostedTrees  ehrlinger/ggBoostedTrees
 #> 10  TemporalHazard  ehrlinger/TemporalHazard
 #> 11 ggRandomForests ehrlinger/ggRandomForests
 ```

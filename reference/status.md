@@ -67,7 +67,7 @@ status(remote = FALSE)
 #>   x hvtiRlifetables  -          -          missing
 #>   x hvtiRbootstrap   -          -          missing
 #>   x hvtiRpropensity  -          -          missing
-#>   x hvtiBoostmtree   -          -          missing
+#>   x ggBoostedTrees   -          -          missing
 #>   x TemporalHazard   -          -          missing
 #>   x ggRandomForests  -          -          missing
 #> 

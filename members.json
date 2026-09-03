@@ -31,13 +31,13 @@
       "role": null
     },
     {
-      "package": "hvtiBoostmtree",
-      "repo": "ehrlinger/hvtiBoostmtree",
-      "url": "https://github.com/ehrlinger/hvtiBoostmtree",
+      "package": "ggBoostedTrees",
+      "repo": "ehrlinger/ggBoostedTrees",
+      "url": "https://github.com/ehrlinger/ggBoostedTrees",
       "family": "member",
-      "blurb": "Boosted multivariate trees for longitudinal data; an extended fork of boostmtree.",
+      "blurb": "Visual exploration of boosted tree models -- graphical analysis of boostmtree and BoostMLR fits for longitudinal responses.",
       "cran": null,
-      "status": "stable",
+      "status": "wip",
       "role": null
     },
     {
