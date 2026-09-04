@@ -25,7 +25,7 @@ test_that("the catalog has the documented columns", {
     names(cat),
     c(
       "package", "repo", "family", "blurb", "cran", "status", "role",
-      "homepage"
+      "homepage", "cran_version", "dev_version", "dev_ahead"
     )
   )
   expect_true(all(vapply(cat, is.character, logical(1))))
@@ -97,4 +97,39 @@ test_that("blurbs are ASCII so each sink can pick its own typography", {
   non_ascii <- cat$package[grepl("[^\x01-\x7F]", cat$blurb)]
 
   expect_identical(non_ascii, character(0))
+})
+
+# The version columns are refreshed by tools/refresh_catalog_versions.py on a
+# schedule. These tests guard their SHAPE only -- the live comparison is the
+# schedule's job, deliberately not R CMD check's, so that an ordinary check
+# never depends on the network or on what someone merged this morning.
+
+test_that("cran_version is present exactly when the package is on CRAN", {
+  cat <- catalog()
+
+  expect_identical(nzchar(cat$cran_version), nzchar(cat$cran))
+})
+
+test_that("dev_ahead is only set where main is actually ahead of CRAN", {
+  cat <- catalog()
+
+  expect_true(all(cat$dev_ahead %in% c("", "expected", "unexpected")))
+
+  # An intent marker on a row with no gap is stale bookkeeping: it survives a
+  # release that closed the gap and then silences the next real one.
+  marked <- nzchar(cat$dev_ahead)
+  gap <- nzchar(cat$cran_version) &
+    nzchar(cat$dev_version) &
+    cat$cran_version != cat$dev_version
+
+  expect_identical(marked[marked], gap[marked])
+})
+
+test_that("every R package row records a dev version", {
+  cat <- catalog()
+
+  # hazard is SAS/C and HVTI Recipes is a Quarto book: neither has a
+  # DESCRIPTION, so an empty dev_version is correct for them and only for
+  # them. A member with no recorded version means the refresh never ran.
+  expect_true(all(nzchar(cat$dev_version[cat$family == "member"])))
 })

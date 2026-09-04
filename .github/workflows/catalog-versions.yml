@@ -1,0 +1,112 @@
+name: catalog-versions
+
+# The family table in the CV tracking note went stale six rows in seven days,
+# and both cells whose marking promised a DESCRIPTION-backed reading were
+# wrong. It had been verified eight days earlier. Nothing was broken except
+# that no one had reason to look again.
+#
+# So this job looks. It refreshes the catalog's version columns from their
+# live oracles and opens a pull request when they moved. The PR diff IS the
+# drift report -- reviewable, and merging it fixes the record. An issue would
+# only tell somebody to go and do this by hand, which is the model that
+# produced the six stale rows.
+#
+# It deliberately does NOT fail a build. These packages release often, so a
+# red check every week would be trained away within a month.
+
+on:
+  schedule:
+    # Mondays 06:00 UTC, ahead of the working week.
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Refresh version columns from CRAN and main
+        id: refresh
+        # Exit 2 means some oracle was unreadable and the recorded value was
+        # kept. That is a warning, not a failure -- the file is still correct,
+        # just not fully re-verified this run. Only a real error should stop
+        # the job before it can report what it did learn.
+        #
+        # 2>&1 is load-bearing. The script prints drift to stdout and its
+        # "kept the recorded value" warnings to stderr, and `tee` captures
+        # stdout alone, so the warnings used to reach the Actions log and
+        # nothing else. The report in the pull request body then read clean
+        # while some rows had not been re-verified at all -- a stale record
+        # that looks checked, which is the exact thing this job exists to
+        # prevent.
+        run: |
+          set +e
+          python3 tools/refresh_catalog_versions.py inst/extdata/catalog.csv \
+            2>&1 | tee refresh.log
+          refresh_status=${PIPESTATUS[0]}
+          set -e
+          if [ "$refresh_status" -gt 2 ]; then exit "$refresh_status"; fi
+          echo "status=$refresh_status" >> "$GITHUB_OUTPUT"
+          # A random delimiter: the report carries text read from other
+          # repositories' DESCRIPTION files, and a fixed one could appear in
+          # it and break the heredoc.
+          delimiter="REPORT_$(openssl rand -hex 8)"
+          {
+            echo "report<<$delimiter"
+            cat refresh.log
+            echo "$delimiter"
+          } >> "$GITHUB_OUTPUT"
+          rm -f refresh.log
+
+      - name: Open a pull request if anything moved
+        id: pr
+        uses: peter-evans/create-pull-request@v6
+        with:
+          branch: chore/catalog-version-refresh
+          base: main
+          title: "chore: refresh catalog versions"
+          commit-message: "chore: refresh catalog versions from CRAN and main"
+          delete-branch: true
+          add-paths: inst/extdata/catalog.csv
+          body: |
+            Automated refresh of the catalog's `cran_version` and
+            `dev_version` columns from their live oracles.
+
+            ```
+            ${{ steps.refresh.outputs.report }}
+            ```
+
+            `dev_ahead` is never touched by the machine: it records intent,
+            and no oracle returns intent. A deliberate pre-CRAN development
+            line and a stale row look identical.
+
+            If a row is reported as an **unexplained gap**, `main` is ahead of
+            CRAN without that being recorded. Either set its `dev_ahead` to
+            `expected`, or cut the release.
+
+      # The silence case. When an oracle could not be read AND nothing drifted,
+      # create-pull-request has nothing to commit and opens no pull request, so
+      # the run ends green with no report anywhere. A week in which every fetch
+      # failed then looks exactly like a week in which everything was checked
+      # and unchanged, which is the stale-but-plausible record this job was
+      # built to stop.
+      #
+      # Routine drift still must not redden the schedule -- that is the
+      # rationale at the top of this file, and it holds. An unreadable oracle
+      # is not routine: it means the run did not verify what it claims to have
+      # verified. So this fails only when there was a failure to report and no
+      # pull request in which to report it.
+      - name: Fail if a fetch failed with no pull request to report it in
+        if: steps.refresh.outputs.status == '2' && !steps.pr.outputs.pull-request-number
+        # The annotation must be one line: GitHub reads workflow commands
+        # from stdout a line at a time, so a wrapped message is silently
+        # truncated at the first newline, and one sent to stderr is not read
+        # as a command at all.
+        run: |
+          echo "::error::An oracle was unreadable and nothing drifted, so no pull request was opened; the catalog still holds its previously recorded values and they were not re-verified this run. See the refresh step for which ones."
+          exit 1
