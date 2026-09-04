@@ -119,7 +119,34 @@ test_that("a build row that is not intake names a real issue", {
   for (r in raw) {
     if (identical(r$disposition, "build") &&
           !identical(r$status, "intake")) {
-      expect_match(r$blocked_on, "^[A-Za-z]+#[0-9]+$", label = r$prefix)
+      # A real R package name starts with a letter and may then contain
+      # letters, digits and dots (e.g. TemporalHazard, hvtiRutilities);
+      # the issue number stays digits-only.
+      expect_match(r$blocked_on, "^[A-Za-z][A-Za-z0-9.]*#[0-9]+$",
+                   label = r$prefix)
+    }
+  }
+})
+
+test_that("an intake row's blocked_on is not a placeholder either", {
+  # The disposition == "build" && status == "intake" carve-out above skips
+  # the issue-reference check entirely, which leaves a hole: an intake row
+  # is allowed to point at something other than a real issue (today, both
+  # intake build rows and the intake retire row point at
+  # hvtiRutilities#taxonomy, a deliberate non-issue marker), but it must
+  # still point at *something meaningful*. A bare "TBD", "TODO", "FIXME",
+  # "?" or "needs ..." would slip past both the literal placeholder-string
+  # test above and the non-intake issue-reference test above it, so this
+  # pins it down directly: non-null, non-empty, and not shaped like a
+  # stand-in for "someone hasn't decided yet".
+  raw <- read_jobs()
+  placeholder_shaped <- "(?i)^\\s*(TBD|TODO|FIXME|\\?+|needs\\b.*)\\s*$"
+  for (r in raw) {
+    if (identical(r$status, "intake")) {
+      b <- r$blocked_on
+      expect_false(is.null(b), label = r$prefix)
+      expect_false(is.na(b) || !nzchar(trimws(b)), label = r$prefix)
+      expect_false(grepl(placeholder_shaped, b, perl = TRUE), label = r$prefix)
     }
   }
 })
