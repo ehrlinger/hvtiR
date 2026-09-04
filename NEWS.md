@@ -1,7 +1,7 @@
 Package: hvtiR
-Version: 1.1.2
+Version: 1.1.3
 
-# hvtiR (unreleased)
+# hvtiR 1.1.3
 
 * `status()` and `doctor()` report hvtiR's own version. hvtiR is not a member,
   so `status()` walks `members()` and never showed the version of the package
