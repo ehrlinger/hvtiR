@@ -57,13 +57,13 @@ scripting.
 ``` r
 # Offline: reports what is installed without contacting GitHub
 status(remote = FALSE)
-#> hvtiR - 11 members
+#> hvtiR 1.1.2 - 11 members
 #> 
 #>   x hvtiRutilities   -          -          missing
 #>   x hvtiRdatabuild   -          -          missing
 #>   x hvtiRtables      -          -          missing
 #>   x hvtiRtemplates   -          -          missing
-#>   - hvtiPlotR        2.7.12     -          ok-local
+#>   - hvtiPlotR        2.7.13     -          ok-local
 #>   x hvtiRlifetables  -          -          missing
 #>   x hvtiRbootstrap   -          -          missing
 #>   x hvtiRpropensity  -          -          missing
