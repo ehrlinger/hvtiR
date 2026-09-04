@@ -1,7 +1,7 @@
 package,repo,family,blurb,cran,status,role,homepage,cran_version,dev_version,dev_ahead
 ggRandomForests,ehrlinger/ggRandomForests,member,"Visual exploration of random forest models -- graphical analysis of survival, regression, and classification forests.",ggRandomForests,stable,,,3.5.2,4.0.0,expected
 TemporalHazard,ehrlinger/TemporalHazard,member,R port of the C computational core underlying the Cleveland Clinic Hazard SAS module.,TemporalHazard,stable,,,1.1.0,1.2.9,expected
-ggBoostedTrees,ehrlinger/ggBoostedTrees,member,Visual exploration of boosted tree models -- graphical analysis of boostmtree and BoostMLR fits for longitudinal responses.,,wip,,,,0.0.5,
+ggBoostedTrees,ehrlinger/ggBoostedTrees,member,Visual exploration of boosted tree models -- graphical analysis of boostmtree and BoostMLR fits for longitudinal responses.,,wip,,,,0.0.6,
 hvtiPlotR,ehrlinger/hvtiPlotR,member,HVTI-standard publication graphics for reproducible clinical research figures.,,stable,,,,2.7.12,
 hvtiRbootstrap,ehrlinger/hvtiRbootstrap,member,"Bootstrap model building -- fit across many replicates and report how often each variable survives selection; an R port of the bootreg, SUMBOOT and cluster SAS macros.",,wip,,,,0.9.3,
 hvtiRdatabuild,ehrlinger/hvtiRdatabuild,member,"Analysis-ready clinical datasets for HVTI CORR studies, verified against the legacy SAS datasets they replace.",,wip,,,,0.2.0,
@@ -9,6 +9,6 @@ hvtiRlifetables,ehrlinger/hvtiRlifetables,member,"Age-, sex- and race-matched US
 hvtiRpropensity,ehrlinger/hvtiRpropensity,member,"Propensity score estimation, matching and IPTW with standardized balance diagnostics, for cardiac surgery comparative-effectiveness research.",,wip,,,,0.1.3,
 hvtiRtables,ehrlinger/hvtiRtables,member,"Manuscript-compliant Word tables from gtsummary objects, following HVTI CORR table construction standards, with a JTCVS submission mode.",,stable,,,,1.0.0,
 hvtiRtemplates,ehrlinger/hvtiRtemplates,member,"Versioned analysis job templates and the analysis-prefix taxonomy the CORR group organizes jobs by, so a study binds to a versioned template rather than to a copy.",,stable,,,,1.1.0,
-hvtiRutilities,ehrlinger/hvtiRutilities,member,Utility functions supporting reproducible HVTI research workflows.,,stable,,,,1.1.9,
+hvtiRutilities,ehrlinger/hvtiRutilities,member,Utility functions supporting reproducible HVTI research workflows.,,stable,,,,1.1.10,
 hazard,ehrlinger/hazard,standalone,SAS and C implementation of multi-phase hazard analysis for time-to-event decomposition.,,stable,Maintainer,,,,
 HVTI Recipes,ehrlinger/hvtiGraphics,book,"Catalog of publication-ready figures, tables, and datasets for clinical outcomes research -- Kaplan-Meier, propensity balance, CONSORT, random-forest visualizations -- each paired with reproducible code.",,stable,,https://ehrlinger.github.io/hvtiGraphics/,,,
