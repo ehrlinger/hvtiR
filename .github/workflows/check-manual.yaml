@@ -38,12 +38,15 @@ jobs:
 
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          # Must cover every package named in replaced_by in inst/extdata/jobs.json.
+          # Must cover every package named in replaced_by in inst/extdata/jobs.json,
+          # and nothing else: R CMD check installs all of Suggests, so an extra
+          # entry is compiled on every run for nothing. A package named here but
+          # not in replaced_by is dead weight; one in replaced_by but missing here
+          # fails test-jobs-routing.R with "UNVALIDATED routings".
           extra-packages: >
             any::rcmdcheck,
             ehrlinger/hvtiPlotR,
-            ehrlinger/ggRandomForests,
-            ehrlinger/ggBoostedTrees
+            ehrlinger/ggRandomForests
           needs: check
 
       - uses: r-lib/actions/setup-tinytex@v2
