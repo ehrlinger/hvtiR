@@ -112,23 +112,18 @@ Do not read a green PR as broader assurance than it gives.
   authored by a linked account, and a `Co-Authored-By:` trailer does not trip it. It will
   fire on a contributor whose git email is not attached to their GitHub account, and the
   resulting requirement looks unexplained if you do not know the setting is there.
-  ⚠️ They are **not** identical, though the pull-request rules now are. Verified against
-  the API on 2026-09-03 across the thirteen repositories in `house-style/repos.yml`: the
-  twelve packages plus `hvtiGraphics`, the book. Every one of them enforces no deletion,
-  no force-push, pull-request-only and Copilot review, with
-  `require_extra_approval_for_unattributed_changes` on and `require_code_owner_review`
-  off. Two things vary:
-
-  | setting | holds in | exception |
-  |---|---|---|
-  | one approving review | twelve | `hvtiGraphics`, the book, requires **none** |
-  | no `required_status_checks` | ten | `TemporalHazard`, `ggRandomForests` and `hvtiRbootstrap` enforce them |
-
-  The two CRAN-bound packages take `required_status_checks` because the stricter gate
-  belongs there. `hvtiRbootstrap` takes them because its `R-CMD-check.yaml` and
-  `pkgdown.yaml` are written for them: those workflows deliberately do **not** skip pull
-  requests, since a required check that never runs can never report and would leave a
-  `.claude/**`-only pull request unmergeable forever.
+  ⚠️ **One rule, and one only, is not the same everywhere.** Verified against the API on
+  2026-09-03 across the thirteen repositories in `house-style/repos.yml` — the twelve
+  packages plus `hvtiGraphics`, the book. All thirteen carry an identical `protect main`:
+  no deletion, no force-push, pull-request-only, Copilot review, one approving review,
+  `require_extra_approval_for_unattributed_changes` on, `require_code_owner_review` off,
+  and the repository admin role as the bypass actor.
+  The exception is `required_status_checks`, which **`TemporalHazard`, `ggRandomForests`
+  and `hvtiRbootstrap`** enforce and the other ten do not. The two CRAN-bound packages
+  take it because the stricter gate belongs there. `hvtiRbootstrap` takes it because its
+  `R-CMD-check.yaml` and `pkgdown.yaml` are written for it: those workflows deliberately
+  do **not** skip pull requests, since a required check that never runs can never report
+  and would leave a `.claude/**`-only pull request unmergeable forever.
   ⚠️ Read the ruleset rather than assuming, and change them together. This paragraph has
   been wrong before — until 2026-09-03 it claimed a uniformity the API did not show, and
   the two repositories that disagreed with it were brought into line rather than the

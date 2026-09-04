@@ -9,9 +9,10 @@ Version: 1.1.2
   that disagreed were brought into line rather than the claim being softened:
   `hvtiRbootstrap` now requires one approving review like the rest, and
   `hvtiGraphics` no longer carries `require_code_owner_review` with no `CODEOWNERS`
-  file behind it. `hvtiGraphics` still requires no approval, and `hvtiRbootstrap`
-  still enforces status checks alongside the two CRAN-bound packages; both are now
-  written down.
+  file behind it, and now requires an approving review like the rest. All thirteen
+  repositories under `house-style/repos.yml` carry an identical `protect main` apart
+  from `required_status_checks`, which `TemporalHazard`, `ggRandomForests` and
+  `hvtiRbootstrap` enforce; the reason each of the three does is written down.
 
 # hvtiR 1.1.2
 
