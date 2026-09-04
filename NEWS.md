@@ -3,6 +3,13 @@ Version: 1.1.2
 
 # hvtiR (unreleased)
 
+* `status()` and `doctor()` report hvtiR's own version. hvtiR is not a member,
+  so `status()` walks `members()` and never showed the version of the package
+  the user is running, and `doctor()`'s Environment section reported the R
+  version, the platform and `pak` but not hvtiR. Both issue templates ask for
+  that output, so a report arrived without the one version a maintainer needs
+  first.
+
 * `jobs()` names the row and the field when a scalar field in the catalog
   arrives as an array. `vapply()`'s own message for that named neither, and
   the first sign of it was the vignette failing to build. The catalog is hand

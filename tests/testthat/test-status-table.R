@@ -211,3 +211,13 @@ test_that("the footer discloses installed-only versions when all are local", {
 test_that("the footer claims up to date only when everything is genuinely ok", {
   expect_output(print(make_status("ok")), "Everything is up to date")
 })
+
+test_that("printing a status object reports hvtiR's own version", {
+  # hvtiR is not a member, so the table below the header can never carry it.
+  # Both issue templates ask users to paste this output, and the first
+  # question about any report is which hvtiR produced it.
+  st <- make_status("ok")
+
+  expect_output(print(st),
+                paste0("hvtiR ", as.character(utils::packageVersion("hvtiR"))))
+})

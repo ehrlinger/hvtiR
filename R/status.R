@@ -209,6 +209,23 @@ status <- function(remote = TRUE) {
   out
 }
 
+#' The running hvtiR version
+#'
+#' hvtiR is not a member, so `status()` walks `members()` and never reports the
+#' version of the package the user is actually running. That is the first thing
+#' a maintainer needs from a pasted `status()` or `doctor()`, and both issue
+#' templates ask for exactly that output.
+#'
+#' @return A length-1 character version, or `NA_character_` if the package
+#'   description cannot be read.
+#' @noRd
+hvtir_version <- function() {
+  tryCatch(
+    as.character(utils::packageVersion("hvtiR")),
+    error = function(e) NA_character_
+  )
+}
+
 #' @export
 print.hvtiR_status <- function(x, ...) {
   symbols <- c(
@@ -226,7 +243,12 @@ print.hvtiR_status <- function(x, ...) {
   # testthat::expect_output()). cli_fmt() captures the formatted lines
   # instead of displaying them, so we can cat() them to stdout ourselves.
   lines <- cli::cli_fmt({
-    cli::cli_text("{.strong hvtiR} - {nrow(x)} member{?s}")
+    version <- hvtir_version()
+    if (is.na(version)) {
+      cli::cli_text("{.strong hvtiR} - {nrow(x)} member{?s}")
+    } else {
+      cli::cli_text("{.strong hvtiR} {version} - {nrow(x)} member{?s}")
+    }
     cli::cli_verbatim("")
 
     for (i in seq_len(nrow(x))) {
@@ -337,6 +359,16 @@ doctor <- function(remote = TRUE) {
     cli::cli_h1("hvtiR doctor")
 
     cli::cli_h2("Environment")
+
+    # First line of the section, because it is the first thing a maintainer
+    # needs from a pasted report and the one thing the member table below
+    # cannot show: hvtiR is not a member of its own registry.
+    version <- hvtir_version()
+    if (is.na(version)) {
+      cli::cli_alert_warning("hvtiR version could not be read")
+    } else {
+      cli::cli_alert_info("hvtiR {version}")
+    }
 
     current <- getRversion()
     if (current < MIN_R_VERSION) {
