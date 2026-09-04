@@ -3,6 +3,11 @@ Version: 1.1.2
 
 # hvtiR (unreleased)
 
+* The catalog gains `cran_version`, `dev_version` and `dev_ahead`, refreshed
+  weekly from crandb and each repo's `DESCRIPTION` on `main` by
+  `tools/refresh_catalog_versions.py`. `members.json` is unchanged, so no
+  downstream CV sink is affected.
+
 * New `jobs()`, the job catalog: every job type found in the studies corpus,
   routed to the package that owes it. Rendered as the "The job catalog"
   article.

@@ -1,0 +1,76 @@
+name: catalog-versions
+
+# The family table in the CV tracking note went stale six rows in seven days,
+# and both cells whose marking promised a DESCRIPTION-backed reading were
+# wrong. It had been verified eight days earlier. Nothing was broken except
+# that no one had reason to look again.
+#
+# So this job looks. It refreshes the catalog's version columns from their
+# live oracles and opens a pull request when they moved. The PR diff IS the
+# drift report -- reviewable, and merging it fixes the record. An issue would
+# only tell somebody to go and do this by hand, which is the model that
+# produced the six stale rows.
+#
+# It deliberately does NOT fail a build. These packages release often, so a
+# red check every week would be trained away within a month.
+
+on:
+  schedule:
+    # Mondays 06:00 UTC, ahead of the working week.
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Refresh version columns from CRAN and main
+        id: refresh
+        # Exit 2 means some oracle was unreadable and the recorded value was
+        # kept. That is a warning, not a failure -- the file is still correct,
+        # just not fully re-verified this run. Only a real error should stop
+        # the job before it can report what it did learn.
+        run: |
+          set +e
+          python3 tools/refresh_catalog_versions.py inst/extdata/catalog.csv \
+            | tee refresh.log
+          status=${PIPESTATUS[0]}
+          set -e
+          if [ "$status" -gt 2 ]; then exit "$status"; fi
+          {
+            echo 'report<<REPORT'
+            cat refresh.log
+            echo 'REPORT'
+          } >> "$GITHUB_OUTPUT"
+          rm -f refresh.log
+
+      - name: Open a pull request if anything moved
+        uses: peter-evans/create-pull-request@v6
+        with:
+          branch: chore/catalog-version-refresh
+          base: main
+          title: "chore: refresh catalog versions"
+          commit-message: "chore: refresh catalog versions from CRAN and main"
+          delete-branch: true
+          add-paths: inst/extdata/catalog.csv
+          body: |
+            Automated refresh of the catalog's `cran_version` and
+            `dev_version` columns from their live oracles.
+
+            ```
+            ${{ steps.refresh.outputs.report }}
+            ```
+
+            `dev_ahead` is never touched by the machine: it records intent,
+            and no oracle returns intent. A deliberate pre-CRAN development
+            line and a stale row look identical.
+
+            If a row is reported as an **unexplained gap**, `main` is ahead of
+            CRAN without that being recorded. Either set its `dev_ahead` to
+            `expected`, or cut the release.

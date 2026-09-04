@@ -3,6 +3,7 @@
 **Written** 2026-09-02, from a Cowork session that built the biostats meeting deck.
 **For** a Claude Code session on the host, picking this up cold.
 **Status** Not started. Nothing in this repo has been changed.
+**Updated** 2026-09-02, after the biostats training. Three inputs moved; see §7.
 
 ---
 
@@ -36,7 +37,7 @@ Bands, in the order the slide uses them:
 
 A table of every family documentation site: package, version, one-line purpose,
 link. All fourteen were fetched and confirmed live on 2026-09-02; versions below
-are what each site reported, not what any note claims.
+are what each site reported, not what any note claims. ⚠️ **Two of them are expected to move to a new major version shortly (hvtiPlotR, hvtiRtables) — see §7. Treat this table as a snapshot for building against, not as content to paste into the page.**
 
 | Package | Version | What it is |
 |---|---|---|
@@ -127,6 +128,20 @@ separate work item.
    more.
 
 ---
+
+## 7. What the 2026-09-02 training changed about this task
+
+**Three things, and the first two strengthen the recommendation in §3.**
+
+1. 🔴 **Two members have planned major versions.** John told the team hvtiPlotR goes to **3.0** — *"pretty much everything in here is going to change"* — and hvtiRtables to about **2.0** as it absorbs the `DC.*` descriptive work. Both are scoped on a corpus re-parse that has not run yet.
+
+   **So a hardcoded version table would be wrong within weeks, for two of twelve rows, on a page whose whole purpose is to be the family's index.** That is the argument for option (b)/(c) — put the docs URL in `catalog.csv` and **leave versions off the page entirely**. A reader who wants a version is one click from a site that states it correctly.
+
+2. ⚠️ **A rename is on the table for hvtiGraphics.** John: *"I probably should rename this as recipes."* If that happens it breaks the site index row **and** the URL, because **GitHub Pages does not redirect across a rename** — measured on 2026-09-02: `ehrlinger.github.io/hvti_graphics/` returns 404 while `hvtiGraphics/` serves. Do not hand-write that URL anywhere it cannot be regenerated. It would also be the sixth family rename in three weeks, which is itself the argument for generating rather than typing.
+
+3. ⚠️ **`hvtiRtemplates`' Pages site is live**, serving v1.0.20 — contradicting the 2026-08-24 decision to leave Pages off rather than publish internal workflow analysis. The site index will surface it. **Confirm what is actually published there before linking it**, because the original objection was about content, not links.
+
+**Net effect on §3's recommendation:** unchanged in direction, stronger in force. Generate the index from `catalog.csv` with a `docs_url` column, omit versions, and let the family map stay an embedded SVG.
 
 ## Definition of done
 
