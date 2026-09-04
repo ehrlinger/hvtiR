@@ -373,6 +373,29 @@ Create `tests/testthat/test-jobs-routing.R`:
   unique(unlist(lapply(raw, function(r) unlist(r$replaced_by))))
 }
 
+# Reporting the unvalidated packages is its own function so that the loud-skip
+# behaviour can be tested directly, with a package name that is certainly not
+# installed, rather than by uninstalling something from the developer's real
+# library and hoping the reinstall runs.
+.jobs_report_absent <- function(absent,
+                                ci = identical(Sys.getenv("CI"), "true")) {
+  if (!length(absent)) {
+    return(invisible(character(0)))
+  }
+  msg <- paste("UNVALIDATED routings, package not installed:",
+               paste(absent, collapse = ", "))
+  if (ci) stop(msg, call. = FALSE) else message(msg)
+  invisible(absent)
+}
+
+test_that("an absent destination is named, and is fatal on CI", {
+  expect_identical(.jobs_report_absent(character(0)), character(0))
+  expect_message(.jobs_report_absent("notAPackageThatExists", ci = FALSE),
+                 "UNVALIDATED routings, package not installed: notAPackageThatExists")
+  expect_error(.jobs_report_absent("notAPackageThatExists", ci = TRUE),
+               "UNVALIDATED routings")
+})
+
 test_that("every replaced_by entry is package::function", {
   refs <- .jobs_refs()
 
@@ -394,17 +417,7 @@ test_that("every replaced_by function is exported by its package", {
   pkgs <- unique(sub("::.*$", "", refs))
 
   have <- vapply(pkgs, requireNamespace, logical(1), quietly = TRUE)
-  absent <- pkgs[!have]
-
-  if (length(absent)) {
-    msg <- paste("UNVALIDATED routings, package not installed:",
-                 paste(absent, collapse = ", "))
-    if (identical(Sys.getenv("CI"), "true")) {
-      fail(msg)
-    } else {
-      message(msg)
-    }
-  }
+  .jobs_report_absent(pkgs[!have])
 
   for (p in pkgs[have]) {
     exported <- getNamespaceExports(p)
@@ -450,20 +463,20 @@ unvalidated in CI. Find the `r-lib/actions/setup-r-dependencies` step and add:
 
 - [ ] **Step 4: Verify the skip is loud**
 
-Run with a destination deliberately absent:
+The behaviour is proved by the `.jobs_report_absent()` test written in Step 1,
+which uses a package name that cannot be installed. Nothing is removed from the
+developer's library.
 
-```bash
-Rscript -e 'remove.packages("ggBoostedTrees"); devtools::test(filter = "jobs-routing")'
-```
+Run: `Rscript -e 'devtools::test(filter = "jobs-routing")'`
+Expected: PASS, 4 tests. The run must print no `UNVALIDATED` message, because
+every real destination is installed after Step 2.
 
-Expected: the run PASSES locally but prints
-`UNVALIDATED routings, package not installed: ggBoostedTrees`.
+Then confirm the fatal path end to end:
 
-```bash
-CI=true Rscript -e 'devtools::test(filter = "jobs-routing")'
-```
-
-Expected: FAIL with the same message. Reinstall `ggBoostedTrees` afterwards.
+Run: `CI=true Rscript -e 'devtools::test(filter = "jobs-routing")'`
+Expected: PASS, 4 tests, still no `UNVALIDATED` message. If this run fails with
+`UNVALIDATED routings`, a destination is genuinely missing from your library:
+install it, do not weaken the test.
 
 - [ ] **Step 5: Commit**
 
@@ -871,10 +884,27 @@ exhausted until October.
 above. The `copilot_code_review` rule is still in the ruleset and does not
 block a merge, so an unreviewed diff otherwise reaches `main` unread.
 
-- [ ] **Step 3: After merge, bump the version**
+- [ ] **Step 3: After merge, bump the version and tag it**
 
 A separate commit, on its own branch: rename the `# hvtiR (unreleased)` heading
 to `# hvtiR 1.1.3`, and set `Version: 1.1.3` and `Date:` in `DESCRIPTION`.
+
+⚠️ **Tag it after that merges.** Step 5 pins the `hvtiRtemplates` workflow to
+`v1.1.3`, and an unpinned or non-existent ref makes that checkout fail:
+
+```bash
+git checkout main && git pull
+git tag -a v1.1.3 -m "hvtiR 1.1.3: the job catalog"
+git push origin v1.1.3
+```
+
+Verify the tag resolves before editing the other repo's workflow:
+
+```bash
+gh api repos/ehrlinger/hvtiR/git/ref/tags/v1.1.3 --jq .object.sha
+```
+
+Expected: a commit SHA, not a 404.
 
 - [ ] **Step 4: Teach the hvtiRtemplates checker the new source**
 
