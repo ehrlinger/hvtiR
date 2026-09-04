@@ -64,3 +64,21 @@ test_that("every destination is a family member", {
 
   expect_true(all(dest %in% members()$package))
 })
+
+test_that("jobs() returns one row per job type with a list column", {
+  j <- jobs()
+
+  expect_s3_class(j, "data.frame")
+  expect_identical(nrow(j), 53L)
+  expect_true(all(c("prefix", "folder", "disposition", "destination",
+                    "replaced_by") %in% names(j)))
+  expect_type(j$replaced_by, "list")
+  expect_type(j$sas_breadth, "integer")
+})
+
+test_that("jobs() agrees with read_jobs() on the retire rows", {
+  j <- jobs()
+
+  expect_identical(sum(j$disposition == "retire"), 5L)
+  expect_true(all(lengths(j$replaced_by[j$disposition == "retire"]) > 0L))
+})
