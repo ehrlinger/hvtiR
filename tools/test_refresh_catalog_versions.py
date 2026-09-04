@@ -6,6 +6,7 @@ nobody reads them. Both are exercised here. Nothing in this file touches the
 network -- `fetch` is stubbed, so the tests pin behaviour rather than what
 GitHub happened to answer.
 """
+import io
 import unittest
 from unittest import mock
 
@@ -118,6 +119,116 @@ class HappyPath(unittest.TestCase):
 
         self.assertEqual(rows[0]["dev_version"], "1.2.3")
         self.assertEqual(failures, [])
+
+
+class RetryActuallyWaits(unittest.TestCase):
+    """Three requests fired inside a millisecond are not three attempts.
+
+    The case these retries exist for is a throttled shared-IP runner, and a
+    throttle window does not move while you are not waiting. R/remote.R has
+    always widened its wait; this is the same rule on the Python side.
+    """
+
+    def curl(self, *results):
+        """subprocess.run double yielding one CompletedProcess per call."""
+        made = [mock.Mock(returncode=rc, stdout=out) for rc, out in results]
+        return mock.Mock(side_effect=made)
+
+    def test_it_waits_between_attempts_and_widens(self):
+        run = self.curl((0, "\n429"), (0, "\n429"), (0, "\n429"))
+        with mock.patch.object(refresher.subprocess, "run", run), \
+                mock.patch.object(refresher.time, "sleep") as slept:
+            refresher.fetch("https://example.invalid/x")
+        self.assertEqual(run.call_count, 3)
+        self.assertEqual([c.args[0] for c in slept.call_args_list],
+                         [refresher.RETRY_WAIT, refresher.RETRY_WAIT * 2])
+
+    def test_it_does_not_wait_after_the_last_attempt(self):
+        # A trailing sleep delays the failure without improving it.
+        run = self.curl((0, "\n500"))
+        with mock.patch.object(refresher.subprocess, "run", run), \
+                mock.patch.object(refresher.time, "sleep") as slept:
+            refresher.fetch("https://example.invalid/x", attempts=1)
+        slept.assert_not_called()
+
+    def test_a_settled_answer_is_not_retried(self):
+        run = self.curl((0, "body\n200"))
+        with mock.patch.object(refresher.subprocess, "run", run), \
+                mock.patch.object(refresher.time, "sleep") as slept:
+            code, body = refresher.fetch("https://example.invalid/x")
+        self.assertEqual((code, body), (200, "body"))
+        self.assertEqual(run.call_count, 1)
+        slept.assert_not_called()
+
+    def test_the_last_status_survives_the_attempts(self):
+        # Collapsing 429 to 0 made a throttle read as a missing repository.
+        run = self.curl((0, "\n429"), (0, "\n429"), (0, "\n429"))
+        with mock.patch.object(refresher.subprocess, "run", run), \
+                mock.patch.object(refresher.time, "sleep"):
+            code, _ = refresher.fetch("https://example.invalid/x")
+        self.assertEqual(code, 429)
+
+    def test_curl_never_answering_is_still_zero(self):
+        run = self.curl((7, ""), (7, ""), (7, ""))
+        with mock.patch.object(refresher.subprocess, "run", run), \
+                mock.patch.object(refresher.time, "sleep"):
+            code, _ = refresher.fetch("https://example.invalid/x")
+        self.assertEqual(code, 0)
+
+
+class UnreadableSaysWhy(unittest.TestCase):
+    def test_a_throttle_does_not_read_as_a_rename(self):
+        said = refresher.why_unreadable(429)
+        self.assertIn("throttled", said)
+        self.assertNotIn("renamed", said)
+
+    def test_a_404_still_names_the_permanent_causes(self):
+        self.assertIn("renamed", refresher.why_unreadable(404))
+
+    def test_no_response_is_distinct_from_a_status(self):
+        self.assertIn("no response", refresher.why_unreadable(0))
+
+    def test_the_failure_line_carries_the_reason(self):
+        row = {"package": "thing", "cran": "", "repo": "e/thing",
+               "family": "member", "cran_version": "", "dev_version": "1.0.0",
+               "dev_ahead": ""}
+        with mock.patch.object(refresher, "fetch", return_value=(429, "")):
+            _, failures = refresher.refresh([row])
+        self.assertEqual(len(failures), 1)
+        self.assertIn("throttled", failures[0])
+
+
+class CheckModeIsHonest(unittest.TestCase):
+    """`--check` must not answer "no drift" for a run that verified nothing.
+
+    A failed fetch keeps the recorded value, so before == after holds just as
+    firmly when nothing was read as when everything was read and unchanged.
+    """
+
+    def run_check(self, fetch_result):
+        import tempfile
+        rows = ("package,repo,family,blurb,cran,status,role,homepage,"
+                "cran_version,dev_version,dev_ahead\n"
+                "thing,e/thing,member,b,,wip,,,,1.0.0,\n")
+        with tempfile.NamedTemporaryFile("w", suffix=".csv",
+                                         delete=False, newline="") as handle:
+            handle.write(rows)
+            path = handle.name
+        with mock.patch.object(refresher, "fetch", return_value=fetch_result):
+            with mock.patch("sys.stderr", new=io.StringIO()), \
+                    mock.patch("sys.stdout", new=io.StringIO()):
+                return refresher.main([path, "--check"])
+
+    def test_an_unreadable_oracle_outranks_no_drift(self):
+        self.assertEqual(self.run_check((0, "")), 2)
+
+    def test_no_drift_is_still_zero(self):
+        self.assertEqual(
+            self.run_check((200, "Package: thing\nVersion: 1.0.0\n")), 0)
+
+    def test_drift_is_still_one(self):
+        self.assertEqual(
+            self.run_check((200, "Package: thing\nVersion: 2.0.0\n")), 1)
 
 
 class UnexplainedGaps(unittest.TestCase):

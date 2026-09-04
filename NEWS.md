@@ -1,6 +1,27 @@
 Package: hvtiR
 Version: 1.1.3
 
+# hvtiR (unreleased)
+
+* The catalog refresher waits between retried fetches. It retried three times
+  with no delay at all, which is not a retry: the case the attempts exist for
+  is a throttled shared-IP runner, and three requests fired inside a
+  millisecond meet the same closed window three times. The wait now widens
+  with the attempt, matching `remote_retry_wait` in `R/remote.R`.
+
+* An unreadable oracle now says why. `fetch()` collapsed every exhausted retry
+  to status 0, so a throttle was reported with the wording reserved for
+  permanent causes, "renamed, private, default branch moved, or the file is
+  gone", and pointed the reader at a rename that never happened. The last
+  status seen survives the attempts and `why_unreadable()` turns it into the
+  repair it actually implies.
+
+* `--check` no longer reports "no drift" for a run that verified nothing. A
+  failed fetch keeps the recorded value, so `before == after` holds just as
+  firmly when nothing was read as when everything was read and unchanged, and
+  the exit code was 0 either way. It is now 2 when an oracle could not be
+  read, matching the convention the writing path already used.
+
 # hvtiR 1.1.3
 
 * `status()` and `doctor()` report hvtiR's own version. hvtiR is not a member,
