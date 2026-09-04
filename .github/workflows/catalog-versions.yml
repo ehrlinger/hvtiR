@@ -40,9 +40,9 @@ jobs:
           set +e
           python3 tools/refresh_catalog_versions.py inst/extdata/catalog.csv \
             | tee refresh.log
-          status=${PIPESTATUS[0]}
+          refresh_status=${PIPESTATUS[0]}
           set -e
-          if [ "$status" -gt 2 ]; then exit "$status"; fi
+          if [ "$refresh_status" -gt 2 ]; then exit "$refresh_status"; fi
           {
             echo 'report<<REPORT'
             cat refresh.log
