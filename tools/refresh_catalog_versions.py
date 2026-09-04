@@ -107,16 +107,28 @@ def expects_description(row: dict) -> bool:
 
 
 def cran_version(pkg: str) -> str | None:
-    """Version from crandb. None means unreadable; "" means not on CRAN."""
+    """Version from crandb. None means unreadable; "" means not on CRAN.
+
+    A 200 does not guarantee a package record. An error envelope, a proxy or
+    captive portal, or an API change can all answer with well-formed JSON that
+    is not an object, and `.get` on that raises rather than returning None --
+    an uncaught exception exits 1, and the schedule used to read 1 as success.
+    So the shape is checked, not assumed, and anything unexpected takes the
+    same path as an unreadable oracle: report it and keep the recorded value.
+    """
     code, body = fetch(CRAN_URL.format(pkg=pkg))
     if code == 404:
         return ""
     if code != 200:
         return None
     try:
-        return json.loads(body).get("Version", "")
+        payload = json.loads(body)
     except json.JSONDecodeError:
         return None
+    if not isinstance(payload, dict):
+        return None
+    version = payload.get("Version", "")
+    return version if isinstance(version, str) else None
 
 
 def refresh(rows: list[dict]) -> tuple[list[dict], list[str]]:

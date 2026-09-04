@@ -54,7 +54,19 @@ jobs:
             2>&1 | tee refresh.log
           refresh_status=${PIPESTATUS[0]}
           set -e
-          if [ "$refresh_status" -gt 2 ]; then exit "$refresh_status"; fi
+          # An ALLOWLIST, not a threshold. 0 and 2 are the only codes the
+          # script returns deliberately (2 means an oracle was unreadable and
+          # the recorded value was kept). Every other code is the interpreter
+          # talking, not the script: an uncaught exception exits 1, which a
+          # `-gt 2` test lets through. That ended the run green with nothing
+          # refreshed, no pull request, and no annotation, because the guard
+          # below keys on status 2 -- a stale record that looks checked, which
+          # is the exact failure this job exists to prevent.
+          case "$refresh_status" in
+            0|2) ;;
+            *) echo "::error::refresh_catalog_versions.py exited $refresh_status, which it never does deliberately; the catalog was not refreshed this run."
+               exit "$refresh_status" ;;
+          esac
           echo "status=$refresh_status" >> "$GITHUB_OUTPUT"
           # A random delimiter: the report carries text read from other
           # repositories' DESCRIPTION files, and a fixed one could appear in

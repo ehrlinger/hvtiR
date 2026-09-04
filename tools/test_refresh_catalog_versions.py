@@ -120,6 +120,53 @@ class HappyPath(unittest.TestCase):
         self.assertEqual(failures, [])
 
 
+class CranAnswersSomethingOtherThanAPackage(unittest.TestCase):
+    """A 200 from crandb is not a promise that the body is a package record.
+
+    An error envelope, a proxy or captive portal, and an API change all answer
+    with well-formed JSON that is not an object. `.get` on that raised rather
+    than returning None, and an uncaught exception exits 1 -- which the
+    schedule read as success, ending the run green with nothing refreshed.
+    Every unexpected shape must take the unreadable-oracle path instead.
+    """
+
+    def shape(self, body):
+        with mock.patch.object(refresher, "fetch",
+                               return_value=(200, body)):
+            return refresher.cran_version("thing")
+
+    def test_a_json_array_is_unreadable_not_a_crash(self):
+        self.assertIsNone(self.shape('["not", "a", "record"]'))
+
+    def test_a_bare_json_string_is_unreadable(self):
+        self.assertIsNone(self.shape('"gone"'))
+
+    def test_a_bare_json_number_is_unreadable(self):
+        self.assertIsNone(self.shape("123"))
+
+    def test_a_non_string_version_is_unreadable(self):
+        # Reading 5 as a version would write "5" into the catalog and look
+        # like a real answer.
+        self.assertIsNone(self.shape('{"Version": 5}'))
+
+    def test_a_real_record_still_reads(self):
+        self.assertEqual(self.shape('{"Version": "1.2.3"}'), "1.2.3")
+
+    def test_malformed_json_is_still_unreadable(self):
+        self.assertIsNone(self.shape("not json at all"))
+
+    def test_an_unreadable_cran_keeps_the_recorded_value(self):
+        rows = [{"package": "thing", "cran": "thing", "repo": "",
+                 "family": "member", "cran_version": "1.0.0",
+                 "dev_version": "1.0.0", "dev_ahead": ""}]
+        with mock.patch.object(refresher, "fetch",
+                               return_value=(200, '["nope"]')):
+            refreshed, failures = refresher.refresh(rows)
+        self.assertEqual(refreshed[0]["cran_version"], "1.0.0")
+        self.assertEqual(len(failures), 1)
+        self.assertIn("could not read CRAN", failures[0])
+
+
 class UnexplainedGaps(unittest.TestCase):
     """The finding the schedule exists to surface.
 
