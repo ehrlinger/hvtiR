@@ -46,7 +46,7 @@
 
 <div id="hvtir" class="section level1">
 
-<p>The one-command installer and diagnostic for the HVTI R package family: <code><a href="reference/install.html">install()</a></code>, <code><a href="reference/update.html">update()</a></code>, <code><a href="reference/status.html">status()</a></code>, <code><a href="reference/doctor.html">doctor()</a></code> and <code><a href="reference/members.html">members()</a></code>. Five exports across five source files, with <code>cli</code> as its only import.</p>
+<p>The one-command installer and diagnostic for the HVTI R package family: <code><a href="reference/install.html">install()</a></code>, <code><a href="reference/update.html">update()</a></code>, <code><a href="reference/status.html">status()</a></code>, <code><a href="reference/doctor.html">doctor()</a></code>, <code><a href="reference/members.html">members()</a></code> and <code><a href="reference/jobs.html">jobs()</a></code>. Six exports across seven source files, importing <code>cli</code>, <code>jsonlite</code> and <code>utils</code>.</p>
 <p><strong>It is the entry point everyone installs through</strong>, so a defect here is the first thing a new user meets and the last thing they can diagnose. It is also the only package in the family whose job is other packages: most of its correctness lives in a registry and in how specs are handed to <code>pak</code>, not in computation.</p>
 <p>This file is the operational contract and applies in full. It is tool neutral, so Codex and any other agent read the same rules. Claude Code affordances live in <code>CLAUDE.md</code>, which imports this file.</p>
 <div class="section level2">

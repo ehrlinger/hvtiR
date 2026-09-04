@@ -4,9 +4,11 @@ The one-command installer and diagnostic for the HVTI R package family:
 [`install()`](https://ehrlinger.github.io/hvtiR/reference/install.md),
 [`update()`](https://ehrlinger.github.io/hvtiR/reference/update.md),
 [`status()`](https://ehrlinger.github.io/hvtiR/reference/status.md),
-[`doctor()`](https://ehrlinger.github.io/hvtiR/reference/doctor.md) and
-[`members()`](https://ehrlinger.github.io/hvtiR/reference/members.md).
-Five exports across five source files, with `cli` as its only import.
+[`doctor()`](https://ehrlinger.github.io/hvtiR/reference/doctor.md),
+[`members()`](https://ehrlinger.github.io/hvtiR/reference/members.md)
+and [`jobs()`](https://ehrlinger.github.io/hvtiR/reference/jobs.md). Six
+exports across seven source files, importing `cli`, `jsonlite` and
+`utils`.
 
 **It is the entry point everyone installs through**, so a defect here is
 the first thing a new user meets and the last thing they can diagnose.
