@@ -1,9 +1,14 @@
 # hvtiR
 
 <!-- badges: start -->
-![R package version](https://img.shields.io/github/r-package/v/ehrlinger/hvtiR)
-![R-CMD-check status](https://img.shields.io/github/actions/workflow/status/ehrlinger/hvtiR/R-CMD-check.yaml)
-![pkgdown site status](https://img.shields.io/github/actions/workflow/status/ehrlinger/hvtiR/pkgdown.yaml?label=pkgdown)
+[![R-CMD-check](https://github.com/ehrlinger/hvtiR/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/ehrlinger/hvtiR/actions/workflows/R-CMD-check.yaml)
+[![Codecov test coverage](https://codecov.io/gh/ehrlinger/hvtiR/graph/badge.svg)](https://app.codecov.io/gh/ehrlinger/hvtiR)
+[![active](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/badges/latest/active.svg)
+[![pkgdown](https://github.com/ehrlinger/hvtiR/actions/workflows/pkgdown.yaml/badge.svg)](https://github.com/ehrlinger/hvtiR/actions/workflows/pkgdown.yaml)
+
+[![R package version](https://img.shields.io/github/r-package/v/ehrlinger/hvtiR)](https://github.com/ehrlinger/hvtiR)
+
+[![lint](https://github.com/ehrlinger/hvtiR/actions/workflows/lint.yaml/badge.svg)](https://github.com/ehrlinger/hvtiR/actions/workflows/lint.yaml)
 <!-- badges: end -->
 
 One command to install the HVTI R package family, and one command to say
