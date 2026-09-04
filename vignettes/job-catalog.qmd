@@ -33,14 +33,17 @@ show <- function(rows) {
   owed <- vapply(rows$replaced_by, function(v) {
     if (!length(v)) "" else paste0("`", paste(v, collapse = "`, `"), "`")
   }, character(1))
+  blocked <- ifelse(is.na(rows$blocked_on), "", rows$blocked_on)
   out <- data.frame(
     job = paste0("`", label, "`"),
     name = rows$name,
     SAS = rows$sas_breadth,
     R = rows$r_jobs,
     disposition = rows$disposition,
+    status = rows$status,
     destination = rows$destination,
     `replaced by` = owed,
+    `blocked on` = blocked,
     check.names = FALSE
   )
   print(knitr::kable(out, row.names = FALSE))

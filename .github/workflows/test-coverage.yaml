@@ -33,7 +33,13 @@ jobs:
 
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          extra-packages: any::covr, any::xml2
+          # Must cover every package named in replaced_by in inst/extdata/jobs.json.
+          extra-packages: >
+            any::covr,
+            any::xml2,
+            ehrlinger/hvtiPlotR,
+            ehrlinger/ggRandomForests,
+            ehrlinger/ggBoostedTrees
           needs: coverage
 
       - name: Test coverage

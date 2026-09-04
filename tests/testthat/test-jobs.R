@@ -3,8 +3,9 @@ test_that("the catalog has 53 rows and every row is keyed", {
 
   expect_type(raw, "list")
   expect_length(raw, 53L)
-  expect_true(all(vapply(raw, function(r) is.character(r$prefix) ||
-                           is.null(r$prefix), logical(1))))
+  expect_true(all(vapply(raw, function(r) {
+    is.character(r$prefix) || is.null(r$prefix)
+  }, logical(1))))
 })
 
 test_that("prefix and qualifier together are unique", {
@@ -41,7 +42,9 @@ test_that("a retired row names what replaced it", {
 test_that("a scaffold or thin row is destined for hvtiRtemplates", {
   raw <- read_jobs()
   for (r in raw) {
-    if (r$disposition %in% c("scaffold", "thin")) {
+    is_scaffold_or_thin <- identical(r$disposition, "scaffold") ||
+      identical(r$disposition, "thin")
+    if (is_scaffold_or_thin) {
       expect_identical(r$destination, "hvtiRtemplates", label = r$prefix)
     }
   }
@@ -76,9 +79,27 @@ test_that("jobs() returns one row per job type with a list column", {
   expect_type(j$sas_breadth, "integer")
 })
 
-test_that("jobs() agrees with read_jobs() on the retire rows", {
+test_that("jobs() has exactly the seeded count of retire rows, each replaced", {
   j <- jobs()
 
+  # 5 is the seeded count as of this catalog. A sixth retirement is not a
+  # bug, but it should change this number on purpose rather than by
+  # surprise, so a failure here points a future author at this line.
   expect_identical(sum(j$disposition == "retire"), 5L)
   expect_true(all(lengths(j$replaced_by[j$disposition == "retire"]) > 0L))
+})
+
+test_that("the real blocked_on values for sid, vt and rfr are pinned", {
+  j <- jobs()
+
+  # sid and vt are disposition build; rfr is disposition retire. All three
+  # carry the same real blocker, hvtiRutilities#taxonomy, unlike the five
+  # placeholder build rows still waiting on an issue. A placeholder sweep
+  # that overwrites blocked_on wholesale would silently clobber these three;
+  # this test is here so that overwrite fails loudly instead.
+  by_prefix <- function(p) j$blocked_on[j$prefix == p]
+
+  expect_identical(by_prefix("sid"), "hvtiRutilities#taxonomy")
+  expect_identical(by_prefix("vt"), "hvtiRutilities#taxonomy")
+  expect_identical(by_prefix("rfr"), "hvtiRutilities#taxonomy")
 })

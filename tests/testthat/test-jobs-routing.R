@@ -18,7 +18,7 @@
 # installed, rather than by uninstalling something from the developer's real
 # library and hoping the reinstall runs.
 .jobs_report_absent <- function(absent,
-                                 ci = identical(Sys.getenv("CI"), "true")) {
+                                ci = identical(Sys.getenv("CI"), "true")) {
   if (!length(absent)) {
     return(invisible(character(0)))
   }
@@ -30,8 +30,10 @@
 
 test_that("an absent destination is named, and is fatal on CI", {
   expect_identical(.jobs_report_absent(character(0)), character(0))
-  expect_message(.jobs_report_absent("notAPackageThatExists", ci = FALSE),
-                 "UNVALIDATED routings, package not installed: notAPackageThatExists")
+  expect_message(
+    .jobs_report_absent("notAPackageThatExists", ci = FALSE),
+    "UNVALIDATED routings, package not installed: notAPackageThatExists"
+  )
   expect_error(.jobs_report_absent("notAPackageThatExists", ci = TRUE),
                "UNVALIDATED routings")
 })
