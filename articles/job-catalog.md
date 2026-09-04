@@ -44,7 +44,7 @@ disagree with it.
 | `lm` | Logistic model | 621 | 45 | scaffold | queued | hvtiRtemplates |  |  |
 | `ls` | Life table / STS | 34 | 0 | scaffold | queued | hvtiRtemplates |  |  |
 | `mm` | Mixed model | 59 | 1 | scaffold | queued | hvtiRtemplates |  |  |
-| `nb` | Notebook | 21 | 63 | build | queued | ggBoostedTrees |  | needs an issue: no function exists yet |
+| `nb` | Notebook | 21 | 63 | build | queued | ggBoostedTrees |  | ggBoostedTrees#9 |
 | `nm` | Nonparametric model | 122 | 1 | scaffold | queued | hvtiRtemplates |  |  |
 | `pm` | Propensity model | 5 | 0 | scaffold | queued | hvtiRtemplates |  |  |
 | `rf` | Random forest | 47 | 312 | retire | out-of-scope | ggRandomForests | [`ggRandomForests::gg_rfsrc`](https://ehrlinger.github.io/ggRandomForests/reference/gg_rfsrc.rfsrc.html), [`ggRandomForests::gg_error`](https://ehrlinger.github.io/ggRandomForests/reference/gg_error.html), [`ggRandomForests::gg_vimp`](https://ehrlinger.github.io/ggRandomForests/reference/gg_vimp.html), [`ggRandomForests::gg_variable`](https://ehrlinger.github.io/ggRandomForests/reference/gg_variable.html) |  |
@@ -68,10 +68,10 @@ disagree with it.
 
 | job | name | SAS | R | disposition | status | destination | replaced by | blocked on |
 |:---|:---|---:|---:|:---|:---|:---|:---|:---|
-| `ce` | Competing events | 131 | 1 | build | queued | hvtiPlotR |  | needs an issue: no function exists yet |
-| `cp` | Cumulative probability plot | 5 | 1 | build | queued | hvtiPlotR |  | needs an issue: no function exists yet |
-| `fp` | Forest plot | 19 | 20 | build | queued | hvtiPlotR |  | needs an issue: no function exists yet |
-| `gp` | Generalized model plot | 50 | 2 | build | queued | hvtiPlotR |  | needs an issue: no function exists yet |
+| `ce` | Competing events | 131 | 1 | build | queued | hvtiPlotR |  | hvtiPlotR#134 |
+| `cp` | Cumulative probability plot | 5 | 1 | build | queued | hvtiPlotR |  | hvtiPlotR#135 |
+| `fp` | Forest plot | 19 | 20 | build | queued | hvtiPlotR |  | hvtiPlotR#133 |
+| `gp` | Generalized model plot | 50 | 2 | build | queued | hvtiPlotR |  | hvtiPlotR#136 |
 | `hp` | Hazard plot | 557 | 24 | thin | revisit | hvtiRtemplates | [`hvtiPlotR::hv_hazard`](https://ehrlinger.github.io/hvtiPlotR/reference/hv_hazard.html), [`hvtiPlotR::hazard_plot`](https://ehrlinger.github.io/hvtiPlotR/reference/hazard_plot.html), [`hvtiPlotR::hv_survival`](https://ehrlinger.github.io/hvtiPlotR/reference/hv_survival.html), [`hvtiPlotR::hv_atrisk_compose`](https://ehrlinger.github.io/hvtiPlotR/reference/hv_atrisk_compose.html) |  |
 | `hs` | Hazard setup | 144 | 11 | scaffold | shipped | hvtiRtemplates |  |  |
 | `lp` | Logistic plot | 636 | 606 | thin | queued | hvtiRtemplates | [`hvtiPlotR::hv_mirror_hist`](https://ehrlinger.github.io/hvtiPlotR/reference/hv_mirror_hist.html) |  |
