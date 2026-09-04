@@ -20,12 +20,15 @@ affordances live in `CLAUDE.md`, which imports this file.
 
 ## Definition of done
 
-- `devtools::test()` passes.
-- `devtools::check()` is **0 errors, 0 warnings, 0 notes**. Verified
-  2026-08-20 at 1.0.0 (21s with `--no-manual` and vignettes skipped; the
-  manual has its own gate).
-- `devtools::document()` has been run and `man/` and `NAMESPACE` are
-  committed with the source change.
+- [`devtools::test()`](https://devtools.r-lib.org/reference/test.html)
+  passes.
+- [`devtools::check()`](https://devtools.r-lib.org/reference/check.html)
+  is **0 errors, 0 warnings, 0 notes**. Verified 2026-08-20 at 1.0.0
+  (21s with `--no-manual` and vignettes skipped; the manual has its own
+  gate).
+- [`devtools::document()`](https://devtools.r-lib.org/reference/document.html)
+  has been run and `man/` and `NAMESPACE` are committed with the source
+  change.
 - A change touching installation is tested through the mocked seam, not
   by installing.
 
