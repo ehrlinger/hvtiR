@@ -1,8 +1,9 @@
 # hvtiR
 
 The one-command installer and diagnostic for the HVTI R package family:
-`install()`, `update()`, `status()`, `doctor()` and
-`members()`. Five exports across five source files, with `cli` as its only import.
+`install()`, `update()`, `status()`, `doctor()`, `members()` and
+`jobs()`. Six exports across seven source files, importing `cli`, `jsonlite`
+and `utils`.
 
 **It is the entry point everyone installs through**, so a defect here is the first thing a
 new user meets and the last thing they can diagnose. It is also the only package in the

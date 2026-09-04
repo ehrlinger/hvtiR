@@ -45,15 +45,37 @@ read_jobs <- function(path = system.file("extdata", "jobs.json",
 jobs <- function() {
   raw <- read_jobs()
 
+  # Every field below is a scalar in the catalog, but the file is hand
+  # edited and four of its fields ARE arrays, so a scalar written as an
+  # array is a plausible slip. vapply's own message for it names neither
+  # the field nor the row -- "values must be length 1, but FUN(X[[i]])
+  # result is length 2" -- and the first sign of it is the vignette
+  # failing to build. So check here and say which row and which field.
+  scalar <- function(r, i, field) {
+    v <- r[[field]]
+    if (!is.null(v) && length(v) != 1L) {
+      prefix <- r[["prefix"]]
+      stop("jobs(): row ", i,
+           if (is.character(prefix) && length(prefix) == 1L) {
+             paste0(" (prefix '", prefix, "')")
+           } else {
+             ""
+           },
+           " gives ", length(v), " values for '", field,
+           "', which the catalog records one of.",
+           call. = FALSE)
+    }
+    v
+  }
   chr <- function(field) {
-    vapply(raw, function(r) {
-      v <- r[[field]]
+    vapply(seq_along(raw), function(i) {
+      v <- scalar(raw[[i]], i, field)
       if (is.null(v)) NA_character_ else as.character(v)
     }, character(1))
   }
   int <- function(field) {
-    vapply(raw, function(r) {
-      v <- r[[field]]
+    vapply(seq_along(raw), function(i) {
+      v <- scalar(raw[[i]], i, field)
       if (is.null(v)) NA_integer_ else as.integer(v)
     }, integer(1))
   }
