@@ -3,6 +3,13 @@ Version: 1.1.2
 
 # hvtiR (unreleased)
 
+* `status()` and `doctor()` report hvtiR's own version. hvtiR is not a member,
+  so `status()` walks `members()` and never showed the version of the package
+  the user is running, and `doctor()`'s Environment section reported the R
+  version, the platform and `pak` but not hvtiR. Both issue templates ask for
+  that output, so a report arrived without the one version a maintainer needs
+  first.
+
 * The catalog gains `cran_version`, `dev_version` and `dev_ahead`, refreshed
   weekly from crandb and each repo's `DESCRIPTION` on `main` by
   `tools/refresh_catalog_versions.py`. `members.json` is unchanged, so no

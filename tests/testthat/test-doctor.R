@@ -1,3 +1,10 @@
+test_that("doctor reports hvtiR's own version", {
+  local_mocked_bindings(fetch_description = function(...) NULL)
+
+  expect_output(doctor(remote = FALSE),
+                paste0("hvtiR ", as.character(utils::packageVersion("hvtiR"))))
+})
+
 test_that("doctor reports the R version and the platform", {
   local_mocked_bindings(
     installed_version = function(pkg) "1.0.0",
