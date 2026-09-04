@@ -36,6 +36,15 @@ read_jobs <- function(path = system.file("extdata", "jobs.json",
 #' apart because validating a routing has to load the destination package, and
 #' `hvtiRutilities` is imported by packages this catalog routes to.
 #'
+#' `status` and `batch` are `hvtiRtemplates` scheduling fields: they answer
+#' when `hvtiRtemplates` will ship a template for a row, not whether the row
+#' is done. Both are `NA` (null in the catalog) for a row whose `destination`
+#' is not `hvtiRtemplates`, because that repository has nothing of its own to
+#' schedule there. The one exception is `status == "intake"`, which survives
+#' regardless of `destination`: it is not a schedule value at all, but a
+#' taxonomy fact meaning the prefix has been proposed but is not yet in
+#' `hvtiRutilities::hvti_taxonomy()`.
+#'
 #' @return A data frame with one row per job type. `replaced_by` is a list
 #'   column of character vectors, empty where nothing replaces the row.
 #' @export

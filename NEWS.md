@@ -1,6 +1,17 @@
 Package: hvtiR
 Version: 1.1.3
 
+# hvtiR (unreleased)
+
+* `status` and `batch` are now null on every row whose `destination` is not
+  `hvtiRtemplates`, except an `intake` row, which keeps `status: "intake"`
+  and only loses `batch`. Both fields are `hvtiRtemplates` scheduling values,
+  and a row `hvtiRtemplates` will never ship a template for has nothing to
+  schedule; leaving a value there let `rfc` read `queued` on the exact
+  `ggRandomForests` surface that had already justified marking `rf` and
+  `rfsrc` `out-of-scope`. `out-of-scope` had no remaining users after the
+  change and is removed as a status value.
+
 # hvtiR 1.1.3
 
 * `status()` and `doctor()` report hvtiR's own version. hvtiR is not a member,

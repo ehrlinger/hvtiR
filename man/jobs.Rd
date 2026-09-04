@@ -33,6 +33,15 @@ The taxonomy that says what a prefix \emph{means} is
 \code{hvtiRutilities::hvti_taxonomy()}. This catalog says who owes it. They are
 apart because validating a routing has to load the destination package, and
 \code{hvtiRutilities} is imported by packages this catalog routes to.
+
+\code{status} and \code{batch} are \code{hvtiRtemplates} scheduling fields: they answer
+when \code{hvtiRtemplates} will ship a template for a row, not whether the row
+is done. Both are \code{NA} (null in the catalog) for a row whose \code{destination}
+is not \code{hvtiRtemplates}, because that repository has nothing of its own to
+schedule there. The one exception is \code{status == "intake"}, which survives
+regardless of \code{destination}: it is not a schedule value at all, but a
+taxonomy fact meaning the prefix has been proposed but is not yet in
+\code{hvtiRutilities::hvti_taxonomy()}.
 }
 \examples{
 j <- jobs()

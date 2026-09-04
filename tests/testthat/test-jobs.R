@@ -222,3 +222,33 @@ test_that("an intake row's blocked_on is not a placeholder either", {
     }
   }
 })
+
+test_that("status/batch are null off-destination, except intake", {
+  raw <- read_jobs()
+  for (r in raw) {
+    if (!identical(r$destination, "hvtiRtemplates")) {
+      expect_null(r$batch, label = r$prefix)
+      if (!identical(r$status, "intake")) {
+        expect_null(r$status, label = r$prefix)
+      }
+    }
+  }
+})
+
+test_that("no row anywhere carries the retired out-of-scope status", {
+  raw <- read_jobs()
+  statuses <- vapply(raw, function(r) {
+    if (is.null(r$status)) NA_character_ else r$status
+  }, character(1))
+
+  expect_false("out-of-scope" %in% statuses)
+})
+
+test_that("a row destined for hvtiRtemplates still has a status", {
+  raw <- read_jobs()
+  for (r in raw) {
+    if (identical(r$destination, "hvtiRtemplates")) {
+      expect_false(is.null(r$status), label = r$prefix)
+    }
+  }
+})

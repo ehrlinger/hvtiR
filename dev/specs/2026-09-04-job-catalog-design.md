@@ -109,9 +109,30 @@ The existing 18 fields are carried over unchanged. The catalog is seeded from
   is the package that should write it; `replaced_by` is empty and `blocked_on`
   carries the issue.
 
-`status` keeps its existing values and its existing meaning, which is about
-scheduling. `out-of-scope` is deprecated: the two rows carrying it become
-`disposition: retire`, and the value is removed once no row uses it.
+`status` and `batch` keep their existing meaning, which is about scheduling:
+they answer when `hvtiRtemplates` will ship a template for a row, not whether
+the row is done. `out-of-scope` is deprecated, and here is what replaces it,
+decided by the maintainer.
+
+`status` and `batch` are `hvtiRtemplates` scheduling fields, so they are null
+for a row whose `destination` is not `hvtiRtemplates`: that repository has
+nothing of its own to schedule for such a row, so a scheduling value on it can
+only drift, the way `rfc` sitting at `queued` on the same `ggRandomForests`
+surface that had already justified `out-of-scope` for `rf` and `rfsrc` did.
+Concretely, every row whose `destination` is not `hvtiRtemplates` gets
+`batch: null`; of those, every row whose `status` is not `intake` also gets
+`status: null`.
+
+`intake` is exempt from this because it is not a schedule value at all. It
+means the prefix has been proposed but is not yet in
+`hvtiRutilities::hvti_taxonomy()`, which is a taxonomy fact independent of
+which package eventually owes the work, so it survives regardless of
+`destination` and keeps its `status` while still losing `batch`.
+
+`out-of-scope` itself is retired rather than repurposed: the two rows that
+carried it (`rf`, `rfsrc`) become `disposition: retire` with `status: null`,
+and the value is removed from the catalog and from any enum or documentation
+that lists it once no row uses it.
 
 ## 6. Validation rules
 
