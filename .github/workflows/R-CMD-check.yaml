@@ -39,7 +39,11 @@ jobs:
 
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          extra-packages: any::rcmdcheck
+          extra-packages: >
+            any::rcmdcheck,
+            ehrlinger/hvtiPlotR,
+            ehrlinger/ggRandomForests,
+            ehrlinger/ggBoostedTrees
           needs: check
 
       # Install the package into the user library so that Quarto's subprocess
