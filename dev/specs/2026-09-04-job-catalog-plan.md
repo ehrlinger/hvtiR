@@ -760,73 +760,84 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 - Modify: `inst/extdata/jobs.json`
 - Modify: `tests/testthat/test-jobs.R`
 
-**Interfaces:**
-- Consumes: the seven `build` rows from Task 2.
-- Produces: `blocked_on` values that are real issue references.
+⚠️ **AMENDED 2026-09-04, after the catalog merged.** This task originally said
+to open seven issues and to assert every `build` row matched
+`^ehrlinger/[A-Za-z]+#[0-9]+$`. Both were wrong against the data that shipped:
 
-- [ ] **Step 1: Open the issues**
+- **Five rows carry the placeholder, not seven.** `ce`, `cp`, `fp` and `gp` go
+  to `hvtiPlotR`, `nb` to `ggBoostedTrees`. `sid` and `vt` are also `build`,
+  but they carry a REAL blocker, `hvtiRutilities#taxonomy`, and their status is
+  `intake`: they are proposed prefixes that do not exist in the taxonomy yet. A
+  function cannot be specified for a prefix that has not been accepted, so they
+  are left alone, and the test pinning them stays.
+- **The reference format is repo relative**, `hvtiPlotR#41`, matching the file's
+  existing `hvtiRbootstrap#16` and `hvtiRutilities#taxonomy`. The original
+  `ehrlinger/...` form would have been a third format in a file that already
+  has two, and would have failed against every pre-existing value.
+- **The test asserts the placeholder is gone**, rather than imposing a rigid
+  shape. `hvtiRdatabuild`, an existing value, carries no issue number at all,
+  and a format rule strict enough to be useful would reject it.
 
-Seven functions do not exist. Open one issue per row, in the destination repo:
+- [ ] **Step 1: File the five issues**
 
-```bash
-gh issue create -R ehrlinger/hvtiPlotR -t "Forest plot function for the fp job type" \
-  -b "The fp job type has 19 SAS templates and 20 R jobs already written by hand, the only graphs row where R exceeds SAS. hvtiPlotR has no forest plot function; every 'forest' match in the package is the colour literal forestgreen. Catalog row: fp, disposition build."
-gh issue create -R ehrlinger/hvtiPlotR -t "Competing events figures for the ce job type" \
-  -b "131 SAS templates, 1 R job. hvtiPlotR ships the parametric dataset of competing-risk estimates but no function that consumes it. Catalog row: ce, disposition build."
-gh issue create -R ehrlinger/hvtiPlotR -t "Cumulative probability plot for the cp job type" \
-  -b "km_build_cumhaz_plot is cumulative hazard, not cumulative probability. Catalog row: cp, disposition build."
-gh issue create -R ehrlinger/hvtiPlotR -t "Generalized model plot for the gp job type" \
-  -b "50 SAS templates, 2 R jobs, no function. Catalog row: gp, disposition build."
-gh issue create -R ehrlinger/ggRandomForests -t "sidClustering support for the sid job type" \
-  -b "sidClustering appears zero times in ggRandomForests. Catalog row: sid, disposition build."
-gh issue create -R ehrlinger/ggRandomForests -t "Virtual twins support for the vt job type" \
-  -b "Virtual twins appears only inside gg_partial_varpro's documentation, describing Unlimited Virtual Twins as machinery varpro uses internally. There is no entry point. Catalog row: vt, disposition build."
-gh issue create -R ehrlinger/ggBoostedTrees -t "BoostMLR support for the nb job type" \
-  -b "gg_boost_* covers boostmtree. BoostMLR is in Suggests but appears in no R/, tests/ or vignettes/ file. Catalog row: nb, disposition build."
-```
-
-Record the seven issue numbers returned.
+Done by the maintainer's session on 2026-09-04. Record the numbers returned.
 
 - [ ] **Step 2: Write the failing test**
 
 Append to `tests/testthat/test-jobs.R`:
 
 ```r
-test_that("a build row is blocked on a real issue reference", {
+test_that("no row is still blocked on a placeholder", {
+  raw <- read_jobs()
+  stale <- vapply(raw, function(r) {
+    b <- r$blocked_on
+    !is.null(b) && grepl("^needs an issue", b)
+  }, logical(1))
+
+  expect_identical(sum(stale), 0L)
+})
+
+test_that("a build row that is not intake names a real issue", {
   raw <- read_jobs()
   for (r in raw) {
-    if (identical(r$disposition, "build")) {
-      expect_match(r$blocked_on, "^ehrlinger/[A-Za-z]+#[0-9]+$",
-                   label = r$prefix)
+    if (identical(r$disposition, "build") &&
+        !identical(r$status, "intake")) {
+      expect_match(r$blocked_on, "^[A-Za-z]+#[0-9]+$", label = r$prefix)
     }
   }
 })
 ```
 
-- [ ] **Step 3: Run test to verify it fails**
+The `intake` carve out is the whole point of the amendment: `sid` and `vt` are
+blocked on the taxonomy, not on a function, and their blocker is already real.
+
+- [ ] **Step 3: Run tests to verify they fail**
 
 Run: `Rscript -e 'devtools::test(filter = "jobs")'`
-Expected: FAIL, seven rows carry the placeholder string.
+Expected: FAIL, five rows still carry the placeholder.
 
 - [ ] **Step 4: Write the issue references**
 
-Edit `inst/extdata/jobs.json` and replace each of the seven `blocked_on`
-placeholder strings with the matching reference, for example
-`"ehrlinger/hvtiPlotR#41"`. Use the numbers `gh` returned in Step 1.
+Edit `inst/extdata/jobs.json`, replacing the five placeholder strings with the
+matching repo relative reference. Do NOT touch `sid`, `vt` or `rfr`.
 
 - [ ] **Step 5: Run tests to verify they pass**
 
 Run: `Rscript -e 'devtools::test(filter = "jobs")'`
-Expected: PASS, 10 tests.
+Expected: PASS, no failures. The existing test pinning `sid`, `vt` and `rfr` to
+`hvtiRutilities#taxonomy` must still pass; if it does not, a row was touched
+that should not have been.
 
 - [ ] **Step 6: Commit**
 
 ```bash
 git add inst/extdata/jobs.json tests/testthat/test-jobs.R
-git commit -m "feat: block every build row on a real issue
+git commit -m "feat: block every buildable row on a real issue
 
-Seven functions the catalog says are owed but do not exist, now each with an
-issue in the repo that owes it, and a test that refuses a placeholder.
+Five functions the catalog says are owed but do not exist, now each with an
+issue in the repo that owes it, and a test that refuses a placeholder. sid and
+vt keep hvtiRutilities#taxonomy: they are intake prefixes, blocked on the
+taxonomy before any function can be specified.
 
 Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 ```
