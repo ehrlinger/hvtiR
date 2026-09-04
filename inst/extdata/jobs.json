@@ -21,8 +21,8 @@
    "spec": null,
    "note": null,
    "sas_breadth_jobs": 745,
-   "disposition": null,
-   "destination": null,
+   "disposition": "scaffold",
+   "destination": "hvtiRtemplates",
    "replaced_by": []
   },
   {
@@ -44,8 +44,8 @@
    "spec": null,
    "note": null,
    "sas_breadth_jobs": 394,
-   "disposition": null,
-   "destination": null,
+   "disposition": "scaffold",
+   "destination": "hvtiRtemplates",
    "replaced_by": []
   },
   {
@@ -67,8 +67,8 @@
    "spec": "dev/specs/2026-08-31-batch-2a-bootstrap-family-design.md",
    "note": "no exemplar study and no SAS template. Shipped on fit_cox() existing. Gated on a screen the render gate ran against a real built dataset, never on a screen a study ran.",
    "sas_breadth_jobs": 16,
-   "disposition": null,
-   "destination": null,
+   "disposition": "scaffold",
+   "destination": "hvtiRtemplates",
    "replaced_by": []
   },
   {
@@ -92,8 +92,8 @@
    "spec": null,
    "note": null,
    "sas_breadth_jobs": 1094,
-   "disposition": null,
-   "destination": null,
+   "disposition": "scaffold",
+   "destination": "hvtiRtemplates",
    "replaced_by": []
   },
   {
@@ -115,8 +115,8 @@
    "spec": "dev/specs/2026-08-28-bh-template-design.md",
    "note": null,
    "sas_breadth_jobs": 320,
-   "disposition": null,
-   "destination": null,
+   "disposition": "scaffold",
+   "destination": "hvtiRtemplates",
    "replaced_by": []
   },
   {
@@ -140,8 +140,8 @@
    "spec": "dev/specs/2026-08-31-batch-2a-bootstrap-family-design.md",
    "note": null,
    "sas_breadth_jobs": 352,
-   "disposition": null,
-   "destination": null,
+   "disposition": "scaffold",
+   "destination": "hvtiRtemplates",
    "replaced_by": []
   },
   {
@@ -163,8 +163,8 @@
    "spec": null,
    "note": "different job from the bh family: %bnmnr / %bnprev / %decompos, no macro overlap beyond %vars. Bootstrap CIs for nonparametric estimates, not variable selection. Needs its own design spec.",
    "sas_breadth_jobs": 108,
-   "disposition": null,
-   "destination": null,
+   "disposition": "scaffold",
+   "destination": "hvtiRtemplates",
    "replaced_by": []
   },
   {
@@ -186,8 +186,8 @@
    "spec": null,
    "note": "no quantile fitter in hvtiRbootstrap, so the template cannot be written. Smallest prefix in the taxonomy (2 studies, 18 jobs).",
    "sas_breadth_jobs": 2,
-   "disposition": null,
-   "destination": null,
+   "disposition": "scaffold",
+   "destination": "hvtiRtemplates",
    "replaced_by": []
   },
   {
@@ -209,8 +209,8 @@
    "spec": "dev/specs/2026-08-31-batch-2a-bootstrap-family-design.md",
    "note": null,
    "sas_breadth_jobs": 103,
-   "disposition": null,
-   "destination": null,
+   "disposition": "scaffold",
+   "destination": "hvtiRtemplates",
    "replaced_by": []
   },
   {
@@ -232,8 +232,8 @@
    "spec": null,
    "note": null,
    "sas_breadth_jobs": 190,
-   "disposition": null,
-   "destination": null,
+   "disposition": "scaffold",
+   "destination": "hvtiRtemplates",
    "replaced_by": []
   },
   {
@@ -254,12 +254,12 @@
    ],
    "downstream": [],
    "workflows": [],
-   "blocked_on": null,
+   "blocked_on": "needs an issue: no function exists yet",
    "spec": null,
    "note": null,
    "sas_breadth_jobs": 128,
-   "disposition": null,
-   "destination": null,
+   "disposition": "build",
+   "destination": "hvtiPlotR",
    "replaced_by": []
   },
   {
@@ -283,8 +283,8 @@
    "spec": null,
    "note": null,
    "sas_breadth_jobs": 35,
-   "disposition": null,
-   "destination": null,
+   "disposition": "scaffold",
+   "destination": "hvtiRtemplates",
    "replaced_by": []
   },
   {
@@ -302,12 +302,12 @@
    "upstream": [],
    "downstream": [],
    "workflows": [],
-   "blocked_on": null,
+   "blocked_on": "needs an issue: no function exists yet",
    "spec": null,
    "note": null,
    "sas_breadth_jobs": 4,
-   "disposition": null,
-   "destination": null,
+   "disposition": "build",
+   "destination": "hvtiPlotR",
    "replaced_by": []
   },
   {
@@ -329,8 +329,8 @@
    "spec": null,
    "note": null,
    "sas_breadth_jobs": 503,
-   "disposition": null,
-   "destination": null,
+   "disposition": "scaffold",
+   "destination": "hvtiRtemplates",
    "replaced_by": []
   },
   {
@@ -348,12 +348,12 @@
    "upstream": [],
    "downstream": [],
    "workflows": [],
-   "blocked_on": null,
+   "blocked_on": "needs an issue: no function exists yet",
    "spec": null,
    "note": null,
    "sas_breadth_jobs": 11,
-   "disposition": null,
-   "destination": null,
+   "disposition": "build",
+   "destination": "hvtiPlotR",
    "replaced_by": []
   },
   {
@@ -375,8 +375,8 @@
    "spec": null,
    "note": null,
    "sas_breadth_jobs": 73,
-   "disposition": null,
-   "destination": null,
+   "disposition": "scaffold",
+   "destination": "hvtiRtemplates",
    "replaced_by": []
   },
   {
@@ -394,12 +394,12 @@
    "upstream": [],
    "downstream": [],
    "workflows": [],
-   "blocked_on": null,
+   "blocked_on": "needs an issue: no function exists yet",
    "spec": null,
    "note": null,
    "sas_breadth_jobs": 50,
-   "disposition": null,
-   "destination": null,
+   "disposition": "build",
+   "destination": "hvtiPlotR",
    "replaced_by": []
   },
   {
@@ -426,8 +426,8 @@
    "spec": null,
    "note": null,
    "sas_breadth_jobs": 373,
-   "disposition": null,
-   "destination": null,
+   "disposition": "scaffold",
+   "destination": "hvtiRtemplates",
    "replaced_by": []
   },
   {
@@ -456,9 +456,14 @@
    "spec": null,
    "note": null,
    "sas_breadth_jobs": 541,
-   "disposition": null,
-   "destination": null,
-   "replaced_by": []
+   "disposition": "thin",
+   "destination": "hvtiRtemplates",
+   "replaced_by": [
+    "hvtiPlotR::hv_hazard",
+    "hvtiPlotR::hazard_plot",
+    "hvtiPlotR::hv_survival",
+    "hvtiPlotR::hv_atrisk_compose"
+   ]
   },
   {
    "prefix": "hs",
@@ -486,8 +491,8 @@
    "spec": "dev/specs/2026-08-29-hs-template-design.md",
    "note": null,
    "sas_breadth_jobs": 140,
-   "disposition": null,
-   "destination": null,
+   "disposition": "scaffold",
+   "destination": "hvtiRtemplates",
    "replaced_by": []
   },
   {
@@ -514,8 +519,8 @@
    "spec": null,
    "note": null,
    "sas_breadth_jobs": 574,
-   "disposition": null,
-   "destination": null,
+   "disposition": "scaffold",
+   "destination": "hvtiRtemplates",
    "replaced_by": []
   },
   {
@@ -537,8 +542,8 @@
    "spec": null,
    "note": null,
    "sas_breadth_jobs": 362,
-   "disposition": null,
-   "destination": null,
+   "disposition": "scaffold",
+   "destination": "hvtiRtemplates",
    "replaced_by": []
   },
   {
@@ -562,8 +567,8 @@
    "spec": null,
    "note": null,
    "sas_breadth_jobs": 469,
-   "disposition": null,
-   "destination": null,
+   "disposition": "scaffold",
+   "destination": "hvtiRtemplates",
    "replaced_by": []
   },
   {
@@ -587,9 +592,11 @@
    "spec": null,
    "note": null,
    "sas_breadth_jobs": 310,
-   "disposition": null,
-   "destination": null,
-   "replaced_by": []
+   "disposition": "thin",
+   "destination": "hvtiRtemplates",
+   "replaced_by": [
+    "hvtiPlotR::hv_mirror_hist"
+   ]
   },
   {
    "prefix": "ls",
@@ -610,8 +617,8 @@
    "spec": null,
    "note": null,
    "sas_breadth_jobs": 32,
-   "disposition": null,
-   "destination": null,
+   "disposition": "scaffold",
+   "destination": "hvtiRtemplates",
    "replaced_by": []
   },
   {
@@ -633,8 +640,8 @@
    "spec": null,
    "note": null,
    "sas_breadth_jobs": 56,
-   "disposition": null,
-   "destination": null,
+   "disposition": "scaffold",
+   "destination": "hvtiRtemplates",
    "replaced_by": []
   },
   {
@@ -656,9 +663,11 @@
    "spec": null,
    "note": null,
    "sas_breadth_jobs": 41,
-   "disposition": null,
-   "destination": null,
-   "replaced_by": []
+   "disposition": "thin",
+   "destination": "hvtiRtemplates",
+   "replaced_by": [
+    "hvtiPlotR::hv_spaghetti"
+   ]
   },
   {
    "prefix": "nb",
@@ -675,12 +684,12 @@
    "upstream": [],
    "downstream": [],
    "workflows": [],
-   "blocked_on": null,
+   "blocked_on": "needs an issue: no function exists yet",
    "spec": null,
    "note": null,
    "sas_breadth_jobs": 18,
-   "disposition": null,
-   "destination": null,
+   "disposition": "build",
+   "destination": "ggBoostedTrees",
    "replaced_by": []
   },
   {
@@ -702,8 +711,8 @@
    "spec": null,
    "note": null,
    "sas_breadth_jobs": 244,
-   "disposition": null,
-   "destination": null,
+   "disposition": "scaffold",
+   "destination": "hvtiRtemplates",
    "replaced_by": []
   },
   {
@@ -727,8 +736,8 @@
    "spec": null,
    "note": null,
    "sas_breadth_jobs": 121,
-   "disposition": null,
-   "destination": null,
+   "disposition": "scaffold",
+   "destination": "hvtiRtemplates",
    "replaced_by": []
   },
   {
@@ -752,9 +761,12 @@
    "spec": null,
    "note": null,
    "sas_breadth_jobs": 241,
-   "disposition": null,
-   "destination": null,
-   "replaced_by": []
+   "disposition": "thin",
+   "destination": "hvtiRtemplates",
+   "replaced_by": [
+    "hvtiPlotR::hv_nonparametric",
+    "hvtiPlotR::hv_ordinal"
+   ]
   },
   {
    "prefix": "pm",
@@ -777,8 +789,8 @@
    "spec": null,
    "note": null,
    "sas_breadth_jobs": 4,
-   "disposition": null,
-   "destination": null,
+   "disposition": "scaffold",
+   "destination": "hvtiRtemplates",
    "replaced_by": []
   },
   {
@@ -800,9 +812,14 @@
    "spec": null,
    "note": null,
    "sas_breadth_jobs": 41,
-   "disposition": null,
-   "destination": null,
-   "replaced_by": []
+   "disposition": "retire",
+   "destination": "ggRandomForests",
+   "replaced_by": [
+    "ggRandomForests::gg_rfsrc",
+    "ggRandomForests::gg_error",
+    "ggRandomForests::gg_vimp",
+    "ggRandomForests::gg_variable"
+   ]
   },
   {
    "prefix": "rfc",
@@ -823,9 +840,14 @@
    "spec": null,
    "note": null,
    "sas_breadth_jobs": 11,
-   "disposition": null,
-   "destination": null,
-   "replaced_by": []
+   "disposition": "retire",
+   "destination": "ggRandomForests",
+   "replaced_by": [
+    "ggRandomForests::gg_roc",
+    "ggRandomForests::gg_brier",
+    "ggRandomForests::gg_error",
+    "ggRandomForests::calc_auc"
+   ]
   },
   {
    "prefix": "rfs",
@@ -846,9 +868,14 @@
    "spec": null,
    "note": null,
    "sas_breadth_jobs": 9,
-   "disposition": null,
-   "destination": null,
-   "replaced_by": []
+   "disposition": "retire",
+   "destination": "ggRandomForests",
+   "replaced_by": [
+    "ggRandomForests::gg_rfsrc",
+    "ggRandomForests::gg_survival",
+    "ggRandomForests::gg_error",
+    "ggRandomForests::gg_vimp"
+   ]
   },
   {
    "prefix": "rfsrc",
@@ -869,9 +896,15 @@
    "spec": null,
    "note": null,
    "sas_breadth_jobs": 97,
-   "disposition": null,
-   "destination": null,
-   "replaced_by": []
+   "disposition": "retire",
+   "destination": "ggRandomForests",
+   "replaced_by": [
+    "ggRandomForests::gg_rfsrc",
+    "ggRandomForests::gg_survival",
+    "ggRandomForests::gg_error",
+    "ggRandomForests::gg_vimp",
+    "ggRandomForests::gg_partial"
+   ]
   },
   {
    "prefix": "rg",
@@ -892,8 +925,8 @@
    "spec": null,
    "note": null,
    "sas_breadth_jobs": 45,
-   "disposition": null,
-   "destination": null,
+   "disposition": "scaffold",
+   "destination": "hvtiRtemplates",
    "replaced_by": []
   },
   {
@@ -917,8 +950,8 @@
    "spec": null,
    "note": null,
    "sas_breadth_jobs": 170,
-   "disposition": null,
-   "destination": null,
+   "disposition": "scaffold",
+   "destination": "hvtiRtemplates",
    "replaced_by": []
   },
   {
@@ -942,9 +975,11 @@
    "spec": null,
    "note": null,
    "sas_breadth_jobs": 68,
-   "disposition": null,
-   "destination": null,
-   "replaced_by": []
+   "disposition": "thin",
+   "destination": "hvtiRtemplates",
+   "replaced_by": [
+    "hvtiPlotR::hv_balance"
+   ]
   },
   {
    "prefix": "vars",
@@ -965,8 +1000,8 @@
    "spec": null,
    "note": null,
    "sas_breadth_jobs": 912,
-   "disposition": null,
-   "destination": null,
+   "disposition": "scaffold",
+   "destination": "hvtiRtemplates",
    "replaced_by": []
   },
   {
@@ -988,9 +1023,13 @@
    "spec": null,
    "note": "proposed prefix; blocks on the taxonomy PR",
    "sas_breadth_jobs": null,
-   "disposition": null,
-   "destination": null,
-   "replaced_by": []
+   "disposition": "retire",
+   "destination": "ggRandomForests",
+   "replaced_by": [
+    "ggRandomForests::gg_rfsrc",
+    "ggRandomForests::gg_vimp",
+    "ggRandomForests::gg_shap"
+   ]
   },
   {
    "prefix": "sid",
@@ -1011,8 +1050,8 @@
    "spec": null,
    "note": "proposed prefix; blocks on the taxonomy PR",
    "sas_breadth_jobs": null,
-   "disposition": null,
-   "destination": null,
+   "disposition": "build",
+   "destination": "ggRandomForests",
    "replaced_by": []
   },
   {
@@ -1034,8 +1073,8 @@
    "spec": null,
    "note": "proposed prefix; blocks on the taxonomy PR",
    "sas_breadth_jobs": null,
-   "disposition": null,
-   "destination": null,
+   "disposition": "build",
+   "destination": "ggRandomForests",
    "replaced_by": []
   },
   {
@@ -1057,8 +1096,8 @@
    "blocked_on": null,
    "spec": "dev/specs/2026-09-02-dp-dc-decomposition-design.md",
    "note": "Measured 2026-09-02: distinct studies with a program-extension job of this qualifier. Base procs only (contents/means/freq), no package dependency, which is what separates it from `tables`.",
-   "disposition": null,
-   "destination": null,
+   "disposition": "scaffold",
+   "destination": "hvtiRtemplates",
    "replaced_by": []
   },
   {
@@ -1080,8 +1119,8 @@
    "blocked_on": null,
    "spec": "dev/specs/2026-09-02-dp-dc-decomposition-design.md",
    "note": "Measured 2026-09-02: distinct studies with a program-extension job of this qualifier. Calls %desc_tab, allocated to hvtiRtables. Same dataset and %vars as `general`; different destination package.",
-   "disposition": null,
-   "destination": null,
+   "disposition": "scaffold",
+   "destination": "hvtiRtemplates",
    "replaced_by": []
   },
   {
@@ -1103,8 +1142,8 @@
    "blocked_on": null,
    "spec": "dev/specs/2026-09-02-dp-dc-decomposition-design.md",
    "note": "Measured 2026-09-02: distinct studies with a program-extension job of this qualifier.",
-   "disposition": null,
-   "destination": null,
+   "disposition": "scaffold",
+   "destination": "hvtiRtemplates",
    "replaced_by": []
   },
   {
@@ -1126,8 +1165,8 @@
    "blocked_on": null,
    "spec": "dev/specs/2026-09-02-dp-dc-decomposition-design.md",
    "note": "Measured 2026-09-02: distinct studies with a program-extension job of this qualifier.",
-   "disposition": null,
-   "destination": null,
+   "disposition": "scaffold",
+   "destination": "hvtiRtemplates",
    "replaced_by": []
   },
   {
@@ -1151,8 +1190,8 @@
    "blocked_on": null,
    "spec": "dev/specs/2026-09-02-dp-dc-decomposition-design.md",
    "note": "Measured 2026-09-02: distinct studies with a program-extension job of this qualifier. Ships the 2019 successor (stddiff.sas, 649 lines, Artis, continuous+ordinal+categorical, hvtiRutilities), NOT the 2009 std_dif.sas (108 lines, hvtiRtables, 72 studies). Decided 2026-09-03; the wider corpus use of std_dif is a macro outliving its replacement, not a preference.",
-   "disposition": null,
-   "destination": null,
+   "disposition": "scaffold",
+   "destination": "hvtiRtemplates",
    "replaced_by": []
   },
   {
@@ -1174,9 +1213,11 @@
    "blocked_on": null,
    "spec": "dev/specs/2026-09-02-dp-dc-decomposition-design.md",
    "note": "Measured 2026-09-02: distinct studies with a program-extension job of this qualifier.",
-   "disposition": null,
-   "destination": null,
-   "replaced_by": []
+   "disposition": "thin",
+   "destination": "hvtiRtemplates",
+   "replaced_by": [
+    "hvtiPlotR::hv_trends"
+   ]
   },
   {
    "prefix": "dp",
@@ -1197,9 +1238,11 @@
    "blocked_on": null,
    "spec": "dev/specs/2026-09-02-dp-dc-decomposition-design.md",
    "note": "Measured 2026-09-02: distinct studies with a program-extension job of this qualifier.",
-   "disposition": null,
-   "destination": null,
-   "replaced_by": []
+   "disposition": "thin",
+   "destination": "hvtiRtemplates",
+   "replaced_by": [
+    "hvtiPlotR::hv_followup"
+   ]
   },
   {
    "prefix": "dp",
@@ -1220,9 +1263,11 @@
    "blocked_on": null,
    "spec": "dev/specs/2026-09-02-dp-dc-decomposition-design.md",
    "note": "Measured 2026-09-02: distinct studies with a program-extension job of this qualifier.",
-   "disposition": null,
-   "destination": null,
-   "replaced_by": []
+   "disposition": "thin",
+   "destination": "hvtiRtemplates",
+   "replaced_by": [
+    "hvtiPlotR::hv_spaghetti"
+   ]
   },
   {
    "prefix": "dp",
@@ -1243,9 +1288,12 @@
    "blocked_on": null,
    "spec": "dev/specs/2026-09-02-dp-dc-decomposition-design.md",
    "note": "Measured 2026-09-02: distinct studies with a program-extension job of this qualifier.",
-   "disposition": null,
-   "destination": null,
-   "replaced_by": []
+   "disposition": "thin",
+   "destination": "hvtiRtemplates",
+   "replaced_by": [
+    "hvtiPlotR::hv_longitudinal",
+    "hvtiPlotR::hv_stacked"
+   ]
   },
   {
    "prefix": "dp",
@@ -1266,8 +1314,8 @@
    "blocked_on": null,
    "spec": "dev/specs/2026-09-02-dp-dc-decomposition-design.md",
    "note": "ONE template, the variable as an EDIT: field. Measured 2026-09-03 over 1,271 distributions/dp job rows: 666 (52%) carry only the variable and no second field at all, and a measurement-scale word appears in 110 stems (8.7%) -- binary 51, ordinal 49, continuous 6. As a second qualifier, `binary` (8 studies) and `ordinal` (10) rank fifth and sixth behind `trend` (21), `tavr`, `gastroparesis` and `matched`. `qualifier` is `variable` rather than null because a prefix must be wholly qualified or wholly unqualified and graphs/dp is decomposed; it names what the job is parameterised by. Watch `trend` (100 rows, 21 studies), the one qualifier2 that could earn a template of its own.",
-   "disposition": null,
-   "destination": null,
+   "disposition": "scaffold",
+   "destination": "hvtiRtemplates",
    "replaced_by": []
   }
  ]
