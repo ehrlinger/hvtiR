@@ -103,3 +103,23 @@ test_that("the real blocked_on values for sid, vt and rfr are pinned", {
   expect_identical(by_prefix("vt"), "hvtiRutilities#taxonomy")
   expect_identical(by_prefix("rfr"), "hvtiRutilities#taxonomy")
 })
+
+test_that("no row is still blocked on a placeholder", {
+  raw <- read_jobs()
+  stale <- vapply(raw, function(r) {
+    b <- r$blocked_on
+    !is.null(b) && grepl("^needs an issue", b)
+  }, logical(1))
+
+  expect_identical(sum(stale), 0L)
+})
+
+test_that("a build row that is not intake names a real issue", {
+  raw <- read_jobs()
+  for (r in raw) {
+    if (identical(r$disposition, "build") &&
+          !identical(r$status, "intake")) {
+      expect_match(r$blocked_on, "^[A-Za-z]+#[0-9]+$", label = r$prefix)
+    }
+  }
+})
