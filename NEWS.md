@@ -15,7 +15,11 @@ Version: 1.1.3
   unreadable oracle rather than crashing on it. A 200 carrying a JSON array,
   string or number, or a non-string `Version`, raised an uncaught
   `AttributeError`, which was the exit-1 crash above. Such a row now keeps its
-  recorded value and is reported, like any other unreadable oracle.
+  recorded value and is reported, like any other unreadable oracle. That
+  includes a 200 carrying an object with no `Version`: `{}` and an error
+  envelope are objects, so they passed the shape check and mapped to `""`,
+  which this module reserves for an authoritative CRAN 404. A recorded
+  version was blanked and no failure was reported.
 
 # hvtiR 1.1.3
 

@@ -149,8 +149,34 @@ class CranAnswersSomethingOtherThanAPackage(unittest.TestCase):
         # like a real answer.
         self.assertIsNone(self.shape('{"Version": 5}'))
 
+    def test_an_object_envelope_is_unreadable_not_absent_from_cran(self):
+        # The dangerous one: {} and an error envelope are OBJECTS, so the
+        # isinstance check passes and .get returned "" -- the value this
+        # module reserves for an authoritative 404. refresh() then blanked a
+        # recorded version and reported no failure at all.
+        self.assertIsNone(self.shape('{"error": "upstream unavailable"}'))
+
+    def test_an_empty_object_is_unreadable(self):
+        self.assertIsNone(self.shape("{}"))
+
+    def test_an_empty_version_string_is_unreadable(self):
+        self.assertIsNone(self.shape('{"Version": ""}'))
+
     def test_a_real_record_still_reads(self):
         self.assertEqual(self.shape('{"Version": "1.2.3"}'), "1.2.3")
+
+    def test_an_envelope_keeps_the_recorded_version(self):
+        # The whole point: a blanked cran_version is indistinguishable from
+        # "not on CRAN", and it was being written with nothing reported.
+        rows = [{"package": "ggRandomForests", "cran": "ggRandomForests",
+                 "repo": "", "family": "member", "cran_version": "3.5.2",
+                 "dev_version": "4.0.0", "dev_ahead": "expected"}]
+        with mock.patch.object(refresher, "fetch",
+                               return_value=(200, '{"error": "nope"}')):
+            refreshed, failures = refresher.refresh(rows)
+        self.assertEqual(refreshed[0]["cran_version"], "3.5.2")
+        self.assertEqual(len(failures), 1)
+        self.assertIn("could not read CRAN", failures[0])
 
     def test_malformed_json_is_still_unreadable(self):
         self.assertIsNone(self.shape("not json at all"))
