@@ -4,11 +4,14 @@ Version: 1.1.2
 # hvtiR (unreleased)
 
 * `AGENTS.md` records the branch rulesets as they actually stand. It claimed the
-  twelve repositories differed only in `required_status_checks`; verified against
-  the API, the pull-request rules differ too — `hvtiRbootstrap` and `hvtiGraphics`
-  require no approving review, `hvtiRbootstrap` also enforces status checks, and
-  `require_code_owner_review` is on in `hvtiGraphics` with no `CODEOWNERS` file
-  anywhere in the family.
+  repositories differed only in `required_status_checks`, and that the pull-request
+  rules were uniform; checked against the API, neither held. The two repositories
+  that disagreed were brought into line rather than the claim being softened:
+  `hvtiRbootstrap` now requires one approving review like the rest, and
+  `hvtiGraphics` no longer carries `require_code_owner_review` with no `CODEOWNERS`
+  file behind it. `hvtiGraphics` still requires no approval, and `hvtiRbootstrap`
+  still enforces status checks alongside the two CRAN-bound packages; both are now
+  written down.
 
 # hvtiR 1.1.2
 
