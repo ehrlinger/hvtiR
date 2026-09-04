@@ -49,13 +49,13 @@ doctor(remote = FALSE)
 #>   x hvtiRdatabuild   -          -          missing
 #>   x hvtiRtables      -          -          missing
 #>   x hvtiRtemplates   -          -          missing
-#>   x hvtiPlotR        -          -          missing
+#>   - hvtiPlotR        2.7.12     -          ok-local
 #>   x hvtiRlifetables  -          -          missing
 #>   x hvtiRbootstrap   -          -          missing
 #>   x hvtiRpropensity  -          -          missing
-#>   x ggBoostedTrees   -          -          missing
+#>   - ggBoostedTrees   0.0.6      -          ok-local
 #>   x TemporalHazard   -          -          missing
-#>   x ggRandomForests  -          -          missing
+#>   - ggRandomForests  4.0.0      -          ok-local
 #> 
-#> ℹ 11 members need updating. Run `hvtiR::update()`.
+#> ℹ 8 members need updating. Run `hvtiR::update()`.
 ```

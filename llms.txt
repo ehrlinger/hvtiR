@@ -173,6 +173,8 @@ Which packages are members, and where they come from
 
 - [`members()`](https://ehrlinger.github.io/hvtiR/reference/members.md)
   : Members of the hvtiR
+- [`jobs()`](https://ehrlinger.github.io/hvtiR/reference/jobs.md) : The
+  job catalog
 
 # Articles
 
@@ -180,3 +182,5 @@ Which packages are members, and where they come from
 
 - [Getting Started with
   hvtiR](https://ehrlinger.github.io/hvtiR/articles/hvtiR.md):
+- [The job
+  catalog](https://ehrlinger.github.io/hvtiR/articles/job-catalog.md):
