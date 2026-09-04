@@ -1,5 +1,63 @@
 # Changelog
 
+## hvtiR 1.1.3
+
+- [`status()`](https://ehrlinger.github.io/hvtiR/reference/status.md)
+  and
+  [`doctor()`](https://ehrlinger.github.io/hvtiR/reference/doctor.md)
+  report hvtiR’s own version. hvtiR is not a member, so
+  [`status()`](https://ehrlinger.github.io/hvtiR/reference/status.md)
+  walks
+  [`members()`](https://ehrlinger.github.io/hvtiR/reference/members.md)
+  and never showed the version of the package the user is running, and
+  [`doctor()`](https://ehrlinger.github.io/hvtiR/reference/doctor.md)’s
+  Environment section reported the R version, the platform and `pak` but
+  not hvtiR. Both issue templates ask for that output, so a report
+  arrived without the one version a maintainer needs first.
+
+- [`jobs()`](https://ehrlinger.github.io/hvtiR/reference/jobs.md) names
+  the row and the field when a scalar field in the catalog arrives as an
+  array. [`vapply()`](https://rdrr.io/r/base/lapply.html)’s own message
+  for that named neither, and the first sign of it was the vignette
+  failing to build. The catalog is hand edited and four of its fields
+  are arrays, so a scalar written as one is a plausible slip.
+
+- [`jobs()`](https://ehrlinger.github.io/hvtiR/reference/jobs.md) also
+  names the row and the field when a count field holds something that is
+  not a whole number.
+  [`as.integer()`](https://rdrr.io/r/base/integer.html) made that `NA`
+  with a warning, which reads downstream as a field the catalog simply
+  omits rather than one written wrong. A whole number written as a
+  string still reads.
+
+- `ggBoostedTrees` is no longer declared in `Suggests`. No `replaced_by`
+  entry names it, so nothing loaded it, but `R CMD check` installs all
+  of `Suggests` and it pulls a compiled `boostmtree` fork; seven CI jobs
+  were building it on every run. `ggRandomForests` and `hvtiPlotR`,
+  which the catalog does name, stay.
+
+- The catalog gains `cran_version`, `dev_version` and `dev_ahead`,
+  refreshed weekly from crandb and each repo’s `DESCRIPTION` on `main`
+  by `tools/refresh_catalog_versions.py`. `members.json` is unchanged,
+  so no downstream CV sink is affected.
+
+- New [`jobs()`](https://ehrlinger.github.io/hvtiR/reference/jobs.md),
+  the job catalog: every job type found in the studies corpus, routed to
+  the package that owes it. Rendered as the “The job catalog” article.
+
+- `AGENTS.md` records the branch rulesets as they actually stand. It
+  claimed the repositories differed only in `required_status_checks`,
+  and that the pull-request rules were uniform; checked against the API,
+  neither held. The two repositories that disagreed were brought into
+  line rather than the claim being softened: `hvtiRbootstrap` now
+  requires one approving review like the rest, and `hvtiGraphics` no
+  longer carries `require_code_owner_review` with no `CODEOWNERS` file
+  behind it, and now requires an approving review like the rest. All
+  thirteen repositories under `house-style/repos.yml` carry an identical
+  `protect main` apart from `required_status_checks`, which
+  `TemporalHazard`, `ggRandomForests` and `hvtiRbootstrap` enforce; the
+  reason each of the three does is written down.
+
 ## hvtiR 1.1.2
 
 - `ggBoostedTrees` replaces `hvtiBoostmtree` in the registry. The

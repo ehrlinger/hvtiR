@@ -57,7 +57,7 @@ scripting.
 ``` r
 # Offline: reports what is installed without contacting GitHub
 status(remote = FALSE)
-#> hvtiR 1.1.2 - 11 members
+#> hvtiR 1.1.3 - 11 members
 #> 
 #>   x hvtiRutilities   -          -          missing
 #>   x hvtiRdatabuild   -          -          missing
