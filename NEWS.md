@@ -8,11 +8,17 @@ Version: 1.1.2
   the first sign of it was the vignette failing to build. The catalog is hand
   edited and four of its fields are arrays, so a scalar written as one is a
   plausible slip.
+
 * `ggBoostedTrees` is no longer declared in `Suggests`. No `replaced_by` entry
   names it, so nothing loaded it, but `R CMD check` installs all of `Suggests`
   and it pulls a compiled `boostmtree` fork; seven CI jobs were building it on
   every run. `ggRandomForests` and `hvtiPlotR`, which the catalog does name,
   stay.
+
+* The catalog gains `cran_version`, `dev_version` and `dev_ahead`, refreshed
+  weekly from crandb and each repo's `DESCRIPTION` on `main` by
+  `tools/refresh_catalog_versions.py`. `members.json` is unchanged, so no
+  downstream CV sink is affected.
 
 * New `jobs()`, the job catalog: every job type found in the studies corpus,
   routed to the package that owes it. Rendered as the "The job catalog"
