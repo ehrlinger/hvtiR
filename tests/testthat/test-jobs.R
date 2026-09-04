@@ -65,7 +65,13 @@ test_that("every destination is a family member", {
   raw <- read_jobs()
   dest <- unique(unlist(lapply(raw, function(r) r$destination)))
 
-  expect_true(all(dest %in% members()$package))
+  # Guard the vacuous pass: unlist() on rows that carry no destination
+  # returns NULL, and all(NULL %in% x) is all(logical(0)), which is TRUE.
+  # Renaming the JSON key would otherwise leave this test green while
+  # every routing had silently lost its destination.
+  expect_gt(length(dest), 0L)
+  expect_true(all(dest %in% members()$package),
+              info = paste(setdiff(dest, members()$package), collapse = ", "))
 })
 
 test_that("jobs() returns one row per job type with a list column", {
@@ -97,11 +103,51 @@ test_that("the real blocked_on values for sid, vt and rfr are pinned", {
   # placeholder build rows still waiting on an issue. A placeholder sweep
   # that overwrites blocked_on wholesale would silently clobber these three;
   # this test is here so that overwrite fails loudly instead.
-  by_prefix <- function(p) j$blocked_on[j$prefix == p]
+  # which(), not a bare logical: an NA prefix -- which the schema test
+  # above permits -- indexes in an NA element and fails these pins with
+  # a message about the blockers rather than about the malformed row.
+  by_prefix <- function(p) j$blocked_on[which(j$prefix == p)]
 
   expect_identical(by_prefix("sid"), "hvtiRutilities#taxonomy")
   expect_identical(by_prefix("vt"), "hvtiRutilities#taxonomy")
   expect_identical(by_prefix("rfr"), "hvtiRutilities#taxonomy")
+})
+
+test_that("jobs() names the row and field when a scalar arrives as an array", {
+  # The catalog is hand edited and four of its fields are arrays, so a scalar
+  # written as one is a plausible slip. vapply's own message for it names
+  # neither the row nor the field, and the first sign is the vignette failing
+  # to build. Mocked over the reader, per the seam this package already uses
+  # for the network.
+  testthat::local_mocked_bindings(
+    read_jobs = function(...) {
+      list(
+        list(prefix = "aa", disposition = "scaffold",
+             destination = "hvtiRtemplates", blocked_on = "x#1"),
+        list(prefix = "bb", disposition = "scaffold",
+             destination = "hvtiRtemplates", blocked_on = c("x#1", "x#2"))
+      )
+    }
+  )
+
+  expect_error(jobs(), "row 2")
+  expect_error(jobs(), "prefix 'bb'")
+  expect_error(jobs(), "blocked_on")
+})
+
+test_that("jobs() still reads a row whose scalar fields are absent", {
+  testthat::local_mocked_bindings(
+    read_jobs = function(...) {
+      list(list(prefix = "aa", disposition = "scaffold",
+                destination = "hvtiRtemplates"))
+    }
+  )
+
+  j <- jobs()
+
+  expect_identical(nrow(j), 1L)
+  expect_true(is.na(j$blocked_on))
+  expect_true(is.na(j$sas_breadth))
 })
 
 test_that("no row is still blocked on a placeholder", {

@@ -21,7 +21,6 @@ Imports:
     utils
 Suggests:
     curl,
-    ggBoostedTrees,
     ggRandomForests,
     hvtiPlotR,
     knitr,
@@ -29,7 +28,6 @@ Suggests:
     quarto,
     testthat (>= 3.2.0)
 Remotes:
-    ehrlinger/ggBoostedTrees,
     ehrlinger/ggRandomForests,
     ehrlinger/hvtiPlotR
 VignetteBuilder: quarto
