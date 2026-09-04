@@ -36,11 +36,14 @@ apart because validating a routing has to load the destination package, and
 
 \code{status} and \code{batch} are \code{hvtiRtemplates} scheduling fields: they answer
 when \code{hvtiRtemplates} will ship a template for a row, not whether the row
-is done. Both are \code{NA} (null in the catalog) for a row whose \code{destination}
-is not \code{hvtiRtemplates}, because that repository has nothing of its own to
-schedule there. The one exception is \code{status == "intake"}, which survives
-regardless of \code{destination}: it is not a schedule value at all, but a
-taxonomy fact meaning the prefix has been proposed but is not yet in
+is done. Both are null in the catalog for a row whose \code{destination} is
+neither \code{hvtiRtemplates} nor null, because that repository has nothing of
+its own to schedule there. \code{jobs()} surfaces \code{status} as \code{NA} in the
+\code{status} column; it does not surface \code{batch} at all, so a caller after
+that field reads the catalog row directly. The one exception to the
+nulling is \code{status == "intake"}, which survives regardless of
+\code{destination}: it is not a schedule value at all, but a taxonomy fact
+meaning the prefix has been proposed but is not yet in
 \code{hvtiRutilities::hvti_taxonomy()}.
 }
 \examples{
