@@ -3,6 +3,10 @@ Version: 1.1.2
 
 # hvtiR (unreleased)
 
+* New `jobs()`, the job catalog: every job type found in the studies corpus,
+  routed to the package that owes it. Rendered as the "The job catalog"
+  article.
+
 * `AGENTS.md` records the branch rulesets as they actually stand. It claimed the
   repositories differed only in `required_status_checks`, and that the pull-request
   rules were uniform; checked against the API, neither held. The two repositories

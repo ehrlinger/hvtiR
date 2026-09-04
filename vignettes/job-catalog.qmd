@@ -1,0 +1,57 @@
+---
+title: "The job catalog"
+format: html
+vignette: >
+  %\VignetteIndexEntry{The job catalog}
+  %\VignetteEngine{quarto::html}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r}
+#| include: false
+library(hvtiR)
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+Every job type found in the studies corpus, and the package that owes it.
+Counts are SAS templates found and R jobs already written. This page is
+generated from the catalog shipped with the package, so it cannot disagree
+with it.
+
+```{r}
+j <- jobs()
+knitr::kable(as.data.frame(table(
+  disposition = j$disposition
+)), col.names = c("disposition", "rows"))
+```
+
+```{r}
+#| results: asis
+show <- function(rows) {
+  label <- ifelse(is.na(rows$qualifier), rows$prefix,
+                  paste0(rows$prefix, "-", rows$qualifier))
+  owed <- vapply(rows$replaced_by, function(v) {
+    if (!length(v)) "" else paste0("`", paste(v, collapse = "`, `"), "`")
+  }, character(1))
+  blocked <- ifelse(is.na(rows$blocked_on), "", rows$blocked_on)
+  out <- data.frame(
+    job = paste0("`", label, "`"),
+    name = rows$name,
+    SAS = rows$sas_breadth,
+    R = rows$r_jobs,
+    disposition = rows$disposition,
+    status = rows$status,
+    destination = rows$destination,
+    `replaced by` = owed,
+    `blocked on` = blocked,
+    check.names = FALSE
+  )
+  print(knitr::kable(out, row.names = FALSE))
+  cat("\n\n")
+}
+
+for (f in unique(j$folder)) {
+  cat("## ", f, "\n\n", sep = "")
+  show(j[j$folder == f, , drop = FALSE])
+}
+```

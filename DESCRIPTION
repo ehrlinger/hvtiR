@@ -17,13 +17,21 @@ Depends:
     R (>= 4.1.0)
 Imports:
     cli,
+    jsonlite,
     utils
 Suggests:
     curl,
+    ggBoostedTrees,
+    ggRandomForests,
+    hvtiPlotR,
     knitr,
     pak,
     quarto,
     testthat (>= 3.2.0)
+Remotes:
+    ehrlinger/ggBoostedTrees,
+    ehrlinger/ggRandomForests,
+    ehrlinger/hvtiPlotR
 VignetteBuilder: quarto
 Config/testthat/edition: 3
 Roxygen: list(markdown = TRUE)

@@ -3,6 +3,7 @@
 S3method(print,hvtiR_status)
 export(doctor)
 export(install)
+export(jobs)
 export(members)
 export(status)
 export(update)
