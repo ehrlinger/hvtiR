@@ -65,23 +65,45 @@ def fetch(url: str, attempts: int = 3, timeout: int = 25) -> tuple[int, str]:
     return 0, ""
 
 
-def dev_version(repo: str) -> str | None:
+def dev_version(repo: str, expected: bool) -> str | None:
     """Version: from the repo's DESCRIPTION on main. None means unreadable.
 
-    "" is a real answer, not a failure: `hazard` is SAS/C and `HVTI Recipes`
-    is a Quarto book, so neither has a DESCRIPTION and GitHub answers 404
-    permanently. Reporting those as fetch failures would put two warnings in
-    every scheduled run forever, which is how a signal gets ignored.
+    `expected` says whether this row is supposed to have a DESCRIPTION at all,
+    and it decides how a 404 is read. GitHub answers 404 identically for a
+    repository that legitimately has no DESCRIPTION, one that was renamed, one
+    that went private, one whose default branch is no longer `main`, and one
+    that lost the file by accident. The status code cannot separate those; only
+    knowing what the row should contain can.
+
+    So: for a row with no DESCRIPTION expected (`hazard` is SAS/C,
+    `HVTI Recipes` is a Quarto book), 404 is a settled answer and "" is
+    correct. For a row that should have one, 404 is a failure -- the caller
+    keeps the recorded version and reports it, rather than blanking a
+    known-good value and staying silent about it.
     """
     code, body = fetch(DEV_URL.format(repo=repo))
     if code == 404:
-        return ""
+        return None if expected else ""
     if code != 200:
         return None
     for line in body.splitlines():
         if line.startswith("Version:"):
             return line.split(":", 1)[1].strip()
-    return ""
+    # Reached main and read a DESCRIPTION with no Version: field. That is a
+    # malformed file, not an absent package, so report it rather than blank.
+    return None if expected else ""
+
+
+def expects_description(row: dict) -> bool:
+    """Whether this catalog row should have a DESCRIPTION on main.
+
+    Derived from the catalog rather than an allowlist of package names, so a
+    new member is covered the day it is added. `family == "member"` means an R
+    package in the registry; a row that already carries a dev_version is
+    holding evidence that it had one, which covers any future R package that
+    is not a registry member.
+    """
+    return row.get("family") == "member" or bool(row.get("dev_version"))
 
 
 def cran_version(pkg: str) -> str | None:
@@ -118,9 +140,13 @@ def refresh(rows: list[dict]) -> tuple[list[dict], list[str]]:
             row["cran_version"] = ""
 
         if row.get("repo"):
-            live = dev_version(row["repo"])
+            live = dev_version(row["repo"], expects_description(row))
             if live is None:
-                failures.append(f"{row['package']}: could not read main")
+                failures.append(
+                    f"{row['package']}: could not read DESCRIPTION on main "
+                    f"({row['repo']}) -- renamed, private, default branch "
+                    f"moved, or the file is gone"
+                )
             else:
                 row["dev_version"] = live
         else:
