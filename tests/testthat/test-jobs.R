@@ -150,6 +150,32 @@ test_that("jobs() still reads a row whose scalar fields are absent", {
   expect_true(is.na(j$sas_breadth))
 })
 
+test_that("jobs() names the row and field for a non-numeric count", {
+  # as.integer() would make this NA with a warning, which reads downstream as
+  # a field the catalog simply omits rather than one written wrong.
+  testthat::local_mocked_bindings(
+    read_jobs = function(...) {
+      list(list(prefix = "aa", disposition = "scaffold",
+                destination = "hvtiRtemplates", sas_breadth = "several"))
+    }
+  )
+
+  expect_error(jobs(), "row 1")
+  expect_error(jobs(), "prefix 'aa'")
+  expect_error(jobs(), "sas_breadth")
+})
+
+test_that("jobs() still reads a whole number written as a string", {
+  testthat::local_mocked_bindings(
+    read_jobs = function(...) {
+      list(list(prefix = "aa", disposition = "scaffold",
+                destination = "hvtiRtemplates", sas_breadth = "12"))
+    }
+  )
+
+  expect_identical(jobs()$sas_breadth, 12L)
+})
+
 test_that("no row is still blocked on a placeholder", {
   raw <- read_jobs()
   stale <- vapply(raw, function(r) {

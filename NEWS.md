@@ -16,6 +16,11 @@ Version: 1.1.2
   edited and four of its fields are arrays, so a scalar written as one is a
   plausible slip.
 
+* `jobs()` also names the row and the field when a count field holds something
+  that is not a whole number. `as.integer()` made that `NA` with a warning,
+  which reads downstream as a field the catalog simply omits rather than one
+  written wrong. A whole number written as a string still reads.
+
 * `ggBoostedTrees` is no longer declared in `Suggests`. No `replaced_by` entry
   names it, so nothing loaded it, but `R CMD check` installs all of `Suggests`
   and it pulls a compiled `boostmtree` fork; seven CI jobs were building it on

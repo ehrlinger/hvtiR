@@ -51,16 +51,19 @@ jobs <- function() {
   # the field nor the row -- "values must be length 1, but FUN(X[[i]])
   # result is length 2" -- and the first sign of it is the vignette
   # failing to build. So check here and say which row and which field.
-  scalar <- function(r, i, field) {
-    v <- r[[field]]
-    if (!is.null(v) && length(v) != 1L) {
-      prefix <- r[["prefix"]]
-      stop("jobs(): row ", i,
+  row_label <- function(r, i) {
+    prefix <- r[["prefix"]]
+    paste0("row ", i,
            if (is.character(prefix) && length(prefix) == 1L) {
              paste0(" (prefix '", prefix, "')")
            } else {
              ""
-           },
+           })
+  }
+  scalar <- function(r, i, field) {
+    v <- r[[field]]
+    if (!is.null(v) && length(v) != 1L) {
+      stop("jobs(): ", row_label(r, i),
            " gives ", length(v), " values for '", field,
            "', which the catalog records one of.",
            call. = FALSE)
@@ -73,10 +76,23 @@ jobs <- function() {
       if (is.null(v)) NA_character_ else as.character(v)
     }, character(1))
   }
+  # as.integer() turns a non-numeric string into NA with a warning, which
+  # reads downstream as a field the catalog simply omits. Same slip, same
+  # file, so name the row and the field rather than losing the value.
   int <- function(field) {
     vapply(seq_along(raw), function(i) {
       v <- scalar(raw[[i]], i, field)
-      if (is.null(v)) NA_integer_ else as.integer(v)
+      if (is.null(v)) {
+        return(NA_integer_)
+      }
+      n <- suppressWarnings(as.integer(v))
+      if (is.na(n) && !is.na(v)) {
+        stop("jobs(): ", row_label(raw[[i]], i),
+             " gives '", v, "' for '", field,
+             "', which the catalog records a whole number in.",
+             call. = FALSE)
+      }
+      n
     }, integer(1))
   }
 
