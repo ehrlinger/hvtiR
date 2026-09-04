@@ -27,6 +27,10 @@ permissions:
 jobs:
   refresh:
     runs-on: ubuntu-latest
+    # The `secrets` context is not available in a step-level `if:`, so the
+    # presence of the PAT is surfaced as a plain env var the guard can read.
+    env:
+      HAS_REFRESH_TOKEN: ${{ secrets.CATALOG_REFRESH_TOKEN != '' }}
     steps:
       - uses: actions/checkout@v4
 
@@ -67,6 +71,23 @@ jobs:
         id: pr
         uses: peter-evans/create-pull-request@v6
         with:
+          # A pull request opened with GITHUB_TOKEN triggers NO workflows.
+          # That is deliberate on GitHub's part -- it stops a workflow from
+          # recursively triggering itself -- but the consequence here is that
+          # the refresh pull request was the only one in the repository with
+          # zero checks, while `protect main` requires nine. It could never
+          # satisfy its own rules and merged only by admin bypass, which is
+          # exactly the gate we are trying to stop relying on.
+          #
+          # A PAT (or App token) is a different identity, so its pull requests
+          # trigger checks normally. CATALOG_REFRESH_TOKEN needs only
+          # Contents: write and Pull requests: write on this repository.
+          #
+          # The fallback keeps the job working before the secret exists, and
+          # the step below says loudly when it is the one in use -- a silently
+          # unchecked pull request is the failure this change exists to fix,
+          # so it must not reappear quietly as a missing secret.
+          token: ${{ secrets.CATALOG_REFRESH_TOKEN || github.token }}
           branch: chore/catalog-version-refresh
           base: main
           title: "chore: refresh catalog versions"
@@ -88,6 +109,16 @@ jobs:
             If a row is reported as an **unexplained gap**, `main` is ahead of
             CRAN without that being recorded. Either set its `dev_ahead` to
             `expected`, or cut the release.
+
+      # Without the PAT the pull request above carries no checks at all, so it
+      # cannot meet the required status checks on `main` and needs a bypass to
+      # merge. That is worth an annotation every run rather than a surprise at
+      # merge time: the whole point of the schedule is a record that is
+      # actually verified, and an unchecked pull request is not.
+      - name: Warn when the refresh pull request will carry no checks
+        if: steps.pr.outputs.pull-request-number && env.HAS_REFRESH_TOKEN != 'true'
+        run: |
+          echo "::warning::Opened PR #${{ steps.pr.outputs.pull-request-number }} with GITHUB_TOKEN, so it will run no checks and cannot satisfy the required status checks on main. Add a CATALOG_REFRESH_TOKEN secret (Contents: write, Pull requests: write) so refresh PRs are validated like any other."
 
       # The silence case. When an oracle could not be read AND nothing drifted,
       # create-pull-request has nothing to commit and opens no pull request, so
