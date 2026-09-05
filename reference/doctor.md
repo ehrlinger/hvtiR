@@ -46,9 +46,9 @@ doctor(remote = FALSE)
 #> 
 #> hvtiR 1.1.4 - 11 members
 #> 
-#>   x hvtiRutilities   -          -          missing
+#>   - hvtiRutilities   1.1.10     -          ok-local
 #>   x hvtiRdatabuild   -          -          missing
-#>   x hvtiRtables      -          -          missing
+#>   - hvtiRtables      1.0.0      -          ok-local
 #>   x hvtiRtemplates   -          -          missing
 #>   - hvtiPlotR        2.7.13     -          ok-local
 #>   x hvtiRlifetables  -          -          missing
@@ -58,5 +58,5 @@ doctor(remote = FALSE)
 #>   x TemporalHazard   -          -          missing
 #>   - ggRandomForests  4.0.0      -          ok-local
 #> 
-#> ℹ 8 members need updating. Run `hvtiR::update()`.
+#> ℹ 6 members need updating. Run `hvtiR::update()`.
 ```
