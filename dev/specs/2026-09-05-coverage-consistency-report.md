@@ -156,15 +156,29 @@ have flagged `sid`/`vt` alongside a genuine problem in the first place.
 ## Update 2026-09-05: the open question is closed, and it was the check's first true positive
 
 The `dp-variable` open question above is resolved. Reading real jobs in the
-corpus (four jobs across four studies in two top level trees, all the same
-shape: a descriptive graph of one variable against follow-up time alone, no
-covariates, quantile or decile time groupings, plus a trend test; one of the
-four the ordinal variant) confirms `folder: distributions` and
+corpus (four jobs, from four studies, all the same shape: a descriptive graph
+of one variable against follow-up time alone, no covariates, quantile or decile
+time groupings, plus a trend test; one of the four the ordinal variant)
+confirms `folder: distributions` and
 `family: plots` were both already correct. The field that was wrong was
 `disposition`: it should have been `thin`, not `scaffold`, because the shape
 is served by two existing `hvtiPlotR` exports rather than needing a new
 template built from nothing. `inst/extdata/jobs.json` now reads `disposition:
 "thin"` on that row with `replaced_by` naming both functions.
+
+⚠️ **Corrected 2026-09-05: the breadth of that sample was overstated when
+first written.** This paragraph originally read "four jobs across four studies
+in **two top level trees**". All four are under **one** of the corpus's four
+top level trees, and three of the four sit under a single topic within it. Four
+studies, one tree. The conclusion is unchanged and does not rest on breadth
+alone: it agrees with the decomposition design's own measurement over 1,271
+`distributions`/`dp` job rows, that the folder holds one job parameterised by
+variable. But a reader weighing the evidence should weigh what was actually
+read. The claim is recorded rather than deleted because this repository's
+convention is that a superseded statement stays visible, so nobody reinstates
+it from an older note, and because the error is the one the sibling's
+`AGENTS.md` warns about by name: a recommendation stated more broadly than its
+sample supports.
 
 That makes `dp-variable` the disposition check's **first true positive**: a
 real mis-disposition, not a seeded default, caught by exactly the
