@@ -30,5 +30,3 @@ Which packages are members, and where they come from
 
 - [`members()`](https://ehrlinger.github.io/hvtiR/reference/members.md)
   : Members of the hvtiR
-- [`jobs()`](https://ehrlinger.github.io/hvtiR/reference/jobs.md) : The
-  job catalog

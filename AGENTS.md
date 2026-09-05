@@ -4,11 +4,9 @@ The one-command installer and diagnostic for the HVTI R package family:
 [`install()`](https://ehrlinger.github.io/hvtiR/reference/install.md),
 [`update()`](https://ehrlinger.github.io/hvtiR/reference/update.md),
 [`status()`](https://ehrlinger.github.io/hvtiR/reference/status.md),
-[`doctor()`](https://ehrlinger.github.io/hvtiR/reference/doctor.md),
-[`members()`](https://ehrlinger.github.io/hvtiR/reference/members.md)
-and [`jobs()`](https://ehrlinger.github.io/hvtiR/reference/jobs.md). Six
-exports across seven source files, importing `cli`, `jsonlite` and
-`utils`.
+[`doctor()`](https://ehrlinger.github.io/hvtiR/reference/doctor.md) and
+[`members()`](https://ehrlinger.github.io/hvtiR/reference/members.md).
+Five exports across five source files, with `cli` as its only import.
 
 **It is the entry point everyone installs through**, so a defect here is
 the first thing a new user meets and the last thing they can diagnose.
@@ -136,38 +134,24 @@ green PR as broader assurance than it gives.
   from the server, not a local hook. It requires **one approving
   review**, with the repository admin role as a bypass actor, so the
   maintainer merges without waiting while anyone else needs a review.
-  `require_code_owner_review` is **off**, in every repository in the
-  family. It used to be on and inert — no repository in the family has a
-  `CODEOWNERS` file — which meant adding one for any reason would have
-  silently started requiring reviews the author cannot give themselves.
-  It is off so the flag says what is true; turn it on deliberately,
-  together with a `CODEOWNERS` file, or not at all. ⚠️
+  `require_code_owner_review` is **off**. It used to be on and inert —
+  no repository in the family has a `CODEOWNERS` file — which meant
+  adding one for any reason would have silently started requiring
+  reviews the author cannot give themselves. It is off so the flag says
+  what is true; turn it on deliberately, together with a `CODEOWNERS`
+  file, or not at all. ⚠️
   `require_extra_approval_for_unattributed_changes` is **on**, which
   adds an approval for commits GitHub cannot attribute to a user
   account. It does not fire on commits authored by a linked account, and
   a `Co-Authored-By:` trailer does not trip it. It will fire on a
   contributor whose git email is not attached to their GitHub account,
   and the resulting requirement looks unexplained if you do not know the
-  setting is there. ⚠️ **One rule, and one only, is not the same
-  everywhere.** Verified against the API on 2026-09-03 across the
-  thirteen repositories in `house-style/repos.yml` — the twelve packages
-  plus `hvtiGraphics`, the book. All thirteen carry an identical
-  `protect main`: no deletion, no force-push, pull-request-only, Copilot
-  review, one approving review,
-  `require_extra_approval_for_unattributed_changes` on,
-  `require_code_owner_review` off, and the repository admin role as the
-  bypass actor. The exception is `required_status_checks`, which
-  **`TemporalHazard`, `ggRandomForests` and `hvtiRbootstrap`** enforce
-  and the other ten do not. The two CRAN-bound packages take it because
-  the stricter gate belongs there. `hvtiRbootstrap` takes it because its
-  `R-CMD-check.yaml` and `pkgdown.yaml` are written for it: those
-  workflows deliberately do **not** skip pull requests, since a required
-  check that never runs can never report and would leave a
-  `.claude/**`-only pull request unmergeable forever. ⚠️ Read the
-  ruleset rather than assuming, and change them together. This paragraph
-  has been wrong before — until 2026-09-03 it claimed a uniformity the
-  API did not show, and the two repositories that disagreed with it were
-  brought into line rather than the sentence being softened.
+  setting is there. ⚠️ The twelve are **not** quite identical, though
+  the pull-request rules above are. `TemporalHazard` and
+  `ggRandomForests` additionally enforce `required_status_checks`, which
+  the other ten do not. Both are CRAN-bound, so the stricter gate
+  belongs there. Read the ruleset rather than assuming, and change all
+  twelve together.
 - Versions are **straight three digits** (`1.0.0`). Never a `.9000`
   suffix or a fourth digit.
 - **Patch-digit bumps only**, as fixes land. Minor and major are the

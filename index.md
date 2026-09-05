@@ -1,9 +1,10 @@
 # hvtiR
 
-[![R package
-version](https://img.shields.io/github/r-package/v/ehrlinger/hvtiR)](https://github.com/ehrlinger/hvtiR)
-
-[![lint](https://github.com/ehrlinger/hvtiR/actions/workflows/lint.yaml/badge.svg)](https://github.com/ehrlinger/hvtiR/actions/workflows/lint.yaml)
+![R package
+version](https://img.shields.io/github/r-package/v/ehrlinger/hvtiR)![R-CMD-check
+status](https://img.shields.io/github/actions/workflow/status/ehrlinger/hvtiR/R-CMD-check.yaml)![pkgdown
+site
+status](https://img.shields.io/github/actions/workflow/status/ehrlinger/hvtiR/pkgdown.yaml?label=pkgdown)
 
 One command to install the HVTI R package family, and one command to say
 whether you are current.
