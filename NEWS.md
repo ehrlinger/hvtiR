@@ -1,7 +1,9 @@
 Package: hvtiR
-Version: 1.1.3
+Version: 1.1.4
 
 # hvtiR (unreleased)
+
+# hvtiR 1.1.4
 
 * Corrected `inst/extdata/jobs.json` disposition for the `(dp, variable)` job
   row from `scaffold` to `thin`, with `replaced_by` naming
