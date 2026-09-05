@@ -57,11 +57,11 @@ scripting.
 ``` r
 # Offline: reports what is installed without contacting GitHub
 status(remote = FALSE)
-#> hvtiR - 11 members
+#> hvtiR 1.1.4 - 11 members
 #> 
-#>   - hvtiRutilities   1.1.10     -          ok-local
+#>   x hvtiRutilities   -          -          missing
 #>   x hvtiRdatabuild   -          -          missing
-#>   - hvtiRtables      1.0.0      -          ok-local
+#>   x hvtiRtables      -          -          missing
 #>   x hvtiRtemplates   -          -          missing
 #>   - hvtiPlotR        2.7.13     -          ok-local
 #>   x hvtiRlifetables  -          -          missing
@@ -71,5 +71,5 @@ status(remote = FALSE)
 #>   x TemporalHazard   -          -          missing
 #>   - ggRandomForests  4.0.0      -          ok-local
 #> 
-#> ℹ 6 members need updating. Run `hvtiR::update()`.
+#> ℹ 8 members need updating. Run `hvtiR::update()`.
 ```

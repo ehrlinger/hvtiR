@@ -35,6 +35,7 @@ doctor(remote = FALSE)
 #> 
 #> ── Environment ──
 #> 
+#> ℹ hvtiR 1.1.4
 #> ✔ R version 4.6.1 (>= 4.4.0 required)
 #> ℹ Platform x86_64-pc-linux-gnu
 #> ✔ pak is installed
@@ -43,11 +44,11 @@ doctor(remote = FALSE)
 #> 
 #> ── Members ──
 #> 
-#> hvtiR - 11 members
+#> hvtiR 1.1.4 - 11 members
 #> 
-#>   - hvtiRutilities   1.1.10     -          ok-local
+#>   x hvtiRutilities   -          -          missing
 #>   x hvtiRdatabuild   -          -          missing
-#>   - hvtiRtables      1.0.0      -          ok-local
+#>   x hvtiRtables      -          -          missing
 #>   x hvtiRtemplates   -          -          missing
 #>   - hvtiPlotR        2.7.13     -          ok-local
 #>   x hvtiRlifetables  -          -          missing
@@ -57,5 +58,5 @@ doctor(remote = FALSE)
 #>   x TemporalHazard   -          -          missing
 #>   - ggRandomForests  4.0.0      -          ok-local
 #> 
-#> ℹ 6 members need updating. Run `hvtiR::update()`.
+#> ℹ 8 members need updating. Run `hvtiR::update()`.
 ```

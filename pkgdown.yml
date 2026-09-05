@@ -3,7 +3,8 @@ pkgdown: 2.2.1
 pkgdown_sha: ~
 articles:
   hvtiR: hvtiR.html
-last_built: 2026-09-05T18:01Z
+  job-catalog: job-catalog.html
+last_built: 2026-09-05T18:02Z
 urls:
   reference: https://ehrlinger.github.io/hvtiR/reference
   article: https://ehrlinger.github.io/hvtiR/articles
