@@ -29,10 +29,18 @@ import csv
 import json
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 VERSION_COLUMNS = ("cran_version", "dev_version", "dev_ahead")
 AHEAD_VALUES = ("", "expected", "unexpected")
+
+# Base seconds between retried attempts, scaled by the attempt just failed,
+# matching remote_retry_wait in R/remote.R. Retrying with no wait at all is
+# not a retry: the case these attempts exist for is a throttled shared-IP
+# runner, and three requests fired inside a millisecond meet the same closed
+# window three times.
+RETRY_WAIT = 1
 
 CRAN_URL = "https://crandb.r-pkg.org/{pkg}"
 DEV_URL = "https://raw.githubusercontent.com/{repo}/main/DESCRIPTION"
@@ -48,8 +56,15 @@ def fetch(url: str, attempts: int = 3, timeout: int = 25) -> tuple[int, str]:
     The status code is returned rather than swallowed because 404 and "the
     network stalled" mean opposite things here and must not be retried alike.
     A status of 0 means curl never got a response at all.
+
+    When the attempts run out, the LAST status seen is returned rather than 0.
+    A 429 and a connection that never opened are both unreadable, but they are
+    unreadable for opposite reasons, and the caller's failure message names
+    only permanent causes. Reporting "throttled" as "renamed, private, default
+    branch moved, or the file is gone" points the reader at the wrong repair.
     """
-    for _ in range(attempts):
+    code = 0
+    for attempt in range(1, attempts + 1):
         done = subprocess.run(
             ["curl", "-s", "--max-time", str(timeout),
              "-w", "\n%{http_code}", url],
@@ -62,11 +77,20 @@ def fetch(url: str, attempts: int = 3, timeout: int = 25) -> tuple[int, str]:
             # A 404 is a settled answer, not a stall: retrying cannot change it.
             if code == 200 or code == 404:
                 return code, body
-    return 0, ""
+        else:
+            code = 0
+        if attempt < attempts:
+            time.sleep(RETRY_WAIT * attempt)
+    return code, ""
 
 
-def dev_version(repo: str, expected: bool) -> str | None:
-    """Version: from the repo's DESCRIPTION on main. None means unreadable.
+def dev_version(repo: str, expected: bool) -> tuple[str | None, int]:
+    """Version: from the repo's DESCRIPTION on main, with the status seen.
+
+    The value is None when unreadable. The status rides along so the caller
+    can say WHY: a 404 and a 429 are both unreadable and want opposite
+    repairs, and a message naming only the permanent causes sends the reader
+    to check a rename that never happened.
 
     `expected` says whether this row is supposed to have a DESCRIPTION at all,
     and it decides how a 404 is read. GitHub answers 404 identically for a
@@ -83,15 +107,26 @@ def dev_version(repo: str, expected: bool) -> str | None:
     """
     code, body = fetch(DEV_URL.format(repo=repo))
     if code == 404:
-        return None if expected else ""
+        return (None if expected else ""), code
     if code != 200:
-        return None
+        return None, code
     for line in body.splitlines():
         if line.startswith("Version:"):
-            return line.split(":", 1)[1].strip()
+            return line.split(":", 1)[1].strip(), code
     # Reached main and read a DESCRIPTION with no Version: field. That is a
     # malformed file, not an absent package, so report it rather than blank.
-    return None if expected else ""
+    return (None if expected else ""), code
+
+
+def why_unreadable(code: int) -> str:
+    """What a status code means for someone who has to go and fix it."""
+    if code == 404:
+        return "renamed, private, default branch moved, or the file is gone"
+    if code == 0:
+        return "no response at all: offline, DNS, or the request timed out"
+    if code == 429:
+        return f"throttled (HTTP {code}); the retries did not outlast it"
+    return f"HTTP {code}"
 
 
 def expects_description(row: dict) -> bool:
@@ -107,16 +142,36 @@ def expects_description(row: dict) -> bool:
 
 
 def cran_version(pkg: str) -> str | None:
-    """Version from crandb. None means unreadable; "" means not on CRAN."""
+    """Version from crandb. None means unreadable; "" means not on CRAN.
+
+    A 200 does not guarantee a package record. An error envelope, a proxy or
+    captive portal, or an API change can all answer with well-formed JSON that
+    is not a package: not an object at all, or an object carrying no Version.
+    `.get` on a non-object raises rather than returning None --
+    an uncaught exception exits 1, and the schedule used to read 1 as success.
+    So the shape is checked, not assumed, and anything unexpected takes the
+    same path as an unreadable oracle: report it and keep the recorded value.
+    """
     code, body = fetch(CRAN_URL.format(pkg=pkg))
     if code == 404:
         return ""
     if code != 200:
         return None
     try:
-        return json.loads(body).get("Version", "")
+        payload = json.loads(body)
     except json.JSONDecodeError:
         return None
+    if not isinstance(payload, dict):
+        return None
+    version = payload.get("Version")
+    # "" is reserved for an authoritative 404: the package is not on CRAN.
+    # A 200 object with no Version -- {} or an error envelope such as
+    # {"error": "upstream unavailable"} -- is not that answer, and letting it
+    # fall through to "" blanked a recorded version and reported no failure.
+    # Absent, empty and non-string all mean the same thing here: unreadable.
+    if not isinstance(version, str) or not version:
+        return None
+    return version
 
 
 def refresh(rows: list[dict]) -> tuple[list[dict], list[str]]:
@@ -140,12 +195,11 @@ def refresh(rows: list[dict]) -> tuple[list[dict], list[str]]:
             row["cran_version"] = ""
 
         if row.get("repo"):
-            live = dev_version(row["repo"], expects_description(row))
+            live, code = dev_version(row["repo"], expects_description(row))
             if live is None:
                 failures.append(
                     f"{row['package']}: could not read DESCRIPTION on main "
-                    f"({row['repo']}) -- renamed, private, default branch "
-                    f"moved, or the file is gone"
+                    f"({row['repo']}) -- {why_unreadable(code)}"
                 )
             else:
                 row["dev_version"] = live
@@ -180,7 +234,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("catalog", type=Path, nargs="?",
                         default=Path("inst/extdata/catalog.csv"))
     parser.add_argument("--check", action="store_true",
-                        help="report drift without writing the file")
+                        help="report drift without writing the file; exits 0 "
+                             "for no drift, 1 for drift, 2 if an oracle "
+                             "could not be read and nothing was verified")
     args = parser.parse_args(argv)
 
     with args.catalog.open(newline="") as handle:
@@ -210,6 +266,14 @@ def main(argv: list[str] | None = None) -> int:
         print(f"WARNING {failure}; kept the recorded value", file=sys.stderr)
 
     if args.check:
+        # An unreadable oracle outranks "no drift". A failed fetch keeps the
+        # recorded value, so `before == after` holds just as firmly when every
+        # row was verified and unchanged as when NOTHING was verified at all.
+        # Returning 0 for the second case is the "result-shaped nothing" this
+        # module's own docstring warns against, and it would let a check job
+        # go green having confirmed no version anywhere.
+        if failures:
+            return 2
         return 1 if before != after else 0
 
     with args.catalog.open("w", newline="") as handle:
