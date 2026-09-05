@@ -1096,9 +1096,9 @@
    "blocked_on": null,
    "spec": "dev/specs/2026-09-02-dp-dc-decomposition-design.md",
    "note": "Measured 2026-09-02: distinct studies with a program-extension job of this qualifier. Base procs only (contents/means/freq), no package dependency, which is what separates it from `tables`.",
-   "disposition": "scaffold",
+   "disposition": "thin",
    "destination": "hvtiRtemplates",
-   "replaced_by": []
+   "replaced_by": ["hvtiRutilities::proc_contents", "hvtiRutilities::proc_means"]
   },
   {
    "prefix": "dc",
@@ -1119,9 +1119,9 @@
    "blocked_on": null,
    "spec": "dev/specs/2026-09-02-dp-dc-decomposition-design.md",
    "note": "Measured 2026-09-02: distinct studies with a program-extension job of this qualifier. Calls %desc_tab, allocated to hvtiRtables. Same dataset and %vars as `general`; different destination package.",
-   "disposition": "scaffold",
+   "disposition": "thin",
    "destination": "hvtiRtemplates",
-   "replaced_by": []
+   "replaced_by": ["hvtiRtables::hv_tbl_summary", "hvtiRtables::hv_man_table", "hvtiRtables::hv_man_table_save"]
   },
   {
    "prefix": "dc",
@@ -1142,9 +1142,9 @@
    "blocked_on": null,
    "spec": "dev/specs/2026-09-02-dp-dc-decomposition-design.md",
    "note": "Measured 2026-09-02: distinct studies with a program-extension job of this qualifier.",
-   "disposition": "scaffold",
+   "disposition": "thin",
    "destination": "hvtiRtemplates",
-   "replaced_by": []
+   "replaced_by": ["hvtiRutilities::proc_means"]
   },
   {
    "prefix": "dc",
@@ -1165,9 +1165,9 @@
    "blocked_on": null,
    "spec": "dev/specs/2026-09-02-dp-dc-decomposition-design.md",
    "note": "Measured 2026-09-02: distinct studies with a program-extension job of this qualifier.",
-   "disposition": "scaffold",
+   "disposition": "thin",
    "destination": "hvtiRtemplates",
-   "replaced_by": []
+   "replaced_by": ["hvtiRutilities::proc_means"]
   },
   {
    "prefix": "dc",
@@ -1176,8 +1176,8 @@
    "folder": "descriptive",
    "family": "descriptive",
    "kind": "job",
-   "status": "queued",
-   "batch": 4,
+   "status": null,
+   "batch": null,
    "sas_breadth": null,
    "sas_breadth_jobs": 59,
    "r_exemplars": null,
@@ -1187,11 +1187,11 @@
    "workflows": [
     "propensity-matching"
    ],
-   "blocked_on": null,
+   "blocked_on": "hvtiRutilities#103",
    "spec": "dev/specs/2026-09-02-dp-dc-decomposition-design.md",
    "note": "Measured 2026-09-02: distinct studies with a program-extension job of this qualifier. Ships the 2019 successor (stddiff.sas, 649 lines, Artis, continuous+ordinal+categorical, hvtiRutilities), NOT the 2009 std_dif.sas (108 lines, hvtiRtables, 72 studies). Decided 2026-09-03; the wider corpus use of std_dif is a macro outliving its replacement, not a preference.",
-   "disposition": "scaffold",
-   "destination": "hvtiRtemplates",
+   "disposition": "build",
+   "destination": "hvtiRutilities",
    "replaced_by": []
   },
   {

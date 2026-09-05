@@ -23,13 +23,17 @@ Suggests:
     curl,
     ggRandomForests,
     hvtiPlotR,
+    hvtiRtables,
+    hvtiRutilities,
     knitr,
     pak,
     quarto,
     testthat (>= 3.2.0)
 Remotes:
     ehrlinger/ggRandomForests,
-    ehrlinger/hvtiPlotR
+    ehrlinger/hvtiPlotR,
+    ehrlinger/hvtiRtables,
+    ehrlinger/hvtiRutilities
 VignetteBuilder: quarto
 Config/testthat/edition: 3
 Roxygen: list(markdown = TRUE)
