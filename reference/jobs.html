@@ -79,6 +79,17 @@ leans on <code>hvtiPlotR</code>.</p>
 <code>hvtiRutilities::hvti_taxonomy()</code>. This catalog says who owes it. They are
 apart because validating a routing has to load the destination package, and
 <code>hvtiRutilities</code> is imported by packages this catalog routes to.</p>
+<p><code>status</code> and <code>batch</code> are <code>hvtiRtemplates</code> scheduling fields: they answer
+when <code>hvtiRtemplates</code> will ship a template for a row, not whether the row
+is done. Both are null in the catalog for a row whose <code>destination</code> is
+neither <code>hvtiRtemplates</code> nor null, because that repository has nothing of
+its own to schedule there. <code>jobs()</code> surfaces <code>status</code> as <code>NA</code> in the
+<code>status</code> column; it does not surface <code>batch</code> at all, so a caller after
+that field reads the catalog row directly. The one exception to the
+nulling is <code>status == "intake"</code>, which survives regardless of
+<code>destination</code>: it is not a schedule value at all, but a taxonomy fact
+meaning the prefix has been proposed but is not yet in
+<code>hvtiRutilities::hvti_taxonomy()</code>.</p>
     </div>
 
     <div class="section level2">

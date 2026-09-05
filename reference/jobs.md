@@ -38,6 +38,18 @@ are apart because validating a routing has to load the destination
 package, and `hvtiRutilities` is imported by packages this catalog
 routes to.
 
+`status` and `batch` are `hvtiRtemplates` scheduling fields: they answer
+when `hvtiRtemplates` will ship a template for a row, not whether the
+row is done. Both are null in the catalog for a row whose `destination`
+is neither `hvtiRtemplates` nor null, because that repository has
+nothing of its own to schedule there. `jobs()` surfaces `status` as `NA`
+in the `status` column; it does not surface `batch` at all, so a caller
+after that field reads the catalog row directly. The one exception to
+the nulling is `status == "intake"`, which survives regardless of
+`destination`: it is not a schedule value at all, but a taxonomy fact
+meaning the prefix has been proposed but is not yet in
+`hvtiRutilities::hvti_taxonomy()`.
+
 ## Examples
 
 ``` r
