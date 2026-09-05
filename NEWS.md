@@ -1,7 +1,7 @@
 Package: hvtiR
-Version: 1.1.4
+Version: 1.1.5
 
-# hvtiR (unreleased)
+# hvtiR 1.1.5
 
 * Routed the five `dc` (descriptive) jobs in `inst/extdata/jobs.json`
   according to an audit, rather than the standing shorthand that all of them
@@ -10,7 +10,7 @@ Version: 1.1.4
   design pins it to a table-building macro allocated to `hvtiRtables`, and
   `hv_tbl_summary`, `hv_man_table` and `hv_man_table_save` cover it, so it
   stays `thin`. `dc-general`, `dc-gfup` and `dc-dead` are base-procedure
-  jobs — "look at the data" rather than "produce the manuscript table". One
+  jobs, "look at the data" rather than "produce the manuscript table". One
   job of each of the latter two shapes was read in the corpus; both run base
   procedures only, with no table-building macro. `hvtiRutilities` ports two
   of those procedures, so all three stay `thin` with `replaced_by` naming
