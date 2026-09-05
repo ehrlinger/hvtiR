@@ -152,3 +152,37 @@ it is either the catalog growing enough rows that the false-positive rate
 falls to something a gate could tolerate, or someone finding a definition of
 "shares a surface" sharper than destination plus family, one that would not
 have flagged `sid`/`vt` alongside a genuine problem in the first place.
+
+## Update 2026-09-05: the open question is closed, and it was the check's first true positive
+
+The `dp-variable` open question above is resolved. Reading real jobs in the
+corpus (four jobs across four studies in two top level trees, all the same
+shape: a descriptive graph of one variable against follow-up time alone, no
+covariates, quantile or decile time groupings, plus a trend test; one of the
+four the ordinal variant) confirms `folder: distributions` and
+`family: plots` were both already correct. The field that was wrong was
+`disposition`: it should have been `thin`, not `scaffold`, because the shape
+is served by two existing `hvtiPlotR` exports rather than needing a new
+template built from nothing. `inst/extdata/jobs.json` now reads `disposition:
+"thin"` on that row with `replaced_by` naming both functions.
+
+That makes `dp-variable` the disposition check's **first true positive**: a
+real mis-disposition, not a seeded default, caught by exactly the
+destination-plus-family grouping this report evaluated above. The
+recommendation against a gate is unchanged, because the report's other flag,
+`ggRandomForests`/`machine-learning`, remains a genuine false positive (two
+rows correctly `build` rather than `retire`) that a gate would have failed
+the catalog on. One true positive and one false positive out of two flags is
+still not a track record that justifies blocking a merge on this rule; it is
+simply no longer zero true positives.
+
+One more observation worth carrying forward rather than treating as a defect:
+`graphs`/`dp-trends` and `distributions`/`dp-variable` now both name
+`hvtiPlotR::hv_trends` in `replaced_by`. This is intentional. The
+decomposition design deliberately created both rows, and studies keep the two
+job types in separate folders, so the overlap reflects one function serving
+two distinct catalog entries, not a duplicate row. It is worth watching,
+because two rows naming the same function is exactly the shape a
+`replaced_by`-overlap grouping (the alternative this report declined to
+evaluate above) would key on, and a future attempt at that alternative should
+expect to see it and not treat it as a finding on its own.
