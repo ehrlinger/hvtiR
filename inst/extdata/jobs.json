@@ -1314,9 +1314,12 @@
    "blocked_on": null,
    "spec": "dev/specs/2026-09-02-dp-dc-decomposition-design.md",
    "note": "ONE template, the variable as an EDIT: field. Measured 2026-09-03 over 1,271 distributions/dp job rows: 666 (52%) carry only the variable and no second field at all, and a measurement-scale word appears in 110 stems (8.7%) -- binary 51, ordinal 49, continuous 6. As a second qualifier, `binary` (8 studies) and `ordinal` (10) rank fifth and sixth behind `trend` (21), `tavr`, `gastroparesis` and `matched`. `qualifier` is `variable` rather than null because a prefix must be wholly qualified or wholly unqualified and graphs/dp is decomposed; it names what the job is parameterised by. Watch `trend` (100 rows, 21 studies), the one qualifier2 that could earn a template of its own.",
-   "disposition": "scaffold",
+   "disposition": "thin",
    "destination": "hvtiRtemplates",
-   "replaced_by": []
+   "replaced_by": [
+    "hvtiPlotR::hv_trends",
+    "hvtiPlotR::hv_ordinal"
+   ]
   }
  ]
 }
