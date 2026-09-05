@@ -222,3 +222,49 @@ test_that("an intake row's blocked_on is not a placeholder either", {
     }
   }
 })
+
+test_that("status/batch are null off-destination, except intake", {
+  raw <- read_jobs()
+  for (r in raw) {
+    # A null destination is exempt from nulling, even though it is not
+    # "hvtiRtemplates" either. Design section 6 rule 1 lets destination be
+    # null, meaning nobody owns the row yet, and the sibling hvtiRtemplates
+    # repository filters its own catalog scan with destination in (None,
+    # "hvtiRtemplates"). A null-destination row therefore reaches that
+    # package's check_schema() the same as a row destined there, and that
+    # schema has no status for "none" -- it would reject the row outright.
+    # So a null destination is this repository's business too, and keeps
+    # status and batch, exactly like a row destined for hvtiRtemplates.
+    off_destination <- !is.null(r$destination) &&
+      !identical(r$destination, "hvtiRtemplates")
+    if (off_destination) {
+      expect_null(r$batch, label = r$prefix)
+      if (!identical(r$status, "intake")) {
+        expect_null(r$status, label = r$prefix)
+      }
+    }
+  }
+})
+
+test_that("no row anywhere carries the retired out-of-scope status", {
+  raw <- read_jobs()
+  statuses <- vapply(raw, function(r) {
+    if (is.null(r$status)) NA_character_ else r$status
+  }, character(1))
+
+  expect_false("out-of-scope" %in% statuses)
+})
+
+test_that("a row destined for hvtiRtemplates still has a status", {
+  raw <- read_jobs()
+  for (r in raw) {
+    # Covers a null destination as well as "hvtiRtemplates": see the comment
+    # on the nulling rule above for why the sibling repository treats a
+    # null destination as in scope for this same status requirement.
+    in_scope <- is.null(r$destination) ||
+      identical(r$destination, "hvtiRtemplates")
+    if (in_scope) {
+      expect_false(is.null(r$status), label = r$prefix)
+    }
+  }
+})
