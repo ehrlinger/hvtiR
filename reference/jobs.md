@@ -57,5 +57,5 @@ j <- jobs()
 table(j$disposition)
 #> 
 #>    build   retire scaffold     thin 
-#>        7        5       32        9 
+#>        7        5       31       10 
 ```

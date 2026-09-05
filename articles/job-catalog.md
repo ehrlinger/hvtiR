@@ -9,8 +9,8 @@ disagree with it.
 |:------------|-----:|
 | build       |    7 |
 | retire      |    5 |
-| scaffold    |   32 |
-| thin        |    9 |
+| scaffold    |   31 |
+| thin        |   10 |
 
 ## distributions
 
@@ -20,7 +20,7 @@ disagree with it.
 | `cd` | Cumulative distribution | 202 | 8 | scaffold | queued | hvtiRtemplates |  |  |
 | `hz` | Hazard fit | 581 | 8 | scaffold | shipped | hvtiRtemplates |  |  |
 | `nd` | Nonparametric distributions | 244 | 12 | scaffold | queued | hvtiRtemplates |  |  |
-| `dp-variable` | Distribution of a variable | NA | NA | scaffold | queued | hvtiRtemplates |  |  |
+| `dp-variable` | Distribution of a variable | NA | NA | thin | queued | hvtiRtemplates | [`hvtiPlotR::hv_trends`](https://ehrlinger.github.io/hvtiPlotR/reference/hv_trends.html), [`hvtiPlotR::hv_ordinal`](https://ehrlinger.github.io/hvtiPlotR/reference/hv_ordinal.html) |  |
 
 ## documents
 
