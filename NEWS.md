@@ -3,6 +3,28 @@ Version: 1.1.4
 
 # hvtiR (unreleased)
 
+* Routed the five `dc` (descriptive) jobs in `inst/extdata/jobs.json`
+  according to an audit, rather than the standing shorthand that all of them
+  were `hvtiRtables`' work. That shorthand held for exactly one of the five.
+  `dc-tables` is the manuscript table job: hvtiRtemplates' decomposition
+  design pins it to a table-building macro allocated to `hvtiRtables`, and
+  `hv_tbl_summary`, `hv_man_table` and `hv_man_table_save` cover it, so it
+  stays `thin`. `dc-general`, `dc-gfup` and `dc-dead` are base-procedure
+  jobs — "look at the data" rather than "produce the manuscript table". One
+  job of each of the latter two shapes was read in the corpus; both run base
+  procedures only, with no table-building macro. `hvtiRutilities` ports two
+  of those procedures, so all three stay `thin` with `replaced_by` naming
+  `hvtiRutilities::proc_contents` and/or `hvtiRutilities::proc_means`; the
+  remainder is tracked as `hvtiRutilities#102` and does not block the `thin`
+  marking. `dc-stddiff` becomes a `build` row targeting `hvtiRutilities`
+  rather than `hvtiRtables`: the decomposition design decided on 2026-09-03
+  to ship the successor standardized-differences macro rather than its
+  predecessor, which makes the dependency `hvtiRutilities`, and the function
+  does not exist yet. Its `status` and `batch` are now `null`, per the
+  schema rule that those hvtiRtemplates scheduling fields are null whenever
+  `destination` moves off `hvtiRtemplates`; the work is tracked as
+  `hvtiRutilities#103`.
+
 # hvtiR 1.1.4
 
 * Corrected `inst/extdata/jobs.json` disposition for the `(dp, variable)` job
