@@ -1,5 +1,69 @@
 # Changelog
 
+## hvtiR 1.1.4
+
+- Corrected `inst/extdata/jobs.json` disposition for the
+  `(dp, variable)` job row from `scaffold` to `thin`, with `replaced_by`
+  naming
+  [`hvtiPlotR::hv_trends`](https://ehrlinger.github.io/hvtiPlotR/reference/hv_trends.html)
+  and
+  [`hvtiPlotR::hv_ordinal`](https://ehrlinger.github.io/hvtiPlotR/reference/hv_ordinal.html).
+  A coverage consistency check had flagged this row as the one
+  `scaffold` disposition in a group of otherwise `thin` rows. Reading
+  real jobs across several studies confirmed the shape is a descriptive
+  time-trend plot of one variable with no covariates, already served by
+  those two `hvtiPlotR` exports, so no new template is needed.
+
+- The scheduled catalog refresh no longer reports success when its
+  script crashed. The workflow tested the exit code against `-gt 2`, but
+  0 and 2 are the only codes the script returns deliberately, and an
+  uncaught Python exception exits 1. That passed the test, so the run
+  ended green having written nothing, opened no pull request and raised
+  no annotation: a record that looks checked and is not, which is the
+  failure the schedule exists to prevent. The guard is now an allowlist.
+
+- `cran_version()` treats any crandb answer that is not a package record
+  as an unreadable oracle rather than crashing on it. A 200 carrying a
+  JSON array, string or number, or a non-string `Version`, raised an
+  uncaught `AttributeError`, which was the exit-1 crash above. Such a
+  row now keeps its recorded value and is reported, like any other
+  unreadable oracle. That includes a 200 carrying an object with no
+  `Version`: [`{}`](https://rdrr.io/r/base/Paren.html) and an error
+  envelope are objects, so they passed the shape check and mapped to
+  `""`, which this module reserves for an authoritative CRAN 404. A
+  recorded version was blanked and no failure was reported.
+
+- The catalog refresher waits between retried fetches. It retried three
+  times with no delay at all, which is not a retry: the case the
+  attempts exist for is a throttled shared-IP runner, and three requests
+  fired inside a millisecond meet the same closed window three times.
+  The wait now widens with the attempt, matching `remote_retry_wait` in
+  `R/remote.R`.
+
+- An unreadable oracle now says why. `fetch()` collapsed every exhausted
+  retry to status 0, so a throttle was reported with the wording
+  reserved for permanent causes, “renamed, private, default branch
+  moved, or the file is gone”, and pointed the reader at a rename that
+  never happened. The last status seen survives the attempts and
+  `why_unreadable()` turns it into the repair it actually implies.
+
+- `--check` no longer reports “no drift” for a run that verified
+  nothing. A failed fetch keeps the recorded value, so `before == after`
+  holds just as firmly when nothing was read as when everything was read
+  and unchanged, and the exit code was 0 either way. It is now 2 when an
+  oracle could not be read, matching the convention the writing path
+  already used.
+
+- `status` and `batch` are now null on every row whose `destination` is
+  not `hvtiRtemplates`, except an `intake` row, which keeps
+  `status: "intake"` and only loses `batch`. Both fields are
+  `hvtiRtemplates` scheduling values, and a row `hvtiRtemplates` will
+  never ship a template for has nothing to schedule; leaving a value
+  there let `rfc` read `queued` on the exact `ggRandomForests` surface
+  that had already justified marking `rf` and `rfsrc` `out-of-scope`.
+  `out-of-scope` had no remaining users after the change and is removed
+  as a status value.
+
 ## hvtiR 1.1.3
 
 - [`status()`](https://ehrlinger.github.io/hvtiR/reference/status.md)
