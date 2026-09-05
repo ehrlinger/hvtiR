@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">hvtiR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.4</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.5</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -44,6 +44,10 @@
       <small>Source: <a href="https://github.com/ehrlinger/hvtiR/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.1.5" id="hvtir-115">hvtiR 1.1.5<a class="anchor" aria-label="anchor" href="#hvtir-115"></a></h2>
+<ul><li>Routed the five <code>dc</code> (descriptive) jobs in <code>inst/extdata/jobs.json</code> according to an audit, rather than the standing shorthand that all of them were <code>hvtiRtables</code>’ work. That shorthand held for exactly one of the five. <code>dc-tables</code> is the manuscript table job: hvtiRtemplates’ decomposition design pins it to a table-building macro allocated to <code>hvtiRtables</code>, and <code>hv_tbl_summary</code>, <code>hv_man_table</code> and <code>hv_man_table_save</code> cover it, so it stays <code>thin</code>. <code>dc-general</code>, <code>dc-gfup</code> and <code>dc-dead</code> are base-procedure jobs, “look at the data” rather than “produce the manuscript table”. One job of each of the latter two shapes was read in the corpus; both run base procedures only, with no table-building macro. <code>hvtiRutilities</code> ports two of those procedures, so all three stay <code>thin</code> with <code>replaced_by</code> naming <code><a href="https://ehrlinger.github.io/hvtiRutilities/reference/proc_contents.html">hvtiRutilities::proc_contents</a></code> and/or <code><a href="https://ehrlinger.github.io/hvtiRutilities/reference/proc_means.html">hvtiRutilities::proc_means</a></code>; the remainder is tracked as <code>hvtiRutilities#102</code> and does not block the <code>thin</code> marking. <code>dc-stddiff</code> becomes a <code>build</code> row targeting <code>hvtiRutilities</code> rather than <code>hvtiRtables</code>: the decomposition design decided on 2026-09-03 to ship the successor standardized-differences macro rather than its predecessor, which makes the dependency <code>hvtiRutilities</code>, and the function does not exist yet. Its <code>status</code> and <code>batch</code> are now <code>null</code>, per the schema rule that those hvtiRtemplates scheduling fields are null whenever <code>destination</code> moves off <code>hvtiRtemplates</code>; the work is tracked as <code>hvtiRutilities#103</code>.</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.1.4" id="hvtir-114">hvtiR 1.1.4<a class="anchor" aria-label="anchor" href="#hvtir-114"></a></h2>
 <ul><li><p>Corrected <code>inst/extdata/jobs.json</code> disposition for the <code>(dp, variable)</code> job row from <code>scaffold</code> to <code>thin</code>, with <code>replaced_by</code> naming <code><a href="https://ehrlinger.github.io/hvtiPlotR/reference/hv_trends.html" class="external-link">hvtiPlotR::hv_trends</a></code> and <code><a href="https://ehrlinger.github.io/hvtiPlotR/reference/hv_ordinal.html" class="external-link">hvtiPlotR::hv_ordinal</a></code>. A coverage consistency check had flagged this row as the one <code>scaffold</code> disposition in a group of otherwise <code>thin</code> rows. Reading real jobs across several studies confirmed the shape is a descriptive time-trend plot of one variable with no covariates, already served by those two <code>hvtiPlotR</code> exports, so no new template is needed.</p></li>
