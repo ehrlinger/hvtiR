@@ -5,6 +5,15 @@ Version: 1.1.4
 
 # hvtiR 1.1.4
 
+* Corrected `inst/extdata/jobs.json` disposition for the `(dp, variable)` job
+  row from `scaffold` to `thin`, with `replaced_by` naming
+  `hvtiPlotR::hv_trends` and `hvtiPlotR::hv_ordinal`. A coverage consistency
+  check had flagged this row as the one `scaffold` disposition in a group of
+  otherwise `thin` rows. Reading real jobs across several studies confirmed
+  the shape is a descriptive time-trend plot of one variable with no
+  covariates, already served by those two `hvtiPlotR` exports, so no new
+  template is needed.
+
 * The scheduled catalog refresh no longer reports success when its script
   crashed. The workflow tested the exit code against `-gt 2`, but 0 and 2 are
   the only codes the script returns deliberately, and an uncaught Python
