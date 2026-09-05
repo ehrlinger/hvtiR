@@ -305,6 +305,22 @@ Two candidate definitions, for whoever picks this up:
 The second is the one worth prototyping, as a **report** rather than a gate,
 until it has been wrong or right often enough to judge.
 
+⚠️ **AMENDED 2026-09-05: the "three dispositions" claim above is wrong, and the
+prototype has since run.** Measured against the catalog at commit `11cf860`,
+the `ggRandomForests`/`machine-learning` group held TWO dispositions
+(`retire`, `build`), not three, and THREE statuses (`intake`, `out-of-scope`,
+`queued`). The rule would have caught `rfc` on the status axis, not the
+disposition axis this paragraph credited. That distinction matters because
+pull request #43 has since closed the status axis with an explicit rule
+(status and batch are null for a row destined elsewhere, except intake), so a
+status disagreement within a group is now derivable rather than a free
+choice and carries no signal any more. The one thing this heuristic is on
+record as having caught has been superseded. See
+`dev/specs/2026-09-05-coverage-consistency-report.md` for the corrected
+evidence, the prototype's actual output, and the outcome: one real finding
+(`dp-variable`), one false positive (`sid`/`vt`, which are correctly `build`),
+and a recommendation to keep this a script run by hand, not a gate.
+
 ## 10. Out of scope
 
 - Rewriting `roadmap_render.py`. It reads the same rows plus three fields and
