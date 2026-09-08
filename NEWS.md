@@ -3,6 +3,11 @@ Version: 1.1.6
 
 # hvtiR (unreleased)
 
+* `hvtiRutilities` is recorded at 1.1.11 in `inst/extdata/catalog.csv`, up from
+  1.1.10, refreshed from `origin/main` by `catalog-versions.yml`. The catalog
+  ships in the package and is published as `members.json`, so its recorded
+  versions are content rather than bookkeeping and belong under a heading like
+  anything else.
 * `catalog-versions.yml` now files its own NEWS entry, via
   `tools/news_catalog_entry.py`. The refresh pull request changed
   `inst/extdata/catalog.csv` and nothing else, which is exactly the shape
