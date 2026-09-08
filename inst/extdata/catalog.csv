@@ -5,6 +5,7 @@ ggBoostedTrees,ehrlinger/ggBoostedTrees,member,Visual exploration of boosted tre
 hvtiPlotR,ehrlinger/hvtiPlotR,member,HVTI-standard publication graphics for reproducible clinical research figures.,,stable,,,,2.7.13,
 hvtiRbootstrap,ehrlinger/hvtiRbootstrap,member,"Bootstrap model building -- fit across many replicates and report how often each variable survives selection; an R port of the bootreg, SUMBOOT and cluster SAS macros.",,wip,,,,0.9.3,
 hvtiRdatabuild,ehrlinger/hvtiRdatabuild,member,"Analysis-ready clinical datasets for HVTI CORR studies, verified against the legacy SAS datasets they replace.",,wip,,,,0.2.0,
+hvtiRimputation,ehrlinger/hvtiRimputation,member,Missing value imputation -- fill by a stated method and return a row-level record of exactly which values were changed; an R port of the CORR group's PROC STANDARD REPLACE and imputsub macros.,,wip,,,,0.1.0,
 hvtiRlifetables,ehrlinger/hvtiRlifetables,member,"Age-, sex- and race-matched US reference survival; replaces the usmatchd SAS macro by evaluating a stored three-phase parametric hazard fit rather than interpolating a life table.",,wip,,,,0.1.3,
 hvtiRpropensity,ehrlinger/hvtiRpropensity,member,"Propensity score estimation, matching and IPTW with standardized balance diagnostics, for cardiac surgery comparative-effectiveness research.",,wip,,,,0.1.3,
 hvtiRtables,ehrlinger/hvtiRtables,member,"Manuscript-compliant Word tables from gtsummary objects, following HVTI CORR table construction standards, with a JTCVS submission mode.",,stable,,,,1.0.0,

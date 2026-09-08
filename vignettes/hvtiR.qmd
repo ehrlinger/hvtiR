@@ -18,8 +18,8 @@ knitr::opts_chunk$set(
 
 ## The problem
 
-The HVTI R package family is eleven packages spread across eleven GitHub
-repositories. Setting up a machine used to mean eleven `pak::pak()` calls, in
+The HVTI R package family is twelve packages spread across twelve GitHub
+repositories. Setting up a machine used to mean twelve `pak::pak()` calls, in
 an order you had to know, against repository names that have not always matched
 the package names: `hvtiRpropensity` lived in `ehrlinger/hvtiPropensityScores`
 and `TemporalHazard` in `ehrlinger/temporal_hazard` until the 2026-08 renames.
@@ -47,7 +47,7 @@ hvtiR::status()
 ```
 
 ```
-hvtiR - 11 members
+hvtiR - 12 members
 
   v hvtiRutilities   1.0.10     1.0.10     ok
   v hvtiRdatabuild    0.1.1      0.1.1      ok
@@ -87,7 +87,7 @@ hvtiR::status(remote = FALSE)
 ```
 
 ```
-hvtiR - 11 members
+hvtiR - 12 members
 
   - hvtiRutilities   1.0.10     -          ok-local
   - hvtiRdatabuild    0.1.1      -          ok-local

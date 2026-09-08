@@ -73,12 +73,19 @@ class RealCatalogTests(unittest.TestCase):
             self.manifest = build_manifest(read_catalog(fh), version="1.0.1")
 
     def test_the_family_count_sentence_is_arithmetic(self):
-        # "eleven member packages, the nine below plus ggRandomForests and
+        # "twelve member packages, the ten below plus ggRandomForests and
         # TemporalHazard above" -- the sentence commit 6ab85bd had to fix by
-        # hand in three repositories.
+        # hand in three repositories, which is why it is asserted here rather
+        # than written out downstream.
+        #
+        # These numbers move whenever a member is added, and that is the
+        # point: the downstream sinks render this sentence between their
+        # BEGIN:packages markers, so a member added without updating them
+        # would publish arithmetic that does not add up. 11/2/9 until
+        # hvtiRimputation landed on 2026-09-08.
         self.assertEqual(
             self.manifest["counts"],
-            {"members": 11, "members_on_cran": 2, "members_github_only": 9},
+            {"members": 12, "members_on_cran": 2, "members_github_only": 10},
         )
         self.assertEqual(
             self.manifest["cran_member_names"],
