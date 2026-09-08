@@ -50,6 +50,10 @@ jobs:
         # prevent.
         run: |
           set +e
+          # Kept so the NEWS step can say what actually moved. The script
+          # rewrites the file in place, so this is the only chance to hold the
+          # previous values.
+          cp inst/extdata/catalog.csv "${RUNNER_TEMP}/catalog-before.csv"
           python3 tools/refresh_catalog_versions.py inst/extdata/catalog.csv \
             2>&1 | tee refresh.log
           refresh_status=${PIPESTATUS[0]}
@@ -79,6 +83,27 @@ jobs:
           } >> "$GITHUB_OUTPUT"
           rm -f refresh.log
 
+      # Without this the pull request changes catalog.csv and nothing else,
+      # which is exactly the shape check_version.py rejects: version unchanged
+      # from the base AND no standing "# hvtiR (unreleased)" heading to file
+      # under. Both guards are right and the machine pull request could satisfy
+      # neither, so every refresh needed a hand-written NEWS commit first.
+      #
+      # It is not occasional. The unreleased heading is REMOVED by every naming
+      # commit, so a refresh landing between a bump and the next unreleased
+      # change fails every time -- and that is most of them, since cutting a
+      # release is what prompts someone to look at the catalog.
+      #
+      # Runs unconditionally: the tool is a no-op when nothing moved, and
+      # gating it on the drift report would mean parsing prose to decide
+      # whether to write a file.
+      - name: File the change under the unreleased heading
+        run: |
+          python3 tools/news_catalog_entry.py \
+            --before "${RUNNER_TEMP}/catalog-before.csv" \
+            --after inst/extdata/catalog.csv \
+            --news NEWS.md
+
       - name: Open a pull request if anything moved
         id: pr
         uses: peter-evans/create-pull-request@v6
@@ -105,7 +130,9 @@ jobs:
           title: "chore: refresh catalog versions"
           commit-message: "chore: refresh catalog versions from CRAN and main"
           delete-branch: true
-          add-paths: inst/extdata/catalog.csv
+          add-paths: |
+            inst/extdata/catalog.csv
+            NEWS.md
           body: |
             Automated refresh of the catalog's `cran_version` and
             `dev_version` columns from their live oracles.

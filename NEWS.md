@@ -1,6 +1,23 @@
 Package: hvtiR
 Version: 1.1.6
 
+# hvtiR (unreleased)
+
+* `catalog-versions.yml` now files its own NEWS entry, via
+  `tools/news_catalog_entry.py`. The refresh pull request changed
+  `inst/extdata/catalog.csv` and nothing else, which is exactly the shape
+  `check_version.py` rejects -- version unchanged from the base and no
+  standing `# hvtiR (unreleased)` heading to file under. Both guards are
+  right; the machine pull request could satisfy neither, so every refresh
+  needed a hand-written NEWS commit before it could merge.
+* The collision is structural rather than occasional: the unreleased heading
+  is removed by every naming commit, so a refresh landing between a bump and
+  the next unreleased change fails every time. 1.1.6 was named minutes before
+  the refresh that exposed it.
+* The tool never opens a second unreleased heading and never repeats a bullet
+  it has already written, because the refresh branch is regenerated weekly and
+  reruns have to converge rather than accumulate.
+
 # hvtiR 1.1.6
 
 * Added `hvtiRimputation` to the registry, taking the family to twelve
