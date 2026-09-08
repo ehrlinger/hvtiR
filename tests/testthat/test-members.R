@@ -3,7 +3,7 @@ test_that("the registry has one row per member with two character columns", {
 
   expect_s3_class(m, "data.frame")
   expect_identical(names(m), c("package", "repo"))
-  expect_identical(nrow(m), 11L)
+  expect_identical(nrow(m), 12L)
   expect_type(m$package, "character")
   expect_type(m$repo, "character")
 })

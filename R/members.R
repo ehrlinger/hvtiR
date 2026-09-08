@@ -28,6 +28,7 @@ members <- function() {
       "hvtiRlifetables",
       "hvtiRbootstrap",
       "hvtiRpropensity",
+      "hvtiRimputation",
       "ggBoostedTrees",
       "TemporalHazard",
       "ggRandomForests"
@@ -41,6 +42,7 @@ members <- function() {
       "ehrlinger/hvtiRlifetables",
       "ehrlinger/hvtiRbootstrap",
       "ehrlinger/hvtiRpropensity",
+      "ehrlinger/hvtiRimputation",
       "ehrlinger/ggBoostedTrees",
       "ehrlinger/TemporalHazard",
       "ehrlinger/ggRandomForests"

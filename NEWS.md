@@ -1,6 +1,21 @@
 Package: hvtiR
 Version: 1.1.5
 
+# hvtiR (unreleased)
+
+* Added `hvtiRimputation` to the registry, taking the family to twelve
+  members. It ports `PROC STANDARD` with `REPLACE` and the `imputsub` macro:
+  fill by a stated method, and return a row-level record of exactly which
+  values were changed. It imports only `stats` and `utils`, so it needs no
+  `member_deps()` edge and no `Remotes:` line of its own -- the third of the
+  three things adding a member usually takes does not apply here.
+* Registered only after `ehrlinger/hvtiRimputation`'s `main` actually carried
+  the package. The repo existed on GitHub for some hours with `main` at an
+  empty initial commit and the package on an unmerged branch, and a registry
+  row written then would have broken `install()` for everyone: every spec goes
+  to `pak::pak()` in one call, so a single spec resolving to a `main` with no
+  package fails the whole family install rather than its own row.
+
 # hvtiR 1.1.5
 
 * Routed the five `dc` (descriptive) jobs in `inst/extdata/jobs.json`
