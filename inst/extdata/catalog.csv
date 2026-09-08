@@ -10,6 +10,6 @@ hvtiRlifetables,ehrlinger/hvtiRlifetables,member,"Age-, sex- and race-matched US
 hvtiRpropensity,ehrlinger/hvtiRpropensity,member,"Propensity score estimation, matching and IPTW with standardized balance diagnostics, for cardiac surgery comparative-effectiveness research.",,wip,,,,0.1.3,
 hvtiRtables,ehrlinger/hvtiRtables,member,"Manuscript-compliant Word tables from gtsummary objects, following HVTI CORR table construction standards, with a JTCVS submission mode.",,stable,,,,1.0.0,
 hvtiRtemplates,ehrlinger/hvtiRtemplates,member,"Versioned analysis job templates and the analysis-prefix taxonomy the CORR group organizes jobs by, so a study binds to a versioned template rather than to a copy.",,stable,,,,1.1.0,
-hvtiRutilities,ehrlinger/hvtiRutilities,member,Utility functions supporting reproducible HVTI research workflows.,,stable,,,,1.1.10,
+hvtiRutilities,ehrlinger/hvtiRutilities,member,Utility functions supporting reproducible HVTI research workflows.,,stable,,,,1.1.11,
 hazard,ehrlinger/hazard,standalone,SAS and C implementation of multi-phase hazard analysis for time-to-event decomposition.,,stable,Maintainer,,,,
 HVTI Recipes,ehrlinger/hvtiGraphics,book,"Catalog of publication-ready figures, tables, and datasets for clinical outcomes research -- Kaplan-Meier, propensity balance, CONSORT, random-forest visualizations -- each paired with reproducible code.",,stable,,https://ehrlinger.github.io/hvtiGraphics/,,,
