@@ -13,15 +13,20 @@ Version: 1.1.6
   nothing reported it; it closed because somebody advanced the pin by hand.
   Two copies of one definition, each locally valid and neither reporting the
   divergence, is the failure mode this migration exists to escape.
-* The check needs no list of consumers: it compares `main` against this
-  repository's own newest tag, and if the catalog has moved past that tag then
-  every pin is stale whatever tag it names. It reports into one reused issue
-  rather than opening a pull request, because the remedy -- name a version,
-  tag it, advance `ref:` in the consumer -- is a maintainer's decision rather
-  than a data edit, and it closes that issue again once the catalog matches.
-  It does not fail a build, and it stays quiet for a seven-day grace period,
-  since `main` ahead of the newest tag is the normal unreleased window under
-  the house cadence.
+* Raising the alarm needs no list of consumers; clearing it does, and the two
+  are not symmetric. `main` ahead of the newest tag means every pin is stale
+  whatever tag it names, which is local knowledge. `main` matching the newest
+  tag means only that a tag holding the current catalog *exists* -- it says
+  nothing about which tag anybody checks out. So clearing reads the consumer
+  workflows and requires every `ref:` to name that tag; a ref that cannot be
+  read is pending, never current.
+* It reports into one reused issue rather than opening a pull request, because
+  the remedy -- name a version, tag it, advance `ref:` in the consumer -- is a
+  maintainer's decision rather than a data edit, and it closes that issue only
+  once every consumer is confirmed to read the new tag. It does not fail a
+  build, and it stays quiet for a seven-day grace period on both halves, since
+  `main` ahead of the newest tag is the normal unreleased window under the
+  house cadence and a freshly cut tag needs time to propagate.
 * Added `hvtiRimputation` to the registry, taking the family to twelve
   members. It ports `PROC STANDARD` with `REPLACE` and the `imputsub` macro:
   fill by a stated method, and return a row-level record of exactly which

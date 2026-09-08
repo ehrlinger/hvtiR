@@ -51,16 +51,35 @@ class CompareTests(unittest.TestCase):
             self.assertEqual(cjp.compare(cur, tag)["changed"], ["dp-box"])
 
 
+CHECKOUT = """jobs:
+  check:
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: ehrlinger/hvtiR
+          ref: {ref}
+          path: .hvtiR
+      - name: after
+        run: echo done
+"""
+
+
 class GraceTests(unittest.TestCase):
-    def run_main(self, cur, tag, ahead, grace=7):
+    def run_main(self, cur, tag, ahead, grace=7, consumers=(),
+                 tag_age=None):
         with TemporaryDirectory() as tmp:
             c = Path(tmp) / "c.json"; c.write_text(json.dumps(cur))
             t = Path(tmp) / "t.json"; t.write_text(json.dumps(tag))
-            import contextlib, io, sys
-            buf = io.StringIO()
             argv = ["check_jobs_pin.py", "--current", str(c), "--tagged",
                     str(t), "--tag", "v1.1.5", "--ahead-days", str(ahead),
                     "--grace-days", str(grace)]
+            for spec in consumers:
+                argv += ["--consumer", spec]
+            if tag_age is not None:
+                argv += ["--tag-age-days", str(tag_age)]
+            import contextlib, io, sys
+            buf = io.StringIO()
             old = sys.argv; sys.argv = argv
             try:
                 with contextlib.redirect_stdout(buf):
@@ -69,37 +88,127 @@ class GraceTests(unittest.TestCase):
                 sys.argv = old
             return code, buf.getvalue()
 
-    def test_no_drift_is_ok(self):
-        code, out = self.run_main(rows(("ac", None, "x")),
-                                  rows(("ac", None, "x")), ahead=99)
-        self.assertEqual(code, cjp.OK)
-        self.assertIn("every pin is current", out)
+    def consumer(self, tmp, label, ref):
+        path = Path(tmp) / f"{label}.yaml"
+        path.write_text(CHECKOUT.format(ref=ref))
+        return f"{label}={path}"
 
-    def test_drift_inside_grace_is_ok_but_still_says_so(self):
-        # "Ahead, within grace" and "not ahead" must not print the same thing,
-        # or the run cannot be used to tell the check is still working.
-        code, out = self.run_main(rows(("ac", None, "x"), ("mi", None, "n")),
-                                  rows(("ac", None, "x")), ahead=2)
-        self.assertEqual(code, cjp.OK)
+    SAME = staticmethod(lambda: rows(("ac", None, "x")))
+    AHEAD = staticmethod(lambda: rows(("ac", None, "x"), ("mi", None, "n")))
+
+    def test_matching_the_tag_alone_is_PENDING_not_CURRENT(self):
+        # The bug this file exists to prevent: `main == newest tag` says a tag
+        # containing the catalog EXISTS, not that anything checks it out.
+        # Returning CURRENT here closed the alarm halfway through the remedy.
+        code, out = self.run_main(self.SAME(), self.SAME(), ahead=99)
+        self.assertEqual(code, cjp.PENDING)
+        self.assertIn("unverified", out)
+
+    def test_CURRENT_only_when_every_consumer_pins_the_newest_tag(self):
+        with TemporaryDirectory() as tmp:
+            spec = self.consumer(tmp, "R-CMD-check", "v1.1.5")
+            code, out = self.run_main(self.SAME(), self.SAME(), ahead=99,
+                                      consumers=[spec])
+            self.assertEqual(code, cjp.CURRENT)
+            self.assertIn("every consumer pins it", out)
+
+    def test_a_consumer_left_on_an_older_tag_is_DRIFT(self):
+        with TemporaryDirectory() as tmp:
+            spec = self.consumer(tmp, "R-CMD-check", "v1.1.4")
+            code, out = self.run_main(self.SAME(), self.SAME(), ahead=99,
+                                      consumers=[spec], tag_age=30)
+            self.assertEqual(code, cjp.DRIFT)
+            self.assertIn("`v1.1.4`", out)
+            self.assertIn("only half the remedy", out)
+
+    def test_one_stale_consumer_among_several_still_reports(self):
+        with TemporaryDirectory() as tmp:
+            ok = self.consumer(tmp, "spec-counts", "v1.1.5")
+            bad = self.consumer(tmp, "R-CMD-check", "v1.1.4")
+            code, out = self.run_main(self.SAME(), self.SAME(), ahead=99,
+                                      consumers=[ok, bad], tag_age=30)
+            self.assertEqual(code, cjp.DRIFT)
+            self.assertIn("R-CMD-check", out)
+            self.assertNotIn("`spec-counts` pins", out)
+
+    def test_a_consumer_that_cannot_be_read_is_PENDING_not_CURRENT(self):
+        # An unverifiable pin is not a verified one; closing the alarm on a
+        # failed fetch is the same defect in a different coat.
+        code, out = self.run_main(self.SAME(), self.SAME(), ahead=99,
+                                  consumers=["R-CMD-check=/nonexistent.yaml"])
+        self.assertEqual(code, cjp.PENDING)
+        self.assertIn("could not be read", out)
+
+    def test_a_freshly_cut_tag_gives_consumers_grace(self):
+        with TemporaryDirectory() as tmp:
+            spec = self.consumer(tmp, "R-CMD-check", "v1.1.4")
+            code, out = self.run_main(self.SAME(), self.SAME(), ahead=99,
+                                      consumers=[spec], tag_age=1)
+            self.assertEqual(code, cjp.PENDING)
+            self.assertIn("grace period", out)
+
+    def test_catalog_drift_inside_grace_is_PENDING(self):
+        code, out = self.run_main(self.AHEAD(), self.SAME(), ahead=2)
+        self.assertEqual(code, cjp.PENDING)
         self.assertIn("grace period", out)
-        self.assertNotIn("every pin is current", out)
 
-    def test_drift_past_grace_reports_and_returns_DRIFT(self):
-        code, out = self.run_main(rows(("ac", None, "x"), ("mi", None, "n")),
-                                  rows(("ac", None, "x")), ahead=30)
+    def test_catalog_drift_past_grace_reports_and_returns_DRIFT(self):
+        code, out = self.run_main(self.AHEAD(), self.SAME(), ahead=30)
         self.assertEqual(code, cjp.DRIFT)
         self.assertIn("moved past `v1.1.5`", out)
         self.assertIn("`mi`", out)
-        self.assertIn("30 day(s)", out)
-        # the remedy names both pinned workflows, because they move separately
         self.assertIn("R-CMD-check.yaml", out)
         self.assertIn("spec-counts.yaml", out)
 
     def test_the_grace_boundary_is_not_off_by_one(self):
-        payload = (rows(("ac", None, "x"), ("mi", None, "n")),
-                   rows(("ac", None, "x")))
-        self.assertEqual(self.run_main(*payload, ahead=6)[0], cjp.OK)
-        self.assertEqual(self.run_main(*payload, ahead=7)[0], cjp.DRIFT)
+        self.assertEqual(self.run_main(self.AHEAD(), self.SAME(),
+                                       ahead=6)[0], cjp.PENDING)
+        self.assertEqual(self.run_main(self.AHEAD(), self.SAME(),
+                                       ahead=7)[0], cjp.DRIFT)
+
+
+class ExtractPinnedRefTests(unittest.TestCase):
+    def test_reads_the_ref_of_the_step_naming_this_repository(self):
+        self.assertEqual(cjp.extract_pinned_ref(CHECKOUT.format(ref="v1.1.5")),
+                         "v1.1.5")
+
+    def test_quoted_refs_are_unquoted(self):
+        self.assertEqual(
+            cjp.extract_pinned_ref(CHECKOUT.format(ref="'v1.1.5'")), "v1.1.5")
+
+    def test_a_checkout_with_no_ref_is_None_not_a_pin(self):
+        # No ref means the default branch, which is not a pin at all. It must
+        # not compare equal to the newest tag by accident.
+        text = "".join(line for line in
+                       CHECKOUT.format(ref="v1").splitlines(True)
+                       if "ref:" not in line)
+        self.assertIsNone(cjp.extract_pinned_ref(text))
+
+    def test_an_unrelated_checkouts_ref_is_not_borrowed(self):
+        text = """jobs:
+  check:
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: someone/else
+          ref: v9.9.9
+"""
+        self.assertIsNone(cjp.extract_pinned_ref(text))
+
+    def test_a_later_steps_ref_does_not_leak_into_an_earlier_block(self):
+        text = """jobs:
+  check:
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: ehrlinger/hvtiR
+          path: .hvtiR
+      - uses: actions/checkout@v4
+        with:
+          repository: someone/else
+          ref: v9.9.9
+"""
+        self.assertIsNone(cjp.extract_pinned_ref(text))
 
 
 class MalformedInputTests(unittest.TestCase):

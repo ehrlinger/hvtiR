@@ -10,6 +10,15 @@ name: jobs-pin-drift
 # Between v1.1.3 and v1.1.5 that gap was fourteen changed rows and nothing
 # reported it. It closed because somebody advanced the pin by hand.
 #
+# Firing needs no list of consumers -- if main has moved past the newest tag
+# then every pin is stale whatever tag it names. CLEARING does need one, and
+# that asymmetry is the whole design. `main == newest tag` says a tag holding
+# the current catalog EXISTS; it says nothing about which tag anybody checks
+# out. An earlier version of this file closed the issue on it, which shut the
+# alarm halfway through the remedy it had just printed -- tag cut, consumer
+# refs untouched, quiet forever. So the refs are read and compared, and any
+# state that cannot be verified leaves the alarm standing.
+#
 # It reports into ONE reused issue rather than opening a pull request, which is
 # where it differs from `catalog-versions.yml`. That job's remedy is a data
 # edit, so a pull request whose diff IS the report is exactly right. Here the
@@ -39,6 +48,25 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      # Read from each consumer's default branch, so the check sees what those
+      # repositories actually run today rather than what they ran when this
+      # list was written. A fetch that fails leaves no file, and a consumer the
+      # script cannot read is PENDING, never CURRENT -- so a bad token or a
+      # renamed workflow keeps the alarm up instead of silently clearing it.
+      - name: Fetch the workflow files that pin this repository
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p /tmp/consumers
+          for wf in R-CMD-check spec-counts; do
+            gh api "repos/ehrlinger/hvtiRtemplates/contents/.github/workflows/$wf.yaml" \
+              --jq '.content' 2>/dev/null | base64 -d > "/tmp/consumers/$wf.yaml" || true
+            if [ ! -s "/tmp/consumers/$wf.yaml" ]; then
+              rm -f "/tmp/consumers/$wf.yaml"
+              echo "::warning::Could not read hvtiRtemplates' $wf.yaml; its pin cannot be verified this run."
+            fi
+          done
 
       - name: Compare the catalog on main against the newest tag
         id: check
@@ -70,20 +98,30 @@ jobs:
             ahead_days=$(( ( $(date -u +%s) - opened ) / 86400 ))
           fi
 
+          # Days since the tag was cut, so a consumer gets the same grace to
+          # advance its ref as the catalog gets to sit unreleased.
+          tag_age_days=$(( ( $(date -u +%s) - $(git log -1 --format=%ct "$tag") ) / 86400 ))
+
           python3 tools/check_jobs_pin.py \
             --current inst/extdata/jobs.json \
             --tagged /tmp/tagged.json \
             --tag "$tag" \
-            --ahead-days "$ahead_days" | tee /tmp/report.md
+            --ahead-days "$ahead_days" \
+            --tag-age-days "$tag_age_days" \
+            --consumer "hvtiRtemplates R-CMD-check.yaml=/tmp/consumers/R-CMD-check.yaml" \
+            --consumer "hvtiRtemplates spec-counts.yaml=/tmp/consumers/spec-counts.yaml" \
+            | tee /tmp/report.md
           status=${PIPESTATUS[0]}
           set -e
 
           # An ALLOWLIST. 0 and 2 are the only codes the script returns
           # deliberately; an uncaught exception exits 1, and a `-ge 2` test
           # would read a crash as "no drift" and end the run green.
+          # An ALLOWLIST of the codes the script returns on purpose. 3 is
+          # PENDING: known-not-verified, which must neither raise the alarm nor
+          # clear it.
           case "$status" in
-            0) ;;
-            2) ;;
+            0|2|3) ;;
             *) echo "::error::check_jobs_pin.py exited $status, which it never does deliberately."
                exit "$status" ;;
           esac
@@ -108,10 +146,12 @@ jobs:
             gh issue create --title "$TITLE" --body "$body"
           fi
 
-      # Closing it is part of the loop. An issue left open after the pin was
-      # advanced is a stale alarm, and a tracker people learn to ignore is
-      # worse than no tracker.
-      - name: Close the tracking issue once the catalog matches its tag again
+      # Closing is part of the loop -- an issue left open after the refs moved
+      # is a stale alarm, and a tracker people learn to ignore is worse than no
+      # tracker. But it closes ONLY on CURRENT, which means the catalog is
+      # tagged AND every consumer ref was read AND every one of them names that
+      # tag. PENDING (3) deliberately does neither.
+      - name: Close the tracking issue once every consumer reads the new tag
         if: steps.check.outputs.status == '0'
         env:
           GH_TOKEN: ${{ github.token }}
@@ -121,5 +161,13 @@ jobs:
             --json number,title --jq ".[] | select(.title == \"$TITLE\") | .number" | head -n 1)"
           if [ -n "$existing" ]; then
             gh issue close "$existing" \
-              --comment "The catalog on \`main\` matches ${{ steps.check.outputs.tag }} again; closing."
+              --comment "The catalog on \`main\` is tagged ${{ steps.check.outputs.tag }} and every consumer pins it; closing."
           fi
+
+      # PENDING is a real state and must not look like a clean run: it is how
+      # "nobody could be asked" and "everything is fine" stop being the same
+      # log line.
+      - name: Say so when the pins could not be verified
+        if: steps.check.outputs.status == '3'
+        run: |
+          echo "::notice::Not verified current this run -- see the comparison step. The tracking issue, if any, was deliberately left as it was." 

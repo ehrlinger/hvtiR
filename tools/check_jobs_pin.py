@@ -20,13 +20,28 @@ and nothing reporting the divergence, is the SAS failure mode this migration
 exists to escape. The difference in our favour is that a tag IS a version, so
 the fork is diagnosable -- but only if something looks.
 
-Why this needs no list of consumers
------------------------------------
-It compares `main` against this repository's own newest tag, which is entirely
-local knowledge. If the catalog on `main` has moved past that tag then EVERY
-pin is stale, whatever tag it names, because no tag can contain a change that
-postdates all of them. Enumerating consumers would add a second registry to
-keep correct, and this repository already has one of those.
+Firing needs no list of consumers; CLEARING does
+-----------------------------------------------
+The two directions are not symmetric, and an early version of this file got
+that wrong in the dangerous direction.
+
+  main != newest tag  =>  EVERY pin is stale, whatever tag it names, because
+                          no tag can contain a change that postdates all of
+                          them. Sound with no knowledge of consumers.
+
+  main == newest tag  =>  says only that a tag containing the current catalog
+                          EXISTS. It says nothing about which tag anybody
+                          checks out. NOT sound.
+
+So the alarm can be raised from local knowledge alone, and cannot be cleared
+from it. The remedy this file prints has two steps -- name a version and tag
+it, THEN advance `ref:` in the consumer -- and `main == newest tag` observes
+only the first. Clearing on it closes the alarm halfway through the remedy and
+then stays quiet forever, which is worse than never having raised it.
+
+Clearing therefore requires reading the consumer refs and finding every one of
+them equal to the newest tag. When a ref cannot be read the answer is PENDING,
+never CURRENT: an unverifiable pin is not a verified one.
 
 Why a grace period
 ------------------
@@ -52,13 +67,31 @@ import json
 import sys
 from pathlib import Path
 
-# Exit codes. 0 and 2 are the only ones returned deliberately; anything else is
-# the interpreter, and a caller keying on "not 0" would read a crash as drift.
-OK = 0
+# Exit codes. 0, 2 and 3 are the only ones returned deliberately; anything else
+# is the interpreter, and a caller keying on "not 0" would read a crash as
+# drift.
+#
+# PENDING exists so that "not verified current" and "verified current" cannot
+# collapse into one code. The caller closes its tracking issue on CURRENT and
+# on nothing else, so every unverifiable state leaves the alarm standing.
+CURRENT = 0
 ERROR = 1
 DRIFT = 2
+PENDING = 3
 
 DEFAULT_GRACE_DAYS = 7
+
+# How a consumer pins this repository, in its own workflow YAML:
+#
+#     - uses: actions/checkout@v4
+#       with:
+#         repository: ehrlinger/hvtiR
+#         ref: v1.1.5
+#
+# Parsed here rather than grepped in the workflow because a grep for `ref:`
+# matches the wrong step as soon as a consumer checks out anything else, and it
+# fails by returning a plausible wrong answer rather than by erroring.
+CONSUMER_REPO = "ehrlinger/hvtiR"
 
 
 def load_rows(path: Path) -> dict[tuple[str, str | None], dict]:
@@ -83,6 +116,36 @@ def load_rows(path: Path) -> dict[tuple[str, str | None], dict]:
     if not keyed:
         raise SystemExit(f"error: {path} holds no rows")
     return keyed
+
+
+def extract_pinned_ref(text: str, repository: str = CONSUMER_REPO) -> str | None:
+    """The `ref:` belonging to the checkout step that names `repository`.
+
+    Returns None when there is no such step or it carries no ref -- and None
+    means PENDING upstream, never "fine". A checkout with no `ref:` takes the
+    default branch, which is not a pin at all and must not read as a current
+    one.
+
+    Deliberately scoped: the ref must appear within the same `with:` block, so
+    a later unrelated checkout cannot donate its ref to this one.
+    """
+    lines = text.splitlines()
+    for i, line in enumerate(lines):
+        if line.strip() != f"repository: {repository}":
+            continue
+        indent = len(line) - len(line.lstrip())
+        for follow in lines[i + 1:]:
+            if not follow.strip():
+                continue
+            follow_indent = len(follow) - len(follow.lstrip())
+            # Dedent ends the block; a sibling key at the same indent is still
+            # inside it.
+            if follow_indent < indent:
+                break
+            if follow_indent == indent and follow.strip().startswith("ref:"):
+                return follow.strip()[len("ref:"):].strip().strip("'\"")
+        return None
+    return None
 
 
 def name(key: tuple[str, str | None]) -> str:
@@ -126,6 +189,32 @@ def report(tag: str, days: int, delta: dict[str, list[str]]) -> str:
     return "\n".join(lines)
 
 
+def consumer_report(tag: str, stale: list[tuple[str, str | None]]) -> str:
+    lines = [
+        f"The catalog on `main` is tagged as `{tag}`, but not every consumer "
+        f"is reading it yet.",
+        "",
+    ]
+    for label, ref in stale:
+        seen = f"pins `{ref}`" if ref else "pins nothing (takes the default branch)"
+        lines.append(f"* `{label}` {seen}, not `{tag}`.")
+    lines += [
+        "",
+        "Tagging is only half the remedy. Until these refs move, the consumer "
+        "still validates against an older catalog than this package ships, and "
+        "its guards still pass while it does.",
+    ]
+    return "\n".join(lines)
+
+
+def parse_consumer(spec: str) -> tuple[str, Path]:
+    """`label=path` -- the workflow file a consumer pins this repository in."""
+    label, _, path = spec.partition("=")
+    if not label or not path:
+        raise SystemExit(f"error: --consumer wants label=path, got {spec!r}")
+    return label, Path(path)
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     parser.add_argument("--current", required=True, type=Path,
@@ -138,24 +227,72 @@ def main() -> int:
     parser.add_argument("--grace-days", type=int, default=DEFAULT_GRACE_DAYS,
                         help=f"stay quiet for this long (default "
                              f"{DEFAULT_GRACE_DAYS})")
+    parser.add_argument("--consumer", action="append", default=[],
+                        metavar="LABEL=PATH",
+                        help="a consumer workflow file to read the pinned ref "
+                             "from; repeatable")
+    parser.add_argument("--tag-age-days", type=int, default=None,
+                        help="days since the newest tag was created; consumers "
+                             "are given the same grace to catch up")
     args = parser.parse_args()
 
     delta = compare(load_rows(args.current), load_rows(args.tagged))
-    if not any(delta.values()):
-        print(f"jobs.json on main matches {args.tag}; every pin is current.")
-        return OK
 
-    total = sum(len(v) for v in delta.values())
-    if args.ahead_days < args.grace_days:
-        # Deliberately not silent. "Ahead, within grace" and "not ahead" are
-        # different states, and a run that prints the same thing for both
-        # cannot be used to tell whether the check is still working.
-        print(f"jobs.json on main is ahead of {args.tag} by {total} row(s), "
-              f"for {args.ahead_days} day(s). Within the {args.grace_days}-day "
-              f"grace period, so this is the normal unreleased window.")
-        return OK
+    if any(delta.values()):
+        total = sum(len(v) for v in delta.values())
+        if args.ahead_days < args.grace_days:
+            # Deliberately not silent. "Ahead, within grace" and "verified
+            # current" are different states, and a run that prints the same
+            # thing for both cannot be used to tell the check still works.
+            print(f"jobs.json on main is ahead of {args.tag} by {total} "
+                  f"row(s), for {args.ahead_days} day(s). Within the "
+                  f"{args.grace_days}-day grace period, so this is the normal "
+                  f"unreleased window.")
+            return PENDING
+        print(report(args.tag, args.ahead_days, delta))
+        return DRIFT
 
-    print(report(args.tag, args.ahead_days, delta))
+    # The catalog is tagged. That is NOT the same as the consumers reading it,
+    # and treating it as such closes the alarm halfway through the remedy.
+    if not args.consumer:
+        print(f"jobs.json on main matches {args.tag}. No consumer was given, "
+              f"so whether anything actually reads that tag is unverified.")
+        return PENDING
+
+    stale: list[tuple[str, str | None]] = []
+    unreadable: list[str] = []
+    for spec in args.consumer:
+        label, path = parse_consumer(spec)
+        try:
+            text = path.read_text()
+        except OSError as err:
+            unreadable.append(f"{label} ({err})")
+            continue
+        ref = extract_pinned_ref(text)
+        if ref != args.tag:
+            stale.append((label, ref))
+
+    if unreadable:
+        # An unverifiable pin is not a verified one. Returning CURRENT here
+        # would close the alarm on the strength of a failed network call.
+        print(f"jobs.json on main matches {args.tag}, but these consumers "
+              f"could not be read, so the pins are unverified: "
+              + "; ".join(unreadable))
+        return PENDING
+
+    if not stale:
+        print(f"jobs.json on main matches {args.tag}, and every consumer pins "
+              f"it: {', '.join(parse_consumer(c)[0] for c in args.consumer)}.")
+        return CURRENT
+
+    if args.tag_age_days is not None and args.tag_age_days < args.grace_days:
+        print(f"jobs.json on main matches {args.tag}, but "
+              f"{len(stale)} consumer ref(s) have not moved yet. The tag is "
+              f"{args.tag_age_days} day(s) old, within the "
+              f"{args.grace_days}-day grace period.")
+        return PENDING
+
+    print(consumer_report(args.tag, stale))
     return DRIFT
 
 
