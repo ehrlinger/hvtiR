@@ -2,8 +2,8 @@
 
 ## The problem
 
-The HVTI R package family is eleven packages spread across eleven GitHub
-repositories. Setting up a machine used to mean eleven
+The HVTI R package family is twelve packages spread across twelve GitHub
+repositories. Setting up a machine used to mean twelve
 [`pak::pak()`](https://pak.r-lib.org/reference/pak.html) calls, in an
 order you had to know, against repository names that have not always
 matched the package names: `hvtiRpropensity` lived in
@@ -30,9 +30,10 @@ hvtiR::members()
 #> 6  hvtiRlifetables ehrlinger/hvtiRlifetables
 #> 7   hvtiRbootstrap  ehrlinger/hvtiRbootstrap
 #> 8  hvtiRpropensity ehrlinger/hvtiRpropensity
-#> 9   ggBoostedTrees  ehrlinger/ggBoostedTrees
-#> 10  TemporalHazard  ehrlinger/TemporalHazard
-#> 11 ggRandomForests ehrlinger/ggRandomForests
+#> 9  hvtiRimputation ehrlinger/hvtiRimputation
+#> 10  ggBoostedTrees  ehrlinger/ggBoostedTrees
+#> 11  TemporalHazard  ehrlinger/TemporalHazard
+#> 12 ggRandomForests ehrlinger/ggRandomForests
 ```
 
 ## What you have
@@ -47,7 +48,7 @@ catches new commits even when the package version did not change:
 hvtiR::status()
 ```
 
-    hvtiR - 11 members
+    hvtiR - 12 members
 
       v hvtiRutilities   1.0.10     1.0.10     ok
       v hvtiRdatabuild    0.1.1      0.1.1      ok
@@ -88,7 +89,7 @@ On a machine with no outbound network, skip the remote entirely:
 hvtiR::status(remote = FALSE)
 ```
 
-    hvtiR - 11 members
+    hvtiR - 12 members
 
       - hvtiRutilities   1.0.10     -          ok-local
       - hvtiRdatabuild    0.1.1      -          ok-local

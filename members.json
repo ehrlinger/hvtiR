@@ -1,9 +1,9 @@
 {
-  "generated_from": "hvtiR 1.1.4",
+  "generated_from": "hvtiR 1.1.5",
   "counts": {
-    "members": 11,
+    "members": 12,
     "members_on_cran": 2,
-    "members_github_only": 9
+    "members_github_only": 10
   },
   "cran_member_names": [
     "ggRandomForests",
@@ -66,6 +66,16 @@
       "url": "https://github.com/ehrlinger/hvtiRdatabuild",
       "family": "member",
       "blurb": "Analysis-ready clinical datasets for HVTI CORR studies, verified against the legacy SAS datasets they replace.",
+      "cran": null,
+      "status": "wip",
+      "role": null
+    },
+    {
+      "package": "hvtiRimputation",
+      "repo": "ehrlinger/hvtiRimputation",
+      "url": "https://github.com/ehrlinger/hvtiRimputation",
+      "family": "member",
+      "blurb": "Missing value imputation -- fill by a stated method and return a row-level record of exactly which values were changed; an R port of the CORR group's PROC STANDARD REPLACE and imputsub macros.",
       "cran": null,
       "status": "wip",
       "role": null

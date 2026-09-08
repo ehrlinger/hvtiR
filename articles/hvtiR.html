@@ -24,7 +24,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">hvtiR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.4</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.5</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -69,9 +69,9 @@
       <h1>Getting Started with hvtiR</h1>
 
       <p class="author">John Ehrlinger</p>
-      <p class="date">2026-09-05</p>
+      <p class="date">2026-09-08</p>
 
-      <small class="dont-index">Source: <a href="https://github.com/ehrlinger/hvtiR/blob/v1.1.4/vignettes/hvtiR.qmd" class="external-link"><code>vignettes/hvtiR.qmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/ehrlinger/hvtiR/blob/main/vignettes/hvtiR.qmd" class="external-link"><code>vignettes/hvtiR.qmd</code></a></small>
       <div class="d-none name"><code></code></div>
     </div>
 
@@ -82,7 +82,7 @@
 
     <section class="level2"><h2 id="the-problem">The problem<a class="anchor" aria-label="anchor" href="#the-problem"></a>
 </h2>
-<p>The HVTI R package family is eleven packages spread across eleven GitHub repositories. Setting up a machine used to mean eleven <code><a href="https://pak.r-lib.org/reference/pak.html" class="external-link">pak::pak()</a></code> calls, in an order you had to know, against repository names that have not always matched the package names: <code>hvtiRpropensity</code> lived in <code>ehrlinger/hvtiPropensityScores</code> and <code>TemporalHazard</code> in <code>ehrlinger/temporal_hazard</code> until the 2026-08 renames.</p>
+<p>The HVTI R package family is twelve packages spread across twelve GitHub repositories. Setting up a machine used to mean twelve <code><a href="https://pak.r-lib.org/reference/pak.html" class="external-link">pak::pak()</a></code> calls, in an order you had to know, against repository names that have not always matched the package names: <code>hvtiRpropensity</code> lived in <code>ehrlinger/hvtiPropensityScores</code> and <code>TemporalHazard</code> in <code>ehrlinger/temporal_hazard</code> until the 2026-08 renames.</p>
 <p><code>hvtiR</code> reduces that to one call, and adds a way to ask whether you are current.</p>
 </section><section class="level2"><h2 id="the-members">The members<a class="anchor" aria-label="anchor" href="#the-members"></a>
 </h2>
@@ -99,9 +99,10 @@
 <span><span class="co">#&gt; 6  hvtiRlifetables ehrlinger/hvtiRlifetables</span></span>
 <span><span class="co">#&gt; 7   hvtiRbootstrap  ehrlinger/hvtiRbootstrap</span></span>
 <span><span class="co">#&gt; 8  hvtiRpropensity ehrlinger/hvtiRpropensity</span></span>
-<span><span class="co">#&gt; 9   ggBoostedTrees  ehrlinger/ggBoostedTrees</span></span>
-<span><span class="co">#&gt; 10  TemporalHazard  ehrlinger/TemporalHazard</span></span>
-<span><span class="co">#&gt; 11 ggRandomForests ehrlinger/ggRandomForests</span></span></code></pre></div>
+<span><span class="co">#&gt; 9  hvtiRimputation ehrlinger/hvtiRimputation</span></span>
+<span><span class="co">#&gt; 10  ggBoostedTrees  ehrlinger/ggBoostedTrees</span></span>
+<span><span class="co">#&gt; 11  TemporalHazard  ehrlinger/TemporalHazard</span></span>
+<span><span class="co">#&gt; 12 ggRandomForests ehrlinger/ggRandomForests</span></span></code></pre></div>
 </div>
 </section><section class="level2"><h2 id="what-you-have">What you have<a class="anchor" aria-label="anchor" href="#what-you-have"></a>
 </h2>
@@ -110,7 +111,7 @@
 <div class="sourceCode cell-code" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">hvtiR</span><span class="fu">::</span><span class="fu"><a href="../reference/status.html">status</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 </div>
-<pre><code>hvtiR - 11 members
+<pre><code>hvtiR - 12 members
 
   v hvtiRutilities   1.0.10     1.0.10     ok
   v hvtiRdatabuild    0.1.1      0.1.1      ok
@@ -164,7 +165,7 @@ i 2 members need updating. Run hvtiR::update().</code></pre>
 <div class="sourceCode cell-code" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">hvtiR</span><span class="fu">::</span><span class="fu"><a href="../reference/status.html">status</a></span><span class="op">(</span>remote <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
 </div>
-<pre><code>hvtiR - 11 members
+<pre><code>hvtiR - 12 members
 
   - hvtiRutilities   1.0.10     -          ok-local
   - hvtiRdatabuild    0.1.1      -          ok-local

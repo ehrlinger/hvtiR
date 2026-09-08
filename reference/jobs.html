@@ -11,7 +11,7 @@ can carry several job types."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">hvtiR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.4</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.5</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -45,7 +45,7 @@ can carry several job types."></head><body>
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>The job catalog</h1>
-      <small class="dont-index">Source: <a href="https://github.com/ehrlinger/hvtiR/blob/v1.1.4/R/jobs.R" class="external-link"><code>R/jobs.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/ehrlinger/hvtiR/blob/main/R/jobs.R" class="external-link"><code>R/jobs.R</code></a></small>
       <div class="d-none name"><code>jobs.Rd</code></div>
     </div>
 
@@ -76,7 +76,7 @@ already exists, as <code>package::function</code>, and is frequently in a differ
 package from <code>destination</code>: a thin template lives in <code>hvtiRtemplates</code> and
 leans on <code>hvtiPlotR</code>.</p>
 <p>The taxonomy that says what a prefix <em>means</em> is
-<code>hvtiRutilities::hvti_taxonomy()</code>. This catalog says who owes it. They are
+<code><a href="https://ehrlinger.github.io/hvtiRutilities/reference/hvti_taxonomy.html">hvtiRutilities::hvti_taxonomy()</a></code>. This catalog says who owes it. They are
 apart because validating a routing has to load the destination package, and
 <code>hvtiRutilities</code> is imported by packages this catalog routes to.</p>
 <p><code>status</code> and <code>batch</code> are <code>hvtiRtemplates</code> scheduling fields: they answer
@@ -89,7 +89,7 @@ that field reads the catalog row directly. The one exception to the
 nulling is <code>status == "intake"</code>, which survives regardless of
 <code>destination</code>: it is not a schedule value at all, but a taxonomy fact
 meaning the prefix has been proposed but is not yet in
-<code>hvtiRutilities::hvti_taxonomy()</code>.</p>
+<code><a href="https://ehrlinger.github.io/hvtiRutilities/reference/hvti_taxonomy.html">hvtiRutilities::hvti_taxonomy()</a></code>.</p>
     </div>
 
     <div class="section level2">
@@ -98,7 +98,7 @@ meaning the prefix has been proposed but is not yet in
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="va">j</span><span class="op">$</span><span class="va">disposition</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    build   retire scaffold     thin </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>        7        5       31       10 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>        8        5       26       14 </span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

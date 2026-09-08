@@ -33,10 +33,10 @@ different package from `destination`: a thin template lives in
 `hvtiRtemplates` and leans on `hvtiPlotR`.
 
 The taxonomy that says what a prefix *means* is
-`hvtiRutilities::hvti_taxonomy()`. This catalog says who owes it. They
-are apart because validating a routing has to load the destination
-package, and `hvtiRutilities` is imported by packages this catalog
-routes to.
+[`hvtiRutilities::hvti_taxonomy()`](https://ehrlinger.github.io/hvtiRutilities/reference/hvti_taxonomy.html).
+This catalog says who owes it. They are apart because validating a
+routing has to load the destination package, and `hvtiRutilities` is
+imported by packages this catalog routes to.
 
 `status` and `batch` are `hvtiRtemplates` scheduling fields: they answer
 when `hvtiRtemplates` will ship a template for a row, not whether the
@@ -48,7 +48,7 @@ after that field reads the catalog row directly. The one exception to
 the nulling is `status == "intake"`, which survives regardless of
 `destination`: it is not a schedule value at all, but a taxonomy fact
 meaning the prefix has been proposed but is not yet in
-`hvtiRutilities::hvti_taxonomy()`.
+[`hvtiRutilities::hvti_taxonomy()`](https://ehrlinger.github.io/hvtiRutilities/reference/hvti_taxonomy.html).
 
 ## Examples
 
@@ -57,5 +57,5 @@ j <- jobs()
 table(j$disposition)
 #> 
 #>    build   retire scaffold     thin 
-#>        7        5       31       10 
+#>        8        5       26       14 
 ```

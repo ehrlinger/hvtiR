@@ -7,10 +7,10 @@ disagree with it.
 
 | disposition | rows |
 |:------------|-----:|
-| build       |    7 |
+| build       |    8 |
 | retire      |    5 |
-| scaffold    |   31 |
-| thin        |   10 |
+| scaffold    |   26 |
+| thin        |   14 |
 
 ## distributions
 
@@ -89,8 +89,8 @@ disagree with it.
 |:---|:---|---:|---:|:---|:---|:---|:---|:---|
 | `lg` | Logit trends | 367 | 0 | scaffold | queued | hvtiRtemplates |  |  |
 | `rg` | Regression trends | 45 | 0 | scaffold | queued | hvtiRtemplates |  |  |
-| `dc-general` | Descriptive: general | NA | NA | scaffold | queued | hvtiRtemplates |  |  |
-| `dc-tables` | Descriptive: formatted tables | NA | NA | scaffold | queued | hvtiRtemplates |  |  |
-| `dc-gfup` | Descriptive: follow-up | NA | NA | scaffold | queued | hvtiRtemplates |  |  |
-| `dc-dead` | Descriptive: mortality | NA | NA | scaffold | queued | hvtiRtemplates |  |  |
-| `dc-stddiff` | Descriptive: standardized differences | NA | NA | scaffold | queued | hvtiRtemplates |  |  |
+| `dc-general` | Descriptive: general | NA | NA | thin | queued | hvtiRtemplates | [`hvtiRutilities::proc_contents`](https://ehrlinger.github.io/hvtiRutilities/reference/proc_contents.html), [`hvtiRutilities::proc_means`](https://ehrlinger.github.io/hvtiRutilities/reference/proc_means.html) |  |
+| `dc-tables` | Descriptive: formatted tables | NA | NA | thin | queued | hvtiRtemplates | [`hvtiRtables::hv_tbl_summary`](https://ehrlinger.github.io/hvtiRtables/reference/hv_tbl_summary.html), [`hvtiRtables::hv_man_table`](https://ehrlinger.github.io/hvtiRtables/reference/hv_man_table.html), [`hvtiRtables::hv_man_table_save`](https://ehrlinger.github.io/hvtiRtables/reference/hv_man_table_save.html) |  |
+| `dc-gfup` | Descriptive: follow-up | NA | NA | thin | queued | hvtiRtemplates | [`hvtiRutilities::proc_means`](https://ehrlinger.github.io/hvtiRutilities/reference/proc_means.html) |  |
+| `dc-dead` | Descriptive: mortality | NA | NA | thin | queued | hvtiRtemplates | [`hvtiRutilities::proc_means`](https://ehrlinger.github.io/hvtiRutilities/reference/proc_means.html) |  |
+| `dc-stddiff` | Descriptive: standardized differences | NA | NA | build | NA | hvtiRutilities |  | hvtiRutilities#103 |
