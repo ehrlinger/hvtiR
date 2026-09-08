@@ -3,6 +3,41 @@ Version: 1.1.6
 
 # hvtiR 1.1.6
 
+* Added `hvtiRimputation` to the registry, taking the family to twelve
+  members. It ports `PROC STANDARD` with `REPLACE` and the `imputsub` macro:
+  fill by a stated method, and return a row-level record of exactly which
+  values were changed. It imports only `stats` and `utils`, so it needs no
+  `member_deps()` edge and no `Remotes:` line of its own -- the third of the
+  three things adding a member usually takes does not apply here. It is
+  recorded as `wip`: `impute_multiple()` is unbuilt and pooling is
+  deferred.
+* Registered only after `ehrlinger/hvtiRimputation`'s `main` actually carried
+  the package. The repo existed on GitHub for some hours with `main` at an
+  empty initial commit and the package on an unmerged branch, and a registry
+  row written then would have broken `install()` for everyone: every spec goes
+  to `pak::pak()` in one call, so a single spec resolving to a `main` with no
+  package fails the whole family install rather than its own row.
+* **The job catalog gains `si` and `mi`**, the imputation job types, taking it
+  from 53 rows to 55. Both are `datasets`/`datasets`, `disposition: scaffold`,
+  destined for `hvtiRtemplates`. `si` is ported and shipped as
+  `hvtiRimputation::impute_mean()`; `mi` is blocked on `impute_multiple()`,
+  which is designed and not built.
+
+  ⚠️ **`sas_breadth` is deliberately `null` on both.** The imputation numbers
+  that exist are STUDY counts -- 223 call single, 326 call multiple, 18 both --
+  and this field holds file/job counts everywhere else in the catalog (`bd` is
+  1,134 files). Writing study counts into it would repeat the units error the
+  corpus census already caught once, where macro *copies* were reported as
+  *runs*. The counts are in `note`, with their unit named.
+
+  This row was not optional: `hvtiRtemplates`' `test-roadmap.R` asserts that
+  every taxonomy prefix has a catalog row, so adding `si`/`mi` upstream in
+  `hvtiRutilities` turned that suite red until the catalog accounted for them.
+  That gate is working exactly as its comment says it should.
+* **`53` is no longer hard-coded in two places and one docstring.** The counts
+  moved to 55, and `jobs()`'s test now also asserts
+  `nrow(jobs()) == length(read_jobs())` -- the relationship, which cannot go
+  stale the way a literal does.
 * New `jobs-pin-drift` workflow, with `tools/check_jobs_pin.py` behind it.
   `inst/extdata/jobs.json` is read by sibling repositories rather than
   imported, so `hvtiRtemplates` checks it out by tag -- deliberately, so that
@@ -27,20 +62,6 @@ Version: 1.1.6
   build, and it stays quiet for a seven-day grace period on both halves, since
   `main` ahead of the newest tag is the normal unreleased window under the
   house cadence and a freshly cut tag needs time to propagate.
-* Added `hvtiRimputation` to the registry, taking the family to twelve
-  members. It ports `PROC STANDARD` with `REPLACE` and the `imputsub` macro:
-  fill by a stated method, and return a row-level record of exactly which
-  values were changed. It imports only `stats` and `utils`, so it needs no
-  `member_deps()` edge and no `Remotes:` line of its own -- the third of the
-  three things adding a member usually takes does not apply here. It is
-  recorded as `wip`: `impute_multiple()` is unbuilt and pooling is
-  deferred.
-* Registered only after `ehrlinger/hvtiRimputation`'s `main` actually carried
-  the package. The repo existed on GitHub for some hours with `main` at an
-  empty initial commit and the package on an unmerged branch, and a registry
-  row written then would have broken `install()` for everyone: every spec goes
-  to `pak::pak()` in one call, so a single spec resolving to a `main` with no
-  package fails the whole family install rather than its own row.
 
 # hvtiR 1.1.5
 

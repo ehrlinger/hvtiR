@@ -1,8 +1,8 @@
-test_that("the catalog has 53 rows and every row is keyed", {
+test_that("the catalog has 55 rows and every row is keyed", {
   raw <- read_jobs()
 
   expect_type(raw, "list")
-  expect_length(raw, 53L)
+  expect_length(raw, 55L)
   expect_true(all(vapply(raw, function(r) {
     is.character(r$prefix) || is.null(r$prefix)
   }, logical(1))))
@@ -78,7 +78,10 @@ test_that("jobs() returns one row per job type with a list column", {
   j <- jobs()
 
   expect_s3_class(j, "data.frame")
-  expect_identical(nrow(j), 53L)
+  expect_identical(nrow(j), 55L)
+  # The relationship, which cannot go stale the way the literal above does:
+  # jobs() returns exactly one row per catalog entry.
+  expect_identical(nrow(j), length(read_jobs()))
   expect_true(all(c("prefix", "folder", "disposition", "destination",
                     "replaced_by") %in% names(j)))
   expect_type(j$replaced_by, "list")
