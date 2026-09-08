@@ -59,7 +59,7 @@ scripting.
 status(remote = FALSE)
 #> hvtiR 1.1.6 - 12 members
 #> 
-#>   - hvtiRutilities   1.1.10     -          ok-local
+#>   - hvtiRutilities   1.1.11     -          ok-local
 #>   x hvtiRdatabuild   -          -          missing
 #>   - hvtiRtables      1.0.0      -          ok-local
 #>   x hvtiRtemplates   -          -          missing
