@@ -1,5 +1,15 @@
 Package: hvtiR
-Version: 1.1.5
+Version: 1.1.6
+
+# hvtiR 1.1.6
+
+* `hvtiRimputation` joins the family registry and the catalog, taking the
+  member count from 11 to 12. It shipped on 2026-09-08 (PR #1, `47bf3ea`) at
+  0.1.0: single mean imputation, an R port of `PROC STANDARD ... REPLACE` and
+  the `imputsub` macro, returning the filled data plus a row-level record of
+  which values were changed. It imports only `stats` and `utils`, so it adds
+  no entry to `member_deps()`. Recorded as `wip`: `impute_multiple()` is
+  unbuilt and pooling is deferred.
 
 # hvtiR 1.1.5
 

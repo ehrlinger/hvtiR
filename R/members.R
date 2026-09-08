@@ -22,6 +22,7 @@ members <- function() {
     package = c(
       "hvtiRutilities",
       "hvtiRdatabuild",
+      "hvtiRimputation",
       "hvtiRtables",
       "hvtiRtemplates",
       "hvtiPlotR",
@@ -35,6 +36,7 @@ members <- function() {
     repo = c(
       "ehrlinger/hvtiRutilities",
       "ehrlinger/hvtiRdatabuild",
+      "ehrlinger/hvtiRimputation",
       "ehrlinger/hvtiRtables",
       "ehrlinger/hvtiRtemplates",
       "ehrlinger/hvtiPlotR",
