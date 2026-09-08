@@ -1,5 +1,81 @@
 # Changelog
 
+## hvtiR 1.1.6
+
+- Added `hvtiRimputation` to the registry, taking the family to twelve
+  members. It ports `PROC STANDARD` with `REPLACE` and the `imputsub`
+  macro: fill by a stated method, and return a row-level record of
+  exactly which values were changed. It imports only `stats` and
+  `utils`, so it needs no `member_deps()` edge and no `Remotes:` line of
+  its own – the third of the three things adding a member usually takes
+  does not apply here. It is recorded as `wip`: `impute_multiple()` is
+  unbuilt and pooling is deferred.
+
+- Registered only after `ehrlinger/hvtiRimputation`’s `main` actually
+  carried the package. The repo existed on GitHub for some hours with
+  `main` at an empty initial commit and the package on an unmerged
+  branch, and a registry row written then would have broken
+  [`install()`](https://ehrlinger.github.io/hvtiR/reference/install.md)
+  for everyone: every spec goes to
+  [`pak::pak()`](https://pak.r-lib.org/reference/pak.html) in one call,
+  so a single spec resolving to a `main` with no package fails the whole
+  family install rather than its own row.
+
+- **The job catalog gains `si` and `mi`**, the imputation job types,
+  taking it from 53 rows to 55. Both are `datasets`/`datasets`,
+  `disposition: scaffold`, destined for `hvtiRtemplates`. `si` is ported
+  and shipped as `hvtiRimputation::impute_mean()`; `mi` is blocked on
+  `impute_multiple()`, which is designed and not built.
+
+  ⚠️ **`sas_breadth` is deliberately `null` on both.** The imputation
+  numbers that exist are STUDY counts – 223 call single, 326 call
+  multiple, 18 both – and this field holds file/job counts everywhere
+  else in the catalog (`bd` is 1,134 files). Writing study counts into
+  it would repeat the units error the corpus census already caught once,
+  where macro *copies* were reported as *runs*. The counts are in
+  `note`, with their unit named.
+
+  This row was not optional: `hvtiRtemplates`’ `test-roadmap.R` asserts
+  that every taxonomy prefix has a catalog row, so adding `si`/`mi`
+  upstream in `hvtiRutilities` turned that suite red until the catalog
+  accounted for them. That gate is working exactly as its comment says
+  it should.
+
+- **`53` is no longer hard-coded in two places and one docstring.** The
+  counts moved to 55, and
+  [`jobs()`](https://ehrlinger.github.io/hvtiR/reference/jobs.md)’s test
+  now also asserts `nrow(jobs()) == length(read_jobs())` – the
+  relationship, which cannot go stale the way a literal does.
+
+- New `jobs-pin-drift` workflow, with `tools/check_jobs_pin.py` behind
+  it. `inst/extdata/jobs.json` is read by sibling repositories rather
+  than imported, so `hvtiRtemplates` checks it out by tag –
+  deliberately, so that editing the catalog here cannot fail every pull
+  request there. That pin has a shelf life: once `main` moves past the
+  newest tag, the pin still resolves and both sides stay green while the
+  consumer validates against an older catalog. Between `v1.1.3` and
+  `v1.1.5` that gap was eighteen rows and nothing reported it; it closed
+  because somebody advanced the pin by hand. Two copies of one
+  definition, each locally valid and neither reporting the divergence,
+  is the failure mode this migration exists to escape.
+
+- Raising the alarm needs no list of consumers; clearing it does, and
+  the two are not symmetric. `main` ahead of the newest tag means every
+  pin is stale whatever tag it names, which is local knowledge. `main`
+  matching the newest tag means only that a tag holding the current
+  catalog *exists* – it says nothing about which tag anybody checks out.
+  So clearing reads the consumer workflows and requires every `ref:` to
+  name that tag; a ref that cannot be read is pending, never current.
+
+- It reports into one reused issue rather than opening a pull request,
+  because the remedy – name a version, tag it, advance `ref:` in the
+  consumer – is a maintainer’s decision rather than a data edit, and it
+  closes that issue only once every consumer is confirmed to read the
+  new tag. It does not fail a build, and it stays quiet for a seven-day
+  grace period on both halves, since `main` ahead of the newest tag is
+  the normal unreleased window under the house cadence and a freshly cut
+  tag needs time to propagate.
+
 ## hvtiR 1.1.5
 
 - Routed the five `dc` (descriptive) jobs in `inst/extdata/jobs.json`
