@@ -9,7 +9,7 @@ disagree with it.
 |:------------|-----:|
 | build       |    8 |
 | retire      |    5 |
-| scaffold    |   26 |
+| scaffold    |   28 |
 | thin        |   14 |
 
 ## distributions
@@ -63,6 +63,8 @@ disagree with it.
 | `bd` | Build | 1134 | 18 | scaffold | queued | hvtiRtemplates |  | hvtiRdatabuild |
 | `dt` | Data check | 512 | 0 | scaffold | queued | hvtiRtemplates |  | hvtiRdatabuild |
 | `vars` | Variables | 959 | 2 | scaffold | queued | hvtiRtemplates |  | hvtiRdatabuild |
+| `si` | Single imputation | NA | NA | scaffold | queued | hvtiRtemplates |  |  |
+| `mi` | Multiple imputation | NA | NA | scaffold | queued | hvtiRtemplates |  | hvtiRimputation |
 
 ## graphs
 
