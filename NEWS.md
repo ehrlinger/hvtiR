@@ -1,6 +1,14 @@
 Package: hvtiR
 Version: 1.1.6
 
+# hvtiR (unreleased)
+
+* `hvtiRutilities` is recorded at 1.1.11 in `inst/extdata/catalog.csv`, up from
+  1.1.10, refreshed from `origin/main` by `catalog-versions.yml`. The catalog
+  ships in the package and is published as `members.json`, so its recorded
+  versions are content rather than bookkeeping and belong under a heading like
+  anything else.
+
 # hvtiR 1.1.6
 
 * Added `hvtiRimputation` to the registry, taking the family to twelve
