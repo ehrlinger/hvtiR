@@ -3,6 +3,28 @@ Version: 1.1.5
 
 # hvtiR (unreleased)
 
+* **The job catalog gains `si` and `mi`**, the imputation job types, taking it
+  from 53 rows to 55. Both are `datasets`/`datasets`, `disposition: scaffold`,
+  destined for `hvtiRtemplates`. `si` is ported and shipped as
+  `hvtiRimputation::impute_mean()`; `mi` is blocked on `impute_multiple()`,
+  which is designed and not built.
+
+  ⚠️ **`sas_breadth` is deliberately `null` on both.** The imputation numbers
+  that exist are STUDY counts -- 223 call single, 326 call multiple, 18 both --
+  and this field holds file/job counts everywhere else in the catalog (`bd` is
+  1,134 files). Writing study counts into it would repeat the units error the
+  corpus census already caught once, where macro *copies* were reported as
+  *runs*. The counts are in `note`, with their unit named.
+
+  This row was not optional: `hvtiRtemplates`' `test-roadmap.R` asserts that
+  every taxonomy prefix has a catalog row, so adding `si`/`mi` upstream in
+  `hvtiRutilities` turned that suite red until the catalog accounted for them.
+  That gate is working exactly as its comment says it should.
+* **`53` is no longer hard-coded in two places and one docstring.** The counts
+  moved to 55, and `jobs()`'s test now also asserts
+  `nrow(jobs()) == length(read_jobs())` -- the relationship, which cannot go
+  stale the way a literal does.
+
 * Added `hvtiRimputation` to the registry, taking the family to twelve
   members. It ports `PROC STANDARD` with `REPLACE` and the `imputsub` macro:
   fill by a stated method, and return a row-level record of exactly which
