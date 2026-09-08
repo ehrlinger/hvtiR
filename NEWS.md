@@ -3,6 +3,25 @@ Version: 1.1.6
 
 # hvtiR 1.1.6
 
+* New `jobs-pin-drift` workflow, with `tools/check_jobs_pin.py` behind it.
+  `inst/extdata/jobs.json` is read by sibling repositories rather than
+  imported, so `hvtiRtemplates` checks it out by tag -- deliberately, so that
+  editing the catalog here cannot fail every pull request there. That pin has
+  a shelf life: once `main` moves past the newest tag, the pin still resolves
+  and both sides stay green while the consumer validates against an older
+  catalog. Between `v1.1.3` and `v1.1.5` that gap was eighteen rows and
+  nothing reported it; it closed because somebody advanced the pin by hand.
+  Two copies of one definition, each locally valid and neither reporting the
+  divergence, is the failure mode this migration exists to escape.
+* The check needs no list of consumers: it compares `main` against this
+  repository's own newest tag, and if the catalog has moved past that tag then
+  every pin is stale whatever tag it names. It reports into one reused issue
+  rather than opening a pull request, because the remedy -- name a version,
+  tag it, advance `ref:` in the consumer -- is a maintainer's decision rather
+  than a data edit, and it closes that issue again once the catalog matches.
+  It does not fail a build, and it stays quiet for a seven-day grace period,
+  since `main` ahead of the newest tag is the normal unreleased window under
+  the house cadence.
 * Added `hvtiRimputation` to the registry, taking the family to twelve
   members. It ports `PROC STANDARD` with `REPLACE` and the `imputsub` macro:
   fill by a stated method, and return a row-level record of exactly which
