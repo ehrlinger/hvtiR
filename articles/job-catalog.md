@@ -9,7 +9,7 @@ disagree with it.
 |:------------|-----:|
 | build       |    8 |
 | retire      |    5 |
-| scaffold    |   28 |
+| scaffold    |   29 |
 | thin        |   14 |
 
 ## distributions
@@ -96,3 +96,4 @@ disagree with it.
 | `dc-gfup` | Descriptive: follow-up | NA | NA | thin | queued | hvtiRtemplates | [`hvtiRutilities::proc_means`](https://ehrlinger.github.io/hvtiRutilities/reference/proc_means.html) |  |
 | `dc-dead` | Descriptive: mortality | NA | NA | thin | queued | hvtiRtemplates | [`hvtiRutilities::proc_means`](https://ehrlinger.github.io/hvtiRutilities/reference/proc_means.html) |  |
 | `dc-stddiff` | Descriptive: standardized differences | NA | NA | build | NA | hvtiRutilities |  | hvtiRutilities#103 |
+| `dp-postage` | Descriptive plot: postage stamp | NA | NA | scaffold | queued | hvtiRtemplates |  | hvtiRtemplates#97 |

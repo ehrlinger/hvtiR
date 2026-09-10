@@ -68,9 +68,9 @@ status(remote = FALSE)
 #>   x hvtiRbootstrap   -          -          missing
 #>   x hvtiRpropensity  -          -          missing
 #>   x hvtiRimputation  -          -          missing
-#>   - ggBoostedTrees   0.0.6      -          ok-local
+#>   x ggBoostedTrees   -          -          missing
 #>   x TemporalHazard   -          -          missing
 #>   - ggRandomForests  4.0.0      -          ok-local
 #> 
-#> ℹ 7 members need updating. Run `hvtiR::update()`.
+#> ℹ 8 members need updating. Run `hvtiR::update()`.
 ```
