@@ -1,5 +1,75 @@
 # Changelog
 
+## hvtiR 1.1.7
+
+- **`dp-postage` is no longer blocked.** Its `blocked_on` named
+  `hvtiRtemplates#97`, the defect that made `hvtiRtemplates` reject any
+  template whose folder disagrees with `hvti_taxonomy()`.
+  `hvtiRtemplates#98` fixed it and closed `hvtiRtemplates#97` on
+  2026-09-10, so `blocked_on` is now `null` and the row’s note records
+  when and why. Nothing checks `blocked_on` for a `queued` row, which is
+  why this is a manual step rather than something a test would have
+  caught.
+
+- **The job catalog gains `dp-postage` and pulls three `dc` rows into
+  batch 3**, taking it from 55 rows to 56. Scheduled for the biostats
+  fellows training session; the design is
+  `hvtiRtemplates/dev/specs/2026-09-09-eda-templates-design.md`.
+
+  `dc-general`, `dc-tables` and `dc-gfup` move from batch 4 to batch 3.
+  Nothing else moves: `dc-dead`, `lg` and `rg` stay in 4, and the `dp`
+  rows were already in 3.
+
+  ⚠️ **`dp-postage` is the first row whose `folder` disagrees with
+  `hvti_taxonomy()` by design.** The taxonomy files `dp` under `graphs`;
+  this row is `descriptive`, which is the third folder the prefix
+  occupies in the corpus. `hvtiRtemplates` asserted template folders
+  against the taxonomy alone until `hvtiRtemplates#98`, so a row like
+  this one, and the already scheduled `dp-variable` with
+  `folder: distributions`, could not have shipped a template.
+  `blocked_on` names that issue.
+
+  Its counts are `null` rather than zero. `descriptive/dp` has never
+  been censused: the 2026-09-02 decomposition enacted rows for
+  `graphs/dp` and `distributions/dp` only, and five further
+  `descriptive/dp` legacy templates remain unrepresented. An em dash in
+  the rendered roadmap means unmeasured, not absent.
+
+  `disposition` is `scaffold`, not `thin` like its `dp` siblings,
+  because `hvtiPlotR` 2.7.13 has no faceting constructor and the grid is
+  the template’s own `facet_wrap()`.
+
+- **`dc-tables` records that pairwise correlation is in scope for it.**
+  The exemplar is `/descriptive/dc.tables.ods_preoplabs_a1c.sas`, one
+  `proc corr nosimple spearman pearson fisher(biasadj=no) plots=matrix`
+  emitting a scatter-plot matrix and a Fisher-CI coefficient table.
+  `dc-general` carries a plain `proc corr nosimple rank` section with no
+  plot and no intervals, so the two are not the same job and the note
+  says which is which.
+
+- `hvtiRutilities` is recorded at 1.1.11 in `inst/extdata/catalog.csv`,
+  up from 1.1.10, refreshed from `origin/main` by
+  `catalog-versions.yml`. The catalog ships in the package and is
+  published as `members.json`, so its recorded versions are content
+  rather than bookkeeping and belong under a heading like anything else.
+
+- `catalog-versions.yml` now files its own NEWS entry, via
+  `tools/news_catalog_entry.py`. The refresh pull request changed
+  `inst/extdata/catalog.csv` and nothing else, which is exactly the
+  shape `check_version.py` rejects – version unchanged from the base and
+  no standing `# hvtiR (unreleased)` heading to file under. Both guards
+  are right; the machine pull request could satisfy neither, so every
+  refresh needed a hand-written NEWS commit before it could merge.
+
+- The collision is structural rather than occasional: the unreleased
+  heading is removed by every naming commit, so a refresh landing
+  between a bump and the next unreleased change fails every time. 1.1.6
+  was named minutes before the refresh that exposed it.
+
+- The tool never opens a second unreleased heading and never repeats a
+  bullet it has already written, because the refresh branch is
+  regenerated weekly and reruns have to converge rather than accumulate.
+
 ## hvtiR 1.1.6
 
 - Added `hvtiRimputation` to the registry, taking the family to twelve
