@@ -1,7 +1,7 @@
 Package: hvtiR
-Version: 1.1.6
+Version: 1.1.7
 
-# hvtiR (unreleased)
+# hvtiR 1.1.7
 
 * **`dp-postage` is no longer blocked.** Its `blocked_on` named
   `hvtiRtemplates#97`, the defect that made `hvtiRtemplates` reject any template
