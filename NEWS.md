@@ -6,7 +6,7 @@ Version: 1.1.6
 * **`dp-postage` is no longer blocked.** Its `blocked_on` named
   `hvtiRtemplates#97`, the defect that made `hvtiRtemplates` reject any template
   whose folder disagrees with `hvti_taxonomy()`. `hvtiRtemplates#98` fixed it and
-  closed #97 on 2026-09-10, so the field is now `null` and the note records when
+  closed `hvtiRtemplates#97` on 2026-09-10, so the field is now `null` and the note records when
   and why. Nothing checks `blocked_on` for a `queued` row, which is why this is a
   manual step rather than something a test would have caught.
 
