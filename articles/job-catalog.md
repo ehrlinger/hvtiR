@@ -80,7 +80,7 @@ disagree with it.
 | `mp` | Mixed model plot | 82 | 5 | thin | queued | hvtiRtemplates | [`hvtiPlotR::hv_spaghetti`](https://ehrlinger.github.io/hvtiPlotR/reference/hv_spaghetti.html) |  |
 | `np` | Nonparametric plot | 248 | 201 | thin | queued | hvtiRtemplates | [`hvtiPlotR::hv_nonparametric`](https://ehrlinger.github.io/hvtiPlotR/reference/hv_nonparametric.html), [`hvtiPlotR::hv_ordinal`](https://ehrlinger.github.io/hvtiPlotR/reference/hv_ordinal.html) |  |
 | `rp` | Regression plot | 76 | 8 | thin | queued | hvtiRtemplates | [`hvtiPlotR::hv_balance`](https://ehrlinger.github.io/hvtiPlotR/reference/hv_balance.html) |  |
-| `dp-trends` | Descriptive plot: trends | NA | NA | thin | queued | hvtiRtemplates | [`hvtiPlotR::hv_trends`](https://ehrlinger.github.io/hvtiPlotR/reference/hv_trends.html) |  |
+| `dp-trends` | Descriptive plot: trends | NA | NA | thin | shipped | hvtiRtemplates | [`hvtiPlotR::hv_trends`](https://ehrlinger.github.io/hvtiPlotR/reference/hv_trends.html) |  |
 | `dp-gfup` | Descriptive plot: follow-up | NA | NA | thin | queued | hvtiRtemplates | [`hvtiPlotR::hv_followup`](https://ehrlinger.github.io/hvtiPlotR/reference/hv_followup.html) |  |
 | `dp-spaghetti` | Descriptive plot: spaghetti | NA | NA | thin | queued | hvtiRtemplates | [`hvtiPlotR::hv_spaghetti`](https://ehrlinger.github.io/hvtiPlotR/reference/hv_spaghetti.html) |  |
 | `dp-procs` | Descriptive plot: procedures over time | NA | NA | thin | queued | hvtiRtemplates | [`hvtiPlotR::hv_longitudinal`](https://ehrlinger.github.io/hvtiPlotR/reference/hv_longitudinal.html), [`hvtiPlotR::hv_stacked`](https://ehrlinger.github.io/hvtiPlotR/reference/hv_stacked.html) |  |
