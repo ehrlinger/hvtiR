@@ -1,6 +1,17 @@
 Package: hvtiR
 Version: 1.1.7
 
+# hvtiR (unreleased)
+
+* **`dp-trends` is `shipped`**, the first of the EDA templates from the
+  2026-09-10 batch. `hvtiRtemplates` gains `40_graphs/dp-trends.qmd`, a thin
+  template over `hvtiPlotR::hv_trends()`; its design is
+  `hvtiRtemplates/dev/specs/2026-09-10-dp-trends-template-design.md`, which the
+  row's `spec` now names. The row is flipped straight to `shipped` rather than
+  through `in-flight`: `hvtiRtemplates` only sees the catalog through its pinned
+  tag, and the pin moves in the same pull request that adds the template, so the
+  catalog never claims a template that is not on disk and one tag suffices.
+
 # hvtiR 1.1.7
 
 * **`dp-postage` is no longer blocked.** Its `blocked_on` named
