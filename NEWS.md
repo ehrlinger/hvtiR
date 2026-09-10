@@ -3,6 +3,40 @@ Version: 1.1.6
 
 # hvtiR (unreleased)
 
+* **The job catalog gains `dp-postage` and pulls three `dc` rows into batch 3**,
+  taking it from 55 rows to 56. Scheduled for the biostats fellows training
+  session; the design is
+  `hvtiRtemplates/dev/specs/2026-09-09-eda-templates-design.md`.
+
+  `dc-general`, `dc-tables` and `dc-gfup` move from batch 4 to batch 3. Nothing
+  else moves: `dc-dead`, `lg` and `rg` stay in 4, and the `dp` rows were
+  already in 3.
+
+  ⚠️ **`dp-postage` is the first row whose `folder` disagrees with
+  `hvti_taxonomy()` by design.** The taxonomy files `dp` under `graphs`; this
+  row is `descriptive`, which is the third folder the prefix occupies in the
+  corpus. `hvtiRtemplates` asserted template folders against the taxonomy
+  alone until `hvtiRtemplates#98`, so a row like this one, and the already
+  scheduled `dp-variable` with `folder: distributions`, could not have shipped
+  a template. `blocked_on` names that issue.
+
+  Its counts are `null` rather than zero. `descriptive/dp` has never been
+  censused: the 2026-09-02 decomposition enacted rows for `graphs/dp` and
+  `distributions/dp` only, and five further `descriptive/dp` legacy templates
+  remain unrepresented. An em dash in the rendered roadmap means unmeasured,
+  not absent.
+
+  `disposition` is `scaffold`, not `thin` like its `dp` siblings, because
+  `hvtiPlotR` 2.7.13 has no faceting constructor and the grid is the
+  template's own `facet_wrap()`.
+
+* **`dc-tables` records that pairwise correlation is in scope for it.** The
+  exemplar is `/descriptive/dc.tables.ods_preoplabs_a1c.sas`, one `proc corr
+  nosimple spearman pearson fisher(biasadj=no) plots=matrix` emitting a
+  scatter-plot matrix and a Fisher-CI coefficient table. `dc-general` carries a
+  plain `proc corr nosimple rank` section with no plot and no intervals, so the
+  two are not the same job and the note says which is which.
+
 * `hvtiRutilities` is recorded at 1.1.11 in `inst/extdata/catalog.csv`, up from
   1.1.10, refreshed from `origin/main` by `catalog-versions.yml`. The catalog
   ships in the package and is published as `members.json`, so its recorded

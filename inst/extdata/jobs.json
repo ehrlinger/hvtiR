@@ -1131,7 +1131,7 @@
    "family": "descriptive",
    "kind": "job",
    "status": "queued",
-   "batch": 4,
+   "batch": 3,
    "sas_breadth": null,
    "sas_breadth_jobs": 759,
    "r_exemplars": null,
@@ -1154,7 +1154,7 @@
    "family": "descriptive",
    "kind": "job",
    "status": "queued",
-   "batch": 4,
+   "batch": 3,
    "sas_breadth": null,
    "sas_breadth_jobs": 551,
    "r_exemplars": null,
@@ -1164,7 +1164,7 @@
    "workflows": [],
    "blocked_on": null,
    "spec": "dev/specs/2026-09-02-dp-dc-decomposition-design.md",
-   "note": "Measured 2026-09-02: distinct studies with a program-extension job of this qualifier. Calls %desc_tab, allocated to hvtiRtables. Same dataset and %vars as `general`; different destination package.",
+   "note": "Measured 2026-09-02: distinct studies with a program-extension job of this qualifier. Calls %desc_tab, allocated to hvtiRtables. Same dataset and %vars as `general`; different destination package. PAIRWISE CORRELATION IS IN SCOPE for this row: the exemplar is /descriptive/dc.tables.ods_preoplabs_a1c.sas, a single `proc corr nosimple spearman pearson fisher(biasadj=no) plots=matrix` emitting a scatter-plot matrix and a Fisher-CI coefficient table, so it needs hv_correlation_matrix() in hvtiPlotR and hv_correlation_table() in hvtiRtables. `general` carries a plain `proc corr nosimple rank` section with no plot and no CIs; the two are not the same job.",
    "disposition": "thin",
    "destination": "hvtiRtemplates",
    "replaced_by": ["hvtiRtables::hv_tbl_summary", "hvtiRtables::hv_man_table", "hvtiRtables::hv_man_table_save"]
@@ -1177,7 +1177,7 @@
    "family": "descriptive",
    "kind": "job",
    "status": "queued",
-   "batch": 4,
+   "batch": 3,
    "sas_breadth": null,
    "sas_breadth_jobs": 389,
    "r_exemplars": null,
@@ -1366,6 +1366,29 @@
     "hvtiPlotR::hv_trends",
     "hvtiPlotR::hv_ordinal"
    ]
+  },
+  {
+   "prefix": "dp",
+   "qualifier": "postage",
+   "name": "Descriptive plot: postage stamp",
+   "folder": "descriptive",
+   "family": "plots",
+   "kind": "job",
+   "status": "queued",
+   "batch": 3,
+   "sas_breadth": null,
+   "sas_breadth_jobs": null,
+   "r_exemplars": null,
+   "r_jobs": null,
+   "upstream": [],
+   "downstream": [],
+   "workflows": [],
+   "blocked_on": "hvtiRtemplates#97",
+   "spec": "dev/specs/2026-09-09-eda-templates-design.md",
+   "note": "One small panel per VARIABLE across the whole dataset, parameterised by dataset rather than by variable, which is what separates it from `variable`. Exemplar is the legacy template tp.dp.DescriptiveSummary.qmd, already a Quarto file with an EDIT-here block and `# postage stamp plot grid size / ncol=4 / nrow=4`. Counts are null because descriptive/dp has never been censused; the 2026-09-02 decomposition enacted rows for graphs/dp and distributions/dp only. THIRD FOLDER for this prefix, and the first row whose folder disagrees with hvti_taxonomy() by design (dp maps to graphs there); see hvtiRtemplates#97, whose fix is hvtiRtemplates#98; CLEAR blocked_on when that merges, because nothing checks it for a queued row and a blocker naming a closed issue teaches readers to distrust the column. disposition is scaffold, not thin: hvtiPlotR 2.7.13 has no faceting constructor, so the grid is the template's own facet_wrap(). Five further descriptive/dp legacy templates remain unrepresented.",
+   "disposition": "scaffold",
+   "destination": "hvtiRtemplates",
+   "replaced_by": []
   }
  ]
 }

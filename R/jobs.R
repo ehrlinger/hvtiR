@@ -1,12 +1,12 @@
 #' Read the job catalog
 #'
-#' The 55 job types found in the studies corpus, each routed to the package
+#' The 56 job types found in the studies corpus, each routed to the package
 #' that owes it. Rows are returned as a list rather than a data frame because
 #' `upstream`, `downstream`, `workflows` and `replaced_by` are arrays.
 #'
 #' @param path Path to the catalog JSON. Defaults to the copy installed with
 #'   the package.
-#' @return A list of 55 lists, one per job type.
+#' @return A list of 56 lists, one per job type.
 #' @noRd
 read_jobs <- function(path = system.file("extdata", "jobs.json",
                                          package = "hvtiR")) {
