@@ -3,6 +3,14 @@ Version: 1.1.6
 
 # hvtiR (unreleased)
 
+* **`dp-postage` is no longer blocked.** Its `blocked_on` named
+  `hvtiRtemplates#97`, the defect that made `hvtiRtemplates` reject any template
+  whose folder disagrees with `hvti_taxonomy()`. `hvtiRtemplates#98` fixed it
+  and closed `hvtiRtemplates#97` on 2026-09-10, so `blocked_on` is now `null`
+  and the row's note records when and why. Nothing checks `blocked_on` for a
+  `queued` row, which is why this is a manual step rather than something a test
+  would have caught.
+
 * **The job catalog gains `dp-postage` and pulls three `dc` rows into batch 3**,
   taking it from 55 rows to 56. Scheduled for the biostats fellows training
   session; the design is

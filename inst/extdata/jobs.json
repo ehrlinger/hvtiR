@@ -1383,9 +1383,9 @@
    "upstream": [],
    "downstream": [],
    "workflows": [],
-   "blocked_on": "hvtiRtemplates#97",
+   "blocked_on": null,
    "spec": "dev/specs/2026-09-09-eda-templates-design.md",
-   "note": "One small panel per VARIABLE across the whole dataset, parameterised by dataset rather than by variable, which is what separates it from `variable`. Exemplar is the legacy template tp.dp.DescriptiveSummary.qmd, already a Quarto file with an EDIT-here block and `# postage stamp plot grid size / ncol=4 / nrow=4`. Counts are null because descriptive/dp has never been censused; the 2026-09-02 decomposition enacted rows for graphs/dp and distributions/dp only. THIRD FOLDER for this prefix, and the first row whose folder disagrees with hvti_taxonomy() by design (dp maps to graphs there); see hvtiRtemplates#97, whose fix is hvtiRtemplates#98; CLEAR blocked_on when that merges, because nothing checks it for a queued row and a blocker naming a closed issue teaches readers to distrust the column. disposition is scaffold, not thin: hvtiPlotR 2.7.13 has no faceting constructor, so the grid is the template's own facet_wrap(). Five further descriptive/dp legacy templates remain unrepresented.",
+   "note": "One small panel per VARIABLE across the whole dataset, parameterised by dataset rather than by variable, which is what separates it from `variable`. Exemplar is the legacy template tp.dp.DescriptiveSummary.qmd, already a Quarto file with an EDIT-here block and `# postage stamp plot grid size / ncol=4 / nrow=4`. Counts are null because descriptive/dp has never been censused; the 2026-09-02 decomposition enacted rows for graphs/dp and distributions/dp only. THIRD FOLDER for this prefix, and the first row whose folder disagrees with hvti_taxonomy() by design (dp maps to graphs there); see hvtiRtemplates#97, closed by hvtiRtemplates#98 on 2026-09-10, when blocked_on was cleared. Nothing checks blocked_on for a queued row, so a blocker naming a closed issue would have stood indefinitely and taught readers to distrust the column. disposition is scaffold, not thin: hvtiPlotR 2.7.13 has no faceting constructor, so the grid is the template's own facet_wrap(). Five further descriptive/dp legacy templates remain unrepresented.",
    "disposition": "scaffold",
    "destination": "hvtiRtemplates",
    "replaced_by": []
