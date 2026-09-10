@@ -7,13 +7,13 @@ Version: 1.1.7
   2026-09-10 batch. `hvtiRtemplates` gains `40_graphs/dp-trends.qmd`, a thin
   template over `hvtiPlotR::hv_trends()`. Its design is
   `dev/specs/2026-09-10-dp-trends-template-design.md` in `hvtiRtemplates`, the
-  value the row's `spec` now holds. A `spec` with no repository prefix is a
-  path in `hvtiRtemplates`, as 16 of the catalog's 18 are; `si` and `mi` name
+  value the row's `spec` now holds. A `spec` with no repository prefix is a path
+  in `hvtiRtemplates`, as 16 of the catalog's 18 are; `si` and `mi` name
   `hvtiRdatabuild/` explicitly because their designs live there. The row is
-  flipped straight to `shipped` rather than
-  through `in-flight`: `hvtiRtemplates` only sees the catalog through its pinned
-  tag, and the pin moves in the same pull request that adds the template, so the
-  catalog never claims a template that is not on disk and one tag suffices.
+  flipped straight to `shipped` rather than through `in-flight`:
+  `hvtiRtemplates` only sees the catalog through its pinned tag, and the pin
+  moves in the same pull request that adds the template, so the catalog never
+  claims a template that is not on disk and one tag suffices.
 
 # hvtiR 1.1.7
 
