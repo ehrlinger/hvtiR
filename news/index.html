@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">hvtiR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.7</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.8</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -44,6 +44,11 @@
       <small>Source: <a href="https://github.com/ehrlinger/hvtiR/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.1.8" id="hvtir-118">hvtiR 1.1.8<a class="anchor" aria-label="anchor" href="#hvtir-118"></a></h2>
+<ul><li>
+<strong><code>dp-trends</code> is <code>shipped</code></strong>, the first of the EDA templates from the 2026-09-10 batch. <code>hvtiRtemplates</code> gains <code>40_graphs/dp-trends.qmd</code>, a thin template over <code><a href="https://ehrlinger.github.io/hvtiPlotR/reference/hv_trends.html" class="external-link">hvtiPlotR::hv_trends()</a></code>. Its design is <code>dev/specs/2026-09-10-dp-trends-template-design.md</code> in <code>hvtiRtemplates</code>, the value the row’s <code>spec</code> now holds. A <code>spec</code> with no repository prefix is a path in <code>hvtiRtemplates</code>, as 16 of the catalog’s 18 are; <code>si</code> and <code>mi</code> name <code>hvtiRdatabuild/</code> explicitly because their designs live there. The row is flipped straight to <code>shipped</code> rather than through <code>in-flight</code>: <code>hvtiRtemplates</code> only sees the catalog through its pinned tag, and the pin moves in the same pull request that adds the template, so the catalog never claims a template that is not on disk and one tag suffices.</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.1.7" id="hvtir-117">hvtiR 1.1.7<a class="anchor" aria-label="anchor" href="#hvtir-117"></a></h2>
 <ul><li><p><strong><code>dp-postage</code> is no longer blocked.</strong> Its <code>blocked_on</code> named <code>hvtiRtemplates#97</code>, the defect that made <code>hvtiRtemplates</code> reject any template whose folder disagrees with <code>hvti_taxonomy()</code>. <code>hvtiRtemplates#98</code> fixed it and closed <code>hvtiRtemplates#97</code> on 2026-09-10, so <code>blocked_on</code> is now <code>null</code> and the row’s note records when and why. Nothing checks <code>blocked_on</code> for a <code>queued</code> row, which is why this is a manual step rather than something a test would have caught.</p></li>
