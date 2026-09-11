@@ -114,7 +114,7 @@ Do not read a green PR as broader assurance than it gives.
   fire on a contributor whose git email is not attached to their GitHub account, and the
   resulting requirement looks unexplained if you do not know the setting is there.
   ⚠️ **Read the ruleset rather than assuming.** Verified against the API on 2026-09-11
-  across the fourteen repositories in `house-style/repos.yml` — the thirteen packages
+  across the fourteen repositories in `house-style/repos.yml`: the thirteen packages
   plus `hvtiGraphics`, the book. All fourteen carry the same `protect main`: no deletion,
   no force-push, pull-request-only, Copilot review, one approving review,
   `require_extra_approval_for_unattributed_changes` on, `require_code_owner_review` off,
@@ -129,7 +129,7 @@ Do not read a green PR as broader assurance than it gives.
   ⚠️ **A workflow that produces a required context must never skip a pull request.** A
   required check whose workflow a `paths` or `paths-ignore` filter keeps from starting
   never reports, and the pull request waits on it forever: #65, a `.claude/**`-only
-  recompose, sat at "Expected — Waiting for status to be reported" on `test-coverage`
+  recompose, sat at "Expected -- Waiting for status to be reported" on `test-coverage`
   for exactly that reason. Filter `push` if you like; leave `pull_request` unfiltered.
   `TemporalHazard` gets the same result another way, gating the expensive steps behind a
   `changes` job so that every context still reports.
