@@ -86,6 +86,39 @@ test_that("jobs() returns one row per job type with a list column", {
                     "replaced_by") %in% names(j)))
   expect_type(j$replaced_by, "list")
   expect_type(j$sas_breadth, "integer")
+  # sas_breadth_jobs is the figure of record, and r_exemplars travels with
+  # r_jobs; a catalog reader that cannot see either reads the wrong column.
+  expect_type(j$sas_breadth_jobs, "integer")
+  expect_type(j$r_exemplars, "integer")
+})
+
+test_that("dc-stddiff counts the union of its folded spellings, pinned", {
+  j <- jobs()
+  row <- which(j$prefix == "dc" & j$qualifier %in% "stddiff")
+
+  # 59 was the 2019 spelling alone. The row absorbs std_dif (72) and four
+  # rarer spellings, and a study using two of them is one study, so the
+  # figure is the union from the 2026-09-11 scan: 120, where the sum is 157.
+  # 59 here means the rule was read as deciding the population as well as
+  # the label; 157 means the union was replaced by a sum.
+  expect_length(row, 1L)
+  expect_identical(j$sas_breadth_jobs[row], 120L)
+})
+
+test_that("pm is thin over bs_count, and si and mi carry call counts", {
+  j <- jobs()
+  at <- function(p) which(j$prefix == p)
+
+  # pm was read in the room as a misfiled propensity model. Its programs are
+  # negative-binomial balancing-score fits, which bs_count() ports, so the
+  # row routes there and keeps its 4 studies rather than folding into lm.
+  expect_identical(j$disposition[at("pm")], "thin")
+  expect_identical(j$replaced_by[[at("pm")]], "hvtiRpropensity::bs_count")
+  expect_identical(j$sas_breadth_jobs[at("pm")], 4L)
+  # si and mi count studies CALLING the imputation macros, the one stated
+  # exception to the field's unit. By job name each is 1.
+  expect_identical(j$sas_breadth_jobs[at("si")], 223L)
+  expect_identical(j$sas_breadth_jobs[at("mi")], 326L)
 })
 
 test_that("jobs() has exactly the seeded count of retire rows, each replaced", {

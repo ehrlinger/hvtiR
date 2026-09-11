@@ -31,6 +31,16 @@ read_jobs <- function(path = system.file("extdata", "jobs.json",
 #' package from `destination`: a thin template lives in `hvtiRtemplates` and
 #' leans on `hvtiPlotR`.
 #'
+#' The count columns are distinct counts over the studies corpus, so they
+#' never sum across rows. `sas_breadth_jobs`, the studies holding a program
+#' of the job type, is the figure of record; for `si` and `mi` it counts the
+#' studies calling the imputation macro instead, because imputation runs
+#' inside other jobs. `sas_breadth` counts files of
+#' any extension and predates the qualifier parse, so it is `NA` on a
+#' qualified row. `r_jobs` counts R jobs, and `r_exemplars` the studies
+#' holding one. `NA` means not measured and `0` means measured and none
+#' found. `dev/specs/2026-09-04-job-catalog-design.md` defines each unit.
+#'
 #' The catalog file also carries a top-level `options` list beside `jobs`. An
 #' option is a construct shared across prefixes, such as a landmark early /
 #' late split or a matched analysis. It is not a job type, so `jobs()` does not
@@ -124,7 +134,9 @@ jobs <- function() {
     disposition = chr("disposition"),
     destination = chr("destination"),
     sas_breadth = int("sas_breadth"),
+    sas_breadth_jobs = int("sas_breadth_jobs"),
     r_jobs      = int("r_jobs"),
+    r_exemplars = int("r_exemplars"),
     blocked_on  = chr("blocked_on"),
     stringsAsFactors = FALSE
   )

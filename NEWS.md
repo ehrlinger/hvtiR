@@ -3,6 +3,32 @@ Version: 1.1.8
 
 # hvtiR (unreleased)
 
+* **`pm` is `thin` over `hvtiRpropensity::bs_count()`.** The 2026-09-11
+  umbrella review read it as a misfiled propensity model. Its programs say
+  otherwise: 7 of the 8 are `PROC GENMOD` with `dist=nb` and 2 compute the
+  balancing score outright, which is what `hvti_taxonomy()` means by `pm`
+  ("count outcome with balancing score") and what `bs_count()` ports. So its
+  4 studies stand and `lm` is unchanged. The misleading label, "Propensity
+  model", is the taxonomy's to fix.
+
+* **The catalog's counts are corrected, and their units are written down.**
+  `dc-stddiff` counts the union of the six spellings that fold into it, 120
+  studies, where 59 was the 2019 spelling alone and a sum would give 157. `si`
+  and `mi` carry 223 and 326 in `sas_breadth_jobs`: studies calling the
+  imputation macros, the one stated exception to the field's unit. Twelve of
+  the thirteen qualified `dc` and `dp` rows gain `r_jobs` and `r_exemplars`,
+  by the 2026-08-29 definition, which the scan reproduces for all 42
+  prefixes; `dp-postage` stays null, because its job is named by dataset.
+  Section 5 of `dev/specs/2026-09-04-job-catalog-design.md` defines each
+  unit and records two rules: `sas_breadth_jobs` is the figure of record, and
+  where two spellings name one job the newer macro's names the row while the
+  row counts both.
+
+* **`jobs()` returns `sas_breadth_jobs` and `r_exemplars`**, and the job
+  catalog vignette's SAS column reads `sas_breadth_jobs`. It read
+  `sas_breadth`, which is null on every qualified row, so all thirteen `dc`
+  and `dp` rows showed no SAS count.
+
 * **`dc-trends` and `dp-boxplot` now count studies in the field's own unit.**
   #61 filled `sas_breadth_jobs` with a token count over the whole job name, 58
   and 34, where every other qualified row holds distinct studies whose second

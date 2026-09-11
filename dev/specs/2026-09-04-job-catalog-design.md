@@ -140,6 +140,50 @@ carried it (`rf`, `rfsrc`) become `disposition: retire` with `status: null`,
 and the value is removed from the catalog and from any enum or documentation
 that lists it once no row uses it.
 
+### The count fields, and the unit each one is in
+
+Added 2026-09-11, after the umbrella status review read the catalog page back
+and a row's note and a design record were found contradicting each other about
+what `sas_breadth` counts.
+
+| field | unit | source |
+|---|---|---|
+| `sas_breadth` | distinct studies holding a file of this prefix, **any extension**, templates excluded | `distinct_studies`, 2026-08-29 census. Null on a qualified row: that census predates the qualifier parse |
+| `sas_breadth_jobs` | distinct studies holding a **program** of this prefix: a program extension, outside `estimates`, not a template, placed in a study | 2026-09-02 re-parse, `hvtiRtemplates` `dev/specs/2026-09-02-per-folder-naming-parse-design.md` §4 |
+| `r_jobs` | distinct `(study, folder, stem)` jobs with an R-side extension, templates excluded | 2026-08-29 census, `r_jobs` |
+| `r_exemplars` | distinct studies with such a job, dropping any stem present in more than 100 studies | 2026-08-29 census, `r_studies_deflated` |
+
+On a qualified row every count is scoped to the row's `folder` and to files
+whose **second** name field is the qualifier, so `dc-general` counts
+`descriptive/dc.general.*` and nothing else.
+
+**All four are distinct counts, and none of them sums.** A study with both
+`dp.trends` and `dp.gfup` is one study in each row and one study in `dp`.
+Adding rows double-counts it.
+
+**`null` means not measured and `0` means measured and none found.** A
+measured zero is a finding, that the taxonomy carries a name the corpus does
+not use, and is never written as `null` or rendered as a dash.
+
+**`si` and `mi` are the one exception, by the maintainer's decision of
+2026-09-11.** Their `sas_breadth_jobs` holds 223 and 326, the studies that
+*call* `%imputsub` and `%mult_imput`. Imputation runs as a step inside other
+jobs, so by job name each has a single study, and a 1 would order the work as
+though nobody imputes. Each row's note states its unit. A further exception
+is stated the same way, in its row and here; one stated nowhere is a defect.
+
+Two rules govern the counts, both stated by the maintainer on 2026-09-11:
+
+1. **`sas_breadth_jobs` is the figure of record.** SAS breadth is what
+   orders the work. The R fields stay, and stay measured, because the R
+   column is the one that shows the port moving.
+2. **Where two spellings name one job, the newer macro's spelling names the
+   row, and the row counts the union of both.** `dc-stddiff` is the case
+   that set the rule: it ships the 2019 `stddiff.sas`, not the 2009
+   `std_dif.sas`, and it counts every study that uses either. The rule
+   decides the label and never the population. The union comes from the
+   scan and is never a sum, for the reason above.
+
 ## 6. Validation rules
 
 These run as `hvtiR` tests. This is option B from the design conversation;
@@ -330,4 +374,7 @@ and a recommendation to keep this a script run by hand, not a gate.
 - The `dc` and `dp` re-count. Thirteen rows carry no SAS or R counts pending
   the 2026-09-03 split re-count, and the catalog carries the gap rather than
   filling it.
+  ✅ RESOLVED 2026-09-11: twelve of the thirteen carry SAS and R counts.
+  `dp-postage` stays null, because its job is named by dataset and not by a
+  name field; its note says so.
 - Moving the taxonomy. `hvti_taxonomy()` stays in `hvtiRutilities`.
