@@ -3,6 +3,14 @@ Version: 1.1.8
 
 # hvtiR (unreleased)
 
+* **`dc-trends` and `dp-boxplot` now count studies in the field's own unit.**
+  #61 filled `sas_breadth_jobs` with a token count over the whole job name, 58
+  and 34, where every other qualified row holds distinct studies whose second
+  name field is the qualifier. By that unit, from the 2026-09-02 re-parse, they
+  are 43 (`descriptive/dc`) and 9 (`graphs/dp`), both still past the
+  two-studies gate. The `options` evidence strings stay token counts, and say
+  so.
+
 * **Two job types join the catalog, and a top-level `options` list starts
   beside `jobs`.** `dc-trends` (58 studies) and `dp-boxplot` (34) are
   `queued` with no batch yet. Both come from the 2026-09-10 triage in
