@@ -148,26 +148,36 @@ green PR as broader assurance than it gives.
   a `Co-Authored-By:` trailer does not trip it. It will fire on a
   contributor whose git email is not attached to their GitHub account,
   and the resulting requirement looks unexplained if you do not know the
-  setting is there. ⚠️ **One rule, and one only, is not the same
-  everywhere.** Verified against the API on 2026-09-03 across the
-  thirteen repositories in `house-style/repos.yml` — the twelve packages
-  plus `hvtiGraphics`, the book. All thirteen carry an identical
-  `protect main`: no deletion, no force-push, pull-request-only, Copilot
-  review, one approving review,
-  `require_extra_approval_for_unattributed_changes` on,
-  `require_code_owner_review` off, and the repository admin role as the
-  bypass actor. The exception is `required_status_checks`, which
-  **`TemporalHazard`, `ggRandomForests` and `hvtiRbootstrap`** enforce
-  and the other ten do not. The two CRAN-bound packages take it because
-  the stricter gate belongs there. `hvtiRbootstrap` takes it because its
-  `R-CMD-check.yaml` and `pkgdown.yaml` are written for it: those
-  workflows deliberately do **not** skip pull requests, since a required
-  check that never runs can never report and would leave a
-  `.claude/**`-only pull request unmergeable forever. ⚠️ Read the
-  ruleset rather than assuming, and change them together. This paragraph
-  has been wrong before — until 2026-09-03 it claimed a uniformity the
-  API did not show, and the two repositories that disagreed with it were
-  brought into line rather than the sentence being softened.
+  setting is there. ⚠️ **Read the ruleset rather than assuming.**
+  Verified against the API on 2026-09-11 across the fourteen
+  repositories in `house-style/repos.yml`: the thirteen packages plus
+  `hvtiGraphics`, the book. All fourteen carry the same `protect main`:
+  no deletion, no force-push, pull-request-only, Copilot review, one
+  approving review, `require_extra_approval_for_unattributed_changes`
+  on, `require_code_owner_review` off, and the repository admin role as
+  the bypass actor. **All fourteen also enforce
+  `required_status_checks`**, since the ruleset updates of 2026-09-04
+  (`hvtiRimputation` on 2026-09-08). Here that is nine contexts: the
+  three `R-CMD-check` matrix jobs, `lint`, `docs-current`,
+  `house-style`, `pkgdown`, `test-coverage` and `version`. What differs
+  between repositories is the list of contexts, which follows each one’s
+  workflows, and two parameters. Only `ggRandomForests` sets
+  `strict_required_status_checks_policy`, so a pull request there must
+  be up to date with `main` before it can merge. Only `hvtiRbootstrap`
+  and `hvtiRimputation` pin their contexts to the GitHub Actions app, so
+  a status of the same name posted by anything else (another app, or a
+  `gh api` call) does not satisfy them. ⚠️ **A workflow that produces a
+  required context must never skip a pull request.** A required check
+  whose workflow a `paths` or `paths-ignore` filter keeps from starting
+  never reports, and the pull request waits on it forever: \#65, a
+  `.claude/**`-only recompose, sat at “Expected – Waiting for status to
+  be reported” on `test-coverage` for exactly that reason. Filter `push`
+  if you like; leave `pull_request` unfiltered. `TemporalHazard` gets
+  the same result another way, gating the expensive steps behind a
+  `changes` job so that every context still reports. This paragraph has
+  been wrong twice. Until 2026-09-03 it claimed a uniformity the API did
+  not show; until 2026-09-11 it said three repositories enforced status
+  checks, when from 2026-09-04 every one of them did.
 - Versions are **straight three digits** (`1.0.0`). Never a `.9000`
   suffix or a fourth digit.
 - **Patch-digit bumps only**, as fixes land. Minor and major are the
