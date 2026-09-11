@@ -12,7 +12,7 @@ Version: 1.1.8
   so.
 
 * **Two job types join the catalog, and a top-level `options` list starts
-  beside `jobs`.** `dc-trends` (58 studies) and `dp-boxplot` (34) are
+  beside `jobs`.** `dc-trends` (43 studies) and `dp-boxplot` (9) are
   `queued` with no batch yet. Both come from the 2026-09-10 triage in
   `hvtiRtemplates`, counted as distinct studies over the 2026-08-27 census.
   `options` records four constructs that span prefixes rather than being job
