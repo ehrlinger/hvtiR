@@ -32,6 +32,12 @@ what already exists, as `package::function`, and is frequently in a
 different package from `destination`: a thin template lives in
 `hvtiRtemplates` and leans on `hvtiPlotR`.
 
+The catalog file also carries a top-level `options` list beside `jobs`.
+An option is a construct shared across prefixes, such as a landmark
+early / late split or a matched analysis. It is not a job type, so
+`jobs()` does not return it; each entry names the prefixes it applies to
+and the census evidence for it.
+
 The taxonomy that says what a prefix *means* is
 [`hvtiRutilities::hvti_taxonomy()`](https://ehrlinger.github.io/hvtiRutilities/reference/hvti_taxonomy.html).
 This catalog says who owes it. They are apart because validating a
@@ -57,5 +63,5 @@ j <- jobs()
 table(j$disposition)
 #> 
 #>    build   retire scaffold     thin 
-#>        8        5       29       14 
+#>        8        5       31       14 
 ```

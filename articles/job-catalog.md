@@ -9,7 +9,7 @@ disagree with it.
 |:------------|-----:|
 | build       |    8 |
 | retire      |    5 |
-| scaffold    |   29 |
+| scaffold    |   31 |
 | thin        |   14 |
 
 ## distributions
@@ -84,6 +84,7 @@ disagree with it.
 | `dp-gfup` | Descriptive plot: follow-up | NA | NA | thin | queued | hvtiRtemplates | [`hvtiPlotR::hv_followup`](https://ehrlinger.github.io/hvtiPlotR/reference/hv_followup.html) |  |
 | `dp-spaghetti` | Descriptive plot: spaghetti | NA | NA | thin | queued | hvtiRtemplates | [`hvtiPlotR::hv_spaghetti`](https://ehrlinger.github.io/hvtiPlotR/reference/hv_spaghetti.html) |  |
 | `dp-procs` | Descriptive plot: procedures over time | NA | NA | thin | queued | hvtiRtemplates | [`hvtiPlotR::hv_longitudinal`](https://ehrlinger.github.io/hvtiPlotR/reference/hv_longitudinal.html), [`hvtiPlotR::hv_stacked`](https://ehrlinger.github.io/hvtiPlotR/reference/hv_stacked.html) |  |
+| `dp-boxplot` | Descriptive plot: boxplot | NA | NA | scaffold | queued | hvtiRtemplates |  |  |
 
 ## descriptive
 
@@ -97,3 +98,4 @@ disagree with it.
 | `dc-dead` | Descriptive: mortality | NA | NA | thin | queued | hvtiRtemplates | [`hvtiRutilities::proc_means`](https://ehrlinger.github.io/hvtiRutilities/reference/proc_means.html) |  |
 | `dc-stddiff` | Descriptive: standardized differences | NA | NA | build | NA | hvtiRutilities |  | hvtiRutilities#103 |
 | `dp-postage` | Descriptive plot: postage stamp | NA | NA | scaffold | queued | hvtiRtemplates |  |  |
+| `dc-trends` | Descriptive: trends | NA | NA | scaffold | queued | hvtiRtemplates |  |  |

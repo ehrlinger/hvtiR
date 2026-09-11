@@ -75,6 +75,11 @@ column of character vectors, empty where nothing replaces the row.</p>
 already exists, as <code>package::function</code>, and is frequently in a different
 package from <code>destination</code>: a thin template lives in <code>hvtiRtemplates</code> and
 leans on <code>hvtiPlotR</code>.</p>
+<p>The catalog file also carries a top-level <code>options</code> list beside <code>jobs</code>. An
+option is a construct shared across prefixes, such as a landmark early /
+late split or a matched analysis. It is not a job type, so <code>jobs()</code> does not
+return it; each entry names the prefixes it applies to and the census
+evidence for it.</p>
 <p>The taxonomy that says what a prefix <em>means</em> is
 <code><a href="https://ehrlinger.github.io/hvtiRutilities/reference/hvti_taxonomy.html">hvtiRutilities::hvti_taxonomy()</a></code>. This catalog says who owes it. They are
 apart because validating a routing has to load the destination package, and
@@ -98,7 +103,7 @@ meaning the prefix has been proposed but is not yet in
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="va">j</span><span class="op">$</span><span class="va">disposition</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    build   retire scaffold     thin </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>        8        5       29       14 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>        8        5       31       14 </span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
