@@ -34,5 +34,15 @@ jobs:
       - name: Read the base branch's DESCRIPTION
         run: git show origin/${{ github.base_ref }}:DESCRIPTION > "${RUNNER_TEMP}/base-DESCRIPTION"
 
+      # A pull request confined to .github/ ships nothing, so the house style
+      # gives it no NEWS entry and no bump. The script needs the file list to
+      # tell that case apart. HEAD is the pull request's merge commit, so the
+      # three-dot diff against the base is exactly what the pull request adds.
+      - name: List the files this pull request changes
+        run: git diff --name-only "origin/${{ github.base_ref }}...HEAD" > "${RUNNER_TEMP}/changed-files"
+
       - name: Check the version against the base branch
-        run: python3 tools/check_version.py --base-description "${RUNNER_TEMP}/base-DESCRIPTION"
+        run: >-
+          python3 tools/check_version.py
+          --base-description "${RUNNER_TEMP}/base-DESCRIPTION"
+          --changed-files "${RUNNER_TEMP}/changed-files"

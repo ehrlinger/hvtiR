@@ -3,6 +3,14 @@ Version: 1.1.8
 
 # hvtiR (unreleased)
 
+* **`version-check` lets a CI-only pull request stand still.** The house
+  style now gives a change confined to `.github/` no NEWS entry and no bump.
+  The check passed an unchanged version only when `# hvtiR (unreleased)` was
+  present, so such a change failed whenever it landed just after a bump.
+  `tools/check_version.py` now takes the pull request's changed files and
+  accepts an unchanged version when every one sits under `.github/`. An empty
+  list never qualifies, so a diff that fails to list anything still fails.
+
 * **`pm` folds into `lm`, and `lm` is `thin` over `hvtiRpropensity`.** A
   review of the catalog page on 2026-09-11 put 8 or 9 in 10 `lm` jobs as
   propensity models, and the corpus agrees as far as a text match can: 1,014

@@ -14,6 +14,11 @@ two cases is NEWS.md: work that is not being versioned lands under the standing
 version heading instead. So an unchanged version is accepted only when the
 unreleased heading is present, which keeps the collision a failure.
 
+A pull request confined to `.github/` needs neither. The house style gives a
+CI-only change no NEWS entry and no bump, since nothing under `.github/` ships,
+so an unchanged version passes for it with or without the heading. A missing or
+empty list of changed files never earns that exemption.
+
 Also checks the two places the version is written agree, since NEWS.md carries
 its own `Version:` line and a per-release heading.
 
@@ -41,6 +46,14 @@ UNRELEASED_RE = re.compile(r"^#\s+hvtiR\s+\(unreleased\)\s*$", re.M)
 def has_unreleased_heading(news: str) -> bool:
     """Whether NEWS.md carries the standing unreleased heading."""
     return bool(UNRELEASED_RE.search(news))
+
+
+def is_ci_only(paths: list) -> bool:
+    """Whether every changed file sits under `.github/`.
+
+    An empty list is not CI-only: a missing diff must fail closed.
+    """
+    return bool(paths) and all(p.startswith(".github/") for p in paths)
 
 
 def parse_version(version: str) -> tuple:
@@ -92,34 +105,40 @@ def compare_dates(base: str, head: str, today: datetime.date = None) -> list:
     return problems
 
 
-def compare(base: str, head: str, unreleased: bool = False) -> list:
+def compare(base: str, head: str, unreleased: bool = False,
+            ci_only: bool = False) -> list:
     """Problems with the head version relative to base. Empty means fine.
 
     `unreleased` says whether NEWS.md carries the unreleased heading, which is
     what makes an unchanged version legitimate rather than a silent collision.
+    `ci_only` says the pull request touches nothing outside `.github/`, which
+    makes it legitimate too.
     """
     if parse_version(head) > parse_version(base):
         return []
     if base == head:
-        if unreleased:
+        if unreleased or ci_only:
             return []
         return [
             f"DESCRIPTION Version is still {head}, unchanged from the base branch, "
             "and NEWS.md has no '# hvtiR (unreleased)' heading. File the entry "
             "under that heading, or bump the patch digit. Without one of the two, "
             "a branch rebased onto a main that already took this number is "
-            "indistinguishable from one that never bumped."
+            "indistinguishable from one that never bumped. A change confined to "
+            ".github/ needs neither."
         ]
     return [f"DESCRIPTION Version {head} is lower than the base branch's {base}."]
 
 
-def main_with(base_desc: str, head_desc: str, head_news: str) -> int:
+def main_with(base_desc: str, head_desc: str, head_news: str,
+              changed_files: list = None) -> int:
     """Run every check and report all problems, not just the first."""
     problems = []
     try:
         base = read_version(base_desc, "the base branch's DESCRIPTION")
         head = read_version(head_desc, "DESCRIPTION")
-        problems += compare(base, head, has_unreleased_heading(head_news))
+        problems += compare(base, head, has_unreleased_heading(head_news),
+                            is_ci_only(changed_files or []))
     except ValueError as exc:
         problems.append(str(exc))
         return _report(problems)
@@ -163,12 +182,19 @@ def main(argv=None) -> int:
                         help="DESCRIPTION as it exists on the base branch")
     parser.add_argument("--description", type=Path, default=root / "DESCRIPTION")
     parser.add_argument("--news", type=Path, default=root / "NEWS.md")
+    parser.add_argument("--changed-files", type=Path,
+                        help="the pull request's changed paths, one per line")
     args = parser.parse_args(argv)
 
+    changed = []
+    if args.changed_files:
+        changed = [ln.strip() for ln in args.changed_files.read_text().splitlines()
+                   if ln.strip()]
     code = main_with(
         args.base_description.read_text(),
         args.description.read_text(),
         args.news.read_text(),
+        changed,
     )
     if code == 0:
         print(f"version ok: {read_version(args.description.read_text(), 'DESCRIPTION')}")

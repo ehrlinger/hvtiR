@@ -10,6 +10,7 @@ import unittest
 from check_version import (
     compare,
     has_unreleased_heading,
+    is_ci_only,
     main_with,
     parse_version,
     read_version,
@@ -66,6 +67,31 @@ class CompareTests(unittest.TestCase):
         # The unreleased heading excuses standing still, never going backwards.
         self.assertTrue(compare("1.0.5", "1.0.4", unreleased=True))
 
+    def test_an_unchanged_version_passes_for_a_ci_only_change(self):
+        # House style: a change confined to .github/ gets no NEWS entry and no
+        # bump, so it may stand still without the unreleased heading.
+        self.assertEqual(compare("1.0.5", "1.0.5", ci_only=True), [])
+
+    def test_a_lower_version_fails_even_for_a_ci_only_change(self):
+        self.assertTrue(compare("1.0.5", "1.0.4", ci_only=True))
+
+
+class CiOnlyTests(unittest.TestCase):
+    def test_workflow_files_alone_are_ci_only(self):
+        self.assertTrue(is_ci_only([".github/workflows/pkgdown.yaml",
+                                    ".github/workflows/check-manual.yaml"]))
+
+    def test_one_file_outside_github_is_not(self):
+        self.assertFalse(is_ci_only([".github/workflows/pkgdown.yaml",
+                                     "tools/check_version.py"]))
+
+    def test_an_empty_list_is_not(self):
+        # A diff that failed to list anything must not excuse the check.
+        self.assertFalse(is_ci_only([]))
+
+    def test_a_lookalike_prefix_is_not(self):
+        self.assertFalse(is_ci_only([".githubx/notes.md"]))
+
 
 class UnreleasedHeadingTests(unittest.TestCase):
     def test_the_heading_is_found(self):
@@ -116,6 +142,18 @@ class NewsAgreementTests(unittest.TestCase):
             "# hvtiR 1.0.5\n"
         )
         self.assertEqual(main_with(self.BASE, self.BASE, news), 0)
+
+    def test_an_unbumped_ci_only_change_passes_without_an_unreleased_heading(self):
+        # End to end: the case right after a bump, when the heading is gone and
+        # a workflow change lands with no entry.
+        news = "Package: hvtiR\nVersion: 1.0.5\n\n# hvtiR 1.0.5\n"
+        changed = [".github/workflows/pkgdown.yaml"]
+        self.assertEqual(main_with(self.BASE, self.BASE, news, changed), 0)
+
+    def test_an_unbumped_change_reaching_past_github_still_fails(self):
+        news = "Package: hvtiR\nVersion: 1.0.5\n\n# hvtiR 1.0.5\n"
+        changed = [".github/workflows/pkgdown.yaml", "R/install.R"]
+        self.assertEqual(main_with(self.BASE, self.BASE, news, changed), 1)
 
     def test_a_bumped_version_with_a_moved_date_and_matching_news_passes(self):
         # The happy path, asserted once with every rule satisfied.
