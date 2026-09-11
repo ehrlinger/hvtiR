@@ -3,6 +3,38 @@ Version: 1.1.8
 
 # hvtiR (unreleased)
 
+* **`pm` folds into `lm`, and `lm` is `thin` over `hvtiRpropensity`.** A
+  review of the catalog page on 2026-09-11 put 8 or 9 in 10 `lm` jobs as
+  propensity models, and the corpus agrees as far as a text match can: 1,014
+  of the 1,872 `lm` SAS programs name a propensity or balancing score, in 331
+  of 467 studies. `lm` now leans on `ps_logistic()` and `bs_count()`, and
+  counts the studies using either prefix, 470 against 469. `pm`, whose
+  programs are negative-binomial balancing-score fits, is `retire` over
+  `bs_count()`, and keeps a row only while `hvti_taxonomy()` lists it.
+  `hvtiRpropensity` joins `Suggests`,
+  `Remotes` and the CI installs, because the routing test validates every
+  package a `replaced_by` names and fails on CI when one is absent.
+
+* **The catalog's counts are corrected, and their units are written down.**
+  `dc-stddiff` counts the union of the six spellings that fold into it, 120
+  studies, where 59 was the 2019 spelling alone and a sum would give 157. `si`
+  and `mi` count jobs like every other row: `mi` its own and `bd`'s
+  multiple-imputation jobs, 18 studies, and `si` 1, because mean imputation
+  runs inside bootstrap jobs. The 223 and 326 studies calling the imputation
+  macros stay in the notes. Twelve of
+  the thirteen qualified `dc` and `dp` rows gain `r_jobs` and `r_exemplars`,
+  by the 2026-08-29 definition, which the scan reproduces for all 42
+  prefixes; `dp-postage` stays null, because its job is named by dataset.
+  Section 5 of `dev/specs/2026-09-04-job-catalog-design.md` defines each
+  unit and records two rules: `sas_breadth_jobs` is the figure of record, and
+  where two spellings name one job the newer macro's names the row while the
+  row counts both.
+
+* **`jobs()` returns `sas_breadth_jobs` and `r_exemplars`**, and the job
+  catalog vignette's SAS column reads `sas_breadth_jobs`. It read
+  `sas_breadth`, which is null on every qualified row, so all thirteen `dc`
+  and `dp` rows showed no SAS count.
+
 * **`dc-trends` and `dp-boxplot` now count studies in the field's own unit.**
   #61 filled `sas_breadth_jobs` with a token count over the whole job name, 58
   and 34, where every other qualified row holds distinct studies whose second

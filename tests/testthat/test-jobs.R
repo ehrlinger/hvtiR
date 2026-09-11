@@ -86,6 +86,76 @@ test_that("jobs() returns one row per job type with a list column", {
                     "replaced_by") %in% names(j)))
   expect_type(j$replaced_by, "list")
   expect_type(j$sas_breadth, "integer")
+  # sas_breadth_jobs is the figure of record, and r_exemplars travels with
+  # r_jobs; a catalog reader that cannot see either reads the wrong column.
+  expect_type(j$sas_breadth_jobs, "integer")
+  expect_type(j$r_exemplars, "integer")
+})
+
+test_that("dc-stddiff counts the union of its folded spellings, pinned", {
+  j <- jobs()
+  row <- which(j$prefix == "dc" & j$qualifier %in% "stddiff")
+
+  # 59 was the 2019 spelling alone. The row absorbs std_dif (72) and four
+  # rarer spellings, and a study using two of them is one study, so the
+  # figure is the union from the 2026-09-11 scan: 120, where the sum is 157.
+  # 59 here means the rule was read as deciding the population as well as
+  # the label; 157 means the union was replaced by a sum.
+  expect_length(row, 1L)
+  expect_identical(j$sas_breadth_jobs[row], 120L)
+})
+
+test_that("the qualified rows' R counts are pinned, and dp-postage is NA", {
+  j <- jobs()
+  at <- function(p, q) which(j$prefix == p & j$qualifier %in% q)
+
+  # From the 2026-09-11 scan of the 2026-08-27 census, by the 2026-08-29
+  # definition, which that scan reproduced for all 42 prefixes. Type checks
+  # alone pass when every value reverts to null, so the values are pinned; a
+  # re-census that moves them should change these on purpose.
+  want <- data.frame(
+    prefix = c("dc", "dc", "dc", "dc", "dc", "dc",
+               "dp", "dp", "dp", "dp", "dp", "dp"),
+    qualifier = c("general", "tables", "gfup", "dead", "stddiff", "trends",
+                  "trends", "gfup", "spaghetti", "procs", "variable",
+                  "boxplot"),
+    r_jobs = c(1L, 1L, 0L, 0L, 0L, 0L, 105L, 50L, 68L, 0L, 2L, 2L),
+    r_exemplars = c(1L, 1L, 0L, 0L, 0L, 0L, 75L, 4L, 40L, 0L, 2L, 2L),
+    stringsAsFactors = FALSE
+  )
+  for (i in seq_len(nrow(want))) {
+    row <- at(want$prefix[i], want$qualifier[i])
+    label <- paste0(want$prefix[i], "-", want$qualifier[i])
+    expect_length(row, 1L)
+    expect_identical(j$r_jobs[row], want$r_jobs[i], label = label)
+    expect_identical(j$r_exemplars[row], want$r_exemplars[i], label = label)
+  }
+
+  # dp-postage is named by dataset, not by a name field, so a literal count
+  # would be a false zero. NA is the finding here, and 0 would be the defect.
+  postage <- at("dp", "postage")
+  expect_length(postage, 1L)
+  expect_true(is.na(j$sas_breadth_jobs[postage]))
+  expect_true(is.na(j$r_jobs[postage]))
+  expect_true(is.na(j$r_exemplars[postage]))
+})
+
+test_that("pm folds into lm, and si and mi count jobs, pinned", {
+  j <- jobs()
+  at <- function(p) which(j$prefix == p & is.na(j$qualifier))
+
+  # pm folds into lm (2026-09-11): lm counts the studies with either prefix,
+  # 470, where lm alone is 469. pm stays as a retire row only while the
+  # taxonomy lists it, because hvtiRtemplates wants a row per prefix.
+  expect_identical(j$sas_breadth_jobs[at("lm")], 470L)
+  expect_identical(j$disposition[at("lm")], "thin")
+  expect_identical(j$disposition[at("pm")], "retire")
+  expect_identical(j$destination[at("pm")], "hvtiRpropensity")
+  # si and mi count jobs, as every row does; mi includes bd's multiple-
+  # imputation jobs. 223 or 326 here would mean the macro call counts came
+  # back into the field.
+  expect_identical(j$sas_breadth_jobs[at("si")], 1L)
+  expect_identical(j$sas_breadth_jobs[at("mi")], 18L)
 })
 
 test_that("jobs() has exactly the seeded count of retire rows, each replaced", {
@@ -94,7 +164,8 @@ test_that("jobs() has exactly the seeded count of retire rows, each replaced", {
   # 5 is the seeded count as of this catalog. A sixth retirement is not a
   # bug, but it should change this number on purpose rather than by
   # surprise, so a failure here points a future author at this line.
-  expect_identical(sum(j$disposition == "retire"), 5L)
+  # pm became the sixth on 2026-09-11, folded into lm; see its pin below.
+  expect_identical(sum(j$disposition == "retire"), 6L)
   expect_true(all(lengths(j$replaced_by[j$disposition == "retire"]) > 0L))
 })
 

@@ -46,6 +46,7 @@ jobs:
           extra-packages: >
             any::rcmdcheck,
             ehrlinger/hvtiPlotR,
+            ehrlinger/hvtiRpropensity,
             ehrlinger/ggRandomForests
           needs: check
 

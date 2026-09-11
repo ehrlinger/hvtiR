@@ -29,6 +29,17 @@ already exists, as \verb{package::function}, and is frequently in a different
 package from \code{destination}: a thin template lives in \code{hvtiRtemplates} and
 leans on \code{hvtiPlotR}.
 
+The count columns are distinct counts over the studies corpus, so they
+never sum across rows. \code{sas_breadth_jobs}, the studies holding a program
+of the job type, is the figure of record. \code{sas_breadth} counts files of
+any extension and
+predates the qualifier parse, so it is \code{NA} on a qualified row. \code{r_jobs}
+counts R jobs. \code{r_exemplars} counts the studies holding one, leaving out
+any job name found in more than 100 studies, because one script copied
+that widely would otherwise count as precedent in every study it reached.
+\code{NA} means not measured and \code{0} means measured and none found.
+\code{dev/specs/2026-09-04-job-catalog-design.md} defines each unit.
+
 The catalog file also carries a top-level \code{options} list beside \code{jobs}. An
 option is a construct shared across prefixes, such as a landmark early /
 late split or a matched analysis. It is not a job type, so \code{jobs()} does not

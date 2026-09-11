@@ -45,6 +45,7 @@ jobs:
             any::covr,
             any::xml2,
             ehrlinger/hvtiPlotR,
+            ehrlinger/hvtiRpropensity,
             ehrlinger/ggRandomForests
           needs: coverage
 
