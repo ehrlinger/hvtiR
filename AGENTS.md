@@ -36,7 +36,7 @@ Do not read a green PR as broader assurance than it gives.
 | `check-manual.yaml` | the PDF manual build |
 | `pkgdown.yaml` | the site build |
 | `house-style.yaml` | drift between the composed `.claude/house-style.md` and the upstream standard |
-| `version-check.yml` | a PR whose `Version:` went backwards, or stood still with no `# hvtiR (unreleased)` heading and a change reaching outside `.github/`; or a `DESCRIPTION`/`NEWS.md` version disagreement |
+| `version-check.yml` | a PR whose `Version:` went backwards, or stood still with no `# hvtiR (unreleased)` heading while shipping something (it ships nothing only when the base's `.Rbuildignore` excludes every file it touches); or a `DESCRIPTION`/`NEWS.md` version disagreement |
 | `lint.yaml` | `lintr::lint_package()`, **and** a `docs-current` job that reruns `roxygenise()` and fails on any diff in `man/`, `NAMESPACE` or `DESCRIPTION` |
 | `test-coverage.yaml` | test failures under coverage; the codecov upload does not fail CI when no token is configured |
 
@@ -147,6 +147,11 @@ Do not read a green PR as broader assurance than it gives.
   again after a bump, so the next change re-adds it. `.claude/house-style.md` carries the rule
   and the reasoning.
   That commit updates the DCF `Version:` line at the top of `NEWS.md` too.
+- **A change that ships nothing gets no `NEWS.md` entry and no bump.** That is one where
+  `.Rbuildignore` excludes every file it touches, here `.github/`, `AGENTS.md`, `CLAUDE.md`,
+  `dev/` and `tools/` among others. No user can observe it, so the pull request and its commit
+  message are the record. Read `.Rbuildignore` rather than judging by feel. `version-check`
+  applies the same test.
 
 ## Change discipline
 

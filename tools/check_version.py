@@ -14,10 +14,12 @@ two cases is NEWS.md: work that is not being versioned lands under the standing
 version heading instead. So an unchanged version is accepted only when the
 unreleased heading is present, which keeps the collision a failure.
 
-A pull request confined to `.github/` needs neither. The house style gives a
-CI-only change no NEWS entry and no bump, since nothing under `.github/` ships,
-so an unchanged version passes for it with or without the heading. A missing or
-empty list of changed files never earns that exemption.
+A pull request that ships nothing needs neither. The house style gives a
+change that `.Rbuildignore` excludes in full no NEWS entry and no bump, so an
+unchanged version passes for it with or without the heading. The workflow
+hands over the base branch's `.Rbuildignore`, so a pull request cannot exempt
+itself by adding a pattern. A missing or empty list of changed files, or of
+patterns, never earns the exemption.
 
 Also checks the two places the version is written agree, since NEWS.md carries
 its own `Version:` line and a per-release heading.
@@ -48,12 +50,33 @@ def has_unreleased_heading(news: str) -> bool:
     return bool(UNRELEASED_RE.search(news))
 
 
-def is_ci_only(paths: list) -> bool:
-    """Whether every changed file sits under `.github/`.
+def read_rbuildignore(text: str) -> list:
+    """The patterns in an `.Rbuildignore`, one per non-blank line."""
+    return [line for line in text.splitlines() if line.strip()]
 
-    An empty list is not CI-only: a missing diff must fail closed.
+
+def ships_nothing(paths: list, patterns: list) -> bool:
+    """Whether `R CMD build` would leave out every changed file.
+
+    Mirrors `tools:::inRbuildignore()`: each pattern is a case-insensitive Perl
+    regex tested against paths relative to the package root, directories
+    included, and an excluded directory takes everything under it. So a file
+    is out when it, or any directory above it, matches. An empty list of paths
+    or of patterns is not "ships nothing": a missing input must fail closed.
     """
-    return bool(paths) and all(p.startswith(".github/") for p in paths)
+    if not paths or not patterns:
+        return False
+    try:
+        regexes = [re.compile(p, re.IGNORECASE) for p in patterns]
+    except re.error as exc:
+        raise ValueError(f".Rbuildignore pattern does not compile: {exc}") from None
+
+    def excluded(path: str) -> bool:
+        parts = path.split("/")
+        prefixes = ["/".join(parts[:i]) for i in range(1, len(parts) + 1)]
+        return any(rx.search(pre) for pre in prefixes for rx in regexes)
+
+    return all(excluded(p) for p in paths)
 
 
 def parse_version(version: str) -> tuple:
@@ -106,39 +129,39 @@ def compare_dates(base: str, head: str, today: datetime.date = None) -> list:
 
 
 def compare(base: str, head: str, unreleased: bool = False,
-            ci_only: bool = False) -> list:
+            nothing_ships: bool = False) -> list:
     """Problems with the head version relative to base. Empty means fine.
 
     `unreleased` says whether NEWS.md carries the unreleased heading, which is
     what makes an unchanged version legitimate rather than a silent collision.
-    `ci_only` says the pull request touches nothing outside `.github/`, which
-    makes it legitimate too.
+    `nothing_ships` says `.Rbuildignore` excludes every file the pull request
+    touches, which makes it legitimate too.
     """
     if parse_version(head) > parse_version(base):
         return []
     if base == head:
-        if unreleased or ci_only:
+        if unreleased or nothing_ships:
             return []
         return [
             f"DESCRIPTION Version is still {head}, unchanged from the base branch, "
             "and NEWS.md has no '# hvtiR (unreleased)' heading. File the entry "
             "under that heading, or bump the patch digit. Without one of the two, "
             "a branch rebased onto a main that already took this number is "
-            "indistinguishable from one that never bumped. A change confined to "
-            ".github/ needs neither."
+            "indistinguishable from one that never bumped. A change that ships "
+            "nothing, every file excluded by .Rbuildignore, needs neither."
         ]
     return [f"DESCRIPTION Version {head} is lower than the base branch's {base}."]
 
 
 def main_with(base_desc: str, head_desc: str, head_news: str,
-              changed_files: list = None) -> int:
+              changed_files: list = None, rbuildignore: list = None) -> int:
     """Run every check and report all problems, not just the first."""
     problems = []
     try:
         base = read_version(base_desc, "the base branch's DESCRIPTION")
         head = read_version(head_desc, "DESCRIPTION")
         problems += compare(base, head, has_unreleased_heading(head_news),
-                            is_ci_only(changed_files or []))
+                            ships_nothing(changed_files or [], rbuildignore or []))
     except ValueError as exc:
         problems.append(str(exc))
         return _report(problems)
@@ -184,6 +207,8 @@ def main(argv=None) -> int:
     parser.add_argument("--news", type=Path, default=root / "NEWS.md")
     parser.add_argument("--changed-files", type=Path,
                         help="the pull request's changed paths, one per line")
+    parser.add_argument("--rbuildignore", type=Path, default=root / ".Rbuildignore",
+                        help=".Rbuildignore to judge them by; CI passes the base's")
     args = parser.parse_args(argv)
 
     changed = []
@@ -195,6 +220,7 @@ def main(argv=None) -> int:
         args.description.read_text(),
         args.news.read_text(),
         changed,
+        read_rbuildignore(args.rbuildignore.read_text()),
     )
     if code == 0:
         print(f"version ok: {read_version(args.description.read_text(), 'DESCRIPTION')}")
