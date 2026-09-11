@@ -1,5 +1,5 @@
 Package: hvtiR
-Version: 1.1.7
+Version: 1.1.8
 
 # hvtiR (unreleased)
 
@@ -13,6 +13,8 @@ Version: 1.1.7
   the catalog takes only `jobs`, so the new list changes nothing that exists.
   The `hs` and `dc-stddiff` notes now name the legacy variants that fold into
   them, and the tests that pinned 56 rows now pin 58.
+
+# hvtiR 1.1.8
 
 * **`dp-trends` is `shipped`**, the first of the EDA templates from the
   2026-09-10 batch. `hvtiRtemplates` gains `40_graphs/dp-trends.qmd`, a thin
