@@ -33,9 +33,8 @@ read_jobs <- function(path = system.file("extdata", "jobs.json",
 #'
 #' The count columns are distinct counts over the studies corpus, so they
 #' never sum across rows. `sas_breadth_jobs`, the studies holding a program
-#' of the job type, is the figure of record; for `si` and `mi` it counts the
-#' studies calling the imputation macro instead, because imputation runs
-#' inside other jobs. `sas_breadth` counts files of any extension and
+#' of the job type, is the figure of record. `sas_breadth` counts files of
+#' any extension and
 #' predates the qualifier parse, so it is `NA` on a qualified row. `r_jobs`
 #' counts R jobs. `r_exemplars` counts the studies holding one, leaving out
 #' any job name found in more than 100 studies, because one script copied

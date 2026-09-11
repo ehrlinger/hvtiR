@@ -31,9 +31,8 @@ leans on \code{hvtiPlotR}.
 
 The count columns are distinct counts over the studies corpus, so they
 never sum across rows. \code{sas_breadth_jobs}, the studies holding a program
-of the job type, is the figure of record; for \code{si} and \code{mi} it counts the
-studies calling the imputation macro instead, because imputation runs
-inside other jobs. \code{sas_breadth} counts files of any extension and
+of the job type, is the figure of record. \code{sas_breadth} counts files of
+any extension and
 predates the qualifier parse, so it is \code{NA} on a qualified row. \code{r_jobs}
 counts R jobs. \code{r_exemplars} counts the studies holding one, leaving out
 any job name found in more than 100 studies, because one script copied

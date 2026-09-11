@@ -165,12 +165,15 @@ Adding rows double-counts it.
 measured zero is a finding, that the taxonomy carries a name the corpus does
 not use, and is never written as `null` or rendered as a dash.
 
-**`si` and `mi` are the one exception, by the maintainer's decision of
-2026-09-11.** Their `sas_breadth_jobs` holds 223 and 326, the studies that
-*call* `%imputsub` and `%mult_imput`. Imputation runs as a step inside other
-jobs, so by job name each has a single study, and a 1 would order the work as
-though nobody imputes. Each row's note states its unit. A further exception
-is stated the same way, in its row and here; one stated nowhere is a defect.
+**No row is an exception to its field's unit.** On 2026-09-11 `si` and `mi`
+briefly carried 223 and 326, the studies that *call* `%imputsub` and
+`%mult_imput`, as a stated exception. A biostatistician's review of the
+catalog page the same day withdrew it, and the maintainer took the review.
+Multiple imputation is filed as `bd` jobs whose second name field names it
+(`bd.mult_imput` and its spellings), so by rule 2 below `mi` counts its own
+jobs and those. Mean imputation runs inside bootstrap jobs rather than as a
+job of its own, so `si` counts the few `si` programs there are. The call-site
+counts stay in each row's note: they measure something else.
 
 Two rules govern the counts, both stated by the maintainer on 2026-09-11:
 
@@ -182,7 +185,11 @@ Two rules govern the counts, both stated by the maintainer on 2026-09-11:
    that set the rule: it ships the 2019 `stddiff.sas`, not the 2009
    `std_dif.sas`, and it counts every study that uses either. The rule
    decides the label and never the population. The union comes from the
-   scan and is never a sum, for the reason above.
+   scan and is never a sum, for the reason above. `lm` is the second case:
+   `pm` folds into it, so `lm` counts the studies using either prefix. `pm`
+   stays as a `retire` row only because `hvti_taxonomy()` still lists it and
+   `hvtiRtemplates` requires a catalog row for every taxonomy prefix; it
+   goes when the taxonomy drops `pm`.
 
 ## 6. Validation rules
 

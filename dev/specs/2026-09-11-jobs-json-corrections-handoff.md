@@ -6,17 +6,18 @@
 the maintainer regenerates. Three premises below did not survive measurement, and the
 sections are left as written so the correction can be read against them:
 
-- **§2, `pm` is not misfiled `lm`.** `hvti_taxonomy()` defines `pm` as a count outcome
-  with a balancing score. Across its 4 studies, 7 of 8 SAS programs are `PROC GENMOD
-  dist=nb`, and 2 compute the score outright. No parse rule was wrong. The row is `thin`
-  over `hvtiRpropensity::bs_count()`, which ports `tp.pm.count.balncing_score.sas`, and
-  its 4 stands. The label "Propensity model" is what misled the room, and renaming it
-  is `hvtiRutilities`' change.
+- **§2, `pm` is not misfiled `lm`, but it does fold into it.** `hvti_taxonomy()` defines
+  `pm` as a count outcome with a balancing score, and 7 of its 8 SAS programs are `PROC
+  GENMOD dist=nb`, so no parse rule was wrong. The same day's review of the catalog page
+  put most `lm` jobs as propensity models, and the maintainer folded `pm` into `lm`:
+  `lm` is `thin` over `hvtiRpropensity`, counting the 470 studies with either prefix, and
+  `pm` is `retire` until the taxonomy drops it.
 - **§3, neither prose was right.** The design record is right that `sas_breadth_jobs`
   counts distinct studies. But 223 and 326 count studies *calling* the imputation
-  macros, not studies holding an `si`/`mi` job, which by job name are 1 and 1. The
-  maintainer put 223 and 326 in the field as a stated exception, now recorded in the
-  catalog design, §5.
+  macros, not studies holding an `si`/`mi` job. They went into the field briefly as a
+  stated exception, which the review withdrew: `mi` counts its own and `bd`'s
+  multiple-imputation jobs, 18 studies, `si` counts 1, and the call-site counts stay in
+  the notes.
 - **§4's four variants were five.** `std_dif_all_bef-aft` (13 studies) was folded in by
   the maintainer, so the union is 120, against a sum of 157.
 
@@ -153,13 +154,15 @@ The checklist as the handoff wrote it, each item stamped with what was done on
 struck through where the request and the outcome differ.
 
 - [x] Rules 1 and 2 written into the catalog's own documentation: the catalog design, §5
-- [x] `pm` routing decided by reading `hvtiRpropensity`: `thin` over `bs_count()`
+- [x] `pm` routing decided by reading `hvtiRpropensity`: folded into `lm`, which is
+      `thin` over `ps_logistic()` and `bs_count()`; `pm` is `retire`
 - [x] ~~`pm` / `lm` misfiling fixed in the parse rule~~ No misfiling to fix. `pm`'s
-      programs are negative-binomial count models, and its count stands at 4
+      programs are negative-binomial count models; it folds into `lm` by decision, and
+      `lm` counts the union, 470
 - [x] A measured zero rendered as zero, never as a dash. `dp-postage` stays null because
       it is unmeasured, not zero
 - [x] The `sas_breadth_jobs` unit question settled and documented, catalog design §5
-- [x] `si` and `mi` carry their counts in a field: 223 and 326, a stated exception
+- [x] `si` and `mi` carry their counts in a field: 1 and 18, in the field's own unit
 - [x] `dc-stddiff` re-counted over the union of its ~~four~~ five folded variants: 120
 - [x] `r_jobs` and `r_exemplars` filled for ~~the 13~~ 12 of the 13 qualifier rows;
       `dp-postage` stays null

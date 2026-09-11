@@ -14,9 +14,8 @@ knitr::opts_chunk$set(echo = FALSE)
 ```
 
 Every job type found in the studies corpus, and the package that owes it.
-SAS counts the studies holding a program of each job type, except for `si`
-and `mi`, where it counts the studies calling the imputation macro, because
-imputation runs inside other jobs. R counts the R jobs already written. Both are distinct counts, so rows do not sum;
+SAS counts the studies holding a program of each job type, and R counts
+the R jobs already written. Both are distinct counts, so rows do not sum;
 `NA` means not yet measured and `0` means measured and none found. This page is
 generated from the catalog shipped with the package, so it cannot disagree
 with it.

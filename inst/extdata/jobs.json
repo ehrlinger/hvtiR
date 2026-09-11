@@ -565,11 +565,11 @@
    ],
    "blocked_on": null,
    "spec": null,
-   "note": null,
-   "sas_breadth_jobs": 469,
-   "disposition": "scaffold",
+   "note": "Mostly propensity-score models. Of the 1,872 lm SAS programs in analyses, 1,824 run PROC LOGISTIC and 1,014 name a propensity or balancing score, in 331 of 467 studies (2026-09-11 scan; a text match, so a lower bound). The 2026-09-11 review of the catalog page put it at 8 or 9 in 10, and propensity modelling is done in hvtiRpropensity, so the row is thin over it. pm folds in (rule 2 of the catalog design, section 5): sas_breadth_jobs counts the studies with either an lm or a pm program, 470, where lm alone is 469 and three of pm's four studies already have one. sas_breadth and the R counts are lm's alone.",
+   "sas_breadth_jobs": 470,
+   "disposition": "thin",
    "destination": "hvtiRtemplates",
-   "replaced_by": []
+   "replaced_by": ["hvtiRpropensity::ps_logistic", "hvtiRpropensity::bs_count"]
   },
   {
    "prefix": "lp",
@@ -775,8 +775,8 @@
    "folder": "analyses",
    "family": "models",
    "kind": "job",
-   "status": "queued",
-   "batch": 6,
+   "status": null,
+   "batch": null,
    "sas_breadth": 5,
    "r_exemplars": 0,
    "r_jobs": 0,
@@ -787,10 +787,10 @@
    ],
    "blocked_on": null,
    "spec": null,
-   "note": "A count outcome with a balancing score, as hvti_taxonomy() defines it, and not the binary propensity model its name suggests. Read 2026-09-11: across its 4 studies, 7 of the 8 SAS programs fit PROC GENMOD with dist=nb, and 2 compute the balancing score (xbeta) outright. So these are not misfiled lm jobs, and the count stands. hvtiRpropensity::bs_count() ports tp.pm.count.balncing_score.sas, the same step, so the row is thin over it. The binary propensity model does live in lm, where 12 studies carry an lm job whose second name field names the propensity score, and hvtiRpropensity::ps_logistic() covers it. The label is the taxonomy's; renaming it belongs in hvtiRutilities, not in this file.",
+   "note": "Folded into lm on 2026-09-11, after a review of the catalog page: its studies are counted in lm's sas_breadth_jobs, and no template of its own is owed. Its programs are negative-binomial balancing-score fits (7 of its 8 SAS programs are PROC GENMOD dist=nb), which hvtiRpropensity::bs_count() ports. The row remains only because hvti_taxonomy() still lists pm and hvtiRtemplates requires a catalog row for every taxonomy prefix; it goes when the taxonomy drops pm. Its own count, 4 studies, is also inside lm's.",
    "sas_breadth_jobs": 4,
-   "disposition": "thin",
-   "destination": "hvtiRtemplates",
+   "disposition": "retire",
+   "destination": "hvtiRpropensity",
    "replaced_by": ["hvtiRpropensity::bs_count"]
   },
   {
@@ -1021,8 +1021,8 @@
    "workflows": [],
    "blocked_on": null,
    "spec": "hvtiRdatabuild/dev/specs/2026-09-03-imputation-package-spec.md",
-   "note": "223 studies call single mean imputation, %imputsub, which runs PROC STANDARD ... REPLACE (measured 2026-09-05). That is this row's sas_breadth_jobs, and it counts studies CALLING the macro, not studies holding an si job: imputation runs as a step inside other jobs, and by job name only 1 study carries an si program (2026-09-11 scan). The maintainer's exception of 2026-09-11, recorded in the catalog design, section 5. Ported as hvtiRimputation::impute_mean(), shipped v0.1.0.",
-   "sas_breadth_jobs": 223,
+   "note": "Mean imputation is a step inside other jobs, bootstrap jobs chief among them, rather than a job type of its own: by job name 1 study carries an si program (2026-09-11 scan), and that is this row's sas_breadth_jobs. 223 studies call %imputsub, the single-mean-imputation macro, which runs PROC STANDARD ... REPLACE (measured 2026-09-05); that is a call-site count and stays in this note. Ported as hvtiRimputation::impute_mean(), shipped v0.1.0.",
+   "sas_breadth_jobs": 1,
    "disposition": "scaffold",
    "destination": "hvtiRtemplates",
    "replaced_by": []
@@ -1044,8 +1044,8 @@
    "workflows": [],
    "blocked_on": "hvtiRimputation",
    "spec": "hvtiRdatabuild/dev/specs/2026-09-05-hvtiRimputation-design.md",
-   "note": "326 studies call multiple imputation, %mult_imput, and 18 call both it and si's %imputsub (measured 2026-09-05). That is this row's sas_breadth_jobs and, as for si, it counts studies CALLING the macro, not studies holding an mi job: by job name only 1 study carries an mi program (2026-09-11 scan). impute_multiple() is designed and not yet built; pooling by Rubin's rules is deferred.",
-   "sas_breadth_jobs": 326,
+   "note": "Multiple-imputation jobs are filed under bd, as bd jobs whose second name field names it (bd.mult_imput and its spellings, 17 studies), which is one job under two names (rule 2 of the catalog design, section 5). So sas_breadth_jobs counts the studies with either an mi program or such a bd job: 18, from the 2026-09-11 scan. 326 studies call %mult_imput, and 18 call both it and si's %imputsub (measured 2026-09-05); those are call-site counts and stay in this note. impute_multiple() is designed and not yet built; pooling by Rubin's rules is deferred.",
+   "sas_breadth_jobs": 18,
    "disposition": "scaffold",
    "destination": "hvtiRtemplates",
    "replaced_by": []

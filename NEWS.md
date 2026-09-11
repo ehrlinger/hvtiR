@@ -3,21 +3,25 @@ Version: 1.1.8
 
 # hvtiR (unreleased)
 
-* **`pm` is `thin` over `hvtiRpropensity::bs_count()`.** The 2026-09-11
-  umbrella review read it as a misfiled propensity model. Its programs say
-  otherwise: 7 of the 8 are `PROC GENMOD` with `dist=nb` and 2 compute the
-  balancing score outright, which is what `hvti_taxonomy()` means by `pm`
-  ("count outcome with balancing score") and what `bs_count()` ports. So its
-  4 studies stand and `lm` is unchanged. The misleading label, "Propensity
-  model", is the taxonomy's to fix. `hvtiRpropensity` joins `Suggests`,
+* **`pm` folds into `lm`, and `lm` is `thin` over `hvtiRpropensity`.** A
+  review of the catalog page on 2026-09-11 put 8 or 9 in 10 `lm` jobs as
+  propensity models, and the corpus agrees as far as a text match can: 1,014
+  of the 1,872 `lm` SAS programs name a propensity or balancing score, in 331
+  of 467 studies. `lm` now leans on `ps_logistic()` and `bs_count()`, and
+  counts the studies using either prefix, 470 against 469. `pm`, whose
+  programs are negative-binomial balancing-score fits, is `retire` over
+  `bs_count()`, and keeps a row only while `hvti_taxonomy()` lists it.
+  `hvtiRpropensity` joins `Suggests`,
   `Remotes` and the CI installs, because the routing test validates every
   package a `replaced_by` names and fails on CI when one is absent.
 
 * **The catalog's counts are corrected, and their units are written down.**
   `dc-stddiff` counts the union of the six spellings that fold into it, 120
   studies, where 59 was the 2019 spelling alone and a sum would give 157. `si`
-  and `mi` carry 223 and 326 in `sas_breadth_jobs`: studies calling the
-  imputation macros, the one stated exception to the field's unit. Twelve of
+  and `mi` count jobs like every other row: `mi` its own and `bd`'s
+  multiple-imputation jobs, 18 studies, and `si` 1, because mean imputation
+  runs inside bootstrap jobs. The 223 and 326 studies calling the imputation
+  macros stay in the notes. Twelve of
   the thirteen qualified `dc` and `dp` rows gain `r_jobs` and `r_exemplars`,
   by the 2026-08-29 definition, which the scan reproduces for all 42
   prefixes; `dp-postage` stays null, because its job is named by dataset.

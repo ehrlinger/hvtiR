@@ -140,20 +140,22 @@ test_that("the qualified rows' R counts are pinned, and dp-postage is NA", {
   expect_true(is.na(j$r_exemplars[postage]))
 })
 
-test_that("pm is thin over bs_count, and si and mi carry call counts", {
+test_that("pm folds into lm, and si and mi count jobs, pinned", {
   j <- jobs()
-  at <- function(p) which(j$prefix == p)
+  at <- function(p) which(j$prefix == p & is.na(j$qualifier))
 
-  # pm was read in the room as a misfiled propensity model. Its programs are
-  # negative-binomial balancing-score fits, which bs_count() ports, so the
-  # row routes there and keeps its 4 studies rather than folding into lm.
-  expect_identical(j$disposition[at("pm")], "thin")
-  expect_identical(j$replaced_by[[at("pm")]], "hvtiRpropensity::bs_count")
-  expect_identical(j$sas_breadth_jobs[at("pm")], 4L)
-  # si and mi count studies CALLING the imputation macros, the one stated
-  # exception to the field's unit. By job name each is 1.
-  expect_identical(j$sas_breadth_jobs[at("si")], 223L)
-  expect_identical(j$sas_breadth_jobs[at("mi")], 326L)
+  # pm folds into lm (2026-09-11): lm counts the studies with either prefix,
+  # 470, where lm alone is 469. pm stays as a retire row only while the
+  # taxonomy lists it, because hvtiRtemplates wants a row per prefix.
+  expect_identical(j$sas_breadth_jobs[at("lm")], 470L)
+  expect_identical(j$disposition[at("lm")], "thin")
+  expect_identical(j$disposition[at("pm")], "retire")
+  expect_identical(j$destination[at("pm")], "hvtiRpropensity")
+  # si and mi count jobs, as every row does; mi includes bd's multiple-
+  # imputation jobs. 223 or 326 here would mean the macro call counts came
+  # back into the field.
+  expect_identical(j$sas_breadth_jobs[at("si")], 1L)
+  expect_identical(j$sas_breadth_jobs[at("mi")], 18L)
 })
 
 test_that("jobs() has exactly the seeded count of retire rows, each replaced", {
@@ -162,7 +164,8 @@ test_that("jobs() has exactly the seeded count of retire rows, each replaced", {
   # 5 is the seeded count as of this catalog. A sixth retirement is not a
   # bug, but it should change this number on purpose rather than by
   # surprise, so a failure here points a future author at this line.
-  expect_identical(sum(j$disposition == "retire"), 5L)
+  # pm became the sixth on 2026-09-11, folded into lm; see its pin below.
+  expect_identical(sum(j$disposition == "retire"), 6L)
   expect_true(all(lengths(j$replaced_by[j$disposition == "retire"]) > 0L))
 })
 
