@@ -9,7 +9,9 @@ Version: 1.1.8
   balancing score outright, which is what `hvti_taxonomy()` means by `pm`
   ("count outcome with balancing score") and what `bs_count()` ports. So its
   4 studies stand and `lm` is unchanged. The misleading label, "Propensity
-  model", is the taxonomy's to fix.
+  model", is the taxonomy's to fix. `hvtiRpropensity` joins `Suggests`,
+  `Remotes` and the CI installs, because the routing test validates every
+  package a `replaced_by` names and fails on CI when one is absent.
 
 * **The catalog's counts are corrected, and their units are written down.**
   `dc-stddiff` counts the union of the six spellings that fold into it, 120

@@ -23,6 +23,7 @@ Suggests:
     curl,
     ggRandomForests,
     hvtiPlotR,
+    hvtiRpropensity,
     hvtiRtables,
     hvtiRutilities,
     knitr,
@@ -32,6 +33,7 @@ Suggests:
 Remotes:
     ehrlinger/ggRandomForests,
     ehrlinger/hvtiPlotR,
+    ehrlinger/hvtiRpropensity,
     ehrlinger/hvtiRtables,
     ehrlinger/hvtiRutilities
 VignetteBuilder: quarto
