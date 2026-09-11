@@ -148,16 +148,22 @@ movement in the thirteen rows where the port is actually happening.
 
 ## Definition of done
 
-- [ ] Rules 1 and 2 written into the catalog's own documentation, not just this note
-- [ ] `pm` routing decided by reading `hvtiRpropensity`, and the row rewritten to match
-- [ ] `pm` / `lm` misfiling fixed **in the parse rule**, then re-scanned, then the catalog
-      updated from the scan
-- [ ] A measured zero rendered as zero, never as a dash
-- [ ] The `sas_breadth_jobs` unit question settled and documented
-- [ ] `si` and `mi` carry their counts in a field, once the unit is settled
-- [ ] `dc-stddiff` re-counted over the union of its four folded variants
-- [ ] `r_jobs` and `r_exemplars` filled for the 13 qualifier rows
-- [ ] The deck's catalog page regenerated; it reads this file directly
+The checklist as the handoff wrote it, each item stamped with what was done on
+2026-09-11. Three items changed on measurement, as the status block explains, and are
+struck through where the request and the outcome differ.
+
+- [x] Rules 1 and 2 written into the catalog's own documentation: the catalog design, §5
+- [x] `pm` routing decided by reading `hvtiRpropensity`: `thin` over `bs_count()`
+- [x] ~~`pm` / `lm` misfiling fixed in the parse rule~~ No misfiling to fix. `pm`'s
+      programs are negative-binomial count models, and its count stands at 4
+- [x] A measured zero rendered as zero, never as a dash. `dp-postage` stays null because
+      it is unmeasured, not zero
+- [x] The `sas_breadth_jobs` unit question settled and documented, catalog design §5
+- [x] `si` and `mi` carry their counts in a field: 223 and 326, a stated exception
+- [x] `dc-stddiff` re-counted over the union of its ~~four~~ five folded variants: 120
+- [x] `r_jobs` and `r_exemplars` filled for ~~the 13~~ 12 of the 13 qualifier rows;
+      `dp-postage` stays null
+- [ ] The deck's catalog page regenerated: the maintainer runs `gen_deck.py` after merge
 
 ## Not in this PR
 

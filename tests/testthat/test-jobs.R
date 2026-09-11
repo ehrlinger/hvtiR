@@ -105,6 +105,41 @@ test_that("dc-stddiff counts the union of its folded spellings, pinned", {
   expect_identical(j$sas_breadth_jobs[row], 120L)
 })
 
+test_that("the qualified rows' R counts are pinned, and dp-postage is NA", {
+  j <- jobs()
+  at <- function(p, q) which(j$prefix == p & j$qualifier %in% q)
+
+  # From the 2026-09-11 scan of the 2026-08-27 census, by the 2026-08-29
+  # definition, which that scan reproduced for all 42 prefixes. Type checks
+  # alone pass when every value reverts to null, so the values are pinned; a
+  # re-census that moves them should change these on purpose.
+  want <- data.frame(
+    prefix = c("dc", "dc", "dc", "dc", "dc", "dc",
+               "dp", "dp", "dp", "dp", "dp", "dp"),
+    qualifier = c("general", "tables", "gfup", "dead", "stddiff", "trends",
+                  "trends", "gfup", "spaghetti", "procs", "variable",
+                  "boxplot"),
+    r_jobs = c(1L, 1L, 0L, 0L, 0L, 0L, 105L, 50L, 68L, 0L, 2L, 2L),
+    r_exemplars = c(1L, 1L, 0L, 0L, 0L, 0L, 75L, 4L, 40L, 0L, 2L, 2L),
+    stringsAsFactors = FALSE
+  )
+  for (i in seq_len(nrow(want))) {
+    row <- at(want$prefix[i], want$qualifier[i])
+    label <- paste0(want$prefix[i], "-", want$qualifier[i])
+    expect_length(row, 1L)
+    expect_identical(j$r_jobs[row], want$r_jobs[i], label = label)
+    expect_identical(j$r_exemplars[row], want$r_exemplars[i], label = label)
+  }
+
+  # dp-postage is named by dataset, not by a name field, so a literal count
+  # would be a false zero. NA is the finding here, and 0 would be the defect.
+  postage <- at("dp", "postage")
+  expect_length(postage, 1L)
+  expect_true(is.na(j$sas_breadth_jobs[postage]))
+  expect_true(is.na(j$r_jobs[postage]))
+  expect_true(is.na(j$r_exemplars[postage]))
+})
+
 test_that("pm is thin over bs_count, and si and mi carry call counts", {
   j <- jobs()
   at <- function(p) which(j$prefix == p)
