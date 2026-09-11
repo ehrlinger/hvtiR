@@ -80,7 +80,7 @@
 
 
 
-    <p>Every job type found in the studies corpus, and the package that owes it. Counts are SAS templates found and R jobs already written. This page is generated from the catalog shipped with the package, so it cannot disagree with it.</p>
+    <p>Every job type found in the studies corpus, and the package that owes it. SAS counts the studies holding a program of each job type, and R counts the R jobs already written. Both are distinct counts, so rows do not sum; <code>NA</code> means not yet measured and <code>0</code> means measured and none found. This page is generated from the catalog shipped with the package, so it cannot disagree with it.</p>
 <div class="cell">
 <div class="cell-output-display">
 <table class="table caption-top">
@@ -95,15 +95,15 @@
 </tr>
 <tr class="even">
 <td style="text-align: left;">retire</td>
-<td style="text-align: right;">5</td>
+<td style="text-align: right;">6</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">scaffold</td>
-<td style="text-align: right;">31</td>
+<td style="text-align: right;">29</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">thin</td>
-<td style="text-align: right;">14</td>
+<td style="text-align: right;">15</td>
 </tr>
 </tbody>
 </table>
@@ -138,7 +138,7 @@
 <tr class="odd">
 <td style="text-align: left;"><code>ac</code></td>
 <td style="text-align: left;">Actuarial</td>
-<td style="text-align: right;">756</td>
+<td style="text-align: right;">745</td>
 <td style="text-align: right;">20</td>
 <td style="text-align: left;">scaffold</td>
 <td style="text-align: left;">shipped</td>
@@ -149,7 +149,7 @@
 <tr class="even">
 <td style="text-align: left;"><code>cd</code></td>
 <td style="text-align: left;">Cumulative distribution</td>
-<td style="text-align: right;">202</td>
+<td style="text-align: right;">190</td>
 <td style="text-align: right;">8</td>
 <td style="text-align: left;">scaffold</td>
 <td style="text-align: left;">queued</td>
@@ -160,7 +160,7 @@
 <tr class="odd">
 <td style="text-align: left;"><code>hz</code></td>
 <td style="text-align: left;">Hazard fit</td>
-<td style="text-align: right;">581</td>
+<td style="text-align: right;">574</td>
 <td style="text-align: right;">8</td>
 <td style="text-align: left;">scaffold</td>
 <td style="text-align: left;">shipped</td>
@@ -182,8 +182,8 @@
 <tr class="odd">
 <td style="text-align: left;"><code>dp-variable</code></td>
 <td style="text-align: left;">Distribution of a variable</td>
-<td style="text-align: right;">NA</td>
-<td style="text-align: right;">NA</td>
+<td style="text-align: right;">237</td>
+<td style="text-align: right;">2</td>
 <td style="text-align: left;">thin</td>
 <td style="text-align: left;">queued</td>
 <td style="text-align: left;">hvtiRtemplates</td>
@@ -221,7 +221,7 @@
 <tbody><tr class="odd">
 <td style="text-align: left;"><code>ar</code></td>
 <td style="text-align: left;">Analysis report</td>
-<td style="text-align: right;">706</td>
+<td style="text-align: right;">394</td>
 <td style="text-align: right;">1114</td>
 <td style="text-align: left;">scaffold</td>
 <td style="text-align: left;">queued</td>
@@ -269,7 +269,7 @@
 <tr class="even">
 <td style="text-align: left;"><code>bh</code></td>
 <td style="text-align: left;">Bootstrap hazard</td>
-<td style="text-align: right;">322</td>
+<td style="text-align: right;">320</td>
 <td style="text-align: right;">5</td>
 <td style="text-align: left;">scaffold</td>
 <td style="text-align: left;">shipped</td>
@@ -291,7 +291,7 @@
 <tr class="even">
 <td style="text-align: left;"><code>bn</code></td>
 <td style="text-align: left;">Bootstrap nonparametric</td>
-<td style="text-align: right;">214</td>
+<td style="text-align: right;">108</td>
 <td style="text-align: right;">0</td>
 <td style="text-align: left;">scaffold</td>
 <td style="text-align: left;">queued</td>
@@ -335,7 +335,7 @@
 <tr class="even">
 <td style="text-align: left;"><code>gm</code></td>
 <td style="text-align: left;">Generalized model</td>
-<td style="text-align: right;">77</td>
+<td style="text-align: right;">73</td>
 <td style="text-align: right;">0</td>
 <td style="text-align: left;">scaffold</td>
 <td style="text-align: left;">queued</td>
@@ -346,7 +346,7 @@
 <tr class="odd">
 <td style="text-align: left;"><code>hm</code></td>
 <td style="text-align: left;">Hazard model</td>
-<td style="text-align: right;">383</td>
+<td style="text-align: right;">373</td>
 <td style="text-align: right;">9</td>
 <td style="text-align: left;">scaffold</td>
 <td style="text-align: left;">shipped</td>
@@ -357,18 +357,20 @@
 <tr class="even">
 <td style="text-align: left;"><code>lm</code></td>
 <td style="text-align: left;">Logistic model</td>
-<td style="text-align: right;">621</td>
+<td style="text-align: right;">470</td>
 <td style="text-align: right;">45</td>
-<td style="text-align: left;">scaffold</td>
+<td style="text-align: left;">thin</td>
 <td style="text-align: left;">queued</td>
 <td style="text-align: left;">hvtiRtemplates</td>
-<td style="text-align: left;"></td>
+<td style="text-align: left;">
+<code><a href="https://ehrlinger.github.io/hvtiRpropensity/reference/ps_logistic.html">hvtiRpropensity::ps_logistic</a></code>, <code><a href="https://ehrlinger.github.io/hvtiRpropensity/reference/bs_count.html">hvtiRpropensity::bs_count</a></code>
+</td>
 <td style="text-align: left;"></td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"><code>ls</code></td>
 <td style="text-align: left;">Life table / STS</td>
-<td style="text-align: right;">34</td>
+<td style="text-align: right;">32</td>
 <td style="text-align: right;">0</td>
 <td style="text-align: left;">scaffold</td>
 <td style="text-align: left;">queued</td>
@@ -379,7 +381,7 @@
 <tr class="even">
 <td style="text-align: left;"><code>mm</code></td>
 <td style="text-align: left;">Mixed model</td>
-<td style="text-align: right;">59</td>
+<td style="text-align: right;">56</td>
 <td style="text-align: right;">1</td>
 <td style="text-align: left;">scaffold</td>
 <td style="text-align: left;">queued</td>
@@ -390,7 +392,7 @@
 <tr class="odd">
 <td style="text-align: left;"><code>nb</code></td>
 <td style="text-align: left;">Notebook</td>
-<td style="text-align: right;">21</td>
+<td style="text-align: right;">18</td>
 <td style="text-align: right;">63</td>
 <td style="text-align: left;">build</td>
 <td style="text-align: left;">NA</td>
@@ -401,7 +403,7 @@
 <tr class="even">
 <td style="text-align: left;"><code>nm</code></td>
 <td style="text-align: left;">Nonparametric model</td>
-<td style="text-align: right;">122</td>
+<td style="text-align: right;">121</td>
 <td style="text-align: right;">1</td>
 <td style="text-align: left;">scaffold</td>
 <td style="text-align: left;">queued</td>
@@ -412,18 +414,18 @@
 <tr class="odd">
 <td style="text-align: left;"><code>pm</code></td>
 <td style="text-align: left;">Propensity model</td>
-<td style="text-align: right;">5</td>
+<td style="text-align: right;">4</td>
 <td style="text-align: right;">0</td>
-<td style="text-align: left;">scaffold</td>
-<td style="text-align: left;">queued</td>
-<td style="text-align: left;">hvtiRtemplates</td>
-<td style="text-align: left;"></td>
+<td style="text-align: left;">retire</td>
+<td style="text-align: left;">NA</td>
+<td style="text-align: left;">hvtiRpropensity</td>
+<td style="text-align: left;"><code><a href="https://ehrlinger.github.io/hvtiRpropensity/reference/bs_count.html">hvtiRpropensity::bs_count</a></code></td>
 <td style="text-align: left;"></td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"><code>rf</code></td>
 <td style="text-align: left;">Random forest</td>
-<td style="text-align: right;">47</td>
+<td style="text-align: right;">41</td>
 <td style="text-align: right;">312</td>
 <td style="text-align: left;">retire</td>
 <td style="text-align: left;">NA</td>
@@ -436,7 +438,7 @@
 <tr class="odd">
 <td style="text-align: left;"><code>rfc</code></td>
 <td style="text-align: left;">Random forest classifier</td>
-<td style="text-align: right;">19</td>
+<td style="text-align: right;">11</td>
 <td style="text-align: right;">52</td>
 <td style="text-align: left;">retire</td>
 <td style="text-align: left;">NA</td>
@@ -449,7 +451,7 @@
 <tr class="even">
 <td style="text-align: left;"><code>rfs</code></td>
 <td style="text-align: left;">Random forest survival</td>
-<td style="text-align: right;">25</td>
+<td style="text-align: right;">9</td>
 <td style="text-align: right;">39</td>
 <td style="text-align: left;">retire</td>
 <td style="text-align: left;">NA</td>
@@ -462,7 +464,7 @@
 <tr class="odd">
 <td style="text-align: left;"><code>rfsrc</code></td>
 <td style="text-align: left;">Random forest (SRC)</td>
-<td style="text-align: right;">131</td>
+<td style="text-align: right;">97</td>
 <td style="text-align: right;">631</td>
 <td style="text-align: left;">retire</td>
 <td style="text-align: left;">NA</td>
@@ -475,7 +477,7 @@
 <tr class="even">
 <td style="text-align: left;"><code>rm</code></td>
 <td style="text-align: left;">Regression model</td>
-<td style="text-align: right;">174</td>
+<td style="text-align: right;">170</td>
 <td style="text-align: right;">94</td>
 <td style="text-align: left;">scaffold</td>
 <td style="text-align: left;">queued</td>
@@ -548,7 +550,7 @@
 <tr class="odd">
 <td style="text-align: left;"><code>bd</code></td>
 <td style="text-align: left;">Build</td>
-<td style="text-align: right;">1134</td>
+<td style="text-align: right;">1094</td>
 <td style="text-align: right;">18</td>
 <td style="text-align: left;">scaffold</td>
 <td style="text-align: left;">queued</td>
@@ -559,7 +561,7 @@
 <tr class="even">
 <td style="text-align: left;"><code>dt</code></td>
 <td style="text-align: left;">Data check</td>
-<td style="text-align: right;">512</td>
+<td style="text-align: right;">503</td>
 <td style="text-align: right;">0</td>
 <td style="text-align: left;">scaffold</td>
 <td style="text-align: left;">queued</td>
@@ -570,7 +572,7 @@
 <tr class="odd">
 <td style="text-align: left;"><code>vars</code></td>
 <td style="text-align: left;">Variables</td>
-<td style="text-align: right;">959</td>
+<td style="text-align: right;">912</td>
 <td style="text-align: right;">2</td>
 <td style="text-align: left;">scaffold</td>
 <td style="text-align: left;">queued</td>
@@ -581,7 +583,7 @@
 <tr class="even">
 <td style="text-align: left;"><code>si</code></td>
 <td style="text-align: left;">Single imputation</td>
-<td style="text-align: right;">NA</td>
+<td style="text-align: right;">1</td>
 <td style="text-align: right;">NA</td>
 <td style="text-align: left;">scaffold</td>
 <td style="text-align: left;">queued</td>
@@ -592,7 +594,7 @@
 <tr class="odd">
 <td style="text-align: left;"><code>mi</code></td>
 <td style="text-align: left;">Multiple imputation</td>
-<td style="text-align: right;">NA</td>
+<td style="text-align: right;">18</td>
 <td style="text-align: right;">NA</td>
 <td style="text-align: left;">scaffold</td>
 <td style="text-align: left;">queued</td>
@@ -630,7 +632,7 @@
 <tr class="odd">
 <td style="text-align: left;"><code>ce</code></td>
 <td style="text-align: left;">Competing events</td>
-<td style="text-align: right;">131</td>
+<td style="text-align: right;">128</td>
 <td style="text-align: right;">1</td>
 <td style="text-align: left;">build</td>
 <td style="text-align: left;">NA</td>
@@ -641,7 +643,7 @@
 <tr class="even">
 <td style="text-align: left;"><code>cp</code></td>
 <td style="text-align: left;">Cumulative probability plot</td>
-<td style="text-align: right;">5</td>
+<td style="text-align: right;">4</td>
 <td style="text-align: right;">1</td>
 <td style="text-align: left;">build</td>
 <td style="text-align: left;">NA</td>
@@ -652,7 +654,7 @@
 <tr class="odd">
 <td style="text-align: left;"><code>fp</code></td>
 <td style="text-align: left;">Forest plot</td>
-<td style="text-align: right;">19</td>
+<td style="text-align: right;">11</td>
 <td style="text-align: right;">20</td>
 <td style="text-align: left;">build</td>
 <td style="text-align: left;">NA</td>
@@ -674,7 +676,7 @@
 <tr class="odd">
 <td style="text-align: left;"><code>hp</code></td>
 <td style="text-align: left;">Hazard plot</td>
-<td style="text-align: right;">557</td>
+<td style="text-align: right;">541</td>
 <td style="text-align: right;">24</td>
 <td style="text-align: left;">thin</td>
 <td style="text-align: left;">revisit</td>
@@ -687,7 +689,7 @@
 <tr class="even">
 <td style="text-align: left;"><code>hs</code></td>
 <td style="text-align: left;">Hazard setup</td>
-<td style="text-align: right;">144</td>
+<td style="text-align: right;">140</td>
 <td style="text-align: right;">11</td>
 <td style="text-align: left;">scaffold</td>
 <td style="text-align: left;">shipped</td>
@@ -698,7 +700,7 @@
 <tr class="odd">
 <td style="text-align: left;"><code>lp</code></td>
 <td style="text-align: left;">Logistic plot</td>
-<td style="text-align: right;">636</td>
+<td style="text-align: right;">310</td>
 <td style="text-align: right;">606</td>
 <td style="text-align: left;">thin</td>
 <td style="text-align: left;">queued</td>
@@ -709,7 +711,7 @@
 <tr class="even">
 <td style="text-align: left;"><code>mp</code></td>
 <td style="text-align: left;">Mixed model plot</td>
-<td style="text-align: right;">82</td>
+<td style="text-align: right;">41</td>
 <td style="text-align: right;">5</td>
 <td style="text-align: left;">thin</td>
 <td style="text-align: left;">queued</td>
@@ -720,7 +722,7 @@
 <tr class="odd">
 <td style="text-align: left;"><code>np</code></td>
 <td style="text-align: left;">Nonparametric plot</td>
-<td style="text-align: right;">248</td>
+<td style="text-align: right;">241</td>
 <td style="text-align: right;">201</td>
 <td style="text-align: left;">thin</td>
 <td style="text-align: left;">queued</td>
@@ -733,7 +735,7 @@
 <tr class="even">
 <td style="text-align: left;"><code>rp</code></td>
 <td style="text-align: left;">Regression plot</td>
-<td style="text-align: right;">76</td>
+<td style="text-align: right;">68</td>
 <td style="text-align: right;">8</td>
 <td style="text-align: left;">thin</td>
 <td style="text-align: left;">queued</td>
@@ -744,8 +746,8 @@
 <tr class="odd">
 <td style="text-align: left;"><code>dp-trends</code></td>
 <td style="text-align: left;">Descriptive plot: trends</td>
-<td style="text-align: right;">NA</td>
-<td style="text-align: right;">NA</td>
+<td style="text-align: right;">80</td>
+<td style="text-align: right;">105</td>
 <td style="text-align: left;">thin</td>
 <td style="text-align: left;">shipped</td>
 <td style="text-align: left;">hvtiRtemplates</td>
@@ -755,8 +757,8 @@
 <tr class="even">
 <td style="text-align: left;"><code>dp-gfup</code></td>
 <td style="text-align: left;">Descriptive plot: follow-up</td>
-<td style="text-align: right;">NA</td>
-<td style="text-align: right;">NA</td>
+<td style="text-align: right;">48</td>
+<td style="text-align: right;">50</td>
 <td style="text-align: left;">thin</td>
 <td style="text-align: left;">queued</td>
 <td style="text-align: left;">hvtiRtemplates</td>
@@ -766,8 +768,8 @@
 <tr class="odd">
 <td style="text-align: left;"><code>dp-spaghetti</code></td>
 <td style="text-align: left;">Descriptive plot: spaghetti</td>
-<td style="text-align: right;">NA</td>
-<td style="text-align: right;">NA</td>
+<td style="text-align: right;">40</td>
+<td style="text-align: right;">68</td>
 <td style="text-align: left;">thin</td>
 <td style="text-align: left;">queued</td>
 <td style="text-align: left;">hvtiRtemplates</td>
@@ -777,8 +779,8 @@
 <tr class="even">
 <td style="text-align: left;"><code>dp-procs</code></td>
 <td style="text-align: left;">Descriptive plot: procedures over time</td>
-<td style="text-align: right;">NA</td>
-<td style="text-align: right;">NA</td>
+<td style="text-align: right;">35</td>
+<td style="text-align: right;">0</td>
 <td style="text-align: left;">thin</td>
 <td style="text-align: left;">queued</td>
 <td style="text-align: left;">hvtiRtemplates</td>
@@ -790,8 +792,8 @@
 <tr class="odd">
 <td style="text-align: left;"><code>dp-boxplot</code></td>
 <td style="text-align: left;">Descriptive plot: boxplot</td>
-<td style="text-align: right;">NA</td>
-<td style="text-align: right;">NA</td>
+<td style="text-align: right;">9</td>
+<td style="text-align: right;">2</td>
 <td style="text-align: left;">scaffold</td>
 <td style="text-align: left;">queued</td>
 <td style="text-align: left;">hvtiRtemplates</td>
@@ -828,7 +830,7 @@
 <tr class="odd">
 <td style="text-align: left;"><code>lg</code></td>
 <td style="text-align: left;">Logit trends</td>
-<td style="text-align: right;">367</td>
+<td style="text-align: right;">362</td>
 <td style="text-align: right;">0</td>
 <td style="text-align: left;">scaffold</td>
 <td style="text-align: left;">queued</td>
@@ -850,8 +852,8 @@
 <tr class="odd">
 <td style="text-align: left;"><code>dc-general</code></td>
 <td style="text-align: left;">Descriptive: general</td>
-<td style="text-align: right;">NA</td>
-<td style="text-align: right;">NA</td>
+<td style="text-align: right;">759</td>
+<td style="text-align: right;">1</td>
 <td style="text-align: left;">thin</td>
 <td style="text-align: left;">queued</td>
 <td style="text-align: left;">hvtiRtemplates</td>
@@ -863,8 +865,8 @@
 <tr class="even">
 <td style="text-align: left;"><code>dc-tables</code></td>
 <td style="text-align: left;">Descriptive: formatted tables</td>
-<td style="text-align: right;">NA</td>
-<td style="text-align: right;">NA</td>
+<td style="text-align: right;">551</td>
+<td style="text-align: right;">1</td>
 <td style="text-align: left;">thin</td>
 <td style="text-align: left;">queued</td>
 <td style="text-align: left;">hvtiRtemplates</td>
@@ -876,8 +878,8 @@
 <tr class="odd">
 <td style="text-align: left;"><code>dc-gfup</code></td>
 <td style="text-align: left;">Descriptive: follow-up</td>
-<td style="text-align: right;">NA</td>
-<td style="text-align: right;">NA</td>
+<td style="text-align: right;">389</td>
+<td style="text-align: right;">0</td>
 <td style="text-align: left;">thin</td>
 <td style="text-align: left;">queued</td>
 <td style="text-align: left;">hvtiRtemplates</td>
@@ -887,8 +889,8 @@
 <tr class="even">
 <td style="text-align: left;"><code>dc-dead</code></td>
 <td style="text-align: left;">Descriptive: mortality</td>
-<td style="text-align: right;">NA</td>
-<td style="text-align: right;">NA</td>
+<td style="text-align: right;">171</td>
+<td style="text-align: right;">0</td>
 <td style="text-align: left;">thin</td>
 <td style="text-align: left;">queued</td>
 <td style="text-align: left;">hvtiRtemplates</td>
@@ -898,8 +900,8 @@
 <tr class="odd">
 <td style="text-align: left;"><code>dc-stddiff</code></td>
 <td style="text-align: left;">Descriptive: standardized differences</td>
-<td style="text-align: right;">NA</td>
-<td style="text-align: right;">NA</td>
+<td style="text-align: right;">120</td>
+<td style="text-align: right;">0</td>
 <td style="text-align: left;">build</td>
 <td style="text-align: left;">NA</td>
 <td style="text-align: left;">hvtiRutilities</td>
@@ -920,8 +922,8 @@
 <tr class="odd">
 <td style="text-align: left;"><code>dc-trends</code></td>
 <td style="text-align: left;">Descriptive: trends</td>
-<td style="text-align: right;">NA</td>
-<td style="text-align: right;">NA</td>
+<td style="text-align: right;">43</td>
+<td style="text-align: right;">0</td>
 <td style="text-align: left;">scaffold</td>
 <td style="text-align: left;">queued</td>
 <td style="text-align: left;">hvtiRtemplates</td>

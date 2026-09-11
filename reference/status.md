@@ -66,11 +66,11 @@ status(remote = FALSE)
 #>   - hvtiPlotR        2.7.13     -          ok-local
 #>   x hvtiRlifetables  -          -          missing
 #>   x hvtiRbootstrap   -          -          missing
-#>   x hvtiRpropensity  -          -          missing
+#>   - hvtiRpropensity  0.1.3      -          ok-local
 #>   x hvtiRimputation  -          -          missing
 #>   x ggBoostedTrees   -          -          missing
 #>   x TemporalHazard   -          -          missing
 #>   - ggRandomForests  4.0.0      -          ok-local
 #> 
-#> ℹ 8 members need updating. Run `hvtiR::update()`.
+#> ℹ 7 members need updating. Run `hvtiR::update()`.
 ```
