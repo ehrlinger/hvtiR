@@ -271,3 +271,22 @@ test_that("a row destined for hvtiRtemplates still has a status", {
     }
   }
 })
+
+test_that("the triage rows' sas_breadth_jobs are second-field counts, pinned", {
+  raw <- read_jobs()
+
+  # dc-trends and dp-boxplot count distinct studies whose SECOND job-name
+  # field is the qualifier, the unit every qualified row uses (the 2026-09-02
+  # re-parse). #61 first wrote a token count over the whole name, 58 and 34,
+  # and nothing failed. Pinning the values makes a slide back to that unit
+  # fail here. A re-census that moves them should change these on purpose.
+  breadth <- function(prefix, qualifier) {
+    hit <- Filter(function(r) {
+      identical(r$prefix, prefix) && identical(r$qualifier, qualifier)
+    }, raw)
+    expect_length(hit, 1L)
+    hit[[1]]$sas_breadth_jobs
+  }
+  expect_equal(breadth("dc", "trends"), 43)
+  expect_equal(breadth("dp", "boxplot"), 9)
+})
