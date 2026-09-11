@@ -1,7 +1,7 @@
 Package: hvtiR
-Version: 1.1.7
+Version: 1.1.8
 
-# hvtiR (unreleased)
+# hvtiR 1.1.8
 
 * **`dp-trends` is `shipped`**, the first of the EDA templates from the
   2026-09-10 batch. `hvtiRtemplates` gains `40_graphs/dp-trends.qmd`, a thin
