@@ -1,12 +1,12 @@
 #' Read the job catalog
 #'
-#' The 56 job types found in the studies corpus, each routed to the package
+#' The 58 job types found in the studies corpus, each routed to the package
 #' that owes it. Rows are returned as a list rather than a data frame because
 #' `upstream`, `downstream`, `workflows` and `replaced_by` are arrays.
 #'
 #' @param path Path to the catalog JSON. Defaults to the copy installed with
 #'   the package.
-#' @return A list of 56 lists, one per job type.
+#' @return A list of 58 lists, one per job type.
 #' @noRd
 read_jobs <- function(path = system.file("extdata", "jobs.json",
                                          package = "hvtiR")) {
@@ -30,6 +30,12 @@ read_jobs <- function(path = system.file("extdata", "jobs.json",
 #' already exists, as `package::function`, and is frequently in a different
 #' package from `destination`: a thin template lives in `hvtiRtemplates` and
 #' leans on `hvtiPlotR`.
+#'
+#' The catalog file also carries a top-level `options` list beside `jobs`. An
+#' option is a construct shared across prefixes, such as a landmark early /
+#' late split or a matched analysis. It is not a job type, so `jobs()` does not
+#' return it; each entry names the prefixes it applies to and the census
+#' evidence for it.
 #'
 #' The taxonomy that says what a prefix *means* is
 #' `hvtiRutilities::hvti_taxonomy()`. This catalog says who owes it. They are

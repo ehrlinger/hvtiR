@@ -29,6 +29,12 @@ already exists, as \verb{package::function}, and is frequently in a different
 package from \code{destination}: a thin template lives in \code{hvtiRtemplates} and
 leans on \code{hvtiPlotR}.
 
+The catalog file also carries a top-level \code{options} list beside \code{jobs}. An
+option is a construct shared across prefixes, such as a landmark early /
+late split or a matched analysis. It is not a job type, so \code{jobs()} does not
+return it; each entry names the prefixes it applies to and the census
+evidence for it.
+
 The taxonomy that says what a prefix \emph{means} is
 \code{hvtiRutilities::hvti_taxonomy()}. This catalog says who owes it. They are
 apart because validating a routing has to load the destination package, and

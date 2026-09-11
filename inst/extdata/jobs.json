@@ -489,7 +489,7 @@
    ],
    "blocked_on": null,
    "spec": "dev/specs/2026-08-29-hs-template-design.md",
-   "note": null,
+   "note": "Triage 2026-09-10: the setup / uses-setup split (hs.dead.setup with hs.dead_uses_setup, and the conditional and compare-benefit setups; 63 studies) folds into this row rather than becoming qualifiers.",
    "sas_breadth_jobs": 140,
    "disposition": "scaffold",
    "destination": "hvtiRtemplates",
@@ -1235,7 +1235,7 @@
    ],
    "blocked_on": "hvtiRutilities#103",
    "spec": "dev/specs/2026-09-02-dp-dc-decomposition-design.md",
-   "note": "Measured 2026-09-02: distinct studies with a program-extension job of this qualifier. Ships the 2019 successor (stddiff.sas, 649 lines, Artis, continuous+ordinal+categorical, hvtiRutilities), NOT the 2009 std_dif.sas (108 lines, hvtiRtables, 72 studies). Decided 2026-09-03; the wider corpus use of std_dif is a macro outliving its replacement, not a preference.",
+   "note": "Measured 2026-09-02: distinct studies with a program-extension job of this qualifier. Ships the 2019 successor (stddiff.sas, 649 lines, Artis, continuous+ordinal+categorical, hvtiRutilities), NOT the 2009 std_dif.sas (108 lines, hvtiRtables, 72 studies). Decided 2026-09-03; the wider corpus use of std_dif is a macro outliving its replacement, not a preference. Triage 2026-09-10: the legacy variants std_dif, stddif_mtch_mtwt, stdcoef_diff.continuous and stddiffci.sumtbl fold into this row rather than becoming qualifiers.",
    "disposition": "build",
    "destination": "hvtiRutilities",
    "replaced_by": []
@@ -1389,6 +1389,82 @@
    "disposition": "scaffold",
    "destination": "hvtiRtemplates",
    "replaced_by": []
+  },
+  {
+   "prefix": "dc",
+   "qualifier": "trends",
+   "name": "Descriptive: trends",
+   "folder": "descriptive",
+   "family": "descriptive",
+   "kind": "job",
+   "status": "queued",
+   "batch": null,
+   "sas_breadth": null,
+   "sas_breadth_jobs": 58,
+   "r_exemplars": null,
+   "r_jobs": null,
+   "upstream": [],
+   "downstream": [],
+   "workflows": [],
+   "blocked_on": null,
+   "spec": null,
+   "note": "Measured 2026-09-10 over the 2026-08-27 census: distinct studies with a program-extension dc job whose name carries `trends` (58); `loess` appears in 30. Legacy templates: tp.dc.trends.vsd.loess, tp.dc.linear_trends.continuous. Admitted by the 2026-09-10 triage; batch not yet assigned.",
+   "disposition": "scaffold",
+   "destination": "hvtiRtemplates",
+   "replaced_by": []
+  },
+  {
+   "prefix": "dp",
+   "qualifier": "boxplot",
+   "name": "Descriptive plot: boxplot",
+   "folder": "graphs",
+   "family": "plots",
+   "kind": "job",
+   "status": "queued",
+   "batch": null,
+   "sas_breadth": null,
+   "sas_breadth_jobs": 34,
+   "r_exemplars": null,
+   "r_jobs": null,
+   "upstream": [],
+   "downstream": [],
+   "workflows": [],
+   "blocked_on": null,
+   "spec": null,
+   "note": "Measured 2026-09-10 over the 2026-08-27 census: distinct studies with a program-extension dp job whose name carries `boxplot` (34); dc jobs carry it in 16. Legacy template: tp.dp.boxplot.rv_index. No hvtiPlotR function is named for it yet, so scaffold rather than thin. Admitted by the 2026-09-10 triage; batch not yet assigned.",
+   "disposition": "scaffold",
+   "destination": "hvtiRtemplates",
+   "replaced_by": []
+  }
+ ],
+ "options": [
+  {
+   "option": "landmark",
+   "name": "Landmark early / late split",
+   "prefixes": ["dc", "lg", "lm", "gm"],
+   "evidence": "early / late: lg.dead 10 / 8, gm.mr 6 / 6, lm.af_po 6 / 4, dc.dead 4 / 5, lm.mr 4 / 4, dc.mr 3 / 3",
+   "note": "Split follow-up at a cutoff: the early job censors at it, the late job keeps only those who reach it. The cutoff is on survival for death and on measurement time for repeated measures. One shared option, not a qualifier per prefix. See hvtiRtemplates dev/specs/2026-09-02-per-folder-naming-parse-design.md, section 8. Counts are distinct studies over the 2026-08-27 census, from job names; decided in the 2026-09-10 triage."
+  },
+  {
+   "option": "repeated_events",
+   "name": "Repeated events",
+   "prefixes": ["ac", "hz", "hp", "bh", "hm", "bd"],
+   "evidence": "ac 65, hz 55, hp 54, bh 24, hm 24, bd 14",
+   "note": "Repeated-event analysis through the hazard chain, with weighted and modulated-renewal forms; bd builds the data. Counts are distinct studies over the 2026-08-27 census, from job names; decided in the 2026-09-10 triage."
+  },
+  {
+   "option": "uslife",
+   "name": "US life-table comparison",
+   "prefixes": ["hs", "hp", "ac"],
+   "evidence": "hs 62, hp 45, ac 9",
+   "note": "Compare observed survival with a matched US population life table, which hvtiRlifetables supplies. Counts are distinct studies over the 2026-08-27 census, from job names; decided in the 2026-09-10 triage."
+  },
+  {
+   "option": "matched",
+   "name": "Matched or weighted analysis",
+   "prefixes": ["dc", "ac", "bd", "hp", "hz"],
+   "evidence": "dc 88, ac 71, bd 58, hp 55, hz 45",
+   "note": "Matched or matching-weight versions of an analysis. The counts are upper bounds, because `match` is also a variable name. Counts are distinct studies over the 2026-08-27 census, from job names; decided in the 2026-09-10 triage."
   }
  ]
 }
