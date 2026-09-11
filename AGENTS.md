@@ -123,9 +123,11 @@ Do not read a green PR as broader assurance than it gives.
   2026-09-04 (`hvtiRimputation` on 2026-09-08). Here that is nine contexts: the three
   `R-CMD-check` matrix jobs, `lint`, `docs-current`, `house-style`, `pkgdown`,
   `test-coverage` and `version`. What differs between repositories is the list of
-  contexts, which follows each one's workflows, and two parameters: only
-  `ggRandomForests` sets `strict_required_status_checks_policy`, and only
-  `hvtiRbootstrap` and `hvtiRimputation` pin their contexts to the GitHub Actions app.
+  contexts, which follows each one's workflows, and two parameters. Only
+  `ggRandomForests` sets `strict_required_status_checks_policy`, so a pull request there
+  must be up to date with `main` before it can merge. Only `hvtiRbootstrap` and
+  `hvtiRimputation` pin their contexts to the GitHub Actions app, so a status of the same
+  name posted by anything else (another app, or a `gh api` call) does not satisfy them.
   ⚠️ **A workflow that produces a required context must never skip a pull request.** A
   required check whose workflow a `paths` or `paths-ignore` filter keeps from starting
   never reports, and the pull request waits on it forever: #65, a `.claude/**`-only
