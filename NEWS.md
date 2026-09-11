@@ -1,6 +1,19 @@
 Package: hvtiR
 Version: 1.1.8
 
+# hvtiR (unreleased)
+
+* **Two job types join the catalog, and a top-level `options` list starts
+  beside `jobs`.** `dc-trends` (58 studies) and `dp-boxplot` (34) are
+  `queued` with no batch yet. Both come from the 2026-09-10 triage in
+  `hvtiRtemplates`, counted as distinct studies over the 2026-08-27 census.
+  `options` records four constructs that span prefixes rather than being job
+  types of their own: a landmark early / late split, repeated events, a US
+  life-table comparison, and a matched or weighted analysis. Every reader of
+  the catalog takes only `jobs`, so the new list changes nothing that exists.
+  The `hs` and `dc-stddiff` notes now name the legacy variants that fold into
+  them, and the tests that pinned 56 rows now pin 58.
+
 # hvtiR 1.1.8
 
 * **`dp-trends` is `shipped`**, the first of the EDA templates from the
