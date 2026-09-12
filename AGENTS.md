@@ -36,7 +36,7 @@ Do not read a green PR as broader assurance than it gives.
 | `check-manual.yaml` | the PDF manual build |
 | `pkgdown.yaml` | the site build |
 | `house-style.yaml` | drift between the composed `.claude/house-style.md` and the upstream standard |
-| `version-check.yml` | a PR whose `Version:` went backwards, or stood still with no `# hvtiR (unreleased)` heading while shipping something (it ships nothing only when the base's `.Rbuildignore` excludes every file it touches); or a `DESCRIPTION`/`NEWS.md` version disagreement |
+| `version-check.yml` | a PR whose `Version:` went backwards, or stood still with no `# hvtiR (unreleased)` heading while shipping something (it ships nothing only when R's built-in build exclusions or the base's `.Rbuildignore` cover every file it touches, `.Rbuildignore` itself among them); or a `DESCRIPTION`/`NEWS.md` version disagreement |
 | `lint.yaml` | `lintr::lint_package()`, **and** a `docs-current` job that reruns `roxygenise()` and fails on any diff in `man/`, `NAMESPACE` or `DESCRIPTION` |
 | `test-coverage.yaml` | test failures under coverage; the codecov upload does not fail CI when no token is configured |
 
