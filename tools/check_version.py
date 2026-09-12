@@ -15,8 +15,9 @@ version heading instead. So an unchanged version is accepted only when the
 unreleased heading is present, which keeps the collision a failure.
 
 A pull request that ships nothing needs neither. The house style gives a
-change that `.Rbuildignore` excludes in full no NEWS entry and no bump, so an
-unchanged version passes for it with or without the heading. The workflow
+change whose every file R's built-in build exclusions or `.Rbuildignore` cover
+(`.Rbuildignore` itself among them) no NEWS entry and no bump, so an unchanged
+version passes for it with or without the heading. The workflow
 hands over the base branch's `.Rbuildignore`, so a pull request cannot exempt
 itself by adding a pattern. A missing or empty list of changed files, or of
 patterns, never earns the exemption.
@@ -149,8 +150,8 @@ def compare(base: str, head: str, unreleased: bool = False,
 
     `unreleased` says whether NEWS.md carries the unreleased heading, which is
     what makes an unchanged version legitimate rather than a silent collision.
-    `nothing_ships` says `.Rbuildignore` excludes every file the pull request
-    touches, which makes it legitimate too.
+    `nothing_ships` says R's built-in build exclusions or `.Rbuildignore`
+    cover every file the pull request touches, which makes it legitimate too.
     """
     if parse_version(head) > parse_version(base):
         return []
@@ -163,7 +164,8 @@ def compare(base: str, head: str, unreleased: bool = False,
             "under that heading, or bump the patch digit. Without one of the two, "
             "a branch rebased onto a main that already took this number is "
             "indistinguishable from one that never bumped. A change that ships "
-            "nothing, every file excluded by .Rbuildignore, needs neither."
+            "nothing, every file excluded by R's build defaults or "
+            ".Rbuildignore, needs neither."
         ]
     return [f"DESCRIPTION Version {head} is lower than the base branch's {base}."]
 

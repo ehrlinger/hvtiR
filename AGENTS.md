@@ -148,8 +148,9 @@ Do not read a green PR as broader assurance than it gives.
   and the reasoning.
   That commit updates the DCF `Version:` line at the top of `NEWS.md` too.
 - **A change that ships nothing gets no `NEWS.md` entry and no bump.** That is one where
-  `.Rbuildignore` excludes every file it touches, here `.github/`, `AGENTS.md`, `CLAUDE.md`,
-  `dev/` and `tools/` among others. No user can observe it, so the pull request and its commit
+  R's built-in build exclusions or `.Rbuildignore` cover every file it touches, here
+  `.github/`, `AGENTS.md`, `CLAUDE.md`, `dev/`, `tools/` and `.Rbuildignore` itself among
+  others. No user can observe it, so the pull request and its commit
   message are the record. Read `.Rbuildignore` rather than judging by feel. `version-check`
   applies the same test.
 
