@@ -1,7 +1,7 @@
 Package: hvtiR
-Version: 1.1.8
+Version: 1.1.9
 
-# hvtiR (unreleased)
+# hvtiR 1.1.9
 
 * **`pm` folds into `lm`, and `lm` is `thin` over `hvtiRpropensity`.** A
   review of the catalog page on 2026-09-11 put 8 or 9 in 10 `lm` jobs as
