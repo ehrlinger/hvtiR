@@ -74,7 +74,7 @@
 </tr><tr><td><code>house-style.yaml</code></td>
 <td>drift between the composed <code>.claude/house-style.md</code> and the upstream standard</td>
 </tr><tr><td><code>version-check.yml</code></td>
-<td>a PR whose <code>Version:</code> has not moved past the base branch, or a <code>DESCRIPTION</code>/<code>NEWS.md</code> version disagreement</td>
+<td>a PR whose <code>Version:</code> went backwards, or stood still with no <code># hvtiR (unreleased)</code> heading while shipping something (it ships nothing only when the base’s <code>.Rbuildignore</code> excludes every file it touches); or a <code>DESCRIPTION</code>/<code>NEWS.md</code> version disagreement</td>
 </tr><tr><td><code>lint.yaml</code></td>
 <td>
 <code><a href="https://lintr.r-lib.org/reference/lint.html" class="external-link">lintr::lint_package()</a></code>, <strong>and</strong> a <code>docs-current</code> job that reruns <code>roxygenise()</code> and fails on any diff in <code>man/</code>, <code>NAMESPACE</code> or <code>DESCRIPTION</code>
@@ -125,6 +125,8 @@
 <strong>Patch-digit bumps only</strong>, as fixes land. Minor and major are the maintainer’s decision.</li>
 <li>
 <strong>Bump when you name a version, not when you merge.</strong> A pull request lands without touching <code>Version:</code>. Its entry goes under a <code># hvtiR (unreleased)</code> heading in <code>NEWS.md</code>, which you add when it is not already there. A separate commit then renames that heading to the new version and updates <code>DESCRIPTION</code> and its <code>Date</code>, at most once a day. The heading is gone again after a bump, so the next change re-adds it. <code>.claude/house-style.md</code> carries the rule and the reasoning. That commit updates the DCF <code>Version:</code> line at the top of <code>NEWS.md</code> too.</li>
+<li>
+<strong>A change that ships nothing gets no <code>NEWS.md</code> entry and no bump.</strong> That is one where <code>.Rbuildignore</code> excludes every file it touches, here <code>.github/</code>, <code>AGENTS.md</code>, <code>CLAUDE.md</code>, <code>dev/</code> and <code>tools/</code> among others. No user can observe it, so the pull request and its commit message are the record. Read <code>.Rbuildignore</code> rather than judging by feel. <code>version-check</code> applies the same test.</li>
 </ul></div>
 <div class="section level2">
 <h2 id="change-discipline">Change discipline<a class="anchor" aria-label="anchor" href="#change-discipline"></a></h2>
