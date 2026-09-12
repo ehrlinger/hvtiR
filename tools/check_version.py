@@ -15,8 +15,9 @@ version heading instead. So an unchanged version is accepted only when the
 unreleased heading is present, which keeps the collision a failure.
 
 A pull request that ships nothing needs neither. The house style gives a
-change that `.Rbuildignore` excludes in full no NEWS entry and no bump, so an
-unchanged version passes for it with or without the heading. The workflow
+change whose every file R's built-in build exclusions or `.Rbuildignore` cover
+(`.Rbuildignore` itself among them) no NEWS entry and no bump, so an unchanged
+version passes for it with or without the heading. The workflow
 hands over the base branch's `.Rbuildignore`, so a pull request cannot exempt
 itself by adding a pattern. A missing or empty list of changed files, or of
 patterns, never earns the exemption.
@@ -50,6 +51,19 @@ def has_unreleased_heading(news: str) -> bool:
     return bool(UNRELEASED_RE.search(news))
 
 
+# `tools:::inRbuildignore()` tests these before a package's own `.Rbuildignore`,
+# which is why `.Rbuildignore` itself never ships. Copied from
+# `tools:::get_exclude_patterns()` in R 4.6.1.
+R_BUILD_EXCLUDES = [
+    r"^\.Rbuildignore$", r"(^|/)\.DS_Store$", r"^\.(RData|Rhistory)$",
+    r"~$", r"\.bak$", r"\.sw.$", r"(^|/)\.#[^/]*$", r"(^|/)#[^/]*#$",
+    r"^TITLE$", r"^data/00Index$", r"^inst/doc/00Index\.dcf$",
+    r"^config\.(cache|log|status)$", r"(^|/)autom4te\.cache$",
+    r"^src/.*\.d$", r"^src/Makedeps$", r"^src/so_locations$",
+    r"^inst/doc/Rplots\.(ps|pdf)$", r"^(GPATH|GRTAGS|GTAGS)$",
+]
+
+
 def read_rbuildignore(text: str) -> list:
     """The patterns in an `.Rbuildignore`, one per non-blank line."""
     return [line for line in text.splitlines() if line.strip()]
@@ -58,7 +72,8 @@ def read_rbuildignore(text: str) -> list:
 def ships_nothing(paths: list, patterns: list) -> bool:
     """Whether `R CMD build` would leave out every changed file.
 
-    Mirrors `tools:::inRbuildignore()`: each pattern is a case-insensitive Perl
+    Mirrors `tools:::inRbuildignore()`, which adds R's own patterns
+    (`R_BUILD_EXCLUDES`) to the file's: each pattern is a case-insensitive Perl
     regex tested against paths relative to the package root, directories
     included, and an excluded directory takes everything under it. So a file
     is out when it, or any directory above it, matches. An empty list of paths
@@ -67,7 +82,8 @@ def ships_nothing(paths: list, patterns: list) -> bool:
     if not paths or not patterns:
         return False
     try:
-        regexes = [re.compile(p, re.IGNORECASE) for p in patterns]
+        regexes = [re.compile(p, re.IGNORECASE)
+                   for p in R_BUILD_EXCLUDES + list(patterns)]
     except re.error as exc:
         raise ValueError(f".Rbuildignore pattern does not compile: {exc}") from None
 
@@ -134,8 +150,8 @@ def compare(base: str, head: str, unreleased: bool = False,
 
     `unreleased` says whether NEWS.md carries the unreleased heading, which is
     what makes an unchanged version legitimate rather than a silent collision.
-    `nothing_ships` says `.Rbuildignore` excludes every file the pull request
-    touches, which makes it legitimate too.
+    `nothing_ships` says R's built-in build exclusions or `.Rbuildignore`
+    cover every file the pull request touches, which makes it legitimate too.
     """
     if parse_version(head) > parse_version(base):
         return []
@@ -148,7 +164,8 @@ def compare(base: str, head: str, unreleased: bool = False,
             "under that heading, or bump the patch digit. Without one of the two, "
             "a branch rebased onto a main that already took this number is "
             "indistinguishable from one that never bumped. A change that ships "
-            "nothing, every file excluded by .Rbuildignore, needs neither."
+            "nothing, every file excluded by R's build defaults or "
+            ".Rbuildignore, needs neither."
         ]
     return [f"DESCRIPTION Version {head} is lower than the base branch's {base}."]
 

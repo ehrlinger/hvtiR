@@ -110,6 +110,20 @@ class ShipsNothingTests(unittest.TestCase):
     def test_no_patterns_fails_closed(self):
         self.assertFalse(ships_nothing(["AGENTS.md"], []))
 
+    def test_rbuildignore_itself_ships_nothing(self):
+        # R's built-in exclusions drop it even though it does not list itself.
+        self.assertTrue(ships_nothing([".Rbuildignore"], IGNORE))
+
+    def test_rbuildignore_with_a_shipped_file_ships(self):
+        self.assertFalse(ships_nothing([".Rbuildignore", "R/install.R"], IGNORE))
+
+    def test_built_in_patterns_do_not_excuse_a_missing_rbuildignore(self):
+        # Fail closed stays: no file patterns, no exemption, defaults or not.
+        self.assertFalse(ships_nothing([".Rbuildignore"], []))
+
+    def test_a_built_in_pattern_matches_below_the_root(self):
+        self.assertTrue(ships_nothing(["R/.DS_Store", ".github/x.yml"], IGNORE))
+
     def test_a_pattern_that_does_not_compile_is_an_error(self):
         with self.assertRaises(ValueError):
             ships_nothing(["AGENTS.md"], ["^(unclosed"])
