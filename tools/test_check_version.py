@@ -12,8 +12,13 @@ from check_version import (
     has_unreleased_heading,
     main_with,
     parse_version,
+    read_rbuildignore,
     read_version,
+    ships_nothing,
 )
+
+# The shape of hvtiR's own .Rbuildignore, enough to exercise the matching.
+IGNORE = [r"^\.github$", r"^AGENTS\.md$", r"^CLAUDE\.md$", r"^tools$"]
 
 
 class ParseTests(unittest.TestCase):
@@ -66,6 +71,53 @@ class CompareTests(unittest.TestCase):
         # The unreleased heading excuses standing still, never going backwards.
         self.assertTrue(compare("1.0.5", "1.0.4", unreleased=True))
 
+    def test_an_unchanged_version_passes_when_nothing_ships(self):
+        # House style: a change .Rbuildignore excludes in full gets no NEWS
+        # entry and no bump, so it may stand still without the heading.
+        self.assertEqual(compare("1.0.5", "1.0.5", nothing_ships=True), [])
+
+    def test_a_lower_version_fails_even_when_nothing_ships(self):
+        self.assertTrue(compare("1.0.5", "1.0.4", nothing_ships=True))
+
+
+class ShipsNothingTests(unittest.TestCase):
+    def test_files_under_an_excluded_directory_ship_nothing(self):
+        self.assertTrue(ships_nothing([".github/workflows/pkgdown.yaml",
+                                       ".github/workflows/check-manual.yaml"], IGNORE))
+
+    def test_an_excluded_top_level_file_ships_nothing(self):
+        self.assertTrue(ships_nothing(["AGENTS.md", "tools/check_version.py"], IGNORE))
+
+    def test_one_shipped_file_makes_the_change_ship(self):
+        self.assertFalse(ships_nothing([".github/workflows/pkgdown.yaml",
+                                        "R/install.R"], IGNORE))
+
+    def test_news_ships(self):
+        # NEWS.md is in the tarball, so an entry is itself a shipped change.
+        self.assertFalse(ships_nothing(["NEWS.md"], IGNORE))
+
+    def test_matching_ignores_case_as_r_does(self):
+        # tools:::inRbuildignore() passes ignore.case = TRUE.
+        self.assertTrue(ships_nothing(["agents.md"], IGNORE))
+
+    def test_a_lookalike_directory_does_not_match(self):
+        self.assertFalse(ships_nothing([".githubx/notes.md"], IGNORE))
+
+    def test_an_empty_file_list_fails_closed(self):
+        # A diff that failed to list anything must not excuse the check.
+        self.assertFalse(ships_nothing([], IGNORE))
+
+    def test_no_patterns_fails_closed(self):
+        self.assertFalse(ships_nothing(["AGENTS.md"], []))
+
+    def test_a_pattern_that_does_not_compile_is_an_error(self):
+        with self.assertRaises(ValueError):
+            ships_nothing(["AGENTS.md"], ["^(unclosed"])
+
+    def test_blank_lines_are_not_patterns(self):
+        self.assertEqual(read_rbuildignore("^tools$\n\n^\\.github$\n"),
+                         ["^tools$", "^\\.github$"])
+
 
 class UnreleasedHeadingTests(unittest.TestCase):
     def test_the_heading_is_found(self):
@@ -116,6 +168,18 @@ class NewsAgreementTests(unittest.TestCase):
             "# hvtiR 1.0.5\n"
         )
         self.assertEqual(main_with(self.BASE, self.BASE, news), 0)
+
+    def test_an_unbumped_change_that_ships_nothing_passes_without_the_heading(self):
+        # End to end: the case right after a bump, when the heading is gone and
+        # a workflow or contract change lands with no entry.
+        news = "Package: hvtiR\nVersion: 1.0.5\n\n# hvtiR 1.0.5\n"
+        changed = [".github/workflows/pkgdown.yaml", "AGENTS.md"]
+        self.assertEqual(main_with(self.BASE, self.BASE, news, changed, IGNORE), 0)
+
+    def test_an_unbumped_change_that_ships_something_still_fails(self):
+        news = "Package: hvtiR\nVersion: 1.0.5\n\n# hvtiR 1.0.5\n"
+        changed = [".github/workflows/pkgdown.yaml", "R/install.R"]
+        self.assertEqual(main_with(self.BASE, self.BASE, news, changed, IGNORE), 1)
 
     def test_a_bumped_version_with_a_moved_date_and_matching_news_passes(self):
         # The happy path, asserted once with every rule satisfied.
