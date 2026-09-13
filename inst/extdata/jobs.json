@@ -560,7 +560,7 @@
    ],
    "blocked_on": null,
    "spec": null,
-   "note": "Mostly propensity-score models. Of the 1,872 lm SAS programs in analyses, 1,824 run PROC LOGISTIC and 1,014 name a propensity or balancing score, in 331 of 467 studies (2026-09-11 scan; a text match, so a lower bound). The 2026-09-11 review of the catalog page put it at 8 or 9 in 10, and propensity modelling is done in hvtiRpropensity, so the row is thin over it. pm folds in (rule 2 of the catalog design, section 5): sas_breadth_jobs counts the studies with either an lm or a pm program, 470, where lm alone is 469 and three of pm's four studies already have one. sas_breadth and the R counts are lm's alone.",
+   "note": "Mostly propensity-score models. Of the 1,872 lm SAS programs in analyses, 1,824 run PROC LOGISTIC and 1,014 name a propensity or balancing score, in 331 of 467 studies (2026-09-11 scan; a text match, so a lower bound). The 2026-09-11 review of the catalog page put it at 8 or 9 in 10, and propensity modelling is done in hvtiRpropensity, so the row is thin over it. pm folds in (rule 2 of the catalog design, section 5): sas_breadth_jobs counts the studies with either an lm or a pm program, 470, where lm alone is 469 and three of pm's four studies already have one. sas_breadth and the R counts are lm's alone. pm's own row left the catalog on 2026-09-13, when hvti_taxonomy() dropped the prefix.",
    "sas_breadth_jobs": 470,
    "disposition": "thin",
    "destination": "hvtiRtemplates",
@@ -762,31 +762,6 @@
     "hvtiPlotR::hv_nonparametric",
     "hvtiPlotR::hv_ordinal"
    ]
-  },
-  {
-   "prefix": "pm",
-   "qualifier": null,
-   "name": "Propensity model",
-   "folder": "analyses",
-   "family": "models",
-   "kind": "job",
-   "status": null,
-   "batch": null,
-   "sas_breadth": 5,
-   "r_exemplars": 0,
-   "r_jobs": 0,
-   "upstream": [],
-   "downstream": [],
-   "workflows": [
-    "propensity-matching"
-   ],
-   "blocked_on": null,
-   "spec": null,
-   "note": "Folded into lm on 2026-09-11, after a review of the catalog page: its studies are counted in lm's sas_breadth_jobs, and no template of its own is owed. Its programs are negative-binomial balancing-score fits (7 of its 8 SAS programs are PROC GENMOD dist=nb), which hvtiRpropensity::bs_count() ports. The row remains only because hvti_taxonomy() still lists pm and hvtiRtemplates requires a catalog row for every taxonomy prefix; it goes when the taxonomy drops pm. Its own count, 4 studies, is also inside lm's.",
-   "sas_breadth_jobs": 4,
-   "disposition": "retire",
-   "destination": "hvtiRpropensity",
-   "replaced_by": ["hvtiRpropensity::bs_count"]
   },
   {
    "prefix": "rf",

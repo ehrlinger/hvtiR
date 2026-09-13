@@ -3,6 +3,12 @@ Version: 1.1.9
 
 # hvtiR (unreleased)
 
+* **`pm`'s row leaves the catalog**, with its entry in `hvti_taxonomy()`.
+  It had stayed as a `retire` row after folding into `lm` only because
+  `hvtiRtemplates` requires the catalog and the taxonomy to name the same
+  prefixes. `lm` still counts the studies using either prefix, 470. The
+  catalog has 57 rows and 5 retired.
+
 * **The hazard rows name the TemporalHazard functions their templates
   call**, in `replaced_by`: `ac` `hzr_kaplan()`; `hz` `hazard()` and
   `hzr_phase()`; `hm` `hazard()`, `hzr_stepwise()`, `hzr_deciles()` and

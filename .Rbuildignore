@@ -19,3 +19,4 @@
 ^.*\.tar\.gz$
 ^tools$
 ^\.pytest_cache$
+^reports$
