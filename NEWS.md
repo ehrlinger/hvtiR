@@ -1,7 +1,7 @@
 Package: hvtiR
-Version: 1.1.9
+Version: 1.1.10
 
-# hvtiR (unreleased)
+# hvtiR 1.1.10
 
 * **`pm`'s row leaves the catalog**, with its entry in `hvti_taxonomy()`.
   It had stayed as a `retire` row after folding into `lm` only because
