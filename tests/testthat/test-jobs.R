@@ -158,6 +158,24 @@ test_that("pm folds into lm, and si and mi count jobs, pinned", {
   expect_identical(j$sas_breadth_jobs[at("mi")], 18L)
 })
 
+test_that("the hazard rows name the TemporalHazard functions they call", {
+  j <- jobs()
+  at <- function(p) which(j$prefix == p & is.na(j$qualifier))
+
+  # Read from the shipped templates in hvtiRtemplates on 2026-09-13. bc is a
+  # Cox job and calls none of them, so it must not grow a reference either.
+  uses <- list(ac = "hzr_kaplan", hz = c("hazard", "hzr_phase"),
+               hm = c("hazard", "hzr_stepwise", "hzr_deciles", "hzr_gof"),
+               hp = "hazard", hs = c("hazard", "hzr_stepwise"),
+               bh = c("hzr_bootstrap", "hzr_stepwise"))
+  for (p in names(uses)) {
+    got <- j$replaced_by[[at(p)]]
+    expect_true(all(paste0("TemporalHazard::", uses[[p]]) %in% got),
+                label = p)
+  }
+  expect_false(any(grepl("^TemporalHazard::", j$replaced_by[[at("bc")]])))
+})
+
 test_that("jobs() has exactly the seeded count of retire rows, each replaced", {
   j <- jobs()
 

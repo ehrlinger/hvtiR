@@ -1,6 +1,23 @@
 Package: hvtiR
 Version: 1.1.9
 
+# hvtiR (unreleased)
+
+* **The hazard rows name the TemporalHazard functions their templates
+  call**, in `replaced_by`: `ac` `hzr_kaplan()`; `hz` `hazard()` and
+  `hzr_phase()`; `hm` `hazard()`, `hzr_stepwise()`, `hzr_deciles()` and
+  `hzr_gof()`; `hs` `hazard()` and `hzr_stepwise()`; `bh` `hzr_bootstrap()`
+  and `hzr_stepwise()`; and `hp` adds `hazard()` to its `hvtiPlotR`
+  functions. Each is read from the shipped template in `hvtiRtemplates` and
+  validated against TemporalHazard's exports, so `TemporalHazard` joins
+  `Suggests`, `Remotes` and the CI installs. `bc` is a Cox job and calls none
+  of them. No disposition changes.
+
+* **Five rows take the relabelled taxonomy names**, after the same review
+  that folded `pm` into `lm`: `bn` "Bootstrap non-linear", `nd` "Non-linear
+  distributions", `nm` "Non-linear model", `np` "Non-linear plot" and `nb`
+  "Boosting". `hvti_taxonomy()` in `hvtiRutilities` takes the same labels.
+
 # hvtiR 1.1.9
 
 * **`pm` folds into `lm`, and `lm` is `thin` over `hvtiRpropensity`.** A
