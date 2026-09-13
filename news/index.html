@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">hvtiR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.9</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.10</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -44,6 +44,12 @@
       <small>Source: <a href="https://github.com/ehrlinger/hvtiR/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.1.10" id="hvtir-1110">hvtiR 1.1.10<a class="anchor" aria-label="anchor" href="#hvtir-1110"></a></h2>
+<ul><li><p><strong><code>pm</code>’s row leaves the catalog</strong>, with its entry in <code>hvti_taxonomy()</code>. It had stayed as a <code>retire</code> row after folding into <code>lm</code> only because <code>hvtiRtemplates</code> requires the catalog and the taxonomy to name the same prefixes. <code>lm</code> still counts the studies using either prefix, 470. The catalog has 57 rows and 5 retired.</p></li>
+<li><p><strong>The hazard rows name the TemporalHazard functions their templates call</strong>, in <code>replaced_by</code>: <code>ac</code> <code>hzr_kaplan()</code>; <code>hz</code> <code>hazard()</code> and <code>hzr_phase()</code>; <code>hm</code> <code>hazard()</code>, <code>hzr_stepwise()</code>, <code>hzr_deciles()</code> and <code>hzr_gof()</code>; <code>hs</code> <code>hazard()</code> and <code>hzr_stepwise()</code>; <code>bh</code> <code>hzr_bootstrap()</code> and <code>hzr_stepwise()</code>; and <code>hp</code> adds <code>hazard()</code> to its <code>hvtiPlotR</code> functions. Each is read from the shipped template in <code>hvtiRtemplates</code> and validated against TemporalHazard’s exports, so <code>TemporalHazard</code> joins <code>Suggests</code>, <code>Remotes</code> and the CI installs. <code>bc</code> is a Cox job and calls none of them. No disposition changes.</p></li>
+<li><p><strong>Five rows take the relabelled taxonomy names</strong>, after the same review that folded <code>pm</code> into <code>lm</code>: <code>bn</code> “Bootstrap non-linear”, <code>nd</code> “Non-linear distributions”, <code>nm</code> “Non-linear model”, <code>np</code> “Non-linear plot” and <code>nb</code> “Boosting”. <code>hvti_taxonomy()</code> in <code>hvtiRutilities</code> takes the same labels.</p></li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.1.9" id="hvtir-119">hvtiR 1.1.9<a class="anchor" aria-label="anchor" href="#hvtir-119"></a></h2>
 <ul><li><p><strong><code>pm</code> folds into <code>lm</code>, and <code>lm</code> is <code>thin</code> over <code>hvtiRpropensity</code>.</strong> A review of the catalog page on 2026-09-11 put 8 or 9 in 10 <code>lm</code> jobs as propensity models, and the corpus agrees as far as a text match can: 1,014 of the 1,872 <code>lm</code> SAS programs name a propensity or balancing score, in 331 of 467 studies. <code>lm</code> now leans on <code>ps_logistic()</code> and <code>bs_count()</code>, and counts the studies using either prefix, 470 against 469. <code>pm</code>, whose programs are negative-binomial balancing-score fits, is <code>retire</code> over <code>bs_count()</code>, and keeps a row only while <code>hvti_taxonomy()</code> lists it. <code>hvtiRpropensity</code> joins <code>Suggests</code>, <code>Remotes</code> and the CI installs, because the routing test validates every package a <code>replaced_by</code> names and fails on CI when one is absent.</p></li>
