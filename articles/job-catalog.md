@@ -10,7 +10,7 @@ so it cannot disagree with it.
 | disposition | rows |
 |:------------|-----:|
 | build       |    8 |
-| retire      |    6 |
+| retire      |    5 |
 | scaffold    |   29 |
 | thin        |   15 |
 
@@ -48,7 +48,6 @@ so it cannot disagree with it.
 | `mm` | Mixed model | 56 | 1 | scaffold | queued | hvtiRtemplates |  |  |
 | `nb` | Boosting | 18 | 63 | build | NA | ggBoostedTrees |  | ggBoostedTrees#9 |
 | `nm` | Non-linear model | 121 | 1 | scaffold | queued | hvtiRtemplates |  |  |
-| `pm` | Propensity model | 4 | 0 | retire | NA | hvtiRpropensity | [`hvtiRpropensity::bs_count`](https://ehrlinger.github.io/hvtiRpropensity/reference/bs_count.html) |  |
 | `rf` | Random forest | 41 | 312 | retire | NA | ggRandomForests | [`ggRandomForests::gg_rfsrc`](https://ehrlinger.github.io/ggRandomForests/reference/gg_rfsrc.rfsrc.html), [`ggRandomForests::gg_error`](https://ehrlinger.github.io/ggRandomForests/reference/gg_error.html), [`ggRandomForests::gg_vimp`](https://ehrlinger.github.io/ggRandomForests/reference/gg_vimp.html), [`ggRandomForests::gg_variable`](https://ehrlinger.github.io/ggRandomForests/reference/gg_variable.html) |  |
 | `rfc` | Random forest classifier | 11 | 52 | retire | NA | ggRandomForests | [`ggRandomForests::gg_roc`](https://ehrlinger.github.io/ggRandomForests/reference/gg_roc.rfsrc.html), [`ggRandomForests::gg_brier`](https://ehrlinger.github.io/ggRandomForests/reference/gg_brier.html), [`ggRandomForests::gg_error`](https://ehrlinger.github.io/ggRandomForests/reference/gg_error.html), [`ggRandomForests::calc_auc`](https://ehrlinger.github.io/ggRandomForests/reference/calc_auc.html) |  |
 | `rfs` | Random forest survival | 9 | 39 | retire | NA | ggRandomForests | [`ggRandomForests::gg_rfsrc`](https://ehrlinger.github.io/ggRandomForests/reference/gg_rfsrc.rfsrc.html), [`ggRandomForests::gg_survival`](https://ehrlinger.github.io/ggRandomForests/reference/gg_survival.html), [`ggRandomForests::gg_error`](https://ehrlinger.github.io/ggRandomForests/reference/gg_error.html), [`ggRandomForests::gg_vimp`](https://ehrlinger.github.io/ggRandomForests/reference/gg_vimp.html) |  |
