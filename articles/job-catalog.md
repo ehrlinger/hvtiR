@@ -18,10 +18,10 @@ so it cannot disagree with it.
 
 | job | name | SAS | R | disposition | status | destination | replaced by | blocked on |
 |:---|:---|---:|---:|:---|:---|:---|:---|:---|
-| `ac` | Actuarial | 745 | 20 | scaffold | shipped | hvtiRtemplates |  |  |
+| `ac` | Actuarial | 745 | 20 | scaffold | shipped | hvtiRtemplates | [`TemporalHazard::hzr_kaplan`](https://ehrlinger.github.io/TemporalHazard/reference/hzr_kaplan.html) |  |
 | `cd` | Cumulative distribution | 190 | 8 | scaffold | queued | hvtiRtemplates |  |  |
-| `hz` | Hazard fit | 574 | 8 | scaffold | shipped | hvtiRtemplates |  |  |
-| `nd` | Nonparametric distributions | 244 | 12 | scaffold | queued | hvtiRtemplates |  |  |
+| `hz` | Hazard fit | 574 | 8 | scaffold | shipped | hvtiRtemplates | [`TemporalHazard::hazard`](https://ehrlinger.github.io/TemporalHazard/reference/hazard.html), [`TemporalHazard::hzr_phase`](https://ehrlinger.github.io/TemporalHazard/reference/hzr_phase.html) |  |
+| `nd` | Non-linear distributions | 244 | 12 | scaffold | queued | hvtiRtemplates |  |  |
 | `dp-variable` | Distribution of a variable | 237 | 2 | thin | queued | hvtiRtemplates | [`hvtiPlotR::hv_trends`](https://ehrlinger.github.io/hvtiPlotR/reference/hv_trends.html), [`hvtiPlotR::hv_ordinal`](https://ehrlinger.github.io/hvtiPlotR/reference/hv_ordinal.html) |  |
 
 ## documents
@@ -35,19 +35,19 @@ so it cannot disagree with it.
 | job | name | SAS | R | disposition | status | destination | replaced by | blocked on |
 |:---|:---|---:|---:|:---|:---|:---|:---|:---|
 | `bc` | Bootstrap Cox | 16 | 0 | scaffold | shipped | hvtiRtemplates |  |  |
-| `bh` | Bootstrap hazard | 320 | 5 | scaffold | shipped | hvtiRtemplates |  |  |
+| `bh` | Bootstrap hazard | 320 | 5 | scaffold | shipped | hvtiRtemplates | [`TemporalHazard::hzr_bootstrap`](https://ehrlinger.github.io/TemporalHazard/reference/hzr_bootstrap.html), [`TemporalHazard::hzr_stepwise`](https://ehrlinger.github.io/TemporalHazard/reference/hzr_stepwise.html) |  |
 | `bl` | Bootstrap logistic | 352 | 1 | scaffold | shipped | hvtiRtemplates |  |  |
-| `bn` | Bootstrap nonparametric | 108 | 0 | scaffold | queued | hvtiRtemplates |  |  |
+| `bn` | Bootstrap non-linear | 108 | 0 | scaffold | queued | hvtiRtemplates |  |  |
 | `bq` | Bootstrap quantile | 2 | 0 | scaffold | queued | hvtiRtemplates |  | hvtiRbootstrap#16 |
 | `br` | Bootstrap regression | 103 | 1 | scaffold | shipped | hvtiRtemplates |  |  |
 | `cm` | Cox matching | 35 | 2 | scaffold | queued | hvtiRtemplates |  |  |
 | `gm` | Generalized model | 73 | 0 | scaffold | queued | hvtiRtemplates |  |  |
-| `hm` | Hazard model | 373 | 9 | scaffold | shipped | hvtiRtemplates |  |  |
+| `hm` | Hazard model | 373 | 9 | scaffold | shipped | hvtiRtemplates | [`TemporalHazard::hazard`](https://ehrlinger.github.io/TemporalHazard/reference/hazard.html), [`TemporalHazard::hzr_stepwise`](https://ehrlinger.github.io/TemporalHazard/reference/hzr_stepwise.html), [`TemporalHazard::hzr_deciles`](https://ehrlinger.github.io/TemporalHazard/reference/hzr_deciles.html), [`TemporalHazard::hzr_gof`](https://ehrlinger.github.io/TemporalHazard/reference/hzr_gof.html) |  |
 | `lm` | Logistic model | 470 | 45 | thin | queued | hvtiRtemplates | [`hvtiRpropensity::ps_logistic`](https://ehrlinger.github.io/hvtiRpropensity/reference/ps_logistic.html), [`hvtiRpropensity::bs_count`](https://ehrlinger.github.io/hvtiRpropensity/reference/bs_count.html) |  |
 | `ls` | Life table / STS | 32 | 0 | scaffold | queued | hvtiRtemplates |  |  |
 | `mm` | Mixed model | 56 | 1 | scaffold | queued | hvtiRtemplates |  |  |
-| `nb` | Notebook | 18 | 63 | build | NA | ggBoostedTrees |  | ggBoostedTrees#9 |
-| `nm` | Nonparametric model | 121 | 1 | scaffold | queued | hvtiRtemplates |  |  |
+| `nb` | Boosting | 18 | 63 | build | NA | ggBoostedTrees |  | ggBoostedTrees#9 |
+| `nm` | Non-linear model | 121 | 1 | scaffold | queued | hvtiRtemplates |  |  |
 | `pm` | Propensity model | 4 | 0 | retire | NA | hvtiRpropensity | [`hvtiRpropensity::bs_count`](https://ehrlinger.github.io/hvtiRpropensity/reference/bs_count.html) |  |
 | `rf` | Random forest | 41 | 312 | retire | NA | ggRandomForests | [`ggRandomForests::gg_rfsrc`](https://ehrlinger.github.io/ggRandomForests/reference/gg_rfsrc.rfsrc.html), [`ggRandomForests::gg_error`](https://ehrlinger.github.io/ggRandomForests/reference/gg_error.html), [`ggRandomForests::gg_vimp`](https://ehrlinger.github.io/ggRandomForests/reference/gg_vimp.html), [`ggRandomForests::gg_variable`](https://ehrlinger.github.io/ggRandomForests/reference/gg_variable.html) |  |
 | `rfc` | Random forest classifier | 11 | 52 | retire | NA | ggRandomForests | [`ggRandomForests::gg_roc`](https://ehrlinger.github.io/ggRandomForests/reference/gg_roc.rfsrc.html), [`ggRandomForests::gg_brier`](https://ehrlinger.github.io/ggRandomForests/reference/gg_brier.html), [`ggRandomForests::gg_error`](https://ehrlinger.github.io/ggRandomForests/reference/gg_error.html), [`ggRandomForests::calc_auc`](https://ehrlinger.github.io/ggRandomForests/reference/calc_auc.html) |  |
@@ -76,11 +76,11 @@ so it cannot disagree with it.
 | `cp` | Cumulative probability plot | 4 | 1 | build | NA | hvtiPlotR |  | hvtiPlotR#135 |
 | `fp` | Forest plot | 11 | 20 | build | NA | hvtiPlotR |  | hvtiPlotR#133 |
 | `gp` | Generalized model plot | 50 | 2 | build | NA | hvtiPlotR |  | hvtiPlotR#136 |
-| `hp` | Hazard plot | 541 | 24 | thin | revisit | hvtiRtemplates | [`hvtiPlotR::hv_hazard`](https://ehrlinger.github.io/hvtiPlotR/reference/hv_hazard.html), [`hvtiPlotR::hazard_plot`](https://ehrlinger.github.io/hvtiPlotR/reference/hazard_plot.html), [`hvtiPlotR::hv_survival`](https://ehrlinger.github.io/hvtiPlotR/reference/hv_survival.html), [`hvtiPlotR::hv_atrisk_compose`](https://ehrlinger.github.io/hvtiPlotR/reference/hv_atrisk_compose.html) |  |
-| `hs` | Hazard setup | 140 | 11 | scaffold | shipped | hvtiRtemplates |  |  |
+| `hp` | Hazard plot | 541 | 24 | thin | revisit | hvtiRtemplates | [`hvtiPlotR::hv_hazard`](https://ehrlinger.github.io/hvtiPlotR/reference/hv_hazard.html), [`hvtiPlotR::hazard_plot`](https://ehrlinger.github.io/hvtiPlotR/reference/hazard_plot.html), [`hvtiPlotR::hv_survival`](https://ehrlinger.github.io/hvtiPlotR/reference/hv_survival.html), [`hvtiPlotR::hv_atrisk_compose`](https://ehrlinger.github.io/hvtiPlotR/reference/hv_atrisk_compose.html), [`TemporalHazard::hazard`](https://ehrlinger.github.io/TemporalHazard/reference/hazard.html) |  |
+| `hs` | Hazard setup | 140 | 11 | scaffold | shipped | hvtiRtemplates | [`TemporalHazard::hazard`](https://ehrlinger.github.io/TemporalHazard/reference/hazard.html), [`TemporalHazard::hzr_stepwise`](https://ehrlinger.github.io/TemporalHazard/reference/hzr_stepwise.html) |  |
 | `lp` | Logistic plot | 310 | 606 | thin | queued | hvtiRtemplates | [`hvtiPlotR::hv_mirror_hist`](https://ehrlinger.github.io/hvtiPlotR/reference/hv_mirror_hist.html) |  |
 | `mp` | Mixed model plot | 41 | 5 | thin | queued | hvtiRtemplates | [`hvtiPlotR::hv_spaghetti`](https://ehrlinger.github.io/hvtiPlotR/reference/hv_spaghetti.html) |  |
-| `np` | Nonparametric plot | 241 | 201 | thin | queued | hvtiRtemplates | [`hvtiPlotR::hv_nonparametric`](https://ehrlinger.github.io/hvtiPlotR/reference/hv_nonparametric.html), [`hvtiPlotR::hv_ordinal`](https://ehrlinger.github.io/hvtiPlotR/reference/hv_ordinal.html) |  |
+| `np` | Non-linear plot | 241 | 201 | thin | queued | hvtiRtemplates | [`hvtiPlotR::hv_nonparametric`](https://ehrlinger.github.io/hvtiPlotR/reference/hv_nonparametric.html), [`hvtiPlotR::hv_ordinal`](https://ehrlinger.github.io/hvtiPlotR/reference/hv_ordinal.html) |  |
 | `rp` | Regression plot | 68 | 8 | thin | queued | hvtiRtemplates | [`hvtiPlotR::hv_balance`](https://ehrlinger.github.io/hvtiPlotR/reference/hv_balance.html) |  |
 | `dp-trends` | Descriptive plot: trends | 80 | 105 | thin | shipped | hvtiRtemplates | [`hvtiPlotR::hv_trends`](https://ehrlinger.github.io/hvtiPlotR/reference/hv_trends.html) |  |
 | `dp-gfup` | Descriptive plot: follow-up | 48 | 50 | thin | queued | hvtiRtemplates | [`hvtiPlotR::hv_followup`](https://ehrlinger.github.io/hvtiPlotR/reference/hv_followup.html) |  |

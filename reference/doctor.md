@@ -56,8 +56,8 @@ doctor(remote = FALSE)
 #>   - hvtiRpropensity  0.1.3      -          ok-local
 #>   x hvtiRimputation  -          -          missing
 #>   x ggBoostedTrees   -          -          missing
-#>   x TemporalHazard   -          -          missing
+#>   - TemporalHazard   1.2.11     -          ok-local
 #>   - ggRandomForests  4.0.0      -          ok-local
 #> 
-#> ℹ 7 members need updating. Run `hvtiR::update()`.
+#> ℹ 6 members need updating. Run `hvtiR::update()`.
 ```
