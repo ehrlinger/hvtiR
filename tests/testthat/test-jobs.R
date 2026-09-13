@@ -176,6 +176,20 @@ test_that("the hazard rows name the TemporalHazard functions they call", {
   expect_false(any(grepl("^TemporalHazard::", j$replaced_by[[at("bc")]])))
 })
 
+test_that("the relabelled rows carry the taxonomy's new names, pinned", {
+  j <- jobs()
+  at <- function(p) which(j$prefix == p & is.na(j$qualifier))
+
+  # The 2026-09-11 review relabelled these in hvti_taxonomy(). The catalog
+  # copies the names, and nothing else checks that the two agree, so a later
+  # edit reverting one would otherwise pass.
+  want <- c(bn = "Bootstrap non-linear", nd = "Non-linear distributions",
+            nm = "Non-linear model", np = "Non-linear plot", nb = "Boosting")
+  for (p in names(want)) {
+    expect_identical(j$name[at(p)], want[[p]], label = p)
+  }
+})
+
 test_that("jobs() has exactly the seeded count of retire rows, each replaced", {
   j <- jobs()
 
