@@ -48,7 +48,8 @@ jobs:
             any::rcmdcheck,
             ehrlinger/hvtiPlotR,
             ehrlinger/hvtiRpropensity,
-            ehrlinger/ggRandomForests
+            ehrlinger/ggRandomForests,
+            ehrlinger/TemporalHazard
           needs: check
 
       # Install the package into the user library so that Quarto's subprocess

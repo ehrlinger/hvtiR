@@ -48,7 +48,8 @@ jobs:
             any::rcmdcheck,
             ehrlinger/hvtiPlotR,
             ehrlinger/hvtiRpropensity,
-            ehrlinger/ggRandomForests
+            ehrlinger/ggRandomForests,
+            ehrlinger/TemporalHazard
           needs: check
 
       - uses: r-lib/actions/setup-tinytex@v2

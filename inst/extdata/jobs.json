@@ -23,7 +23,7 @@
    "sas_breadth_jobs": 745,
    "disposition": "scaffold",
    "destination": "hvtiRtemplates",
-   "replaced_by": []
+   "replaced_by": ["TemporalHazard::hzr_kaplan"]
   },
   {
    "prefix": "ar",
@@ -117,7 +117,7 @@
    "sas_breadth_jobs": 320,
    "disposition": "scaffold",
    "destination": "hvtiRtemplates",
-   "replaced_by": []
+   "replaced_by": ["TemporalHazard::hzr_bootstrap", "TemporalHazard::hzr_stepwise"]
   },
   {
    "prefix": "bl",
@@ -147,7 +147,7 @@
   {
    "prefix": "bn",
    "qualifier": null,
-   "name": "Bootstrap nonparametric",
+   "name": "Bootstrap non-linear",
    "folder": "analyses",
    "family": "bootstrap-ci",
    "kind": "job",
@@ -428,7 +428,7 @@
    "sas_breadth_jobs": 373,
    "disposition": "scaffold",
    "destination": "hvtiRtemplates",
-   "replaced_by": []
+   "replaced_by": ["TemporalHazard::hazard", "TemporalHazard::hzr_stepwise", "TemporalHazard::hzr_deciles", "TemporalHazard::hzr_gof"]
   },
   {
    "prefix": "hp",
@@ -458,12 +458,7 @@
    "sas_breadth_jobs": 541,
    "disposition": "thin",
    "destination": "hvtiRtemplates",
-   "replaced_by": [
-    "hvtiPlotR::hv_hazard",
-    "hvtiPlotR::hazard_plot",
-    "hvtiPlotR::hv_survival",
-    "hvtiPlotR::hv_atrisk_compose"
-   ]
+   "replaced_by": ["hvtiPlotR::hv_hazard", "hvtiPlotR::hazard_plot", "hvtiPlotR::hv_survival", "hvtiPlotR::hv_atrisk_compose", "TemporalHazard::hazard"]
   },
   {
    "prefix": "hs",
@@ -493,7 +488,7 @@
    "sas_breadth_jobs": 140,
    "disposition": "scaffold",
    "destination": "hvtiRtemplates",
-   "replaced_by": []
+   "replaced_by": ["TemporalHazard::hazard", "TemporalHazard::hzr_stepwise"]
   },
   {
    "prefix": "hz",
@@ -521,7 +516,7 @@
    "sas_breadth_jobs": 574,
    "disposition": "scaffold",
    "destination": "hvtiRtemplates",
-   "replaced_by": []
+   "replaced_by": ["TemporalHazard::hazard", "TemporalHazard::hzr_phase"]
   },
   {
    "prefix": "lg",
@@ -672,7 +667,7 @@
   {
    "prefix": "nb",
    "qualifier": null,
-   "name": "Notebook",
+   "name": "Boosting",
    "folder": "analyses",
    "family": "machine-learning",
    "kind": "job",
@@ -695,7 +690,7 @@
   {
    "prefix": "nd",
    "qualifier": null,
-   "name": "Nonparametric distributions",
+   "name": "Non-linear distributions",
    "folder": "distributions",
    "family": "distributions",
    "kind": "job",
@@ -718,7 +713,7 @@
   {
    "prefix": "nm",
    "qualifier": null,
-   "name": "Nonparametric model",
+   "name": "Non-linear model",
    "folder": "analyses",
    "family": "models",
    "kind": "job",
@@ -743,7 +738,7 @@
   {
    "prefix": "np",
    "qualifier": null,
-   "name": "Nonparametric plot",
+   "name": "Non-linear plot",
    "folder": "graphs",
    "family": "plots",
    "kind": "job",
