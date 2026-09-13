@@ -149,7 +149,9 @@ test_that("pm is folded into lm, and si and mi count jobs, pinned", {
   # taxonomy entry, since hvtiRtemplates wants catalog and taxonomy to match.
   expect_identical(j$sas_breadth_jobs[at("lm")], 470L)
   expect_identical(j$disposition[at("lm")], "thin")
-  expect_length(at("pm"), 0L)
+  # Every qualifier, not just the unqualified row: the taxonomy has no pm,
+  # so a qualified pm row would break the same invariant.
+  expect_false("pm" %in% j$prefix)
   # si and mi count jobs, as every row does; mi includes bd's multiple-
   # imputation jobs. 223 or 326 here would mean the macro call counts came
   # back into the field.
