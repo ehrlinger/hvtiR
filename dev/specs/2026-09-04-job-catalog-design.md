@@ -187,9 +187,9 @@ Two rules govern the counts, both stated by the maintainer on 2026-09-11:
    decides the label and never the population. The union comes from the
    scan and is never a sum, for the reason above. `lm` is the second case:
    `pm` folds into it, so `lm` counts the studies using either prefix. `pm`
-   stays as a `retire` row only because `hvti_taxonomy()` still lists it and
-   `hvtiRtemplates` requires a catalog row for every taxonomy prefix; it
-   goes when the taxonomy drops `pm`.
+   kept a `retire` row until 2026-09-13, while `hvti_taxonomy()` still listed
+   it; `hvtiRtemplates` requires catalog and taxonomy to match, so the row
+   went when the taxonomy dropped `pm`.
 
 ## 6. Validation rules
 

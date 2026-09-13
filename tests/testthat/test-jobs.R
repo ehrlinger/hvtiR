@@ -1,8 +1,8 @@
-test_that("the catalog has 58 rows and every row is keyed", {
+test_that("the catalog has 57 rows and every row is keyed", {
   raw <- read_jobs()
 
   expect_type(raw, "list")
-  expect_length(raw, 58L)
+  expect_length(raw, 57L)
   expect_true(all(vapply(raw, function(r) {
     is.character(r$prefix) || is.null(r$prefix)
   }, logical(1))))
@@ -78,7 +78,7 @@ test_that("jobs() returns one row per job type with a list column", {
   j <- jobs()
 
   expect_s3_class(j, "data.frame")
-  expect_identical(nrow(j), 58L)
+  expect_identical(nrow(j), 57L)
   # The relationship, which cannot go stale the way the literal above does:
   # jobs() returns exactly one row per catalog entry.
   expect_identical(nrow(j), length(read_jobs()))
@@ -140,17 +140,16 @@ test_that("the qualified rows' R counts are pinned, and dp-postage is NA", {
   expect_true(is.na(j$r_exemplars[postage]))
 })
 
-test_that("pm folds into lm, and si and mi count jobs, pinned", {
+test_that("pm is folded into lm, and si and mi count jobs, pinned", {
   j <- jobs()
   at <- function(p) which(j$prefix == p & is.na(j$qualifier))
 
   # pm folds into lm (2026-09-11): lm counts the studies with either prefix,
-  # 470, where lm alone is 469. pm stays as a retire row only while the
-  # taxonomy lists it, because hvtiRtemplates wants a row per prefix.
+  # 470, where lm alone is 469. pm's own row went on 2026-09-13 with its
+  # taxonomy entry, since hvtiRtemplates wants catalog and taxonomy to match.
   expect_identical(j$sas_breadth_jobs[at("lm")], 470L)
   expect_identical(j$disposition[at("lm")], "thin")
-  expect_identical(j$disposition[at("pm")], "retire")
-  expect_identical(j$destination[at("pm")], "hvtiRpropensity")
+  expect_length(at("pm"), 0L)
   # si and mi count jobs, as every row does; mi includes bd's multiple-
   # imputation jobs. 223 or 326 here would mean the macro call counts came
   # back into the field.
@@ -196,8 +195,9 @@ test_that("jobs() has exactly the seeded count of retire rows, each replaced", {
   # 5 is the seeded count as of this catalog. A sixth retirement is not a
   # bug, but it should change this number on purpose rather than by
   # surprise, so a failure here points a future author at this line.
-  # pm became the sixth on 2026-09-11, folded into lm; see its pin below.
-  expect_identical(sum(j$disposition == "retire"), 6L)
+  # pm was a sixth from 2026-09-11 until 2026-09-13, when it left the
+  # taxonomy and its row went with it; see the lm pin below.
+  expect_identical(sum(j$disposition == "retire"), 5L)
   expect_true(all(lengths(j$replaced_by[j$disposition == "retire"]) > 0L))
 })
 
