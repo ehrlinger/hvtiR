@@ -154,6 +154,11 @@ Version: 1.1.10
 * The tool never opens a second unreleased heading and never repeats a bullet
   it has already written, because the refresh branch is regenerated weekly and
   reruns have to converge rather than accumulate.
+* Catalog versions refreshed from CRAN and `main`: `ggRandomForests` CRAN
+  3.5.2 to 3.5.3; `TemporalHazard` dev 1.2.9 to 1.2.11; `ggBoostedTrees` dev
+  0.0.6 to 0.0.7. The catalog ships in the package and is published as
+  `members.json`, so its recorded versions are content rather than
+  bookkeeping.
 
 # hvtiR 1.1.6
 
