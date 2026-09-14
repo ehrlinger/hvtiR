@@ -166,8 +166,7 @@
 - The tool never opens a second unreleased heading and never repeats a
   bullet it has already written, because the refresh branch is
   regenerated weekly and reruns have to converge rather than accumulate.
-
-## hvtiR 1.1.6
+  \# hvtiR 1.1.6
 
 - Added `hvtiRimputation` to the registry, taking the family to twelve
   members. It ports `PROC STANDARD` with `REPLACE` and the `imputsub`
