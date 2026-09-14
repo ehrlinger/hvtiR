@@ -89,6 +89,17 @@ class InsertTests(unittest.TestCase):
         self.assertLess(out.index(nce.UNRELEASED), out.index("# hvtiR 1.1.6"))
         self.assertIn(self.LINE, out)
 
+    def test_inline_heading_text_does_not_count_as_a_heading(self):
+        news = NEWS_NAMED.replace(
+            "* Something already released.",
+            "* This release mentions `# hvtiR (unreleased)` in prose.",
+        )
+        out = nce.insert(news, self.LINE)
+        actual_heading = "\n# hvtiR (unreleased)\n"
+        self.assertEqual(out.count(actual_heading), 1)
+        self.assertLess(out.index(actual_heading), out.index("# hvtiR 1.1.6"))
+        self.assertLess(out.index(self.LINE), out.index("# hvtiR 1.1.6"))
+
     def test_appends_into_an_existing_section_without_a_second_heading(self):
         out = nce.insert(NEWS_UNRELEASED, self.LINE)
         self.assertEqual(out.count(nce.UNRELEASED), 1)
