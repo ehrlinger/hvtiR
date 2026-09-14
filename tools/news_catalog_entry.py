@@ -38,11 +38,13 @@ from __future__ import annotations
 
 import argparse
 import csv
+import re
 import sys
 import textwrap
 from pathlib import Path
 
 UNRELEASED = "# hvtiR (unreleased)"
+UNRELEASED_RE = re.compile(r"^#\s+hvtiR\s+\(unreleased\)\s*$", re.M)
 VERSION_COLUMNS = ("cran_version", "dev_version")
 MARKER = "Catalog versions refreshed"
 
@@ -94,8 +96,9 @@ def insert(news: str, line: str) -> str:
     if line in news:
         return news  # already filed; reruns must converge
 
-    if UNRELEASED in news:
-        start = news.index(UNRELEASED) + len(UNRELEASED)
+    unreleased = UNRELEASED_RE.search(news)
+    if unreleased:
+        start = unreleased.end()
         nxt = news.find("\n# ", start)
         end = len(news) if nxt == -1 else nxt
         section = news[start:end].rstrip("\n")
