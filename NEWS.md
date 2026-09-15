@@ -1,7 +1,7 @@
 Package: hvtiR
-Version: 1.1.10
+Version: 1.1.11
 
-# hvtiR (unreleased)
+# hvtiR 1.1.11
 
 * **The catalog marks `dc-tables`, `dc-gfup` and `dp-postage` shipped.**
   `dc-tables` now names the correlation table and matrix engines, and
