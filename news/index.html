@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">hvtiR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.10</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.11</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -44,6 +44,11 @@
       <small>Source: <a href="https://github.com/ehrlinger/hvtiR/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.1.11" id="hvtir-1111">hvtiR 1.1.11<a class="anchor" aria-label="anchor" href="#hvtir-1111"></a></h2>
+<ul><li><p><strong>The catalog marks <code>dc-tables</code>, <code>dc-gfup</code> and <code>dp-postage</code> shipped.</strong> <code>dc-tables</code> now names the correlation table and matrix engines, and <code>dp-postage</code> is thin over <code><a href="https://ehrlinger.github.io/hvtiPlotR/reference/hv_eda.html" class="external-link">hvtiPlotR::hv_eda()</a></code>.</p></li>
+<li><p>Catalog versions refreshed from CRAN and <code>main</code>: <code>ggRandomForests</code> CRAN 3.5.2 to 3.5.3; <code>TemporalHazard</code> dev 1.2.9 to 1.2.11; <code>ggBoostedTrees</code> dev 0.0.6 to 0.0.7. The catalog ships in the package and is published as <code>members.json</code>, so its recorded versions are content rather than bookkeeping.</p></li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.1.10" id="hvtir-1110">hvtiR 1.1.10<a class="anchor" aria-label="anchor" href="#hvtir-1110"></a></h2>
 <ul><li><p><strong><code>pm</code>’s row leaves the catalog</strong>, with its entry in <code>hvti_taxonomy()</code>. It had stayed as a <code>retire</code> row after folding into <code>lm</code> only because <code>hvtiRtemplates</code> requires the catalog and the taxonomy to name the same prefixes. <code>lm</code> still counts the studies using either prefix, 470. The catalog has 57 rows and 5 retired.</p></li>
