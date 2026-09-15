@@ -50,6 +50,40 @@ test_that("a scaffold or thin row is destined for hvtiRtemplates", {
   }
 })
 
+test_that("the descriptive EDA wave stays shipped on its released engines", {
+  raw <- read_jobs()
+  row <- function(prefix, qualifier) {
+    hit <- Filter(function(x) {
+      identical(x$prefix, prefix) && identical(x$qualifier, qualifier)
+    }, raw)
+    expect_length(hit, 1L)
+    hit[[1L]]
+  }
+
+  tables <- row("dc", "tables")
+  gfup <- row("dc", "gfup")
+  postage <- row("dp", "postage")
+
+  expect_identical(tables$status, "shipped")
+  expect_identical(gfup$status, "shipped")
+  expect_identical(postage$status, "shipped")
+  expect_identical(postage$disposition, "thin")
+  expect_setequal(
+    intersect(
+      unlist(tables$replaced_by),
+      c(
+        "hvtiRtables::hv_correlation_table",
+        "hvtiPlotR::hv_correlation_matrix"
+      )
+    ),
+    c(
+      "hvtiRtables::hv_correlation_table",
+      "hvtiPlotR::hv_correlation_matrix"
+    )
+  )
+  expect_identical(unlist(postage$replaced_by), "hvtiPlotR::hv_eda")
+})
+
 test_that("a build row names a destination, no replacement, and a blocker", {
   raw <- read_jobs()
   for (r in raw) {
