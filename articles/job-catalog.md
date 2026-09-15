@@ -11,8 +11,8 @@ so it cannot disagree with it.
 |:------------|-----:|
 | build       |    8 |
 | retire      |    5 |
-| scaffold    |   29 |
-| thin        |   15 |
+| scaffold    |   28 |
+| thin        |   16 |
 
 ## distributions
 
@@ -94,9 +94,9 @@ so it cannot disagree with it.
 | `lg` | Logit trends | 362 | 0 | scaffold | queued | hvtiRtemplates |  |  |
 | `rg` | Regression trends | 45 | 0 | scaffold | queued | hvtiRtemplates |  |  |
 | `dc-general` | Descriptive: general | 759 | 1 | thin | queued | hvtiRtemplates | [`hvtiRutilities::proc_contents`](https://ehrlinger.github.io/hvtiRutilities/reference/proc_contents.html), [`hvtiRutilities::proc_means`](https://ehrlinger.github.io/hvtiRutilities/reference/proc_means.html) |  |
-| `dc-tables` | Descriptive: formatted tables | 551 | 1 | thin | queued | hvtiRtemplates | [`hvtiRtables::hv_tbl_summary`](https://ehrlinger.github.io/hvtiRtables/reference/hv_tbl_summary.html), [`hvtiRtables::hv_man_table`](https://ehrlinger.github.io/hvtiRtables/reference/hv_man_table.html), [`hvtiRtables::hv_man_table_save`](https://ehrlinger.github.io/hvtiRtables/reference/hv_man_table_save.html) |  |
-| `dc-gfup` | Descriptive: follow-up | 389 | 0 | thin | queued | hvtiRtemplates | [`hvtiRutilities::proc_means`](https://ehrlinger.github.io/hvtiRutilities/reference/proc_means.html) |  |
+| `dc-tables` | Descriptive: formatted tables | 551 | 1 | thin | shipped | hvtiRtemplates | [`hvtiRtables::hv_tbl_summary`](https://ehrlinger.github.io/hvtiRtables/reference/hv_tbl_summary.html), [`hvtiRtables::hv_man_table`](https://ehrlinger.github.io/hvtiRtables/reference/hv_man_table.html), [`hvtiRtables::hv_man_table_save`](https://ehrlinger.github.io/hvtiRtables/reference/hv_man_table_save.html), [`hvtiRtables::hv_correlation_table`](https://ehrlinger.github.io/hvtiRtables/reference/hv_correlation_table.html), [`hvtiPlotR::hv_correlation_matrix`](https://ehrlinger.github.io/hvtiPlotR/reference/hv_correlation_matrix.html) |  |
+| `dc-gfup` | Descriptive: follow-up | 389 | 0 | thin | shipped | hvtiRtemplates | [`hvtiRutilities::proc_means`](https://ehrlinger.github.io/hvtiRutilities/reference/proc_means.html) |  |
 | `dc-dead` | Descriptive: mortality | 171 | 0 | thin | queued | hvtiRtemplates | [`hvtiRutilities::proc_means`](https://ehrlinger.github.io/hvtiRutilities/reference/proc_means.html) |  |
 | `dc-stddiff` | Descriptive: standardized differences | 120 | 0 | build | NA | hvtiRutilities |  | hvtiRutilities#103 |
-| `dp-postage` | Descriptive plot: postage stamp | NA | NA | scaffold | queued | hvtiRtemplates |  |  |
+| `dp-postage` | Descriptive plot: postage stamp | NA | NA | thin | shipped | hvtiRtemplates | [`hvtiPlotR::hv_eda`](https://ehrlinger.github.io/hvtiPlotR/reference/hv_eda.html) |  |
 | `dc-trends` | Descriptive: trends | 43 | 0 | scaffold | queued | hvtiRtemplates |  |  |

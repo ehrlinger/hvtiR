@@ -61,9 +61,9 @@ status(remote = FALSE)
 #> 
 #>   - hvtiRutilities   1.1.11     -          ok-local
 #>   x hvtiRdatabuild   -          -          missing
-#>   - hvtiRtables      1.0.0      -          ok-local
+#>   - hvtiRtables      1.0.1      -          ok-local
 #>   x hvtiRtemplates   -          -          missing
-#>   - hvtiPlotR        2.7.13     -          ok-local
+#>   - hvtiPlotR        2.7.14     -          ok-local
 #>   x hvtiRlifetables  -          -          missing
 #>   x hvtiRbootstrap   -          -          missing
 #>   - hvtiRpropensity  0.1.3      -          ok-local
