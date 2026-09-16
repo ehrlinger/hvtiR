@@ -3,6 +3,13 @@ Version: 1.1.12
 
 # hvtiR (unreleased)
 
+* **`dc-stddiff` moves from `hvtiRutilities` to `hvtiRpropensity`.** That
+  package already computes standardized differences inside `ps_match()`,
+  `ps_logistic()` and `ps_weight()`, and the port takes `stddiffci` and
+  `mw_var` with it. The row stays `build`, now blocked on
+  `hvtiRpropensity#34`, which supersedes `hvtiRutilities#103`, and its spec is
+  hvtiRtemplates' `dev/specs/2026-09-16-standardized-difference-design.md`.
+
 * **The catalog marks `dc-general` shipped**, over
   `hvtiRutilities::proc_contents()` and `proc_means()`, with base R for the
   contingency tables, cumulative distributions and correlations.

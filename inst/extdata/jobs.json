@@ -1203,11 +1203,11 @@
    "workflows": [
     "propensity-matching"
    ],
-   "blocked_on": "hvtiRutilities#103",
-   "spec": "dev/specs/2026-09-02-dp-dc-decomposition-design.md",
-   "note": "Measured 2026-09-02: distinct studies with a program-extension job of this qualifier. Ships the 2019 successor (stddiff.sas, 649 lines, Artis, continuous+ordinal+categorical, hvtiRutilities), NOT the 2009 std_dif.sas (108 lines, hvtiRtables, 72 studies). Decided 2026-09-03; the wider corpus use of std_dif is a macro outliving its replacement, not a preference. Triage 2026-09-10: the legacy variants std_dif, stddif_mtch_mtwt, stdcoef_diff.continuous and stddiffci.sumtbl fold into this row rather than becoming qualifiers. Re-counted 2026-09-11 over the union of the spellings that fold here, by second name field in descriptive/dc: stddiff 59, std_dif 72, std_dif_all_bef-aft 13, stddiffci 8, stdcoef_diff 4, stddif_mtch_mtwt 1. That is 120 distinct studies, where adding them gives 157. The row keeps the 2019 spelling and counts every study using any of them (rule 2 of the catalog design, section 5). std_dif_all_bef-aft was folded in by the maintainer on 2026-09-11, beyond the triage's four.",
+   "blocked_on": "hvtiRpropensity#34",
+   "spec": "dev/specs/2026-09-16-standardized-difference-design.md",
+   "note": "Measured 2026-09-02: distinct studies with a program-extension job of this qualifier. Ships the 2019 successor (stddiff.sas, 649 lines, Artis, continuous+ordinal+categorical, hvtiRutilities), NOT the 2009 std_dif.sas (108 lines, hvtiRtables, 72 studies). Decided 2026-09-03; the wider corpus use of std_dif is a macro outliving its replacement, not a preference. Triage 2026-09-10: the legacy variants std_dif, stddif_mtch_mtwt, stdcoef_diff.continuous and stddiffci.sumtbl fold into this row rather than becoming qualifiers. Re-counted 2026-09-11 over the union of the spellings that fold here, by second name field in descriptive/dc: stddiff 59, std_dif 72, std_dif_all_bef-aft 13, stddiffci 8, stdcoef_diff 4, stddif_mtch_mtwt 1. That is 120 distinct studies, where adding them gives 157. The row keeps the 2019 spelling and counts every study using any of them (rule 2 of the catalog design, section 5). std_dif_all_bef-aft was folded in by the maintainer on 2026-09-11, beyond the triage's four. Owner moved 2026-09-16 from hvtiRutilities to hvtiRpropensity, whose ps_match, ps_logistic and ps_weight already compute standardized differences internally; the 2019 macro choice stands, and stddiffci (permutation reference) and mw_var (matching-weight variance) are ported with it. hvtiRutilities#103 is superseded by hvtiRpropensity#34. A census the same day found no study computing a matching weight across three or more groups: they compare groups two at a time, so the port is two-group only.",
    "disposition": "build",
-   "destination": "hvtiRutilities",
+   "destination": "hvtiRpropensity",
    "replaced_by": []
   },
   {
