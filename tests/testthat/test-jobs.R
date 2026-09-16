@@ -155,6 +155,19 @@ test_that("dc-stddiff counts the union of its folded spellings, pinned", {
   expect_identical(j$sas_breadth_jobs[row], 120L)
 })
 
+test_that("dc-stddiff is owed by hvtiRpropensity, pinned", {
+  j <- jobs()
+  row <- which(j$prefix == "dc" & j$qualifier %in% "stddiff")
+
+  # Moved from hvtiRutilities on 2026-09-16 (hvtiRtemplates
+  # dev/specs/2026-09-16-standardized-difference-design.md). The general
+  # checks accept any family member and any issue-shaped blocker, so a revert
+  # to hvtiRutilities#103 would pass them; these pin the decision itself.
+  expect_length(row, 1L)
+  expect_identical(j$destination[row], "hvtiRpropensity")
+  expect_identical(j$blocked_on[row], "hvtiRpropensity#34")
+})
+
 test_that("the qualified rows' R counts are pinned, and dp-postage is NA", {
   j <- jobs()
   at <- function(p, q) which(j$prefix == p & j$qualifier %in% q)
