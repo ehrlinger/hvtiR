@@ -1,7 +1,7 @@
 Package: hvtiR
-Version: 1.1.11
+Version: 1.1.12
 
-# hvtiR (unreleased)
+# hvtiR 1.1.12
 
 * Catalog versions refreshed from CRAN and `main`: `hvtiPlotR` dev 2.7.13 to
   2.7.14; `hvtiRbootstrap` dev 0.9.3 to 0.9.4; `hvtiRdatabuild` dev 0.2.0 to
