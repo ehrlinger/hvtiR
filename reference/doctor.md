@@ -46,14 +46,14 @@ doctor(remote = FALSE)
 #> 
 #> hvtiR 1.1.11 - 12 members
 #> 
-#>   - hvtiRutilities   1.1.11     -          ok-local
+#>   - hvtiRutilities   1.1.12     -          ok-local
 #>   x hvtiRdatabuild   -          -          missing
 #>   - hvtiRtables      1.0.1      -          ok-local
 #>   x hvtiRtemplates   -          -          missing
 #>   - hvtiPlotR        2.7.14     -          ok-local
 #>   x hvtiRlifetables  -          -          missing
 #>   x hvtiRbootstrap   -          -          missing
-#>   - hvtiRpropensity  0.1.3      -          ok-local
+#>   - hvtiRpropensity  0.1.4      -          ok-local
 #>   x hvtiRimputation  -          -          missing
 #>   x ggBoostedTrees   -          -          missing
 #>   - TemporalHazard   1.2.11     -          ok-local
