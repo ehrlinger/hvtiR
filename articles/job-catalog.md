@@ -97,6 +97,6 @@ so it cannot disagree with it.
 | `dc-tables` | Descriptive: formatted tables | 551 | 1 | thin | shipped | hvtiRtemplates | [`hvtiRtables::hv_tbl_summary`](https://ehrlinger.github.io/hvtiRtables/reference/hv_tbl_summary.html), [`hvtiRtables::hv_man_table`](https://ehrlinger.github.io/hvtiRtables/reference/hv_man_table.html), [`hvtiRtables::hv_man_table_save`](https://ehrlinger.github.io/hvtiRtables/reference/hv_man_table_save.html), [`hvtiRtables::hv_correlation_table`](https://ehrlinger.github.io/hvtiRtables/reference/hv_correlation_table.html), [`hvtiPlotR::hv_correlation_matrix`](https://ehrlinger.github.io/hvtiPlotR/reference/hv_correlation_matrix.html) |  |
 | `dc-gfup` | Descriptive: follow-up | 389 | 0 | thin | shipped | hvtiRtemplates | [`hvtiRutilities::proc_means`](https://ehrlinger.github.io/hvtiRutilities/reference/proc_means.html) |  |
 | `dc-dead` | Descriptive: mortality | 171 | 0 | thin | queued | hvtiRtemplates | [`hvtiRutilities::proc_means`](https://ehrlinger.github.io/hvtiRutilities/reference/proc_means.html) |  |
-| `dc-stddiff` | Descriptive: standardized differences | 120 | 0 | build | NA | hvtiRutilities |  | hvtiRutilities#103 |
+| `dc-stddiff` | Descriptive: standardized differences | 120 | 0 | build | NA | hvtiRpropensity |  | hvtiRpropensity#34 |
 | `dp-postage` | Descriptive plot: postage stamp | NA | NA | thin | shipped | hvtiRtemplates | [`hvtiPlotR::hv_eda`](https://ehrlinger.github.io/hvtiPlotR/reference/hv_eda.html) |  |
 | `dc-trends` | Descriptive: trends | 43 | 0 | scaffold | queued | hvtiRtemplates |  |  |
