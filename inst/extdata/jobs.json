@@ -1100,7 +1100,7 @@
    "folder": "descriptive",
    "family": "descriptive",
    "kind": "job",
-   "status": "queued",
+   "status": "shipped",
    "batch": 3,
    "sas_breadth": null,
    "sas_breadth_jobs": 759,

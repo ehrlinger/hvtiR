@@ -84,6 +84,22 @@ test_that("the descriptive EDA wave stays shipped on its released engines", {
   expect_identical(unlist(postage$replaced_by), "hvtiPlotR::hv_eda")
 })
 
+test_that("dc-general stays shipped on base procedures", {
+  raw <- read_jobs()
+  hit <- Filter(function(x) {
+    identical(x$prefix, "dc") && identical(x$qualifier, "general")
+  }, raw)
+  expect_length(hit, 1L)
+  general <- hit[[1L]]
+
+  expect_identical(general$status, "shipped")
+  expect_identical(general$destination, "hvtiRtemplates")
+  expect_setequal(
+    unlist(general$replaced_by),
+    c("hvtiRutilities::proc_contents", "hvtiRutilities::proc_means")
+  )
+})
+
 test_that("a build row names a destination, no replacement, and a blocker", {
   raw <- read_jobs()
   for (r in raw) {
