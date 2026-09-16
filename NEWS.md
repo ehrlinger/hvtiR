@@ -1,6 +1,14 @@
 Package: hvtiR
 Version: 1.1.11
 
+# hvtiR (unreleased)
+
+* Catalog versions refreshed from CRAN and `main`: `hvtiPlotR` dev 2.7.13 to
+  2.7.14; `hvtiRbootstrap` dev 0.9.3 to 0.9.4; `hvtiRdatabuild` dev 0.2.0 to
+  0.2.1; `hvtiRlifetables` dev 0.1.3 to 0.1.4; `hvtiRpropensity` dev 0.1.3
+  to 0.1.4; `hvtiRtables` dev 1.0.0 to 1.0.1; `hvtiRutilities` dev 1.1.11 to
+  1.1.12. The versioned catalog ships in the package.
+
 # hvtiR 1.1.11
 
 * **The catalog marks `dc-tables`, `dc-gfup` and `dp-postage` shipped.**
