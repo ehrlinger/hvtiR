@@ -1,6 +1,13 @@
 Package: hvtiR
 Version: 1.1.12
 
+# hvtiR (unreleased)
+
+* Catalog versions refreshed from CRAN and `main`: `hvtiRdatabuild` dev
+  0.2.1 to 0.2.2. The catalog ships in the package and is published as
+  `members.json`, so its recorded versions are content rather than
+  bookkeeping.
+
 # hvtiR 1.1.12
 
 * Catalog versions refreshed from CRAN and `main`: `hvtiPlotR` dev 2.7.13 to
