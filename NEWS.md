@@ -3,6 +3,10 @@ Version: 1.1.12
 
 # hvtiR (unreleased)
 
+* **The catalog marks `dc-general` shipped**, over
+  `hvtiRutilities::proc_contents()` and `proc_means()`, with base R for the
+  contingency tables, cumulative distributions and correlations.
+
 * Catalog versions refreshed from CRAN and `main`: `hvtiRdatabuild` dev
   0.2.1 to 0.2.2. The catalog ships in the package and is published as
   `members.json`, so its recorded versions are content rather than
