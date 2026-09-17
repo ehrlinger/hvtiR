@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">hvtiR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.13</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.14</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -44,6 +44,11 @@
       <small>Source: <a href="https://github.com/ehrlinger/hvtiR/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.1.14" id="hvtir-1114">hvtiR 1.1.14<a class="anchor" aria-label="anchor" href="#hvtir-1114"></a></h2>
+<ul><li>
+<strong>The catalog records the current <code>main</code> version of five members</strong>, refreshed from the live oracles by <code>tools/refresh_catalog_versions.py</code>: <code>hvtiRutilities</code> 1.1.12 to 1.2.0, <code>hvtiRtemplates</code> 1.1.0 to 1.2.0, <code>hvtiPlotR</code> 2.7.14 to 2.7.15, <code>hvtiRpropensity</code> 0.1.4 to 0.1.5 and <code>hvtiRtables</code> 1.0.1 to 1.0.2. Until now <code><a href="../reference/status.html">status()</a></code> could not tell anyone that the <code>hvtiRutilities</code> and <code>hvtiRtemplates</code> 1.2.0 releases existed, which is what a study needs before it can install them.</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.1.13" id="hvtir-1113">hvtiR 1.1.13<a class="anchor" aria-label="anchor" href="#hvtir-1113"></a></h2>
 <ul><li><p><strong><code>dc-stddiff</code> moves from <code>hvtiRutilities</code> to <code>hvtiRpropensity</code>.</strong> That package already computes standardized differences inside <code>ps_match()</code>, <code>ps_logistic()</code> and <code>ps_weight()</code>, and the port takes <code>stddiffci</code> and <code>mw_var</code> with it. The row stays <code>build</code>, now blocked on <code>hvtiRpropensity#34</code>, which supersedes <code>hvtiRutilities#103</code>, and its spec is hvtiRtemplates’ <code>dev/specs/2026-09-16-standardized-difference-design.md</code>.</p></li>
