@@ -59,9 +59,9 @@ scripting.
 status(remote = FALSE)
 #> hvtiR 1.1.13 - 12 members
 #> 
-#>   - hvtiRutilities   1.1.12     -          ok-local
+#>   - hvtiRutilities   1.2.0      -          ok-local
 #>   x hvtiRdatabuild   -          -          missing
-#>   - hvtiRtables      1.0.1      -          ok-local
+#>   - hvtiRtables      1.0.2      -          ok-local
 #>   x hvtiRtemplates   -          -          missing
 #>   - hvtiPlotR        2.7.15     -          ok-local
 #>   x hvtiRlifetables  -          -          missing
