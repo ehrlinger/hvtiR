@@ -1,7 +1,7 @@
 Package: hvtiR
-Version: 1.1.12
+Version: 1.1.13
 
-# hvtiR (unreleased)
+# hvtiR 1.1.13
 
 * **`dc-stddiff` moves from `hvtiRutilities` to `hvtiRpropensity`.** That
   package already computes standardized differences inside `ps_match()`,
