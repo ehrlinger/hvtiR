@@ -1,6 +1,16 @@
 Package: hvtiR
 Version: 1.1.13
 
+# hvtiR (unreleased)
+
+* **The catalog records the current `main` version of five members**, refreshed
+  from the live oracles by `tools/refresh_catalog_versions.py`:
+  `hvtiRutilities` 1.1.12 to 1.2.0, `hvtiRtemplates` 1.1.0 to 1.2.0,
+  `hvtiPlotR` 2.7.14 to 2.7.15, `hvtiRpropensity` 0.1.4 to 0.1.5 and
+  `hvtiRtables` 1.0.1 to 1.0.2. Until now `status()` could not tell anyone that
+  the `hvtiRutilities` and `hvtiRtemplates` 1.2.0 releases existed, which is
+  what a study needs before it can install them.
+
 # hvtiR 1.1.13
 
 * **`dc-stddiff` moves from `hvtiRutilities` to `hvtiRpropensity`.** That
