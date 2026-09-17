@@ -1,7 +1,7 @@
 Package: hvtiR
-Version: 1.1.13
+Version: 1.1.14
 
-# hvtiR (unreleased)
+# hvtiR 1.1.14
 
 * **The catalog records the current `main` version of five members**, refreshed
   from the live oracles by `tools/refresh_catalog_versions.py`:
