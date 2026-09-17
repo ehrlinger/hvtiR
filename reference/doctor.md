@@ -35,7 +35,7 @@ doctor(remote = FALSE)
 #> 
 #> ── Environment ──
 #> 
-#> ℹ hvtiR 1.1.12
+#> ℹ hvtiR 1.1.13
 #> ✔ R version 4.6.1 (>= 4.4.0 required)
 #> ℹ Platform x86_64-pc-linux-gnu
 #> ✔ pak is installed
@@ -44,16 +44,16 @@ doctor(remote = FALSE)
 #> 
 #> ── Members ──
 #> 
-#> hvtiR 1.1.12 - 12 members
+#> hvtiR 1.1.13 - 12 members
 #> 
 #>   - hvtiRutilities   1.1.12     -          ok-local
 #>   x hvtiRdatabuild   -          -          missing
 #>   - hvtiRtables      1.0.1      -          ok-local
 #>   x hvtiRtemplates   -          -          missing
-#>   - hvtiPlotR        2.7.14     -          ok-local
+#>   - hvtiPlotR        2.7.15     -          ok-local
 #>   x hvtiRlifetables  -          -          missing
 #>   x hvtiRbootstrap   -          -          missing
-#>   - hvtiRpropensity  0.1.4      -          ok-local
+#>   - hvtiRpropensity  0.1.5      -          ok-local
 #>   x hvtiRimputation  -          -          missing
 #>   x ggBoostedTrees   -          -          missing
 #>   - TemporalHazard   1.2.11     -          ok-local

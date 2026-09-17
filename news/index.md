@@ -1,5 +1,25 @@
 # Changelog
 
+## hvtiR 1.1.13
+
+- **`dc-stddiff` moves from `hvtiRutilities` to `hvtiRpropensity`.**
+  That package already computes standardized differences inside
+  `ps_match()`, `ps_logistic()` and `ps_weight()`, and the port takes
+  `stddiffci` and `mw_var` with it. The row stays `build`, now blocked
+  on `hvtiRpropensity#34`, which supersedes `hvtiRutilities#103`, and
+  its spec is hvtiRtemplates’
+  `dev/specs/2026-09-16-standardized-difference-design.md`.
+
+- **The catalog marks `dc-general` shipped**, over
+  [`hvtiRutilities::proc_contents()`](https://ehrlinger.github.io/hvtiRutilities/reference/proc_contents.html)
+  and `proc_means()`, with base R for the contingency tables, cumulative
+  distributions and correlations.
+
+- Catalog versions refreshed from CRAN and `main`: `hvtiRdatabuild` dev
+  0.2.1 to 0.2.2. The catalog ships in the package and is published as
+  `members.json`, so its recorded versions are content rather than
+  bookkeeping.
+
 ## hvtiR 1.1.12
 
 - Catalog versions refreshed from CRAN and `main`: `hvtiPlotR` dev
