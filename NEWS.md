@@ -1,6 +1,25 @@
 Package: hvtiR
 Version: 1.1.14
 
+# hvtiR (unreleased)
+
+* **`rfr`, `sid` and `vt` leave intake.** hvtiRutilities PR #127 added all
+  three prefixes to `hvti_taxonomy()`; it is on that package's `main` but in
+  no release yet, so it is NOT in 1.2.0. All three rows are destined for
+  `ggRandomForests`, off this catalog's `hvtiRtemplates` destination, so they
+  take `status: null` like the other off-destination rows rather than a
+  scheduling status. `rfr` is a retire row and needs no blocker. `sid` and
+  `vt` are build rows, which must cite a real issue once out of intake; they
+  now cite `hvtiRforests#1`, the issue for ML sub-project 3, opened with the
+  new `hvtiRforests` repository because nothing citable existed before.
+
+* Two intake guards in `test-jobs.R` no longer go quiet when intake is empty.
+  One asserted inside a `for` over the intake rows, so with none left it made
+  no expectation, and testthat reports an empty test as a SKIP rather than a
+  pass. It now asserts over the whole set. The temporary pin on the three
+  rows' `hvtiRutilities#taxonomy` blocker is retired in favour of their real
+  blockers.
+
 # hvtiR 1.1.14
 
 * **The catalog records the current `main` version of five members**, refreshed

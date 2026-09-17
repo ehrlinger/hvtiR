@@ -269,19 +269,27 @@ test_that("jobs() has exactly the seeded count of retire rows, each replaced", {
 test_that("the real blocked_on values for sid, vt and rfr are pinned", {
   j <- jobs()
 
-  # sid and vt are disposition build; rfr is disposition retire. All three
-  # carry the same real blocker, hvtiRutilities#taxonomy, unlike the five
-  # placeholder build rows still waiting on an issue. A placeholder sweep
-  # that overwrites blocked_on wholesale would silently clobber these three;
+  # sid and vt are disposition build; rfr is disposition retire. A placeholder
+  # sweep that overwrites blocked_on wholesale would silently clobber them;
   # this test is here so that overwrite fails loudly instead.
+  #
+  # All three carried hvtiRutilities#taxonomy until 2026-09-17, when
+  # hvtiRutilities PR #127 put them in hvti_taxonomy() and they left intake.
+  # That blocker was never a real issue number -- only intake's exemption let
+  # it stand. Now:
+  #   * sid and vt cite hvtiRforests#1, the issue for ML sub-project 3, which
+  #     creates the package their method code is owed to. A build row outside
+  #     intake must cite a real Pkg#N (see "a build row that is not intake
+  #     names a real issue"), and until that issue existed nothing did.
+  #   * rfr is a retire row, so it needs no blocker, and has none.
   # which(), not a bare logical: an NA prefix -- which the schema test
   # above permits -- indexes in an NA element and fails these pins with
   # a message about the blockers rather than about the malformed row.
   by_prefix <- function(p) j$blocked_on[which(j$prefix == p)]
 
-  expect_identical(by_prefix("sid"), "hvtiRutilities#taxonomy")
-  expect_identical(by_prefix("vt"), "hvtiRutilities#taxonomy")
-  expect_identical(by_prefix("rfr"), "hvtiRutilities#taxonomy")
+  expect_identical(by_prefix("sid"), "hvtiRforests#1")
+  expect_identical(by_prefix("vt"), "hvtiRforests#1")
+  expect_identical(by_prefix("rfr"), NA_character_)
 })
 
 test_that("jobs() names the row and field when a scalar arrives as an array", {
@@ -374,24 +382,38 @@ test_that("a build row that is not intake names a real issue", {
 test_that("an intake row's blocked_on is not a placeholder either", {
   # The disposition == "build" && status == "intake" carve-out above skips
   # the issue-reference check entirely, which leaves a hole: an intake row
-  # is allowed to point at something other than a real issue (today, both
-  # intake build rows and the intake retire row point at
-  # hvtiRutilities#taxonomy, a deliberate non-issue marker), but it must
-  # still point at *something meaningful*. A bare "TBD", "TODO", "FIXME",
+  # is allowed to point at something other than a real issue (until
+  # 2026-09-17, sid, vt and rfr all pointed at hvtiRutilities#taxonomy, a
+  # deliberate non-issue marker), but it must still point at *something
+  # meaningful*. A bare "TBD", "TODO", "FIXME",
   # "?" or "needs ..." would slip past both the literal placeholder-string
   # test above and the non-intake issue-reference test above it, so this
   # pins it down directly: non-null, non-empty, and not shaped like a
   # stand-in for "someone hasn't decided yet".
   raw <- read_jobs()
   placeholder_shaped <- "(?i)^\\s*(TBD|TODO|FIXME|\\?+|needs\\b.*)\\s*$"
-  for (r in raw) {
-    if (identical(r$status, "intake")) {
-      b <- r$blocked_on
-      expect_false(is.null(b), label = r$prefix)
-      expect_false(is.na(b) || !nzchar(trimws(b)), label = r$prefix)
-      expect_false(grepl(placeholder_shaped, b, perl = TRUE), label = r$prefix)
-    }
-  }
+  intake <- Filter(function(r) identical(r$status, "intake"), raw)
+
+  # Asserted over the whole set rather than inside a `for`, because intake is
+  # legitimately EMPTY whenever every proposed prefix has landed, as it was
+  # on 2026-09-17. A `for` over zero rows makes no expectation, and testthat
+  # reports an empty test as a SKIP rather than a pass -- so the check would
+  # go quiet under a green run. `all()` of an empty logical is TRUE, which is
+  # the right answer and is still an assertion. The same defect was fixed in
+  # hvtiRtemplates' test-roadmap.R the same day.
+  meaningful <- vapply(intake, function(r) {
+    b <- r$blocked_on
+    !is.null(b) && !is.na(b) && nzchar(trimws(b)) &&
+      !grepl(placeholder_shaped, b, perl = TRUE)
+  }, logical(1))
+  expect_true(
+    all(meaningful),
+    label = paste(
+      "intake rows with a missing or placeholder blocked_on:",
+      paste(vapply(intake[!meaningful], function(r) r$prefix, character(1)),
+            collapse = ", ")
+    )
+  )
 })
 
 test_that("status/batch are null off-destination, except intake", {
