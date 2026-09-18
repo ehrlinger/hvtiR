@@ -1037,7 +1037,7 @@
    "workflows": [],
    "blocked_on": null,
    "spec": null,
-   "note": "in hvti_taxonomy() via hvtiRutilities PR #127, unreleased (not in 1.2.0); template owed by ML sub-project 2",
+   "note": "in hvti_taxonomy() via hvtiRutilities PR #127, unreleased (not in 1.2.0); retire means no template is owed, which ML sub-project 2 must reconcile with the roadmap's rf* templates",
    "sas_breadth_jobs": null,
    "disposition": "retire",
    "destination": "ggRandomForests",

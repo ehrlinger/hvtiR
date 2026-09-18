@@ -13,12 +13,13 @@ Version: 1.1.14
   now cite `hvtiRforests#1`, the issue for ML sub-project 3, opened with the
   new `hvtiRforests` repository because nothing citable existed before.
 
-* Two intake guards in `test-jobs.R` no longer go quiet when intake is empty.
-  One asserted inside a `for` over the intake rows, so with none left it made
-  no expectation, and testthat reports an empty test as a SKIP rather than a
-  pass. It now asserts over the whole set. The temporary pin on the three
-  rows' `hvtiRutilities#taxonomy` blocker is retired in favour of their real
-  blockers.
+* The intake placeholder guard in `test-jobs.R` no longer goes quiet when
+  intake is empty. It asserted inside a `for` over the intake rows, so with
+  none left it made no expectation, and testthat reports an empty test as a
+  SKIP rather than a pass. It now asserts over the whole set. Separately, the
+  temporary pin on the three rows' `hvtiRutilities#taxonomy` blocker is
+  retired: `sid` and `vt` are now pinned to `hvtiRforests#1`, and `rfr` to
+  having no blocker at all.
 
 # hvtiR 1.1.14
 
