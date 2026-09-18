@@ -3,10 +3,14 @@ Version: 1.1.15
 
 # hvtiR 1.1.15
 
-* **The catalog records `hvtiRutilities` 1.2.1**, refreshed from `main` by
-  `tools/refresh_catalog_versions.py`, so `status()` can report the release.
-  1.2.1 carries `cache_fit()` and the `rfr`, `sid` and `vt` taxonomy rows that
-  the `rfs`/`rfc`/`rfr` and `sid`/`vt` catalog rows above depend on.
+* **The published-artifact catalog records `hvtiRutilities` 1.2.1** in its
+  `dev_version` column, refreshed from `main` by
+  `tools/refresh_catalog_versions.py`. That catalog is presentation metadata,
+  read by the internal `read_catalog()` for renderers such as the family
+  table; `status()` does not read it, and takes its versions live from each
+  repository's `main`. 1.2.1 carries `cache_fit()` and the `rfr`, `sid` and
+  `vt` taxonomy rows that the `rfs`/`rfc`/`rfr` and `sid`/`vt` catalog rows
+  above depend on.
 
 * **`rfs`, `rfc` and `rfr` move from `retire` to `scaffold`, destined for
   `hvtiRtemplates`.** Their templates are owed there: they fit with
