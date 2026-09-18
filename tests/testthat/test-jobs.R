@@ -257,12 +257,17 @@ test_that("the relabelled rows carry the taxonomy's new names, pinned", {
 test_that("jobs() has exactly the seeded count of retire rows, each replaced", {
   j <- jobs()
 
-  # 5 is the seeded count as of this catalog. A sixth retirement is not a
-  # bug, but it should change this number on purpose rather than by
-  # surprise, so a failure here points a future author at this line.
+  # 2 is the count as of this catalog. A third retirement is not a bug, but
+  # it should change this number on purpose rather than by surprise, so a
+  # failure here points a future author at this line.
   # pm was a sixth from 2026-09-11 until 2026-09-13, when it left the
   # taxonomy and its row went with it; see the lm pin below.
-  expect_identical(sum(j$disposition == "retire"), 5L)
+  # It was 5 until 2026-09-18, when rfs, rfc and rfr moved from retire to
+  # scaffold: their templates are owed in hvtiRtemplates, fitting with
+  # randomForestSRC and plotting with ggRandomForests (John's decision). The
+  # two left, rf and rfsrc, are the legacy umbrella rows hvti_taxonomy()
+  # demoted, so retire and "demoted" now name the same two rows.
+  expect_identical(sum(j$disposition == "retire"), 2L)
   expect_true(all(lengths(j$replaced_by[j$disposition == "retire"]) > 0L))
 })
 
