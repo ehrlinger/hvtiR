@@ -10,8 +10,8 @@ so it cannot disagree with it.
 | disposition | rows |
 |:------------|-----:|
 | build       |    8 |
-| retire      |    5 |
-| scaffold    |   28 |
+| retire      |    2 |
+| scaffold    |   31 |
 | thin        |   16 |
 
 ## distributions
@@ -49,11 +49,11 @@ so it cannot disagree with it.
 | `nb` | Boosting | 18 | 63 | build | NA | ggBoostedTrees |  | ggBoostedTrees#9 |
 | `nm` | Non-linear model | 121 | 1 | scaffold | queued | hvtiRtemplates |  |  |
 | `rf` | Random forest | 41 | 312 | retire | NA | ggRandomForests | [`ggRandomForests::gg_rfsrc`](https://ehrlinger.github.io/ggRandomForests/reference/gg_rfsrc.rfsrc.html), [`ggRandomForests::gg_error`](https://ehrlinger.github.io/ggRandomForests/reference/gg_error.html), [`ggRandomForests::gg_vimp`](https://ehrlinger.github.io/ggRandomForests/reference/gg_vimp.html), [`ggRandomForests::gg_variable`](https://ehrlinger.github.io/ggRandomForests/reference/gg_variable.html) |  |
-| `rfc` | Random forest classifier | 11 | 52 | retire | NA | ggRandomForests | [`ggRandomForests::gg_roc`](https://ehrlinger.github.io/ggRandomForests/reference/gg_roc.rfsrc.html), [`ggRandomForests::gg_brier`](https://ehrlinger.github.io/ggRandomForests/reference/gg_brier.html), [`ggRandomForests::gg_error`](https://ehrlinger.github.io/ggRandomForests/reference/gg_error.html), [`ggRandomForests::calc_auc`](https://ehrlinger.github.io/ggRandomForests/reference/calc_auc.html) |  |
-| `rfs` | Random forest survival | 9 | 39 | retire | NA | ggRandomForests | [`ggRandomForests::gg_rfsrc`](https://ehrlinger.github.io/ggRandomForests/reference/gg_rfsrc.rfsrc.html), [`ggRandomForests::gg_survival`](https://ehrlinger.github.io/ggRandomForests/reference/gg_survival.html), [`ggRandomForests::gg_error`](https://ehrlinger.github.io/ggRandomForests/reference/gg_error.html), [`ggRandomForests::gg_vimp`](https://ehrlinger.github.io/ggRandomForests/reference/gg_vimp.html) |  |
+| `rfc` | Random forest classifier | 11 | 52 | scaffold | queued | hvtiRtemplates | [`ggRandomForests::gg_roc`](https://ehrlinger.github.io/ggRandomForests/reference/gg_roc.rfsrc.html), [`ggRandomForests::gg_brier`](https://ehrlinger.github.io/ggRandomForests/reference/gg_brier.html), [`ggRandomForests::gg_error`](https://ehrlinger.github.io/ggRandomForests/reference/gg_error.html), [`ggRandomForests::calc_auc`](https://ehrlinger.github.io/ggRandomForests/reference/calc_auc.html) |  |
+| `rfs` | Random forest survival | 9 | 39 | scaffold | queued | hvtiRtemplates | [`ggRandomForests::gg_rfsrc`](https://ehrlinger.github.io/ggRandomForests/reference/gg_rfsrc.rfsrc.html), [`ggRandomForests::gg_survival`](https://ehrlinger.github.io/ggRandomForests/reference/gg_survival.html), [`ggRandomForests::gg_error`](https://ehrlinger.github.io/ggRandomForests/reference/gg_error.html), [`ggRandomForests::gg_vimp`](https://ehrlinger.github.io/ggRandomForests/reference/gg_vimp.html) |  |
 | `rfsrc` | Random forest (SRC) | 97 | 631 | retire | NA | ggRandomForests | [`ggRandomForests::gg_rfsrc`](https://ehrlinger.github.io/ggRandomForests/reference/gg_rfsrc.rfsrc.html), [`ggRandomForests::gg_survival`](https://ehrlinger.github.io/ggRandomForests/reference/gg_survival.html), [`ggRandomForests::gg_error`](https://ehrlinger.github.io/ggRandomForests/reference/gg_error.html), [`ggRandomForests::gg_vimp`](https://ehrlinger.github.io/ggRandomForests/reference/gg_vimp.html), [`ggRandomForests::gg_partial`](https://ehrlinger.github.io/ggRandomForests/reference/gg_partial.html) |  |
 | `rm` | Regression model | 170 | 94 | scaffold | queued | hvtiRtemplates |  |  |
-| `rfr` | Random forest regression | NA | NA | retire | NA | ggRandomForests | [`ggRandomForests::gg_rfsrc`](https://ehrlinger.github.io/ggRandomForests/reference/gg_rfsrc.rfsrc.html), [`ggRandomForests::gg_vimp`](https://ehrlinger.github.io/ggRandomForests/reference/gg_vimp.html), [`ggRandomForests::gg_shap`](https://ehrlinger.github.io/ggRandomForests/reference/gg_shap.html) |  |
+| `rfr` | Random forest regression | NA | NA | scaffold | queued | hvtiRtemplates | [`ggRandomForests::gg_rfsrc`](https://ehrlinger.github.io/ggRandomForests/reference/gg_rfsrc.rfsrc.html), [`ggRandomForests::gg_vimp`](https://ehrlinger.github.io/ggRandomForests/reference/gg_vimp.html), [`ggRandomForests::gg_shap`](https://ehrlinger.github.io/ggRandomForests/reference/gg_shap.html) |  |
 | `sid` | Random forest clustering (sidClustering) | NA | NA | build | NA | ggRandomForests |  | hvtiRforests#1 |
 | `vt` | Virtual twins | NA | NA | build | NA | ggRandomForests |  | hvtiRforests#1 |
 
