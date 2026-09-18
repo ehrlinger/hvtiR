@@ -53,9 +53,9 @@ so it cannot disagree with it.
 | `rfs` | Random forest survival | 9 | 39 | retire | NA | ggRandomForests | [`ggRandomForests::gg_rfsrc`](https://ehrlinger.github.io/ggRandomForests/reference/gg_rfsrc.rfsrc.html), [`ggRandomForests::gg_survival`](https://ehrlinger.github.io/ggRandomForests/reference/gg_survival.html), [`ggRandomForests::gg_error`](https://ehrlinger.github.io/ggRandomForests/reference/gg_error.html), [`ggRandomForests::gg_vimp`](https://ehrlinger.github.io/ggRandomForests/reference/gg_vimp.html) |  |
 | `rfsrc` | Random forest (SRC) | 97 | 631 | retire | NA | ggRandomForests | [`ggRandomForests::gg_rfsrc`](https://ehrlinger.github.io/ggRandomForests/reference/gg_rfsrc.rfsrc.html), [`ggRandomForests::gg_survival`](https://ehrlinger.github.io/ggRandomForests/reference/gg_survival.html), [`ggRandomForests::gg_error`](https://ehrlinger.github.io/ggRandomForests/reference/gg_error.html), [`ggRandomForests::gg_vimp`](https://ehrlinger.github.io/ggRandomForests/reference/gg_vimp.html), [`ggRandomForests::gg_partial`](https://ehrlinger.github.io/ggRandomForests/reference/gg_partial.html) |  |
 | `rm` | Regression model | 170 | 94 | scaffold | queued | hvtiRtemplates |  |  |
-| `rfr` | Random forest regression | NA | NA | retire | intake | ggRandomForests | [`ggRandomForests::gg_rfsrc`](https://ehrlinger.github.io/ggRandomForests/reference/gg_rfsrc.rfsrc.html), [`ggRandomForests::gg_vimp`](https://ehrlinger.github.io/ggRandomForests/reference/gg_vimp.html), [`ggRandomForests::gg_shap`](https://ehrlinger.github.io/ggRandomForests/reference/gg_shap.html) | hvtiRutilities#taxonomy |
-| `sid` | Random forest clustering (sidClustering) | NA | NA | build | intake | ggRandomForests |  | hvtiRutilities#taxonomy |
-| `vt` | Virtual twins | NA | NA | build | intake | ggRandomForests |  | hvtiRutilities#taxonomy |
+| `rfr` | Random forest regression | NA | NA | retire | NA | ggRandomForests | [`ggRandomForests::gg_rfsrc`](https://ehrlinger.github.io/ggRandomForests/reference/gg_rfsrc.rfsrc.html), [`ggRandomForests::gg_vimp`](https://ehrlinger.github.io/ggRandomForests/reference/gg_vimp.html), [`ggRandomForests::gg_shap`](https://ehrlinger.github.io/ggRandomForests/reference/gg_shap.html) |  |
+| `sid` | Random forest clustering (sidClustering) | NA | NA | build | NA | ggRandomForests |  | hvtiRforests#1 |
+| `vt` | Virtual twins | NA | NA | build | NA | ggRandomForests |  | hvtiRforests#1 |
 
 ## datasets
 
