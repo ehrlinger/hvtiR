@@ -13,12 +13,23 @@ test_that("the job catalog is frozen while it moves to hvtiRtemplates", {
   # so re-joining its lines with "\n" gives the same digest on every platform.
   # Measured 2026-09-18: a genuine CRLF copy (1,440 CR bytes) differs from the
   # LF file by raw md5 and matches it after normalization.
+  #
+  # ⚠️ The normalized text is written through a BINARY ("wb") connection.
+  # writeLines() given a file NAME opens a text-mode connection, and on
+  # Windows text mode turns every "\n" back into "\r\n", re-adding the CRLF
+  # this test exists to strip. The first version did exactly that and failed
+  # on windows-latest alone: its digest, d607b4b2..., is precisely the md5 of
+  # the catalog's lines re-joined with CRLF. Binary mode writes the bytes as
+  # given on every platform. Found by Copilot on #90; macOS, where text and
+  # binary mode are the same, could not show it.
   path <- system.file("extdata", "jobs.json", package = "hvtiR")
   expect_true(nzchar(path), label = "jobs.json is installed with the package")
 
   normalized <- tempfile()
   on.exit(unlink(normalized), add = TRUE)
-  writeLines(readLines(path, warn = FALSE), normalized, sep = "\n")
+  con <- file(normalized, "wb")
+  writeLines(readLines(path, warn = FALSE), con, sep = "\n")
+  close(con)
 
   expect_identical(
     unname(tools::md5sum(normalized)),
