@@ -274,7 +274,8 @@ test_that("jobs() has exactly the seeded count of retire rows, each replaced", {
 test_that("the real blocked_on values for sid, vt and rfr are pinned", {
   j <- jobs()
 
-  # sid and vt are disposition build; rfr is disposition retire. A placeholder
+  # sid and vt are disposition build; rfr is disposition scaffold (retire
+  # until 2026-09-18). A placeholder
   # sweep that overwrites blocked_on wholesale would silently clobber them;
   # this test is here so that overwrite fails loudly instead.
   #
@@ -286,7 +287,9 @@ test_that("the real blocked_on values for sid, vt and rfr are pinned", {
   #     creates the package their method code is owed to. A build row outside
   #     intake must cite a real Pkg#N (see "a build row that is not intake
   #     names a real issue"), and until that issue existed nothing did.
-  #   * rfr is a retire row, so it needs no blocker, and has none.
+  #   * rfr needs no blocker, and has none: only a build row must name one.
+  #     It was a retire row until 2026-09-18 and is a scaffold row now; the
+  #     reason holds either way.
   # which(), not a bare logical: an NA prefix -- which the schema test
   # above permits -- indexes in an NA element and fails these pins with
   # a message about the blockers rather than about the malformed row.
