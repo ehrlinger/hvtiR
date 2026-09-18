@@ -1,6 +1,15 @@
 Package: hvtiR
 Version: 1.1.15
 
+# hvtiR (unreleased)
+
+* **The job catalog is frozen.** A new test fails if `inst/extdata/jobs.json`
+  changes at all, measured by a checksum over line-ending-normalized text so
+  it holds on Windows too. The catalog is moving to `hvtiRtemplates` as
+  `templates.json` (`hvtiRtemplates:dev/specs/2026-09-18-template-catalog-design.md`),
+  and until this package drops `jobs.json` two copies exist; the freeze stops
+  them drifting. The test is deleted with the file.
+
 # hvtiR 1.1.15
 
 * **The published-artifact catalog records `hvtiRutilities` 1.2.1** in its
