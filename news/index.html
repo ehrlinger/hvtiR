@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">hvtiR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.14</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.15</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -44,6 +44,13 @@
       <small>Source: <a href="https://github.com/ehrlinger/hvtiR/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.1.15" id="hvtir-1115">hvtiR 1.1.15<a class="anchor" aria-label="anchor" href="#hvtir-1115"></a></h2>
+<ul><li><p><strong>The published-artifact catalog records <code>hvtiRutilities</code> 1.2.1</strong> in its <code>dev_version</code> column, refreshed from <code>main</code> by <code>tools/refresh_catalog_versions.py</code>. That catalog is presentation metadata, read by the internal <code>read_catalog()</code> for renderers such as the family table; <code><a href="../reference/status.html">status()</a></code> does not read it, and takes its versions live from each repository’s <code>main</code>. 1.2.1 carries <code>cache_fit()</code> and the <code>rfr</code>, <code>sid</code> and <code>vt</code> taxonomy rows that the <code>rfs</code>/<code>rfc</code>/<code>rfr</code> and <code>sid</code>/<code>vt</code> catalog rows above depend on.</p></li>
+<li><p><strong><code>rfs</code>, <code>rfc</code> and <code>rfr</code> move from <code>retire</code> to <code>scaffold</code>, destined for <code>hvtiRtemplates</code>.</strong> Their templates are owed there: they fit with randomForestSRC and plot with ggRandomForests, so they use ggRandomForests rather than living in it. <code>status</code> becomes <code>queued</code>, since a row destined for hvtiRtemplates carries a scheduling status, and <code>batch</code> stays null because no ML batch has been assigned. <code>replaced_by</code> keeps the <code>gg_*</code> functions the templates will call. <code>retire</code> now holds exactly <code>rf</code> and <code>rfsrc</code>, the legacy umbrella rows <code>hvti_taxonomy()</code> demoted.</p></li>
+<li><p><strong><code>rfr</code>, <code>sid</code> and <code>vt</code> leave intake.</strong> hvtiRutilities PR <a href="https://github.com/ehrlinger/hvtiR/issues/127" class="external-link">#127</a> added all three prefixes to <code>hvti_taxonomy()</code>; it is on that package’s <code>main</code> but in no release yet, so it is NOT in 1.2.0. All three rows are destined for <code>ggRandomForests</code>, off this catalog’s <code>hvtiRtemplates</code> destination, so they take <code>status: null</code> like the other off-destination rows rather than a scheduling status. <code>rfr</code> is a retire row and needs no blocker. <code>sid</code> and <code>vt</code> are build rows, which must cite a real issue once out of intake; they now cite <code>hvtiRforests#1</code>, the issue for ML sub-project 3, opened with the new <code>hvtiRforests</code> repository because nothing citable existed before.</p></li>
+<li><p>The intake placeholder guard in <code>test-jobs.R</code> no longer goes quiet when intake is empty. It asserted inside a <code>for</code> over the intake rows, so with none left it made no expectation, and testthat reports an empty test as a SKIP rather than a pass. It now asserts over the whole set. Separately, the temporary pin on the three rows’ <code>hvtiRutilities#taxonomy</code> blocker is retired: <code>sid</code> and <code>vt</code> are now pinned to <code>hvtiRforests#1</code>, and <code>rfr</code> to having no blocker at all.</p></li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.1.14" id="hvtir-1114">hvtiR 1.1.14<a class="anchor" aria-label="anchor" href="#hvtir-1114"></a></h2>
 <ul><li>

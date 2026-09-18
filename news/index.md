@@ -1,5 +1,48 @@
 # Changelog
 
+## hvtiR 1.1.15
+
+- **The published-artifact catalog records `hvtiRutilities` 1.2.1** in
+  its `dev_version` column, refreshed from `main` by
+  `tools/refresh_catalog_versions.py`. That catalog is presentation
+  metadata, read by the internal `read_catalog()` for renderers such as
+  the family table;
+  [`status()`](https://ehrlinger.github.io/hvtiR/reference/status.md)
+  does not read it, and takes its versions live from each repository’s
+  `main`. 1.2.1 carries `cache_fit()` and the `rfr`, `sid` and `vt`
+  taxonomy rows that the `rfs`/`rfc`/`rfr` and `sid`/`vt` catalog rows
+  above depend on.
+
+- **`rfs`, `rfc` and `rfr` move from `retire` to `scaffold`, destined
+  for `hvtiRtemplates`.** Their templates are owed there: they fit with
+  randomForestSRC and plot with ggRandomForests, so they use
+  ggRandomForests rather than living in it. `status` becomes `queued`,
+  since a row destined for hvtiRtemplates carries a scheduling status,
+  and `batch` stays null because no ML batch has been assigned.
+  `replaced_by` keeps the `gg_*` functions the templates will call.
+  `retire` now holds exactly `rf` and `rfsrc`, the legacy umbrella rows
+  `hvti_taxonomy()` demoted.
+
+- **`rfr`, `sid` and `vt` leave intake.** hvtiRutilities PR
+  [\#127](https://github.com/ehrlinger/hvtiR/issues/127) added all three
+  prefixes to `hvti_taxonomy()`; it is on that package’s `main` but in
+  no release yet, so it is NOT in 1.2.0. All three rows are destined for
+  `ggRandomForests`, off this catalog’s `hvtiRtemplates` destination, so
+  they take `status: null` like the other off-destination rows rather
+  than a scheduling status. `rfr` is a retire row and needs no blocker.
+  `sid` and `vt` are build rows, which must cite a real issue once out
+  of intake; they now cite `hvtiRforests#1`, the issue for ML
+  sub-project 3, opened with the new `hvtiRforests` repository because
+  nothing citable existed before.
+
+- The intake placeholder guard in `test-jobs.R` no longer goes quiet
+  when intake is empty. It asserted inside a `for` over the intake rows,
+  so with none left it made no expectation, and testthat reports an
+  empty test as a SKIP rather than a pass. It now asserts over the whole
+  set. Separately, the temporary pin on the three rows’
+  `hvtiRutilities#taxonomy` blocker is retired: `sid` and `vt` are now
+  pinned to `hvtiRforests#1`, and `rfr` to having no blocker at all.
+
 ## hvtiR 1.1.14
 
 - **The catalog records the current `main` version of five members**,
