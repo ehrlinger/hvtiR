@@ -1,7 +1,7 @@
 Package: hvtiR
-Version: 1.1.14
+Version: 1.1.15
 
-# hvtiR (unreleased)
+# hvtiR 1.1.15
 
 * **The catalog records `hvtiRutilities` 1.2.1**, refreshed from `main` by
   `tools/refresh_catalog_versions.py`, so `status()` can report the release.
