@@ -3,6 +3,11 @@ Version: 1.1.14
 
 # hvtiR (unreleased)
 
+* **The catalog records `hvtiRutilities` 1.2.1**, refreshed from `main` by
+  `tools/refresh_catalog_versions.py`, so `status()` can report the release.
+  1.2.1 carries `cache_fit()` and the `rfr`, `sid` and `vt` taxonomy rows that
+  the `rfs`/`rfc`/`rfr` and `sid`/`vt` catalog rows above depend on.
+
 * **`rfs`, `rfc` and `rfr` move from `retire` to `scaffold`, destined for
   `hvtiRtemplates`.** Their templates are owed there: they fit with
   randomForestSRC and plot with ggRandomForests, so they use ggRandomForests
