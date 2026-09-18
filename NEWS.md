@@ -3,6 +3,15 @@ Version: 1.1.14
 
 # hvtiR (unreleased)
 
+* **`rfs`, `rfc` and `rfr` move from `retire` to `scaffold`, destined for
+  `hvtiRtemplates`.** Their templates are owed there: they fit with
+  randomForestSRC and plot with ggRandomForests, so they use ggRandomForests
+  rather than living in it. `status` becomes `queued`, since a row destined for
+  hvtiRtemplates carries a scheduling status, and `batch` stays null because
+  no ML batch has been assigned. `replaced_by` keeps the `gg_*` functions the
+  templates will call. `retire` now holds exactly `rf` and `rfsrc`, the legacy
+  umbrella rows `hvti_taxonomy()` demoted.
+
 * **`rfr`, `sid` and `vt` leave intake.** hvtiRutilities PR #127 added all
   three prefixes to `hvti_taxonomy()`; it is on that package's `main` but in
   no release yet, so it is NOT in 1.2.0. All three rows are destined for
