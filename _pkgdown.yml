@@ -59,4 +59,3 @@ reference:
   desc: Which packages are members, and where they come from
   contents:
   - members
-  - jobs

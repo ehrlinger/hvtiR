@@ -1,5 +1,12 @@
 # The job catalog: routing 53 job types to the packages that owe them
 
+> **Superseded 2026-09-19** by `hvtiRtemplates:dev/specs/2026-09-18-template-catalog-design.md`,
+> approved in [hvtiRtemplates#132](https://github.com/ehrlinger/hvtiRtemplates/pull/132).
+> Every job type is a template in hvtiRtemplates, so the catalog moved there as
+> `templates.json` and hvtiR keeps none of it: this design's routing (`destination`,
+> `retire`) is gone, and hvtiR 1.2.0 removes `jobs()` and `jobs.json`. Kept as the
+> record of why the catalog was first put here.
+
 **Written** 2026-09-04.
 **Status** Design, approved in outline. Not implemented.
 **Repo** `hvtiR`. Consumers: `hvtiRtemplates`, `hvtiPlotR`, `hvtiRtables`,

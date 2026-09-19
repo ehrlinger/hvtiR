@@ -1,8 +1,8 @@
 Package: hvtiR
 Type: Package
 Title: Install and Check the HVTI R Package Family
-Version: 1.1.15
-Date: 2026-09-18
+Version: 1.2.0
+Date: 2026-09-19
 Authors@R: person("John", "Ehrlinger", email = "john.ehrlinger@gmail.com",
     role = c("aut", "cre"))
 Description: Installs, updates and reports on the Cleveland Clinic Heart and
@@ -17,27 +17,13 @@ Depends:
     R (>= 4.1.0)
 Imports:
     cli,
-    jsonlite,
     utils
 Suggests:
     curl,
-    ggRandomForests,
-    hvtiPlotR,
-    hvtiRpropensity,
-    hvtiRtables,
-    hvtiRutilities,
     knitr,
     pak,
     quarto,
-    TemporalHazard,
     testthat (>= 3.2.0)
-Remotes:
-    ehrlinger/ggRandomForests,
-    ehrlinger/hvtiPlotR,
-    ehrlinger/hvtiRpropensity,
-    ehrlinger/hvtiRtables,
-    ehrlinger/hvtiRutilities,
-    ehrlinger/TemporalHazard
 VignetteBuilder: quarto
 Config/testthat/edition: 3
 Roxygen: list(markdown = TRUE)

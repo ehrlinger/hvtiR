@@ -1,9 +1,10 @@
 # hvtiR
 
 The one-command installer and diagnostic for the HVTI R package family:
-`install()`, `update()`, `status()`, `doctor()`, `members()` and
-`jobs()`. Six exports across seven source files, importing `cli`, `jsonlite`
-and `utils`.
+`install()`, `update()`, `status()`, `doctor()` and `members()`. Five exports
+across six source files, importing `cli` and `utils`. The job catalog and its
+`jobs()` accessor left this package in 1.2.0; they live in `hvtiRtemplates` as
+`inst/extdata/templates.json` and `template_catalog()`.
 
 **It is the entry point everyone installs through**, so a defect here is the first thing a
 new user meets and the last thing they can diagnose. It is also the only package in the

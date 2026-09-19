@@ -1,14 +1,26 @@
 Package: hvtiR
-Version: 1.1.15
+Version: 1.2.0
 
-# hvtiR (unreleased)
+# hvtiR 1.2.0
 
-* **The job catalog is frozen.** A new test fails if `inst/extdata/jobs.json`
-  changes at all, measured by a checksum over line-ending-normalized text so
-  it holds on Windows too. The catalog is moving to `hvtiRtemplates` as
-  `templates.json` (`hvtiRtemplates:dev/specs/2026-09-18-template-catalog-design.md`),
-  and until this package drops `jobs.json` two copies exist; the freeze stops
-  them drifting. The test is deleted with the file.
+* ⚠️ **Breaking: the job catalog leaves hvtiR, and `jobs()` is removed.** The
+  catalog moves to `hvtiRtemplates` as `inst/extdata/templates.json`, read by
+  `hvtiRtemplates::template_catalog()`
+  (`hvtiRtemplates:dev/specs/2026-09-18-template-catalog-design.md`). Every job
+  type is a template there; other packages only supply the functions a
+  template calls, so hvtiR keeps no part of it. Removed: `jobs()` and its help
+  page, `inst/extdata/jobs.json`, the `job-catalog` vignette, the catalog tests
+  (including the temporary freeze guard added while the catalog moved), the
+  `jobs-pin-drift` workflow and `tools/check_jobs_pin.py`. `jsonlite` leaves
+  Imports, and `ggRandomForests`, `hvtiPlotR`, `hvtiRpropensity`, `hvtiRtables`,
+  `hvtiRutilities` and `TemporalHazard` leave Suggests and Remotes: they were
+  installed only to validate the catalog's `replaced_by` exports. The registry
+  still names them all as members; `install()` reads the registry, not this
+  package's `DESCRIPTION`.
+
+* **The published-artifact catalog records `hvtiRutilities` 1.3.0** in its
+  `dev_version` column, refreshed from `main` by
+  `tools/refresh_catalog_versions.py`.
 
 # hvtiR 1.1.15
 
