@@ -1,7 +1,7 @@
 Package: hvtiR
-Version: 1.1.15
+Version: 1.2.0
 
-# hvtiR (unreleased)
+# hvtiR 1.2.0
 
 * ⚠️ **Breaking: the job catalog leaves hvtiR, and `jobs()` is removed.** The
   catalog moves to `hvtiRtemplates` as `inst/extdata/templates.json`, read by
