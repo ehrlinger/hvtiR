@@ -1,5 +1,29 @@
 # Changelog
 
+## hvtiR 1.2.0
+
+- ⚠️ **Breaking: the job catalog leaves hvtiR, and `jobs()` is
+  removed.** The catalog moves to `hvtiRtemplates` as
+  `inst/extdata/templates.json`, read by
+  `hvtiRtemplates::template_catalog()`
+  (`hvtiRtemplates:dev/specs/2026-09-18-template-catalog-design.md`).
+  Every job type is a template there; other packages only supply the
+  functions a template calls, so hvtiR keeps no part of it. Removed:
+  `jobs()` and its help page, `inst/extdata/jobs.json`, the
+  `job-catalog` vignette, the catalog tests (including the temporary
+  freeze guard added while the catalog moved), the `jobs-pin-drift`
+  workflow and `tools/check_jobs_pin.py`. `jsonlite` leaves Imports, and
+  `ggRandomForests`, `hvtiPlotR`, `hvtiRpropensity`, `hvtiRtables`,
+  `hvtiRutilities` and `TemporalHazard` leave Suggests and Remotes: they
+  were installed only to validate the catalog’s `replaced_by` exports.
+  The registry still names them all as members;
+  [`install()`](https://ehrlinger.github.io/hvtiR/reference/install.md)
+  reads the registry, not this package’s `DESCRIPTION`.
+
+- **The published-artifact catalog records `hvtiRutilities` 1.3.0** in
+  its `dev_version` column, refreshed from `main` by
+  `tools/refresh_catalog_versions.py`.
+
 ## hvtiR 1.1.15
 
 - **The published-artifact catalog records `hvtiRutilities` 1.2.1** in
@@ -152,11 +176,10 @@
   figure of record, and where two spellings name one job the newer
   macro’s names the row while the row counts both.
 
-- **[`jobs()`](https://ehrlinger.github.io/hvtiR/reference/jobs.md)
-  returns `sas_breadth_jobs` and `r_exemplars`**, and the job catalog
-  vignette’s SAS column reads `sas_breadth_jobs`. It read `sas_breadth`,
-  which is null on every qualified row, so all thirteen `dc` and `dp`
-  rows showed no SAS count.
+- **`jobs()` returns `sas_breadth_jobs` and `r_exemplars`**, and the job
+  catalog vignette’s SAS column reads `sas_breadth_jobs`. It read
+  `sas_breadth`, which is null on every qualified row, so all thirteen
+  `dc` and `dp` rows showed no SAS count.
 
 - **`dc-trends` and `dp-boxplot` now count studies in the field’s own
   unit.** [\#61](https://github.com/ehrlinger/hvtiR/issues/61) filled
@@ -306,10 +329,9 @@
   it should.
 
 - **`53` is no longer hard-coded in two places and one docstring.** The
-  counts moved to 55, and
-  [`jobs()`](https://ehrlinger.github.io/hvtiR/reference/jobs.md)’s test
-  now also asserts `nrow(jobs()) == length(read_jobs())` – the
-  relationship, which cannot go stale the way a literal does.
+  counts moved to 55, and `jobs()`’s test now also asserts
+  `nrow(jobs()) == length(read_jobs())` – the relationship, which cannot
+  go stale the way a literal does.
 
 - New `jobs-pin-drift` workflow, with `tools/check_jobs_pin.py` behind
   it. `inst/extdata/jobs.json` is read by sibling repositories rather
@@ -446,16 +468,15 @@
   not hvtiR. Both issue templates ask for that output, so a report
   arrived without the one version a maintainer needs first.
 
-- [`jobs()`](https://ehrlinger.github.io/hvtiR/reference/jobs.md) names
-  the row and the field when a scalar field in the catalog arrives as an
-  array. [`vapply()`](https://rdrr.io/r/base/lapply.html)’s own message
-  for that named neither, and the first sign of it was the vignette
-  failing to build. The catalog is hand edited and four of its fields
-  are arrays, so a scalar written as one is a plausible slip.
+- `jobs()` names the row and the field when a scalar field in the
+  catalog arrives as an array.
+  [`vapply()`](https://rdrr.io/r/base/lapply.html)’s own message for
+  that named neither, and the first sign of it was the vignette failing
+  to build. The catalog is hand edited and four of its fields are
+  arrays, so a scalar written as one is a plausible slip.
 
-- [`jobs()`](https://ehrlinger.github.io/hvtiR/reference/jobs.md) also
-  names the row and the field when a count field holds something that is
-  not a whole number.
+- `jobs()` also names the row and the field when a count field holds
+  something that is not a whole number.
   [`as.integer()`](https://rdrr.io/r/base/integer.html) made that `NA`
   with a warning, which reads downstream as a field the catalog simply
   omits rather than one written wrong. A whole number written as a
@@ -472,9 +493,9 @@
   by `tools/refresh_catalog_versions.py`. `members.json` is unchanged,
   so no downstream CV sink is affected.
 
-- New [`jobs()`](https://ehrlinger.github.io/hvtiR/reference/jobs.md),
-  the job catalog: every job type found in the studies corpus, routed to
-  the package that owes it. Rendered as the “The job catalog” article.
+- New `jobs()`, the job catalog: every job type found in the studies
+  corpus, routed to the package that owes it. Rendered as the “The job
+  catalog” article.
 
 - `AGENTS.md` records the branch rulesets as they actually stand. It
   claimed the repositories differed only in `required_status_checks`,
