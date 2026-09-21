@@ -85,6 +85,10 @@ installed_version <- function(pkg) {
 #' repository. The returned table remains version-focused; commit provenance
 #' is an internal tie-breaker when versions match.
 #'
+#' `hvtiR` itself is checked separately because it is not a family member. It
+#' remains outside the returned table, but the printed report says when the
+#' installer is behind and names the command that updates it.
+#'
 #' The object is returned visibly and has a `print` method, so a bare call
 #' displays the table while `st <- status()` captures the data frame
 #' for scripting.
@@ -186,6 +190,10 @@ status <- function(remote = TRUE) {
     error = remote_error[failed],
     stringsAsFactors = FALSE
   )
+  # self_check() is defined in install.R; lintr cannot resolve its formals
+  # across source files, but R resolves it in the package namespace.
+  # nolint next: object_usage_linter.
+  attr(out, "self") <- self_check(remote = remote)
 
   if (remote) {
     unresolved <- sum(is.na(latest) | state == "unknown")
@@ -211,10 +219,9 @@ status <- function(remote = TRUE) {
 
 #' The running hvtiR version
 #'
-#' hvtiR is not a member, so `status()` walks `members()` and never reports the
-#' version of the package the user is actually running. That is the first thing
-#' a maintainer needs from a pasted `status()` or `doctor()`, and both issue
-#' templates ask for exactly that output.
+#' hvtiR is not a member, so its version cannot appear in the member table.
+#' This helper supplies the header when a status object predates or otherwise
+#' lacks the separate installer check.
 #'
 #' @return A length-1 character version, or `NA_character_` if the package
 #'   description cannot be read.
@@ -237,13 +244,16 @@ print.hvtiR_status <- function(x, ...) {
   stale <- sum(x$status %in% c("stale", "missing"))
   unknown <- sum(x$status == "unknown")
   ok_local <- sum(x$status == "ok-local")
+  self <- attr(x, "self", exact = TRUE)
+  self_needs_report <- !is.null(self) &&
+    !self$state %in% c("ok", "ok-local")
 
   # cli's default handler writes via message() (stderr), which would make
   # this invisible to print()'s conventional stdout consumers (and to
   # testthat::expect_output()). cli_fmt() captures the formatted lines
   # instead of displaying them, so we can cat() them to stdout ourselves.
   lines <- cli::cli_fmt({
-    version <- hvtir_version()
+    version <- if (is.null(self)) hvtir_version() else self$installed
     if (is.na(version)) {
       cli::cli_text("{.strong hvtiR} - {nrow(x)} member{?s}")
     } else {
@@ -263,6 +273,10 @@ print.hvtiR_status <- function(x, ...) {
     }
 
     cli::cli_verbatim("")
+    if (self_needs_report) {
+      report_self(self)
+    }
+
     if (stale > 0L) {
       cli::cli_alert_info(
         "{stale} member{?s} need{?s/} updating. Run {.run hvtiR::update()}."
@@ -275,6 +289,8 @@ print.hvtiR_status <- function(x, ...) {
       cli::cli_alert_info(
         "Remote was not consulted; versions shown are installed versions only."
       )
+    } else if (self_needs_report) {
+      cli::cli_alert_success("All hvtiR members are up to date.")
     } else {
       cli::cli_alert_success("Everything is up to date.")
     }

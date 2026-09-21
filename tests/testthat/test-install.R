@@ -270,3 +270,26 @@ test_that("update says how to upgrade hvtiR when the installer is behind", {
   expect_true(any(grepl("1.1.0", msgs, fixed = TRUE)))
   expect_true(any(grepl("ehrlinger/hvtiR", msgs, fixed = TRUE)))
 })
+
+test_that("update reuses the hvtiR check performed by status", {
+  st <- data.frame(
+    package = "hvtiRutilities",
+    repo = "ehrlinger/hvtiRutilities",
+    installed = "1.0.0",
+    latest = "1.0.0",
+    status = "ok",
+    stringsAsFactors = FALSE
+  )
+  class(st) <- c("hvtiR_status", "data.frame")
+  attr(st, "self") <- list(
+    installed = "1.0.0", latest = "1.1.0", state = "stale"
+  )
+
+  local_mocked_bindings(
+    status = function(remote = TRUE) st,
+    self_check = function(...) stop("must reuse status self-check"),
+    pak_install = function(specs) stop("must not install")
+  )
+
+  expect_message(update(), "hvtiR 1.0.0 is behind 1.1.0")
+})

@@ -132,15 +132,21 @@ SELF_REPO <- "ehrlinger/hvtiR"
 #'
 #' @param installed Installed `hvtiR` version, or `NA_character_`.
 #' @param latest Version on the repository's `main`, or `NA_character_`.
+#' @param remote Was the remote consulted?
 #' @return A list with `installed`, `latest`, and a `state` as returned by
 #'   `classify_status()`.
 #' @noRd
 self_check <- function(installed = installed_version("hvtiR"),
-                       latest = remote_version(SELF_REPO)) {
+                       latest = if (remote) {
+                         remote_version(SELF_REPO)
+                       } else {
+                         NA_character_
+                       },
+                       remote = TRUE) {
   list(
     installed = as.character(installed),
     latest = as.character(latest),
-    state = classify_status(installed, latest, remote = TRUE)
+    state = classify_status(installed, latest, remote = remote)
   )
 }
 
@@ -215,11 +221,11 @@ install <- function(force = FALSE) {
 #' sends pak to CRAN to resolve its `TemporalHazard` import, where the
 #' required version may not exist.
 #'
-#' `hvtiR` itself is reported but never installed. It is not a member of its
-#' own registry, so nothing else would mention it, and it cannot be updated
-#' from inside a running session anyway: calling `update()` means its namespace
-#' is loaded, which the loaded-namespace guard refuses. When the installer is
-#' behind, the report names `pak::pak("ehrlinger/hvtiR")` as the remedy.
+#' `hvtiR` itself is checked by [hvtiR::status()] and reported here, but never
+#' installed. `update()` reuses that check; calling it means the installer's
+#' namespace is already loaded, which the loaded-namespace guard refuses. When
+#' the installer is behind, the report names `pak::pak("ehrlinger/hvtiR")` as
+#' the remedy.
 #'
 #' @param force Bypass the loaded-namespace guard. See [hvtiR::install()].
 #' @return The character vector of `"owner/repo"` specs passed to pak,
@@ -232,7 +238,9 @@ install <- function(force = FALSE) {
 update <- function(force = FALSE) {
   st <- status(remote = TRUE)
 
-  report_self(self_check())
+  self <- attr(st, "self", exact = TRUE)
+  if (is.null(self)) self <- self_check()
+  report_self(self)
   targets <- st$package[st$status %in% c("missing", "stale")]
 
   unchecked <- sum(st$status == "unknown")

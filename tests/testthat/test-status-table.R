@@ -221,3 +221,20 @@ test_that("printing a status object reports hvtiR's own version", {
   expect_output(print(st),
                 paste0("hvtiR ", as.character(utils::packageVersion("hvtiR"))))
 })
+
+test_that("status says how to upgrade hvtiR when the installer is behind", {
+  local_mocked_bindings(
+    installed_version = function(pkg) {
+      if (pkg == "hvtiR") "1.0.0" else "2.0.0"
+    },
+    remote_version = function(repo, ref = "main") {
+      if (repo == SELF_REPO) "1.1.0" else "2.0.0"
+    }
+  )
+
+  st <- status()
+
+  expect_identical(attr(st, "self")$state, "stale")
+  expect_output(print(st), "hvtiR 1.0.0 is behind 1.1.0")
+  expect_output(print(st), "pak::pak\\(\\\"ehrlinger/hvtiR\\\"\\)")
+})
