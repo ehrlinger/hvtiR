@@ -41,10 +41,10 @@ new commits on `main` that keep the same package version. The five-column table
 stays version-focused; commit provenance is used internally to decide whether
 an equal-version install is current.
 
-`hvtiR::update()` also reports `hvtiR`'s own version against GitHub. The
-installer is not a member of its own registry, so nothing else mentions it, and
-it cannot update itself from inside a running session -- reinstall it with
-`pak::pak("ehrlinger/hvtiR")` when the report says it is behind.
+`hvtiR::status()` also checks `hvtiR` itself against GitHub. The installer
+stays outside the member table, but the report names the available version and
+`pak::pak("ehrlinger/hvtiR")` when it is behind. `hvtiR::update()` reuses the
+same check; it cannot update its own loaded namespace.
 
 `hvtiR::update()` will refuse to overwrite a member you have already
 attached in the session, because a loaded package cannot be safely replaced.

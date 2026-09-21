@@ -1,6 +1,13 @@
 Package: hvtiR
 Version: 1.2.0
 
+# hvtiR (unreleased)
+
+* `status()` now checks hvtiR itself against GitHub as well as the family
+  members. When the installer is behind, the report names both the available
+  version and `pak::pak("ehrlinger/hvtiR")` as the update command. `update()`
+  reuses that check rather than making a second request.
+
 # hvtiR 1.2.0
 
 * ⚠️ **Breaking: the job catalog leaves hvtiR, and `jobs()` is removed.** The
