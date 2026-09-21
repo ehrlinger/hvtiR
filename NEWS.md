@@ -1,12 +1,18 @@
 Package: hvtiR
-Version: 1.2.0
+Version: 1.2.1
 
-# hvtiR (unreleased)
+# hvtiR 1.2.1
 
 * `status()` now checks hvtiR itself against GitHub as well as the family
   members. When the installer is behind, the report names both the available
   version and `pak::pak("ehrlinger/hvtiR")` as the update command. `update()`
   reuses that check rather than making a second request.
+
+* Catalog versions refreshed from CRAN and `main`: `hvtiRdatabuild` dev 0.2.2
+  to 0.2.3; `hvtiRpropensity` dev 0.1.5 to 0.1.7; `hvtiRtemplates` dev 1.2.0 to
+  1.2.1; `hvtiRutilities` dev 1.3.0 to 1.3.1. The catalog ships in the package
+  and is published as `members.json`, so its recorded versions are content
+  rather than bookkeeping.
 
 # hvtiR 1.2.0
 
