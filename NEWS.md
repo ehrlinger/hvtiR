@@ -1,7 +1,7 @@
 Package: hvtiR
-Version: 1.2.0
+Version: 1.2.1
 
-# hvtiR (unreleased)
+# hvtiR 1.2.1
 
 * `status()` now checks hvtiR itself against GitHub as well as the family
   members. When the installer is behind, the report names both the available
