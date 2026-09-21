@@ -48,6 +48,10 @@ columns:
 
 ## Details
 
+`hvtiR` itself is checked separately because it is not a family member.
+It remains outside the returned table, but the printed report says when
+the installer is behind and names the command that updates it.
+
 The object is returned visibly and has a `print` method, so a bare call
 displays the table while `st <- status()` captures the data frame for
 scripting.

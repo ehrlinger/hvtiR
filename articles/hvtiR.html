@@ -63,7 +63,7 @@
       <h1>Getting Started with hvtiR</h1>
 
       <p class="author">John Ehrlinger</p>
-      <p class="date">2026-09-19</p>
+      <p class="date">2026-09-21</p>
 
       <small class="dont-index">Source: <a href="https://github.com/ehrlinger/hvtiR/blob/main/vignettes/hvtiR.qmd" class="external-link"><code>vignettes/hvtiR.qmd</code></a></small>
       <div class="d-none name"><code></code></div>
@@ -148,15 +148,18 @@ i 2 members need updating. Run hvtiR::update().</code></pre>
 </tbody>
 </table>
 <p>Packages installed without GitHub commit provenance fall back to the version comparison. The table stays version-focused; commit SHAs are used internally only to resolve a tie between equal versions.</p>
+<p><code><a href="../reference/status.html">status()</a></code> checks <code>hvtiR</code> itself separately because the installer is not a family member. It stays outside the table. When it is behind, the report names the available version and the command that updates it:</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">pak</span><span class="fu">::</span><span class="fu"><a href="https://pak.r-lib.org/reference/pak.html" class="external-link">pak</a></span><span class="op">(</span><span class="st">"ehrlinger/hvtiR"</span><span class="op">)</span></span></code></pre></div>
 <p>The object is a plain data frame underneath, so you can use it in a script:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">st</span> <span class="op">&lt;-</span> <span class="fu">hvtiR</span><span class="fu">::</span><span class="fu"><a href="../reference/status.html">status</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="va">st</span><span class="op">$</span><span class="va">package</span><span class="op">[</span><span class="va">st</span><span class="op">$</span><span class="va">status</span> <span class="op">==</span> <span class="st">"stale"</span><span class="op">]</span></span></code></pre></div>
 </div>
 <p>On a machine with no outbound network, skip the remote entirely:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">hvtiR</span><span class="fu">::</span><span class="fu"><a href="../reference/status.html">status</a></span><span class="op">(</span>remote <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
 </div>
 <pre><code>hvtiR - 12 members
@@ -178,17 +181,17 @@ i Remote was not consulted; versions shown are installed versions only.</code></
 </h2>
 <p>On a new machine, install everything:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">hvtiR</span><span class="fu">::</span><span class="fu"><a href="../reference/install.html">install</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 </div>
 <p>Thereafter, install only what has fallen behind:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">hvtiR</span><span class="fu">::</span><span class="fu"><a href="../reference/update.html">update</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 </div>
-<p><code><a href="../reference/update.html">hvtiR::update()</a></code> also reports <code>hvtiR</code>’s own version against GitHub. The installer is not a member of its own registry, so nothing else would mention it, and it cannot update itself from inside a running session – its namespace is already loaded, which is exactly what the guard below refuses. When the report says it is behind, reinstall it the way you first installed it:</p>
+<p><code><a href="../reference/update.html">hvtiR::update()</a></code> reuses the installer check made by <code><a href="../reference/status.html">status()</a></code>, but it never installs <code>hvtiR</code> itself. Its namespace is already loaded, which is exactly what the guard below refuses. When the report says it is behind, reinstall it the way you first installed it:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">pak</span><span class="fu">::</span><span class="fu"><a href="https://pak.r-lib.org/reference/pak.html" class="external-link">pak</a></span><span class="op">(</span><span class="st">"ehrlinger/hvtiR"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <section class="level3"><h3 id="why-it-may-refuse">Why it may refuse<a class="anchor" aria-label="anchor" href="#why-it-may-refuse"></a>
@@ -202,7 +205,7 @@ i Pass `force = TRUE` to install anyway (unsafe on Windows).</code></pre>
 </h2>
 <p><code><a href="../reference/install.html">hvtiR::install()</a></code> resolves every member from GitHub <code>main</code>, so it gives you the newest code rather than a fixed one. Two people running it a week apart can end up on different commits under the same version number. When an analysis has to be reproducible, pin the versions with <a href="https://rstudio.github.io/renv/" class="external-link">renv</a>:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">renv</span><span class="fu">::</span><span class="fu">init</span><span class="op">(</span><span class="op">)</span>      <span class="co"># once per project</span></span>
 <span><span class="fu">hvtiR</span><span class="fu">::</span><span class="fu"><a href="../reference/install.html">install</a></span><span class="op">(</span><span class="op">)</span>  <span class="co"># installs into the project library</span></span>
 <span><span class="fu">renv</span><span class="fu">::</span><span class="fu">snapshot</span><span class="op">(</span><span class="op">)</span>  <span class="co"># records every package, and each member's commit</span></span></code></pre></div>
@@ -212,7 +215,7 @@ i Pass `force = TRUE` to install anyway (unsafe on Windows).</code></pre>
 </section><section class="level2"><h2 id="when-something-will-not-install">When something will not install<a class="anchor" aria-label="anchor" href="#when-something-will-not-install"></a>
 </h2>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">hvtiR</span><span class="fu">::</span><span class="fu"><a href="../reference/doctor.html">doctor</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 </div>
 <p>The doctor reports four things about your environment ahead of the status table: your R version against the family’s strictest requirement, your platform, whether <code>pak</code> is installed to install members with, and whether an <code>renv</code> project is active.</p>

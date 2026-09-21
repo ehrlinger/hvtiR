@@ -32,12 +32,12 @@ already current. Without this, installing e.g. just `hvtiRlifetables`
 sends pak to CRAN to resolve its `TemporalHazard` import, where the
 required version may not exist.
 
-`hvtiR` itself is reported but never installed. It is not a member of
-its own registry, so nothing else would mention it, and it cannot be
-updated from inside a running session anyway: calling `update()` means
-its namespace is loaded, which the loaded-namespace guard refuses. When
-the installer is behind, the report names `pak::pak("ehrlinger/hvtiR")`
-as the remedy.
+`hvtiR` itself is checked by
+[`status()`](https://ehrlinger.github.io/hvtiR/reference/status.md) and
+reported here, but never installed. `update()` reuses that check;
+calling it means the installer's namespace is already loaded, which the
+loaded-namespace guard refuses. When the installer is behind, the report
+names `pak::pak("ehrlinger/hvtiR")` as the remedy.
 
 ## Examples
 

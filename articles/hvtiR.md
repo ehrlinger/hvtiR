@@ -73,6 +73,16 @@ Packages installed without GitHub commit provenance fall back to the
 version comparison. The table stays version-focused; commit SHAs are
 used internally only to resolve a tie between equal versions.
 
+[`status()`](https://ehrlinger.github.io/hvtiR/reference/status.md)
+checks `hvtiR` itself separately because the installer is not a family
+member. It stays outside the table. When it is behind, the report names
+the available version and the command that updates it:
+
+``` r
+
+pak::pak("ehrlinger/hvtiR")
+```
+
 The object is a plain data frame underneath, so you can use it in a
 script:
 
@@ -122,11 +132,11 @@ hvtiR::update()
 ```
 
 [`hvtiR::update()`](https://ehrlinger.github.io/hvtiR/reference/update.md)
-also reports `hvtiR`’s own version against GitHub. The installer is not
-a member of its own registry, so nothing else would mention it, and it
-cannot update itself from inside a running session – its namespace is
-already loaded, which is exactly what the guard below refuses. When the
-report says it is behind, reinstall it the way you first installed it:
+reuses the installer check made by
+[`status()`](https://ehrlinger.github.io/hvtiR/reference/status.md), but
+it never installs `hvtiR` itself. Its namespace is already loaded, which
+is exactly what the guard below refuses. When the report says it is
+behind, reinstall it the way you first installed it:
 
 ``` r
 

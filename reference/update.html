@@ -80,11 +80,11 @@ dependency is sent to pak alongside it even when that dependency is
 already current. Without this, installing e.g. just <code>hvtiRlifetables</code>
 sends pak to CRAN to resolve its <code>TemporalHazard</code> import, where the
 required version may not exist.</p>
-<p><code>hvtiR</code> itself is reported but never installed. It is not a member of its
-own registry, so nothing else would mention it, and it cannot be updated
-from inside a running session anyway: calling <code>update()</code> means its namespace
-is loaded, which the loaded-namespace guard refuses. When the installer is
-behind, the report names <code>pak::pak("ehrlinger/hvtiR")</code> as the remedy.</p>
+<p><code>hvtiR</code> itself is checked by <code><a href="status.html">status()</a></code> and reported here, but never
+installed. <code>update()</code> reuses that check; calling it means the installer's
+namespace is already loaded, which the loaded-namespace guard refuses. When
+the installer is behind, the report names <code>pak::pak("ehrlinger/hvtiR")</code> as
+the remedy.</p>
     </div>
 
     <div class="section level2">
