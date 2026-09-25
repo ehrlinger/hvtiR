@@ -1,5 +1,12 @@
 # Changelog
 
+## hvtiR 1.2.2
+
+- Catalog versions refreshed from CRAN and `main`: `hvtiPlotR` dev
+  2.7.15 to 2.7.17; `hvtiRimputation` dev 0.1.0 to 0.1.1;
+  `hvtiRpropensity` dev 0.1.7 to 0.1.8; `hvtiRtemplates` dev 1.2.1 to
+  1.2.2; `hvtiRutilities` dev 1.3.1 to 1.4.1.
+
 ## hvtiR 1.2.1
 
 - [`status()`](https://ehrlinger.github.io/hvtiR/reference/status.md)
