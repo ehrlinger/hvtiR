@@ -1,7 +1,7 @@
 Package: hvtiR
-Version: 1.2.1
+Version: 1.2.2
 
-# hvtiR (unreleased)
+# hvtiR 1.2.2
 
 * Catalog versions refreshed from CRAN and `main`: `hvtiPlotR` dev 2.7.15 to
   2.7.17; `hvtiRimputation` dev 0.1.0 to 0.1.1; `hvtiRpropensity` dev 0.1.7 to
