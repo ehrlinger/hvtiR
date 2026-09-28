@@ -129,3 +129,37 @@ test_that("doctor reports renv missing, and says versions float", {
   expect_match(out, "renv is not installed")
   expect_match(out, "not pinned")
 })
+
+test_that("snapshot_repos flags dated and numbered Package Manager URLs", {
+  repos <- c(
+    CRAN = "https://cloud.r-project.org",
+    PPM = "https://packagemanager.posit.co/cran/__linux__/jammy/2026-08-01",
+    OLD = "https://packagemanager.rstudio.com/all/__linux__/focal/4526215/",
+    LATEST = "https://packagemanager.posit.co/cran/__linux__/jammy/latest"
+  )
+
+  expect_named(snapshot_repos(repos), c("PPM", "OLD"))
+  expect_length(snapshot_repos(c(CRAN = "https://cloud.r-project.org")), 0L)
+})
+
+test_that("doctor lists the repositories and warns about a snapshot", {
+  local_mocked_bindings(installed_version = function(pkg) "1.0.0")
+  old <- options(repos = c(
+    CRAN = "https://packagemanager.posit.co/cran/__linux__/jammy/2026-08-01"
+  ))
+  on.exit(options(old), add = TRUE)
+
+  out <- doctor_text()
+  expect_match(out, "Repository CRAN")
+  expect_match(out, "dated snapshot")
+})
+
+test_that("doctor does not warn about a live repository", {
+  local_mocked_bindings(installed_version = function(pkg) "1.0.0")
+  old <- options(repos = c(CRAN = "https://cloud.r-project.org"))
+  on.exit(options(old), add = TRUE)
+
+  out <- doctor_text()
+  expect_match(out, "Repository CRAN")
+  expect_no_match(out, "dated snapshot")
+})

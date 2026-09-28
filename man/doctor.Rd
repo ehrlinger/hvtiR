@@ -16,10 +16,11 @@ report it prints.
 }
 \description{
 Reports the running R version against the strictest requirement in the
-package family, whether \code{pak} is installed, the platform, and then the full
-member status table. When a remote check fails, reports the reason retained
-by \code{\link[=status]{status()}}. This is the report to run first when a member will not
-install.
+package family, whether \code{pak} is installed, the platform, the configured
+package repositories (warning when one is a dated snapshot), and then the
+full member status table. When a remote check fails, reports the reason
+retained by \code{\link[=status]{status()}}. This is the report to run first when a member
+will not install.
 }
 \examples{
 # Offline: environment checks plus what is installed

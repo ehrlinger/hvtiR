@@ -196,3 +196,48 @@ remote_version <- function(repo, ref = "main") {
 
   as.character(dcf[1L, "Version"])
 }
+
+#' Versions the configured package repositories offer
+#'
+#' The second network seam: reads the source package index of every
+#' repository in `repos`, which is where `pak` looks for a member's CRAN
+#' dependencies. Isolated here for the same reason as [fetch_description()].
+#'
+#' @param repos Named character vector of repository URLs, as
+#'   `getOption("repos")` returns it. The unset `"@CRAN@"` placeholder is
+#'   dropped rather than prompting for a mirror.
+#' @param timeout Maximum number of seconds for each request.
+#' @return A named character vector of versions, one per package offered, or
+#'   a condition object if no index could be read.
+#' @noRd
+repo_versions <- function(repos = getOption("repos"),
+                          timeout = remote_timeout) {
+  repos <- repos[!is.na(repos) & repos != "@CRAN@"]
+
+  if (length(repos) == 0L) {
+    return(simpleError("No package repository is configured."))
+  }
+
+  offered <- with_remote_timeout(
+    timeout,
+    tryCatch(
+      withCallingHandlers(
+        utils::available.packages(repos = repos, type = "source"),
+        warning = function(w) invokeRestart("muffleWarning")
+      ),
+      error = identity
+    )
+  )
+
+  if (inherits(offered, "condition")) {
+    return(offered)
+  }
+
+  if (nrow(offered) == 0L) {
+    return(simpleError("No package index could be read from the repositories."))
+  }
+
+  versions <- offered[, "Version"]
+  names(versions) <- offered[, "Package"]
+  versions
+}

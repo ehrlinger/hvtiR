@@ -317,6 +317,22 @@ pak_available <- function() {
   requireNamespace("pak", quietly = TRUE)
 }
 
+#' Which configured repositories are dated snapshots?
+#'
+#' Posit Package Manager serves a frozen view of CRAN when its URL ends in a
+#' date (`.../cran/__linux__/jammy/2026-08-01`) or, in older deployments, a
+#' numeric transaction id (`.../all/__linux__/focal/4526215`). RStudio Server
+#' sites commonly set one. A release newer than the snapshot is invisible, so a
+#' member whose dependency floor is newer fails pak's solver with "Could not
+#' solve package dependencies".
+#'
+#' @param repos A named character vector, as `getOption("repos")` returns.
+#' @return The elements of `repos` that are dated snapshots.
+#' @noRd
+snapshot_repos <- function(repos = getOption("repos")) {
+  repos[grepl("/([0-9]{4}-[0-9]{2}-[0-9]{2}|[0-9]{5,})/?$", repos)]
+}
+
 #' Is renv available for pinning package versions?
 #'
 #' Uses [base::find.package()] rather than [base::requireNamespace()]: this
@@ -357,10 +373,11 @@ renv_state <- function(installed = renv_available(),
 #' Diagnose an hvtiR installation
 #'
 #' Reports the running R version against the strictest requirement in the
-#' package family, whether `pak` is installed, the platform, and then the full
-#' member status table. When a remote check fails, reports the reason retained
-#' by [hvtiR::status()]. This is the report to run first when a member will not
-#' install.
+#' package family, whether `pak` is installed, the platform, the configured
+#' package repositories (warning when one is a dated snapshot), and then the
+#' full member status table. When a remote check fails, reports the reason
+#' retained by [hvtiR::status()]. This is the report to run first when a member
+#' will not install.
 #'
 #' @param remote Consult GitHub for the latest versions? Passed through to
 #'   [hvtiR::status()].
@@ -410,6 +427,21 @@ doctor <- function(remote = TRUE) {
         paste0(
           "Install it with {.code install.packages(\"pak\")} ",
           "before installing members."
+        )
+      )
+    }
+
+    repos <- getOption("repos")
+    for (name in names(repos)) {
+      cli::cli_alert_info("Repository {name}: {.url {repos[[name]]}}")
+    }
+    for (name in names(snapshot_repos(repos))) {
+      cli::cli_alert_warning(
+        paste0(
+          "Repository {name} is a dated snapshot. Dependencies released ",
+          "after it are invisible, and {.fn hvtiR::install} fails with ",
+          "{.val Could not solve package dependencies} when a member ",
+          "needs one."
         )
       )
     }
