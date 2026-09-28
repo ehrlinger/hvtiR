@@ -257,7 +257,8 @@ local_source_repo <- function(packages) {
   } else {
     file.create(file.path(contrib, "PACKAGES"))
   }
-  paste0("file://", normalizePath(root))
+  # file:///C:/... on Windows and file:///tmp/... elsewhere.
+  paste0("file:///", sub("^/", "", normalizePath(root, winslash = "/")))
 }
 
 test_that("repo_versions returns a named vector of offered versions", {
