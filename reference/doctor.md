@@ -1,11 +1,15 @@
 # Diagnose an hvtiR installation
 
 Reports the running R version against the strictest requirement in the
-package family, whether `pak` is installed, the platform, and then the
-full member status table. When a remote check fails, reports the reason
-retained by
+package family, whether `pak` is installed, the platform, the configured
+package repositories (warning when one is a dated snapshot), and then
+the full member status table. When a remote check fails, reports the
+reason retained by
 [`status()`](https://ehrlinger.github.io/hvtiR/reference/status.md).
-This is the report to run first when a member will not install.
+With `remote`, it also reads each member's `DESCRIPTION` from GitHub and
+names every dependency floor the repositories cannot meet, such as
+`varPro (>= 3.3.0)` against a snapshot that predates it. This is the
+report to run first when a member will not install.
 
 ## Usage
 
@@ -17,7 +21,8 @@ doctor(remote = TRUE)
 
 - remote:
 
-  Consult GitHub for the latest versions? Passed through to
+  Consult GitHub for the latest versions, and the configured
+  repositories for the dependencies members need? Passed through to
   [`status()`](https://ehrlinger.github.io/hvtiR/reference/status.md).
 
 ## Value
@@ -39,6 +44,8 @@ doctor(remote = FALSE)
 #> ✔ R version 4.6.1 (>= 4.4.0 required)
 #> ℹ Platform x86_64-pc-linux-gnu
 #> ✔ pak is installed
+#> ℹ Repository RSPM: <https://packagemanager.posit.co/cran/__linux__/noble/latest>
+#> ℹ Repository CRAN: <https://cran.rstudio.com>
 #> ℹ renv is not installed
 #> ℹ Member versions are not pinned - installs resolve from GitHub "main".
 #> 
