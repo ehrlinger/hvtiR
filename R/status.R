@@ -317,6 +317,22 @@ pak_available <- function() {
   requireNamespace("pak", quietly = TRUE)
 }
 
+#' Which configured repositories are dated snapshots?
+#'
+#' Posit Package Manager serves a frozen view of CRAN when its URL ends in a
+#' date (`.../cran/__linux__/jammy/2026-08-01`) or, in older deployments, a
+#' numeric transaction id (`.../all/__linux__/focal/4526215`). RStudio Server
+#' sites commonly set one. A release newer than the snapshot is invisible, so a
+#' member whose dependency floor is newer fails pak's solver with "Could not
+#' solve package dependencies".
+#'
+#' @param repos A named character vector, as `getOption("repos")` returns.
+#' @return The elements of `repos` that are dated snapshots.
+#' @noRd
+snapshot_repos <- function(repos = getOption("repos")) {
+  repos[grepl("/([0-9]{4}-[0-9]{2}-[0-9]{2}|[0-9]{5,})/?$", repos)]
+}
+
 #' Is renv available for pinning package versions?
 #'
 #' Uses [base::find.package()] rather than [base::requireNamespace()]: this
@@ -354,15 +370,169 @@ renv_state <- function(installed = renv_available(),
   if (nzchar(project)) "active" else "installed"
 }
 
+#' Version floors a member declares on packages outside the family
+#'
+#' Pure: reads the hard dependency fields of one DESCRIPTION. Members,
+#' packages named in its `Remotes:` field and packages that ship with R are
+#' left out: `pak` resolves the first two from GitHub and never installs the
+#' third.
+#'
+#' @param dcf A DESCRIPTION as returned by [base::read.dcf()].
+#' @param exclude Package names to leave out.
+#' @return A data frame with character columns `package`, `op` (`">="` or
+#'   `">"`) and `floor`, one row per dependency declared with either.
+#' @noRd
+dependency_floors <- function(dcf, exclude = character()) {
+  fields <- intersect(c("Depends", "Imports", "LinkingTo"), colnames(dcf))
+  entries <- trimws(unlist(strsplit(dcf[1L, fields], ",")))
+  # "varPro (>= 3.3.0)" -> package "varPro", op ">=", floor "3.3.0".
+  pattern <- paste0(
+    "^([[:alnum:].]+)[[:space:]]*",
+    "\\([[:space:]]*(>=?)[[:space:]]*([0-9.-]+)[[:space:]]*\\)$"
+  )
+  entries <- grep(pattern, entries, value = TRUE)
+
+  floors <- data.frame(
+    package = sub(pattern, "\\1", entries),
+    op = sub(pattern, "\\2", entries),
+    floor = sub(pattern, "\\3", entries),
+    stringsAsFactors = FALSE
+  )
+  floors[!floors$package %in% c("R", exclude, remote_packages(dcf)), ,
+         drop = FALSE]
+}
+
+#' Packages a DESCRIPTION installs from a `Remotes:` source
+#'
+#' `pak` takes these from the named source, not from the repositories, so
+#' their floors are not the repositories' to meet. An entry names its package
+#' before `=` (`boostmtree=ehrlinger/boostmtree_src/boostmtree@v2.0.2-ccf`),
+#' or else by the last path component (`davidsjoberg/ggsankey`).
+#'
+#' @param dcf A DESCRIPTION as returned by [base::read.dcf()].
+#' @return A character vector of package names.
+#' @noRd
+remote_packages <- function(dcf) {
+  if (!"Remotes" %in% colnames(dcf) || is.na(dcf[1L, "Remotes"])) {
+    return(character())
+  }
+
+  entries <- trimws(unlist(strsplit(dcf[1L, "Remotes"], ",")))
+  entries <- entries[entries != ""]
+  named <- grepl("=", entries, fixed = TRUE)
+
+  ifelse(
+    named,
+    trimws(sub("=.*$", "", entries)),
+    basename(sub("[@#].*$", "", entries))
+  )
+}
+
+#' Dependency floors the configured repositories cannot meet
+#'
+#' Pure. A package offered by several repositories counts at its highest
+#' version, as `pak` would choose it.
+#'
+#' @param needs Data frame with character columns `member`, `package`, `op`
+#'   and `floor`.
+#' @param offered Named character vector of offered versions, as
+#'   `repo_versions()` returns it.
+#' @return `needs` restricted to the rows that cannot be met, with an
+#'   `offered` column that is `NA` where no repository has the package.
+#' @noRd
+unmet_floors <- function(needs, offered) {
+  best <- vapply(needs$package, function(pkg) {
+    versions <- offered[names(offered) == pkg]
+    if (length(versions) == 0L) {
+      return(NA_character_)
+    }
+    as.character(max(package_version(versions)))
+  }, character(1), USE.NAMES = FALSE)
+
+  have <- package_version(ifelse(is.na(best), "0.0", best))
+  floor <- package_version(needs$floor)
+  met <- !is.na(best) & ifelse(needs$op == ">", have > floor, have >= floor)
+
+  needs$offered <- best
+  needs[!met, , drop = FALSE]
+}
+
+#' Report the dependency floors the configured repositories cannot meet
+#'
+#' Called from inside [doctor()]'s `cli::cli_fmt()` block, only when the
+#' remote is consulted: it reads every member's `DESCRIPTION` from GitHub and
+#' the repositories' package indexes.
+#'
+#' @return `NULL`, invisibly. Called for the lines it emits.
+#' @noRd
+report_unmet_floors <- function() {
+  offered <- repo_versions(getOption("repos"))
+  if (inherits(offered, "condition")) {
+    cli::cli_alert_warning(
+      "Could not read the repositories: {conditionMessage(offered)}"
+    )
+    return(invisible(NULL))
+  }
+
+  registry <- members()
+  exclude <- c(
+    registry$package,
+    rownames(utils::installed.packages(priority = "base"))
+  )
+  needs <- do.call(rbind, lapply(seq_len(nrow(registry)), function(i) {
+    dcf <- fetch_description(registry$repo[i])
+    if (is.null(dcf)) {
+      return(NULL)
+    }
+    floors <- dependency_floors(dcf, exclude)
+    if (nrow(floors) == 0L) {
+      return(NULL)
+    }
+    cbind(member = registry$package[i], floors, stringsAsFactors = FALSE)
+  }))
+
+  if (is.null(needs)) {
+    return(invisible(NULL))
+  }
+
+  unmet <- unmet_floors(needs, offered)
+  if (nrow(unmet) == 0L) {
+    cli::cli_alert_success(
+      "The repositories meet every member's dependency floor."
+    )
+    return(invisible(NULL))
+  }
+
+  for (i in seq_len(nrow(unmet))) {
+    # Read by the cli glue string below, which lintr cannot see into.
+    # nolint next: object_usage_linter.
+    have <- if (is.na(unmet$offered[i])) "none" else unmet$offered[i]
+    cli::cli_alert_danger(paste0(
+      "{.pkg {unmet$member[i]}} needs {.pkg {unmet$package[i]}} ",
+      "{unmet$op[i]} {unmet$floor[i]}; the repositories offer {have}."
+    ))
+  }
+  cli::cli_alert_info(paste0(
+    "{.fn hvtiR::install} will fail until the repositories carry these ",
+    "versions. Ask the server administrator to move the snapshot forward."
+  ))
+
+  invisible(NULL)
+}
+
 #' Diagnose an hvtiR installation
 #'
 #' Reports the running R version against the strictest requirement in the
-#' package family, whether `pak` is installed, the platform, and then the full
-#' member status table. When a remote check fails, reports the reason retained
-#' by [hvtiR::status()]. This is the report to run first when a member will not
-#' install.
+#' package family, whether `pak` is installed, the platform, the configured
+#' package repositories (warning when one is a dated snapshot), and then the
+#' full member status table. When a remote check fails, reports the reason
+#' retained by [hvtiR::status()]. With `remote`, it also reads each member's
+#' `DESCRIPTION` from GitHub and names every dependency floor the repositories
+#' cannot meet, such as `varPro (>= 3.3.0)` against a snapshot that predates
+#' it. This is the report to run first when a member will not install.
 #'
-#' @param remote Consult GitHub for the latest versions? Passed through to
+#' @param remote Consult GitHub for the latest versions, and the configured
+#'   repositories for the dependencies members need? Passed through to
 #'   [hvtiR::status()].
 #' @return The [hvtiR::status()] data frame, invisibly. Called for the
 #'   report it prints.
@@ -414,6 +584,21 @@ doctor <- function(remote = TRUE) {
       )
     }
 
+    repos <- getOption("repos")
+    for (name in names(repos)) {
+      cli::cli_alert_info("Repository {name}: {.url {repos[[name]]}}")
+    }
+    for (name in names(snapshot_repos(repos))) {
+      cli::cli_alert_warning(
+        paste0(
+          "Repository {name} is a dated snapshot. Dependencies released ",
+          "after it are invisible, and {.fn hvtiR::install} fails with ",
+          "{.val Could not solve package dependencies} when a member ",
+          "needs one."
+        )
+      )
+    }
+
     renv <- renv_state()
     if (renv == "active") {
       cli::cli_alert_success(
@@ -433,6 +618,11 @@ doctor <- function(remote = TRUE) {
           "GitHub {.val main}."
         )
       )
+    }
+
+    if (remote) {
+      cli::cli_h2("Dependency floors")
+      report_unmet_floors()
     }
 
     cli::cli_h2("Members")

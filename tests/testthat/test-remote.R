@@ -240,3 +240,58 @@ test_that("a malformed attempts count is rejected with a message naming it", {
     )
   }
 })
+
+# repo_versions() ------------------------------------------------------------
+
+# A local source repository, so the real available.packages() runs without
+# the network. It lives in the session temp directory, which R removes on exit.
+local_source_repo <- function(packages) {
+  root <- tempfile("repo")
+  contrib <- file.path(root, "src", "contrib")
+  dir.create(contrib, recursive = TRUE)
+  if (length(packages) > 0L) {
+    write.dcf(
+      cbind(Package = names(packages), Version = unname(packages)),
+      file.path(contrib, "PACKAGES")
+    )
+  } else {
+    file.create(file.path(contrib, "PACKAGES"))
+  }
+  # file:///C:/... on Windows and file:///tmp/... elsewhere.
+  paste0("file:///", sub("^/", "", normalizePath(root, winslash = "/")))
+}
+
+test_that("repo_versions returns a named vector of offered versions", {
+  repo <- local_source_repo(c(varPro = "3.2.0", igraph = "2.1.4"))
+
+  versions <- repo_versions(c(CRAN = repo))
+  expect_equal(versions[["varPro"]], "3.2.0")
+  expect_equal(versions[["igraph"]], "2.1.4")
+})
+
+test_that("repo_versions keeps the highest version across repositories", {
+  old <- local_source_repo(c(varPro = "3.2.0"))
+  new <- local_source_repo(c(varPro = "3.3.0"))
+
+  # The older snapshot is listed first; R's "duplicates" filter still
+  # reports the latest version.
+  versions <- repo_versions(c(SNAP = old, CRAN = new))
+  expect_equal(unname(versions[names(versions) == "varPro"]), "3.3.0")
+})
+
+test_that("repo_versions drops the unset @CRAN@ placeholder", {
+  expect_s3_class(repo_versions(c(CRAN = "@CRAN@")), "condition")
+
+  repo <- local_source_repo(c(varPro = "3.3.0"))
+  versions <- repo_versions(c(CRAN = "@CRAN@", LOCAL = repo))
+  expect_equal(versions[["varPro"]], "3.3.0")
+})
+
+test_that("repo_versions returns a condition when no index can be read", {
+  expect_s3_class(repo_versions(c(EMPTY = local_source_repo(character()))),
+                  "condition")
+  expect_s3_class(
+    repo_versions(c(GONE = "file:///no/such/repository")),
+    "condition"
+  )
+})

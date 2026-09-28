@@ -3,6 +3,21 @@ Version: 1.2.2
 
 # hvtiR (unreleased)
 
+* `doctor()` lists the configured package repositories and warns when one is
+  a dated Posit Package Manager snapshot, as RStudio Server sites often set.
+  A dependency released after the snapshot is invisible to pak, so
+  `install()` fails with "Could not solve package dependencies" when a member
+  needs it: `ggRandomForests` requires `varPro (>= 3.3.0)`, released to CRAN
+  on 2026-09-22.
+
+* `doctor()` also names the dependency floors the configured repositories
+  cannot meet. It reads each member's `DESCRIPTION` from GitHub, compares every
+  outside `Depends`, `Imports` and `LinkingTo` floor against the repositories'
+  package indexes. Against the Posit Package Manager snapshot of 2026-09-01
+  it reports that `ggRandomForests` needs `varPro` >= 3.3.0 while the
+  repositories offer 3.2.0. The check needs the
+  network, so `doctor(remote = FALSE)` skips it.
+
 * Catalog versions refreshed from CRAN and `main`: `TemporalHazard` dev
   1.2.11 to 1.2.12; `hvtiPlotR` dev 2.7.17 to 2.7.18. The catalog ships in
   the package and is published as `members.json`, so its recorded versions
