@@ -1,8 +1,8 @@
 package,repo,family,blurb,cran,status,role,homepage,cran_version,dev_version,dev_ahead
 ggRandomForests,ehrlinger/ggRandomForests,member,"Visual exploration of random forest models -- graphical analysis of survival, regression, and classification forests.",ggRandomForests,stable,,,3.5.3,4.0.0,expected
-TemporalHazard,ehrlinger/TemporalHazard,member,R port of the C computational core underlying the Cleveland Clinic Hazard SAS module.,TemporalHazard,stable,,,1.1.0,1.2.11,expected
+TemporalHazard,ehrlinger/TemporalHazard,member,R port of the C computational core underlying the Cleveland Clinic Hazard SAS module.,TemporalHazard,stable,,,1.1.0,1.2.12,expected
 ggBoostedTrees,ehrlinger/ggBoostedTrees,member,Visual exploration of boosted tree models -- graphical analysis of boostmtree and BoostMLR fits for longitudinal responses.,,wip,,,,0.0.7,
-hvtiPlotR,ehrlinger/hvtiPlotR,member,HVTI-standard publication graphics for reproducible clinical research figures.,,stable,,,,2.7.17,
+hvtiPlotR,ehrlinger/hvtiPlotR,member,HVTI-standard publication graphics for reproducible clinical research figures.,,stable,,,,2.7.18,
 hvtiRbootstrap,ehrlinger/hvtiRbootstrap,member,"Bootstrap model building -- fit across many replicates and report how often each variable survives selection; an R port of the bootreg, SUMBOOT and cluster SAS macros.",,wip,,,,0.9.4,
 hvtiRdatabuild,ehrlinger/hvtiRdatabuild,member,"Analysis-ready clinical datasets for HVTI CORR studies, verified against the legacy SAS datasets they replace.",,wip,,,,0.2.3,
 hvtiRimputation,ehrlinger/hvtiRimputation,member,Missing value imputation -- fill by a stated method and return a row-level record of exactly which values were changed; an R port of the CORR group's PROC STANDARD REPLACE and imputsub macros.,,wip,,,,0.1.1,

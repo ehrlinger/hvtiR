@@ -1,6 +1,13 @@
 Package: hvtiR
 Version: 1.2.2
 
+# hvtiR (unreleased)
+
+* Catalog versions refreshed from CRAN and `main`: `TemporalHazard` dev
+  1.2.11 to 1.2.12; `hvtiPlotR` dev 2.7.17 to 2.7.18. The catalog ships in
+  the package and is published as `members.json`, so its recorded versions
+  are content rather than bookkeeping.
+
 # hvtiR 1.2.2
 
 * Catalog versions refreshed from CRAN and `main`: `hvtiPlotR` dev 2.7.15 to
