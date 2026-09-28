@@ -185,6 +185,7 @@ test_that("dependency_floors keeps outside floors and drops the rest", {
 
   floors <- dependency_floors(dcf, exclude = c("hvtiRutilities", "utils"))
   expect_equal(floors$package, c("varPro", "randomForestSRC"))
+  expect_equal(floors$op, c(">=", ">"))
   expect_equal(floors$floor, c("3.3.0", "3.4.0"))
 })
 
@@ -203,15 +204,20 @@ test_that("dependency_floors leaves out packages a Remotes: entry supplies", {
 test_that("unmet_floors reports missing and too-old packages only", {
   needs <- data.frame(
     member = "ggRandomForests",
-    package = c("varPro", "igraph", "survival"),
-    floor = c("3.3.0", "1.0.0", "3.0"),
+    package = c("varPro", "igraph", "survival", "randomForestSRC"),
+    op = c(">=", ">=", ">=", ">"),
+    floor = c("3.3.0", "1.0.0", "3.0", "3.4.0"),
     stringsAsFactors = FALSE
   )
-  offered <- c(varPro = "3.1.0", varPro = "3.2.0", survival = "3.5-8")
+  offered <- c(
+    varPro = "3.1.0", varPro = "3.2.0", survival = "3.5-8",
+    randomForestSRC = "3.4.0"
+  )
 
+  # A strict ">" floor is not met by the version it names.
   unmet <- unmet_floors(needs, offered)
-  expect_equal(unmet$package, c("varPro", "igraph"))
-  expect_equal(unmet$offered, c("3.2.0", NA))
+  expect_equal(unmet$package, c("varPro", "igraph", "randomForestSRC"))
+  expect_equal(unmet$offered, c("3.2.0", NA, "3.4.0"))
 })
 
 test_that("doctor names a dependency floor a frozen snapshot cannot meet", {

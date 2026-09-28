@@ -13,8 +13,9 @@ Version: 1.2.2
 * `doctor()` also names the dependency floors the configured repositories
   cannot meet. It reads each member's `DESCRIPTION` from GitHub, compares every
   outside `Depends`, `Imports` and `LinkingTo` floor against the repositories'
-  package indexes, and reports, for example, that `ggRandomForests` needs
-  `varPro` >= 3.3.0 while the repositories offer 3.1.0. The check needs the
+  package indexes. Against the Posit Package Manager snapshot of 2026-09-01
+  it reports that `ggRandomForests` needs `varPro` >= 3.3.0 while the
+  repositories offer 3.2.0. The check needs the
   network, so `doctor(remote = FALSE)` skips it.
 
 * Catalog versions refreshed from CRAN and `main`: `TemporalHazard` dev

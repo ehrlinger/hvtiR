@@ -379,22 +379,23 @@ renv_state <- function(installed = renv_available(),
 #'
 #' @param dcf A DESCRIPTION as returned by [base::read.dcf()].
 #' @param exclude Package names to leave out.
-#' @return A data frame with character columns `package` and `floor`, one
-#'   row per dependency declared with a `>=` or `>` requirement.
+#' @return A data frame with character columns `package`, `op` (`">="` or
+#'   `">"`) and `floor`, one row per dependency declared with either.
 #' @noRd
 dependency_floors <- function(dcf, exclude = character()) {
   fields <- intersect(c("Depends", "Imports", "LinkingTo"), colnames(dcf))
   entries <- trimws(unlist(strsplit(dcf[1L, fields], ",")))
-  # "varPro (>= 3.3.0)" -> package "varPro", floor "3.3.0".
+  # "varPro (>= 3.3.0)" -> package "varPro", op ">=", floor "3.3.0".
   pattern <- paste0(
     "^([[:alnum:].]+)[[:space:]]*",
-    "\\([[:space:]]*>=?[[:space:]]*([0-9.-]+)[[:space:]]*\\)$"
+    "\\([[:space:]]*(>=?)[[:space:]]*([0-9.-]+)[[:space:]]*\\)$"
   )
   entries <- grep(pattern, entries, value = TRUE)
 
   floors <- data.frame(
     package = sub(pattern, "\\1", entries),
-    floor = sub(pattern, "\\2", entries),
+    op = sub(pattern, "\\2", entries),
+    floor = sub(pattern, "\\3", entries),
     stringsAsFactors = FALSE
   )
   floors[!floors$package %in% c("R", exclude, remote_packages(dcf)), ,
@@ -432,8 +433,8 @@ remote_packages <- function(dcf) {
 #' Pure. A package offered by several repositories counts at its highest
 #' version, as `pak` would choose it.
 #'
-#' @param needs Data frame with character columns `member`, `package` and
-#'   `floor`.
+#' @param needs Data frame with character columns `member`, `package`, `op`
+#'   and `floor`.
 #' @param offered Named character vector of offered versions, as
 #'   `repo_versions()` returns it.
 #' @return `needs` restricted to the rows that cannot be met, with an
@@ -448,9 +449,9 @@ unmet_floors <- function(needs, offered) {
     as.character(max(package_version(versions)))
   }, character(1), USE.NAMES = FALSE)
 
-  met <- !is.na(best) &
-    package_version(ifelse(is.na(best), "0.0", best)) >=
-      package_version(needs$floor)
+  have <- package_version(ifelse(is.na(best), "0.0", best))
+  floor <- package_version(needs$floor)
+  met <- !is.na(best) & ifelse(needs$op == ">", have > floor, have >= floor)
 
   needs$offered <- best
   needs[!met, , drop = FALSE]
@@ -508,7 +509,7 @@ report_unmet_floors <- function() {
     have <- if (is.na(unmet$offered[i])) "none" else unmet$offered[i]
     cli::cli_alert_danger(paste0(
       "{.pkg {unmet$member[i]}} needs {.pkg {unmet$package[i]}} ",
-      ">= {unmet$floor[i]}; the repositories offer {have}."
+      "{unmet$op[i]} {unmet$floor[i]}; the repositories offer {have}."
     ))
   }
   cli::cli_alert_info(paste0(
