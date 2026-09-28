@@ -234,7 +234,7 @@ repo_versions <- function(repos = getOption("repos"),
   }
 
   if (nrow(offered) == 0L) {
-    return(simpleError("No package index could be read from the repositories."))
+    return(simpleError("No package index could be read."))
   }
 
   versions <- offered[, "Version"]

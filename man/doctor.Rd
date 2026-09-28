@@ -7,7 +7,8 @@
 doctor(remote = TRUE)
 }
 \arguments{
-\item{remote}{Consult GitHub for the latest versions? Passed through to
+\item{remote}{Consult GitHub for the latest versions, and the configured
+repositories for the dependencies members need? Passed through to
 \code{\link[=status]{status()}}.}
 }
 \value{
@@ -19,8 +20,10 @@ Reports the running R version against the strictest requirement in the
 package family, whether \code{pak} is installed, the platform, the configured
 package repositories (warning when one is a dated snapshot), and then the
 full member status table. When a remote check fails, reports the reason
-retained by \code{\link[=status]{status()}}. This is the report to run first when a member
-will not install.
+retained by \code{\link[=status]{status()}}. With \code{remote}, it also reads each member's
+\code{DESCRIPTION} from GitHub and names every dependency floor the repositories
+cannot meet, such as \verb{varPro (>= 3.3.0)} against a snapshot that predates
+it. This is the report to run first when a member will not install.
 }
 \examples{
 # Offline: environment checks plus what is installed

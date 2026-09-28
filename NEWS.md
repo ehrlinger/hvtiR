@@ -10,6 +10,13 @@ Version: 1.2.2
   needs it: `ggRandomForests` requires `varPro (>= 3.3.0)`, released to CRAN
   on 2026-09-22.
 
+* `doctor()` also names the dependency floors the configured repositories
+  cannot meet. It reads each member's `DESCRIPTION` from GitHub, compares every
+  outside `Depends`, `Imports` and `LinkingTo` floor against the repositories'
+  package indexes, and reports, for example, that `ggRandomForests` needs
+  `varPro` >= 3.3.0 while the repositories offer 3.1.0. The check needs the
+  network, so `doctor(remote = FALSE)` skips it.
+
 * Catalog versions refreshed from CRAN and `main`: `TemporalHazard` dev
   1.2.11 to 1.2.12; `hvtiPlotR` dev 2.7.17 to 2.7.18. The catalog ships in
   the package and is published as `members.json`, so its recorded versions

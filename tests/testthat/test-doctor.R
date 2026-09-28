@@ -8,7 +8,9 @@ test_that("doctor reports hvtiR's own version", {
 test_that("doctor reports the R version and the platform", {
   local_mocked_bindings(
     installed_version = function(pkg) "1.0.0",
-    remote_version = function(repo, ref = "main") "1.0.0"
+    remote_version = function(repo, ref = "main") "1.0.0",
+    fetch_description = function(...) NULL,
+    repo_versions = function(...) character()
   )
 
   expect_output(doctor(), "R version")
@@ -18,7 +20,9 @@ test_that("doctor reports the R version and the platform", {
 test_that("doctor returns the status table invisibly", {
   local_mocked_bindings(
     installed_version = function(pkg) "1.0.0",
-    remote_version = function(repo, ref = "main") "1.0.0"
+    remote_version = function(repo, ref = "main") "1.0.0",
+    fetch_description = function(...) NULL,
+    repo_versions = function(...) character()
   )
 
   expect_invisible(doctor())
@@ -47,7 +51,9 @@ test_that("doctor reports when pak is not installed", {
   local_mocked_bindings(
     installed_version = function(pkg) "1.0.0",
     remote_version = function(repo, ref = "main") "1.0.0",
-    pak_available = function() FALSE
+    pak_available = function() FALSE,
+    fetch_description = function(...) NULL,
+    repo_versions = function(...) character()
   )
 
   expect_output(doctor(), "pak.*not installed")
@@ -65,7 +71,9 @@ test_that("doctor prints the reason a remote check failed", {
       }
       "1.0.0"
     },
-    pak_available = function() TRUE
+    pak_available = function() TRUE,
+    fetch_description = function(...) NULL,
+    repo_versions = function(...) character()
   )
 
   expect_warning(
@@ -162,4 +170,75 @@ test_that("doctor does not warn about a live repository", {
   out <- doctor_text()
   expect_match(out, "Repository CRAN")
   expect_no_match(out, "dated snapshot")
+})
+
+# The repository checks -----------------------------------------------------
+
+test_that("dependency_floors keeps outside floors and drops the rest", {
+  dcf <- cbind(
+    Depends = "R (>= 4.4.0)",
+    Imports = paste(
+      "varPro (>= 3.3.0),\n    ggplot2, hvtiRutilities (>= 1.0.0),",
+      "randomForestSRC (> 3.4.0), utils (>= 4.0.0)"
+    )
+  )
+
+  floors <- dependency_floors(dcf, exclude = c("hvtiRutilities", "utils"))
+  expect_equal(floors$package, c("varPro", "randomForestSRC"))
+  expect_equal(floors$floor, c("3.3.0", "3.4.0"))
+})
+
+test_that("dependency_floors leaves out packages a Remotes: entry supplies", {
+  dcf <- cbind(
+    Imports = "boostmtree (>= 2.0.1), ggsankey (>= 0.0.9), varPro (>= 3.3.0)",
+    Remotes = paste(
+      "boostmtree=ehrlinger/boostmtree_src/boostmtree@v2.0.2-ccf,",
+      "davidsjoberg/ggsankey"
+    )
+  )
+
+  expect_equal(dependency_floors(dcf)$package, "varPro")
+})
+
+test_that("unmet_floors reports missing and too-old packages only", {
+  needs <- data.frame(
+    member = "ggRandomForests",
+    package = c("varPro", "igraph", "survival"),
+    floor = c("3.3.0", "1.0.0", "3.0"),
+    stringsAsFactors = FALSE
+  )
+  offered <- c(varPro = "3.1.0", varPro = "3.2.0", survival = "3.5-8")
+
+  unmet <- unmet_floors(needs, offered)
+  expect_equal(unmet$package, c("varPro", "igraph"))
+  expect_equal(unmet$offered, c("3.2.0", NA))
+})
+
+test_that("doctor names a dependency floor a frozen snapshot cannot meet", {
+
+  local_mocked_bindings(
+    installed_version = function(pkg) "1.0.0",
+    remote_version = function(repo, ref = "main") "1.0.0",
+    fetch_description = function(repo, ...) {
+      if (repo != "ehrlinger/ggRandomForests") {
+        return(NULL)
+      }
+      cbind(Package = "ggRandomForests", Imports = "varPro (>= 3.3.0)")
+    },
+    repo_versions = function(...) c(varPro = "3.1.0")
+  )
+
+  out <- paste(capture.output(suppressMessages(doctor())), collapse = " ")
+  expect_match(out, "ggRandomForests needs varPro >= 3.3.0")
+  expect_match(out, "offer 3.1.0")
+})
+
+test_that("doctor offline skips the dependency floor check", {
+  local_mocked_bindings(
+    installed_version = function(pkg) "1.0.0",
+    repo_versions = function(...) stop("must not be called offline"),
+    fetch_description = function(...) stop("must not be called offline")
+  )
+
+  expect_no_match(doctor_text(), "Dependency floors")
 })
