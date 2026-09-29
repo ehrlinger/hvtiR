@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">hvtiR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.2.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.2.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -40,6 +40,13 @@
       <small>Source: <a href="https://github.com/ehrlinger/hvtiR/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.2.3" id="hvtir-123">hvtiR 1.2.3<a class="anchor" aria-label="anchor" href="#hvtir-123"></a></h2>
+<ul><li><p><code><a href="../reference/doctor.html">doctor()</a></code> lists the configured package repositories and warns when one is a dated Posit Package Manager snapshot, as RStudio Server sites often set. A dependency released after the snapshot is invisible to pak, so <code><a href="../reference/install.html">install()</a></code> fails with “Could not solve package dependencies” when a member needs it: <code>ggRandomForests</code> requires <code>varPro (&gt;= 3.3.0)</code>, released to CRAN on 2026-09-22.</p></li>
+<li><p><code><a href="../reference/doctor.html">doctor()</a></code> also names the dependency floors the configured repositories cannot meet. It reads each member’s <code>DESCRIPTION</code> from GitHub, compares every outside <code>Depends</code>, <code>Imports</code> and <code>LinkingTo</code> floor against the repositories’ package indexes. Against the Posit Package Manager snapshot of 2026-09-01 it reports that <code>ggRandomForests</code> needs <code>varPro</code> &gt;= 3.3.0 while the repositories offer 3.2.0. The check needs the network, so <code>doctor(remote = FALSE)</code> skips it.</p></li>
+<li><p>Catalog versions refreshed from CRAN and <code>main</code>: <code>TemporalHazard</code> dev 1.2.11 to 1.2.12; <code>hvtiPlotR</code> dev 2.7.17 to 2.7.18. The catalog ships in the package and is published as <code>members.json</code>, so its recorded versions are content rather than bookkeeping.</p></li>
+<li><p>Catalog versions refreshed from CRAN and <code>main</code>: <code>hvtiPlotR</code> dev 2.7.18 to 2.8.2; <code>hvtiRdatabuild</code> dev 0.2.3 to 0.2.4; <code>hvtiRtables</code> dev 1.0.2 to 1.0.3; <code>hvtiRutilities</code> dev 1.4.1 to 1.4.3. The catalog ships in the package and is published as <code>members.json</code>, so its recorded versions are content rather than bookkeeping.</p></li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.2.2" id="hvtir-122">hvtiR 1.2.2<a class="anchor" aria-label="anchor" href="#hvtir-122"></a></h2>
 <ul><li>Catalog versions refreshed from CRAN and <code>main</code>: <code>hvtiPlotR</code> dev 2.7.15 to 2.7.17; <code>hvtiRimputation</code> dev 0.1.0 to 0.1.1; <code>hvtiRpropensity</code> dev 0.1.7 to 0.1.8; <code>hvtiRtemplates</code> dev 1.2.1 to 1.2.2; <code>hvtiRutilities</code> dev 1.3.1 to 1.4.1.</li>

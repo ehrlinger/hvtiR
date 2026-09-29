@@ -1,5 +1,36 @@
 # Changelog
 
+## hvtiR 1.2.3
+
+- [`doctor()`](https://ehrlinger.github.io/hvtiR/reference/doctor.md)
+  lists the configured package repositories and warns when one is a
+  dated Posit Package Manager snapshot, as RStudio Server sites often
+  set. A dependency released after the snapshot is invisible to pak, so
+  [`install()`](https://ehrlinger.github.io/hvtiR/reference/install.md)
+  fails with “Could not solve package dependencies” when a member needs
+  it: `ggRandomForests` requires `varPro (>= 3.3.0)`, released to CRAN
+  on 2026-09-22.
+
+- [`doctor()`](https://ehrlinger.github.io/hvtiR/reference/doctor.md)
+  also names the dependency floors the configured repositories cannot
+  meet. It reads each member’s `DESCRIPTION` from GitHub, compares every
+  outside `Depends`, `Imports` and `LinkingTo` floor against the
+  repositories’ package indexes. Against the Posit Package Manager
+  snapshot of 2026-09-01 it reports that `ggRandomForests` needs
+  `varPro` \>= 3.3.0 while the repositories offer 3.2.0. The check needs
+  the network, so `doctor(remote = FALSE)` skips it.
+
+- Catalog versions refreshed from CRAN and `main`: `TemporalHazard` dev
+  1.2.11 to 1.2.12; `hvtiPlotR` dev 2.7.17 to 2.7.18. The catalog ships
+  in the package and is published as `members.json`, so its recorded
+  versions are content rather than bookkeeping.
+
+- Catalog versions refreshed from CRAN and `main`: `hvtiPlotR` dev
+  2.7.18 to 2.8.2; `hvtiRdatabuild` dev 0.2.3 to 0.2.4; `hvtiRtables`
+  dev 1.0.2 to 1.0.3; `hvtiRutilities` dev 1.4.1 to 1.4.3. The catalog
+  ships in the package and is published as `members.json`, so its
+  recorded versions are content rather than bookkeeping.
+
 ## hvtiR 1.2.2
 
 - Catalog versions refreshed from CRAN and `main`: `hvtiPlotR` dev
