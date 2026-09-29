@@ -1,7 +1,7 @@
 Package: hvtiR
-Version: 1.2.2
+Version: 1.2.3
 
-# hvtiR (unreleased)
+# hvtiR 1.2.3
 
 * `doctor()` lists the configured package repositories and warns when one is
   a dated Posit Package Manager snapshot, as RStudio Server sites often set.
