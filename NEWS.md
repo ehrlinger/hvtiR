@@ -22,6 +22,11 @@ Version: 1.2.2
   1.2.11 to 1.2.12; `hvtiPlotR` dev 2.7.17 to 2.7.18. The catalog ships in
   the package and is published as `members.json`, so its recorded versions
   are content rather than bookkeeping.
+* Catalog versions refreshed from CRAN and `main`: `hvtiPlotR` dev 2.7.18 to
+  2.8.2; `hvtiRdatabuild` dev 0.2.3 to 0.2.4; `hvtiRtables` dev 1.0.2 to
+  1.0.3; `hvtiRutilities` dev 1.4.1 to 1.4.3. The catalog ships in the
+  package and is published as `members.json`, so its recorded versions are
+  content rather than bookkeeping.
 
 # hvtiR 1.2.2
 
