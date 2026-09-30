@@ -105,12 +105,12 @@
 <div class="sourceCode cell-code" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">hvtiR</span><span class="fu">::</span><span class="fu"><a href="../reference/status.html">status</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 </div>
-<pre><code>hvtiR - 12 members
+<pre><code>hvtiR 1.2.3 - 12 members
 
-  v hvtiRutilities   1.0.10     1.0.10     ok
-  v hvtiRdatabuild    0.1.1      0.1.1      ok
-  ! hvtiRtables      0.9.0      1.0.0      stale
-  x hvtiPlotR        -          2.7.6      missing
+  v hvtiRutilities   1.4.3      1.4.3      ok
+  v hvtiRdatabuild   0.2.4      0.2.4      ok
+  ! hvtiRtables      1.0.2      1.0.3      stale
+  x hvtiPlotR        -          2.8.2      missing
   ...
 
 i 2 members need updating. Run hvtiR::update().</code></pre>
@@ -162,19 +162,20 @@ i 2 members need updating. Run hvtiR::update().</code></pre>
 <div class="sourceCode cell-code" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">hvtiR</span><span class="fu">::</span><span class="fu"><a href="../reference/status.html">status</a></span><span class="op">(</span>remote <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
 </div>
-<pre><code>hvtiR - 12 members
+<pre><code>hvtiR 1.2.3 - 12 members
 
-  - hvtiRutilities   1.0.10     -          ok-local
-  - hvtiRdatabuild    0.1.1      -          ok-local
-  - hvtiRtables      1.0.0      -          ok-local
-  - hvtiRtemplates   1.0.0      -          ok-local
-  - hvtiPlotR        2.7.6      -          ok-local
-  - hvtiRlifetables  1.3.0      -          ok-local
-  - hvtiRbootstrap   0.2.0      -          ok-local
-  - hvtiRpropensity  1.1.0      -          ok-local
-  - ggBoostedTrees   0.0.1      -          ok-local
-  - TemporalHazard   1.2.0      -          ok-local
-  - ggRandomForests  3.5.1      -          ok-local
+  - hvtiRutilities   1.4.3      -          ok-local
+  - hvtiRdatabuild   0.2.4      -          ok-local
+  - hvtiRtables      1.0.3      -          ok-local
+  - hvtiRtemplates   1.2.2      -          ok-local
+  - hvtiPlotR        2.8.2      -          ok-local
+  - hvtiRlifetables  0.1.4      -          ok-local
+  - hvtiRbootstrap   0.9.4      -          ok-local
+  - hvtiRpropensity  0.1.8      -          ok-local
+  - hvtiRimputation  0.1.1      -          ok-local
+  - ggBoostedTrees   0.0.7      -          ok-local
+  - TemporalHazard   1.2.12     -          ok-local
+  - ggRandomForests  4.0.0      -          ok-local
 
 i Remote was not consulted; versions shown are installed versions only.</code></pre>
 </section><section class="level2"><h2 id="installing-and-updating">Installing and updating<a class="anchor" aria-label="anchor" href="#installing-and-updating"></a>
@@ -218,8 +219,9 @@ i Pass `force = TRUE` to install anyway (unsafe on Windows).</code></pre>
 <div class="sourceCode cell-code" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">hvtiR</span><span class="fu">::</span><span class="fu"><a href="../reference/doctor.html">doctor</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 </div>
-<p>The doctor reports four things about your environment ahead of the status table: your R version against the family’s strictest requirement, your platform, whether <code>pak</code> is installed to install members with, and whether an <code>renv</code> project is active.</p>
+<p>The doctor reports on your environment ahead of the status table: the installed <code>hvtiR</code> version, your R version against the family’s strictest requirement, your platform, whether <code>pak</code> is installed to install members with, the package repositories R is configured to use, and whether an <code>renv</code> project is active.</p>
 <p><code>ggRandomForests</code> and <code>hvtiRlifetables</code> both need R 4.4.0 or newer, which is the single most common reason a member will not install. Note that <code>hvtiR</code> itself requires only R 4.1.0 — deliberately, so that the diagnostic still runs on a machine whose R is too old for the members it is reporting on.</p>
+<p>The second most common reason is a repository that is frozen in time. RStudio Server sites often point R at a dated Posit Package Manager snapshot, and a dependency released after the snapshot date is invisible to pak. The install then fails with “Could not solve package dependencies”. The doctor warns when a configured repository is such a snapshot, and its “Dependency floors” section names each requirement the repositories cannot meet: <code>ggRandomForests</code> needs <code>varPro (&gt;= 3.3.0)</code>, for example, which reached CRAN on 2026-09-22. Reading those floors takes the network, so <code>hvtiR::doctor(remote = FALSE)</code> skips that section.</p>
 </section><section class="level2"><h2 id="why-github-and-not-cran">Why GitHub and not CRAN<a class="anchor" aria-label="anchor" href="#why-github-and-not-cran"></a>
 </h2>
 <p>Every member installs from GitHub <code>main</code>, including <code>ggRandomForests</code>, which is also published on CRAN.</p>

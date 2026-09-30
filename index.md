@@ -90,9 +90,12 @@ hvtiR::doctor()
 ```
 
 reports your R version against the family’s requirement (4.4.0 or
-newer), your platform, whether `pak` is available, whether an renv
-project is active, and the full member table. When a GitHub check fails,
-it also reports the repository-specific reason.
+newer), your platform, whether `pak` is available, the package
+repositories R is configured to use, whether an renv project is active,
+and the full member table. It warns when a repository is a dated
+snapshot and names each dependency version floor a member declares that
+the repositories cannot meet. When a GitHub check fails, it also reports
+the repository-specific reason.
 
 ## Members
 
@@ -106,6 +109,7 @@ it also reports the repository-specific reason.
 | hvtiRlifetables | ehrlinger/hvtiRlifetables |
 | hvtiRbootstrap  | ehrlinger/hvtiRbootstrap  |
 | hvtiRpropensity | ehrlinger/hvtiRpropensity |
+| hvtiRimputation | ehrlinger/hvtiRimputation |
 | ggBoostedTrees  | ehrlinger/ggBoostedTrees  |
 | TemporalHazard  | ehrlinger/TemporalHazard  |
 | ggRandomForests | ehrlinger/ggRandomForests |

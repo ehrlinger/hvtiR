@@ -106,7 +106,7 @@
 </h2>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">hvtiR</span><span class="fu">::</span><span class="fu"><a href="reference/doctor.html">doctor</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-<p>reports your R version against the family’s requirement (4.4.0 or newer), your platform, whether <code>pak</code> is available, whether an renv project is active, and the full member table. When a GitHub check fails, it also reports the repository-specific reason.</p>
+<p>reports your R version against the family’s requirement (4.4.0 or newer), your platform, whether <code>pak</code> is available, the package repositories R is configured to use, whether an renv project is active, and the full member table. It warns when a repository is a dated snapshot and names each dependency version floor a member declares that the repositories cannot meet. When a GitHub check fails, it also reports the repository-specific reason.</p>
 </div>
 <div class="section level2">
 <h2 id="members">Members<a class="anchor" aria-label="anchor" href="#members"></a>
@@ -148,6 +148,10 @@
 <tr>
 <td>hvtiRpropensity</td>
 <td>ehrlinger/hvtiRpropensity</td>
+</tr>
+<tr>
+<td>hvtiRimputation</td>
+<td>ehrlinger/hvtiRimputation</td>
 </tr>
 <tr>
 <td>ggBoostedTrees</td>
