@@ -3,9 +3,9 @@ Version: 1.2.3
 
 # hvtiR (unreleased)
 
-* The getting-started vignette shows current output: the `status()` examples
-  carry the installer version in the header, today's member versions and all
-  twelve members (`hvtiRimputation` was missing from the offline example),
+* The getting-started vignette shows output as of 2026-09-29: the `status()`
+  examples carry the installer version in the header, the member versions in
+  the catalog on that date and all twelve members (`hvtiRimputation` was missing from the offline example),
   and the `doctor()` section covers the repository listing, the dated-snapshot
   warning and the dependency floors added in 1.2.3. The README's member table
   gains `hvtiRimputation` and its `doctor()` summary the same additions.
