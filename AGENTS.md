@@ -24,6 +24,19 @@ imports this file.
   source change.
 - A change touching installation is tested through the mocked seam, not by installing.
 
+## The standard of care
+
+**This package is not headed to CRAN, and it is held to the CRAN standard anyway.** The hvtiR
+packages are distributed internally to get feedback faster than a public release allows, not
+to lower the bar.
+
+- Before a release, audit against every chapter of the
+  [CRAN Cookbook](https://contributor.r-project.org/cran-cookbook/), run
+  `R CMD check --as-cran` with the manual and vignettes built, check reverse dependencies
+  within the hvtiR family and check URLs.
+- Every Cookbook or `--as-cran` finding is real work to do. Order findings by effort and risk,
+  never by "would CRAN care", and never offer "skip it, it's internal" as an option.
+
 ## The automated gates
 
 Seven workflows, as of 1.1.1. Until then this was the **only** repository in the family
