@@ -464,11 +464,15 @@ unmet_floors <- function(needs, offered) {
 #' `install_members()`, which explains a failed solve with it.
 #'
 #' @param repos Named character vector of repository URLs.
+#' @param packages Character vector of the member package names to examine.
+#'   Every member is still excluded from the floors, since `pak` resolves
+#'   them from GitHub.
 #' @return A data frame as `unmet_floors()` returns it, possibly with no
 #'   rows; `NULL` when no member declares a floor or none could be read; or
 #'   the condition `repo_versions()` returned when no index could be read.
 #' @noRd
-member_unmet_floors <- function(repos = getOption("repos")) {
+member_unmet_floors <- function(repos = getOption("repos"),
+                                packages = members()$package) {
   offered <- repo_versions(repos)
   if (inherits(offered, "condition")) {
     return(offered)
@@ -479,7 +483,8 @@ member_unmet_floors <- function(repos = getOption("repos")) {
     registry$package,
     rownames(utils::installed.packages(priority = "base"))
   )
-  needs <- do.call(rbind, lapply(seq_len(nrow(registry)), function(i) {
+  examined <- which(registry$package %in% packages)
+  needs <- do.call(rbind, lapply(examined, function(i) {
     dcf <- fetch_description(registry$repo[i])
     if (is.null(dcf)) {
       return(NULL)

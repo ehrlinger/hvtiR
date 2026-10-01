@@ -62,7 +62,8 @@ pak_install <- function(specs) {
 #' @return `repos`, with every element `snapshot_repos()` flags rewritten.
 #' @noRd
 latest_repos <- function(repos) {
-  dated <- names(repos) %in% names(snapshot_repos(repos))
+  # By URL, not by name: a repository vector need not be named.
+  dated <- repos %in% snapshot_repos(repos)
   repos[dated] <- sub(
     "/([0-9]{4}-[0-9]{2}-[0-9]{2}|[0-9]{5,})/?$", "/latest", repos[dated]
   )
@@ -72,16 +73,18 @@ latest_repos <- function(repos) {
 #' The one line that sets `repos`
 #'
 #' Spells out every repository rather than only the changed one, so pasting
-#' it does not drop a site's other repositories.
+#' it does not drop a site's other repositories. [base::deparse1()] quotes a
+#' name that is not syntactic and omits one that is absent; [base::c()] drops
+#' attributes other than names, such as the `RStudio` flag RStudio sets.
 #'
-#' @param repos A named character vector.
+#' @param repos A character vector, named or not.
 #' @return A length-1 character string of R code.
 #' @noRd
 repos_override <- function(repos) {
-  sprintf(
-    "options(repos = c(%s))",
-    paste0(names(repos), " = ", encodeString(repos, quote = "\""),
-           collapse = ", ")
+  paste0(
+    "options(repos = ",
+    deparse1(c(repos), collapse = "", width.cutoff = 500L),
+    ")"
   )
 }
 
@@ -94,16 +97,20 @@ repos_override <- function(repos) {
 #' Any other error is rethrown untouched, as is a failed solve this does not
 #' explain.
 #'
+#' Only the members sent to pak are examined: a floor some other member
+#' declares cannot be why this solve failed.
+#'
 #' @param err The condition `pak_install()` signalled.
+#' @param packages Character vector of the member package names sent to pak.
 #' @return Does not return.
 #' @noRd
-explain_install_failure <- function(err) {
+explain_install_failure <- function(err, packages) {
   if (!grepl("Could not solve", conditionMessage(err), fixed = TRUE)) {
     stop(err)
   }
 
   repos <- getOption("repos")
-  unmet <- member_unmet_floors(repos)
+  unmet <- member_unmet_floors(repos, packages)
   if (inherits(unmet, "condition") || is.null(unmet) || nrow(unmet) == 0L) {
     stop(err)
   }
@@ -192,7 +199,10 @@ install_members <- function(packages, force = FALSE) {
   }
 
   specs <- build_specs(members(), packages)
-  tryCatch(pak_install(specs), error = explain_install_failure)
+  tryCatch(
+    pak_install(specs),
+    error = function(err) explain_install_failure(err, packages)
+  )
 
   cli::cli_alert_success("Installed {length(specs)} member{?s}.")
   invisible(specs)

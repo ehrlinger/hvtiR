@@ -412,3 +412,50 @@ test_that("an error other than a failed solve is not diagnosed", {
 
   expect_error(install(), "network down")
 })
+
+test_that("latest_repos rewrites a snapshot with no names", {
+  expect_identical(
+    latest_repos("https://ppm.example.org/cran/__linux__/jammy/2026-09-01"),
+    "https://ppm.example.org/cran/__linux__/jammy/latest"
+  )
+})
+
+test_that("repos_override parses for any names, and drops other attributes", {
+  repos <- structure(
+    c(
+      "https://ppm.example.org/cran/latest",
+      "Local CRAN" = "https://cran.example.org",
+      CRAN = "https://cloud.r-project.org"
+    ),
+    RStudio = TRUE
+  )
+
+  code <- repos_override(repos)
+  expect_no_match(code, "structure", fixed = TRUE)
+  expect_identical(
+    eval(parse(text = sub("^options\\(repos = (.*)\\)$", "\\1", code))),
+    c(repos)
+  )
+})
+
+test_that("a failed update diagnoses only the members sent to pak", {
+  old <- options(repos = c(
+    CRAN = "https://ppm.example.org/cran/__linux__/jammy/2026-09-01"
+  ))
+  on.exit(options(old))
+  local_mocked_bindings(
+    pak_install = solve_error,
+    check_loaded = function(targets, loaded = loadedNamespaces()) character(0),
+    fetch_description = varpro_floor,
+    repo_versions = function(...) c(varPro = "3.2.0")
+  )
+
+  # ggRandomForests has the unmet floor but is not among the targets, so
+  # pak's own error comes through rather than a diagnosis of it.
+  err <- expect_error(install_members("hvtiRutilities"), "Could not solve")
+  expect_false(inherits(err, "hvtiR_unmet_floor"))
+  expect_error(
+    install_members(c("hvtiRutilities", "ggRandomForests")),
+    class = "hvtiR_unmet_floor"
+  )
+})
