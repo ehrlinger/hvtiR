@@ -457,21 +457,25 @@ unmet_floors <- function(needs, offered) {
   needs[!met, , drop = FALSE]
 }
 
-#' Report the dependency floors the configured repositories cannot meet
+#' Member dependency floors the configured repositories cannot meet
 #'
-#' Called from inside [doctor()]'s `cli::cli_fmt()` block, only when the
-#' remote is consulted: it reads every member's `DESCRIPTION` from GitHub and
-#' the repositories' package indexes.
+#' Reads every member's `DESCRIPTION` from GitHub and the repositories'
+#' package indexes. Shared by [doctor()], which reports the result, and
+#' `install_members()`, which explains a failed solve with it.
 #'
-#' @return `NULL`, invisibly. Called for the lines it emits.
+#' @param repos Named character vector of repository URLs.
+#' @param packages Character vector of the member package names to examine.
+#'   Every member is still excluded from the floors, since `pak` resolves
+#'   them from GitHub.
+#' @return A data frame as `unmet_floors()` returns it, possibly with no
+#'   rows; `NULL` when no member declares a floor or none could be read; or
+#'   the condition `repo_versions()` returned when no index could be read.
 #' @noRd
-report_unmet_floors <- function() {
-  offered <- repo_versions(getOption("repos"))
+member_unmet_floors <- function(repos = getOption("repos"),
+                                packages = members()$package) {
+  offered <- repo_versions(repos)
   if (inherits(offered, "condition")) {
-    cli::cli_alert_warning(
-      "Could not read the repositories: {conditionMessage(offered)}"
-    )
-    return(invisible(NULL))
+    return(offered)
   }
 
   registry <- members()
@@ -479,7 +483,8 @@ report_unmet_floors <- function() {
     registry$package,
     rownames(utils::installed.packages(priority = "base"))
   )
-  needs <- do.call(rbind, lapply(seq_len(nrow(registry)), function(i) {
+  examined <- which(registry$package %in% packages)
+  needs <- do.call(rbind, lapply(examined, function(i) {
     dcf <- fetch_description(registry$repo[i])
     if (is.null(dcf)) {
       return(NULL)
@@ -492,10 +497,45 @@ report_unmet_floors <- function() {
   }))
 
   if (is.null(needs)) {
+    return(NULL)
+  }
+
+  unmet_floors(needs, offered)
+}
+
+#' Describe unmet floors, one line each
+#'
+#' @param unmet A data frame as `unmet_floors()` returns it.
+#' @return A character vector of cli-formatted lines.
+#' @noRd
+unmet_floor_lines <- function(unmet) {
+  have <- ifelse(is.na(unmet$offered), "none", unmet$offered)
+  sprintf(
+    "{.pkg %s} needs {.pkg %s} %s %s; the repositories offer %s.",
+    unmet$member, unmet$package, unmet$op, unmet$floor, have
+  )
+}
+
+#' Report the dependency floors the configured repositories cannot meet
+#'
+#' Called from inside [doctor()]'s `cli::cli_fmt()` block, only when the
+#' remote is consulted.
+#'
+#' @return `NULL`, invisibly. Called for the lines it emits.
+#' @noRd
+report_unmet_floors <- function() {
+  unmet <- member_unmet_floors(getOption("repos"))
+  if (inherits(unmet, "condition")) {
+    cli::cli_alert_warning(
+      "Could not read the repositories: {conditionMessage(unmet)}"
+    )
     return(invisible(NULL))
   }
 
-  unmet <- unmet_floors(needs, offered)
+  if (is.null(unmet)) {
+    return(invisible(NULL))
+  }
+
   if (nrow(unmet) == 0L) {
     cli::cli_alert_success(
       "The repositories meet every member's dependency floor."
@@ -503,14 +543,8 @@ report_unmet_floors <- function() {
     return(invisible(NULL))
   }
 
-  for (i in seq_len(nrow(unmet))) {
-    # Read by the cli glue string below, which lintr cannot see into.
-    # nolint next: object_usage_linter.
-    have <- if (is.na(unmet$offered[i])) "none" else unmet$offered[i]
-    cli::cli_alert_danger(paste0(
-      "{.pkg {unmet$member[i]}} needs {.pkg {unmet$package[i]}} ",
-      "{unmet$op[i]} {unmet$floor[i]}; the repositories offer {have}."
-    ))
+  for (line in unmet_floor_lines(unmet)) {
+    cli::cli_alert_danger(line)
   }
   cli::cli_alert_info(paste0(
     "{.fn hvtiR::install} will fail until the repositories carry these ",

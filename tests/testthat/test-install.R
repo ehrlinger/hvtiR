@@ -293,3 +293,169 @@ test_that("update reuses the hvtiR check performed by status", {
 
   expect_message(update(), "hvtiR 1.0.0 is behind 1.1.0")
 })
+
+# A failed solve on an unmet floor --------------------------------------------
+
+solve_error <- function(specs) {
+  stop(paste(
+    "Could not solve package dependencies:",
+    "ehrlinger/ggRandomForests: Can't install dependency varPro (>= 3.3.0)"
+  ))
+}
+
+varpro_floor <- function(repo, ...) {
+  if (repo != "ehrlinger/ggRandomForests") {
+    return(NULL)
+  }
+  cbind(Package = "ggRandomForests", Imports = "varPro (>= 3.3.0)")
+}
+
+test_that("latest_repos moves a dated snapshot to latest", {
+  repos <- c(
+    CRAN = "https://ppm.example.org/cran/__linux__/jammy/2026-09-01",
+    OLD = "https://ppm.example.org/all/__linux__/focal/4526215/",
+    LOCAL = "https://cran.example.org"
+  )
+
+  expect_identical(
+    unname(latest_repos(repos)),
+    c(
+      "https://ppm.example.org/cran/__linux__/jammy/latest",
+      "https://ppm.example.org/all/__linux__/focal/latest",
+      "https://cran.example.org"
+    )
+  )
+  expect_named(latest_repos(repos), names(repos))
+})
+
+test_that("repos_override writes one line that keeps every repository", {
+  code <- repos_override(c(
+    CRAN = "https://ppm.example.org/cran/latest",
+    LOCAL = "https://cran.example.org"
+  ))
+
+  expect_identical(
+    code,
+    paste0(
+      'options(repos = c(CRAN = "https://ppm.example.org/cran/latest", ',
+      'LOCAL = "https://cran.example.org"))'
+    )
+  )
+  expect_identical(
+    eval(parse(text = sub("options\\(repos = ", "(", code))),
+    c(CRAN = "https://ppm.example.org/cran/latest",
+      LOCAL = "https://cran.example.org")
+  )
+})
+
+test_that("install prints the override when a snapshot misses a floor", {
+  old <- options(repos = c(
+    CRAN = "https://ppm.example.org/cran/__linux__/jammy/2026-09-01"
+  ))
+  on.exit(options(old))
+  local_mocked_bindings(
+    pak_install = solve_error,
+    check_loaded = function(targets, loaded = loadedNamespaces()) character(0),
+    fetch_description = varpro_floor,
+    repo_versions = function(...) c(varPro = "3.2.0")
+  )
+
+  err <- expect_error(install(), class = "hvtiR_unmet_floor")
+  msg <- cli::ansi_strip(conditionMessage(err))
+  expect_match(msg, "ggRandomForests needs varPro >= 3.3.0", fixed = TRUE)
+  expect_match(msg, "offer 3.2.0", fixed = TRUE)
+  expect_match(
+    msg,
+    paste0(
+      "options(repos = c(CRAN = ",
+      "\"https://ppm.example.org/cran/__linux__/jammy/latest\"))"
+    ),
+    fixed = TRUE
+  )
+  expect_match(conditionMessage(err$parent), "Could not solve")
+})
+
+test_that("an unmet floor without a snapshot names the floor only", {
+  old <- options(repos = c(CRAN = "https://cran.example.org"))
+  on.exit(options(old))
+  local_mocked_bindings(
+    pak_install = solve_error,
+    check_loaded = function(targets, loaded = loadedNamespaces()) character(0),
+    fetch_description = varpro_floor,
+    repo_versions = function(...) c(varPro = "3.2.0")
+  )
+
+  err <- expect_error(install(), class = "hvtiR_unmet_floor")
+  msg <- cli::ansi_strip(conditionMessage(err))
+  expect_match(msg, "needs varPro >= 3.3.0", fixed = TRUE)
+  expect_no_match(msg, "options(repos", fixed = TRUE)
+})
+
+test_that("a solve failure with every floor met keeps pak's error", {
+  local_mocked_bindings(
+    pak_install = solve_error,
+    check_loaded = function(targets, loaded = loadedNamespaces()) character(0),
+    fetch_description = varpro_floor,
+    repo_versions = function(...) c(varPro = "3.3.0")
+  )
+
+  expect_error(install(), "Could not solve package dependencies")
+})
+
+test_that("an error other than a failed solve is not diagnosed", {
+  local_mocked_bindings(
+    pak_install = function(specs) stop("network down"),
+    check_loaded = function(targets, loaded = loadedNamespaces()) character(0),
+    fetch_description = function(...) stop("must not diagnose"),
+    repo_versions = function(...) stop("must not diagnose")
+  )
+
+  expect_error(install(), "network down")
+})
+
+test_that("latest_repos rewrites a snapshot with no names", {
+  expect_identical(
+    latest_repos("https://ppm.example.org/cran/__linux__/jammy/2026-09-01"),
+    "https://ppm.example.org/cran/__linux__/jammy/latest"
+  )
+})
+
+test_that("repos_override parses for any names, and drops other attributes", {
+  repos <- structure(
+    c(
+      "https://ppm.example.org/cran/latest",
+      "Local CRAN" = "https://cran.example.org",
+      CRAN = "https://cloud.r-project.org"
+    ),
+    RStudio = TRUE
+  )
+
+  code <- repos_override(repos)
+  expect_no_match(code, "structure", fixed = TRUE)
+  expect_identical(
+    eval(parse(text = sub("^options\\(repos = (.*)\\)$", "\\1", code))),
+    c(repos)
+  )
+})
+
+test_that("a failed update diagnoses only the members sent to pak", {
+  old <- options(repos = c(
+    CRAN = "https://ppm.example.org/cran/__linux__/jammy/2026-09-01"
+  ))
+  on.exit(options(old))
+  local_mocked_bindings(
+    pak_install = solve_error,
+    check_loaded = function(targets, loaded = loadedNamespaces()) character(0),
+    fetch_description = varpro_floor,
+    repo_versions = function(...) c(varPro = "3.2.0")
+  )
+
+  # ggRandomForests has the unmet floor but is not among the targets, so
+  # pak's own error comes through rather than a diagnosis of it.
+  err <- expect_error(install_members("hvtiRutilities"), "Could not solve")
+  expect_false(inherits(err, "hvtiR_unmet_floor"))
+  expect_error(
+    install_members(c("hvtiRutilities", "ggRandomForests")),
+    class = "hvtiR_unmet_floor"
+  )
+})

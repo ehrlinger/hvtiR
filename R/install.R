@@ -52,6 +52,94 @@ pak_install <- function(specs) {
   invisible(pak::pak(specs, ask = FALSE))
 }
 
+#' Point dated snapshots at the latest view of the same repository
+#'
+#' Posit Package Manager serves its current index at `latest` in place of the
+#' date or transaction id, so the swap keeps the server, the distribution and
+#' the binary path the site chose. Other repositories are returned unchanged.
+#'
+#' @param repos A named character vector, as `getOption("repos")` returns.
+#' @return `repos`, with every element `snapshot_repos()` flags rewritten.
+#' @noRd
+latest_repos <- function(repos) {
+  # By URL, not by name: a repository vector need not be named.
+  dated <- repos %in% snapshot_repos(repos)
+  repos[dated] <- sub(
+    "/([0-9]{4}-[0-9]{2}-[0-9]{2}|[0-9]{5,})/?$", "/latest", repos[dated]
+  )
+  repos
+}
+
+#' The one line that sets `repos`
+#'
+#' Spells out every repository rather than only the changed one, so pasting
+#' it does not drop a site's other repositories. [base::deparse1()] quotes a
+#' name that is not syntactic and omits one that is absent; [base::c()] drops
+#' attributes other than names, such as the `RStudio` flag RStudio sets.
+#'
+#' @param repos A character vector, named or not.
+#' @return A length-1 character string of R code.
+#' @noRd
+repos_override <- function(repos) {
+  paste0(
+    "options(repos = ",
+    deparse1(c(repos), collapse = "", width.cutoff = 500L),
+    ")"
+  )
+}
+
+#' Explain a failed install, when the cause is an unmet dependency floor
+#'
+#' pak reports a floor the repositories cannot meet as "Could not solve
+#' package dependencies", which names the package but not the remedy. When
+#' the solve failed and a member's floor is unmet, this aborts with the floor
+#' and, when a repository is a dated snapshot, the `repos` line that works.
+#' Any other error is rethrown untouched, as is a failed solve this does not
+#' explain.
+#'
+#' Only the members sent to pak are examined: a floor some other member
+#' declares cannot be why this solve failed.
+#'
+#' @param err The condition `pak_install()` signalled.
+#' @param packages Character vector of the member package names sent to pak.
+#' @return Does not return.
+#' @noRd
+explain_install_failure <- function(err, packages) {
+  if (!grepl("Could not solve", conditionMessage(err), fixed = TRUE)) {
+    stop(err)
+  }
+
+  repos <- getOption("repos")
+  unmet <- member_unmet_floors(repos, packages)
+  if (inherits(unmet, "condition") || is.null(unmet) || nrow(unmet) == 0L) {
+    stop(err)
+  }
+
+  lines <- unmet_floor_lines(unmet)
+  names(lines) <- rep("x", length(lines))
+  bullets <- c(
+    "The package repositories cannot meet a member's dependency floor.",
+    lines
+  )
+
+  if (length(snapshot_repos(repos)) > 0L) {
+    bullets <- c(
+      bullets,
+      i = "A repository is a dated snapshot. For this session, run:",
+      " " = "{.code {repos_override(latest_repos(repos))}}",
+      i = "then {.code hvtiR::install()} again.",
+      i = "Ask the server administrator to move the snapshot forward."
+    )
+  } else {
+    bullets <- c(
+      bullets,
+      i = "Add a repository that carries these versions, then try again."
+    )
+  }
+
+  cli::cli_abort(bullets, class = "hvtiR_unmet_floor", parent = err)
+}
+
 #' Close a target set over in-family dependencies
 #'
 #' @param packages Character vector of member package names.
@@ -83,6 +171,10 @@ expand_targets <- function(packages,
 #' its own sends pak to CRAN and the requirement fails. Passing every spec at
 #' once co-resolves `ehrlinger/TemporalHazard` and satisfies the import.
 #'
+#' When pak cannot solve because a dependency floor is newer than the
+#' repositories offer, `explain_install_failure()` names the floor and the
+#' `repos` override in place of pak's raw error.
+#'
 #' @param packages Character vector of member package names.
 #' @param force Bypass the loaded-namespace guard.
 #' @return The character vector of specs passed to pak, invisibly.
@@ -107,7 +199,10 @@ install_members <- function(packages, force = FALSE) {
   }
 
   specs <- build_specs(members(), packages)
-  pak_install(specs)
+  tryCatch(
+    pak_install(specs),
+    error = function(err) explain_install_failure(err, packages)
+  )
 
   cli::cli_alert_success("Installed {length(specs)} member{?s}.")
   invisible(specs)
