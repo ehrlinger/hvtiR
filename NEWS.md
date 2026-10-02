@@ -1,7 +1,7 @@
 Package: hvtiR
-Version: 1.2.4
+Version: 1.2.5
 
-# hvtiR (unreleased)
+# hvtiR 1.2.5
 
 * Catalog versions refreshed from CRAN and `main`: `ggBoostedTrees` dev
   0.9.0 to 0.9.1; `hvtiPlotR` dev 2.8.3 to 2.8.4; `hvtiRtemplates` dev 1.2.2
