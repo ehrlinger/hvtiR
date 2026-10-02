@@ -1,14 +1,15 @@
 Package: hvtiR
-Version: 1.2.3
+Version: 1.2.4
 
-# hvtiR (unreleased)
+# hvtiR 1.2.4
 
 * `install()` and `update()` explain a failed solve on an unmet dependency
   floor rather than passing on pak's raw "Could not solve package
-  dependencies". They name each floor the repositories cannot meet and, when
-  a repository is a dated Posit Package Manager snapshot, print the one-line
-  `options(repos = ...)` that points it at `latest` for the session. Any other
-  failure is rethrown unchanged (#103).
+  dependencies". They name each floor that the members being installed
+  declare and the repositories cannot meet and, when a repository is a dated
+  Posit Package Manager snapshot, print the one-line `options(repos = ...)`
+  that points it at `latest` for the session. Any other failure is rethrown
+  unchanged (#103).
 
 * The getting-started vignette shows output as of 2026-09-29: the `status()`
   examples carry the installer version in the header, the member versions in
@@ -16,6 +17,12 @@ Version: 1.2.3
   and the `doctor()` section covers the repository listing, the dated-snapshot
   warning and the dependency floors added in 1.2.3. The README's member table
   gains `hvtiRimputation` and its `doctor()` summary the same additions.
+
+* Catalog versions refreshed from CRAN and `main`: `ggBoostedTrees` dev
+  0.0.7 to 0.9.0; `hvtiPlotR` dev 2.8.2 to 2.8.3; `hvtiRpropensity` dev
+  0.1.8 to 0.1.10. The catalog ships in the package and is published as
+  `members.json`, so its recorded versions are content rather than
+  bookkeeping.
 
 # hvtiR 1.2.3
 
