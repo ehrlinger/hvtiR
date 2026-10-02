@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">hvtiR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.2.4</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.2.5</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -40,6 +40,10 @@
       <small>Source: <a href="https://github.com/ehrlinger/hvtiR/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.2.5" id="hvtir-125">hvtiR 1.2.5<a class="anchor" aria-label="anchor" href="#hvtir-125"></a></h2>
+<ul><li>Catalog versions refreshed from CRAN and <code>main</code>: <code>ggBoostedTrees</code> dev 0.9.0 to 0.9.1; <code>hvtiPlotR</code> dev 2.8.3 to 2.8.4; <code>hvtiRtemplates</code> dev 1.2.2 to 1.2.4; <code>hvtiRutilities</code> dev 1.4.3 to 1.4.4. The catalog ships in the package and is published as <code>members.json</code>, so its recorded versions are content rather than bookkeeping.</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.2.4" id="hvtir-124">hvtiR 1.2.4<a class="anchor" aria-label="anchor" href="#hvtir-124"></a></h2>
 <ul><li><p><code><a href="../reference/install.html">install()</a></code> and <code><a href="../reference/update.html">update()</a></code> explain a failed solve on an unmet dependency floor rather than passing on pak’s raw “Could not solve package dependencies”. They name each floor that the members being installed declare and the repositories cannot meet and, when a repository is a dated Posit Package Manager snapshot, print the one-line <code>options(repos = ...)</code> that points it at <code>latest</code> for the session. Any other failure is rethrown unchanged (<a href="https://github.com/ehrlinger/hvtiR/issues/103" class="external-link">#103</a>).</p></li>
