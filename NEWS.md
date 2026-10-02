@@ -1,6 +1,14 @@
 Package: hvtiR
 Version: 1.2.4
 
+# hvtiR (unreleased)
+
+* Catalog versions refreshed from CRAN and `main`: `ggBoostedTrees` dev
+  0.9.0 to 0.9.1; `hvtiPlotR` dev 2.8.3 to 2.8.4; `hvtiRtemplates` dev 1.2.2
+  to 1.2.4; `hvtiRutilities` dev 1.4.3 to 1.4.4. The catalog ships in the
+  package and is published as `members.json`, so its recorded versions are
+  content rather than bookkeeping.
+
 # hvtiR 1.2.4
 
 * `install()` and `update()` explain a failed solve on an unmet dependency
