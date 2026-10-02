@@ -18,6 +18,12 @@ Version: 1.2.4
   warning and the dependency floors added in 1.2.3. The README's member table
   gains `hvtiRimputation` and its `doctor()` summary the same additions.
 
+* Catalog versions refreshed from CRAN and `main`: `ggBoostedTrees` dev
+  0.0.7 to 0.9.0; `hvtiPlotR` dev 2.8.2 to 2.8.3; `hvtiRpropensity` dev
+  0.1.8 to 0.1.10. The catalog ships in the package and is published as
+  `members.json`, so its recorded versions are content rather than
+  bookkeeping.
+
 # hvtiR 1.2.3
 
 * `doctor()` lists the configured package repositories and warns when one is
