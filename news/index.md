@@ -1,5 +1,37 @@
 # Changelog
 
+## hvtiR 1.2.4
+
+- [`install()`](https://ehrlinger.github.io/hvtiR/reference/install.md)
+  and
+  [`update()`](https://ehrlinger.github.io/hvtiR/reference/update.md)
+  explain a failed solve on an unmet dependency floor rather than
+  passing on pak’s raw “Could not solve package dependencies”. They name
+  each floor that the members being installed declare and the
+  repositories cannot meet and, when a repository is a dated Posit
+  Package Manager snapshot, print the one-line `options(repos = ...)`
+  that points it at `latest` for the session. Any other failure is
+  rethrown unchanged
+  ([\#103](https://github.com/ehrlinger/hvtiR/issues/103)).
+
+- The getting-started vignette shows output as of 2026-09-29: the
+  [`status()`](https://ehrlinger.github.io/hvtiR/reference/status.md)
+  examples carry the installer version in the header, the member
+  versions in the catalog on that date and all twelve members
+  (`hvtiRimputation` was missing from the offline example), and the
+  [`doctor()`](https://ehrlinger.github.io/hvtiR/reference/doctor.md)
+  section covers the repository listing, the dated-snapshot warning and
+  the dependency floors added in 1.2.3. The README’s member table gains
+  `hvtiRimputation` and its
+  [`doctor()`](https://ehrlinger.github.io/hvtiR/reference/doctor.md)
+  summary the same additions.
+
+- Catalog versions refreshed from CRAN and `main`: `ggBoostedTrees` dev
+  0.0.7 to 0.9.0; `hvtiPlotR` dev 2.8.2 to 2.8.3; `hvtiRpropensity` dev
+  0.1.8 to 0.1.10. The catalog ships in the package and is published as
+  `members.json`, so its recorded versions are content rather than
+  bookkeeping.
+
 ## hvtiR 1.2.3
 
 - [`doctor()`](https://ehrlinger.github.io/hvtiR/reference/doctor.md)
