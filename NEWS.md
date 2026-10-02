@@ -1,14 +1,15 @@
 Package: hvtiR
-Version: 1.2.3
+Version: 1.2.4
 
-# hvtiR (unreleased)
+# hvtiR 1.2.4
 
 * `install()` and `update()` explain a failed solve on an unmet dependency
   floor rather than passing on pak's raw "Could not solve package
-  dependencies". They name each floor the repositories cannot meet and, when
-  a repository is a dated Posit Package Manager snapshot, print the one-line
-  `options(repos = ...)` that points it at `latest` for the session. Any other
-  failure is rethrown unchanged (#103).
+  dependencies". They name each floor that the members being installed
+  declare and the repositories cannot meet and, when a repository is a dated
+  Posit Package Manager snapshot, print the one-line `options(repos = ...)`
+  that points it at `latest` for the session. Any other failure is rethrown
+  unchanged (#103).
 
 * The getting-started vignette shows output as of 2026-09-29: the `status()`
   examples carry the installer version in the header, the member versions in
