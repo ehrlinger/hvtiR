@@ -3,8 +3,11 @@ Version: 1.2.4
 
 # hvtiR (unreleased)
 
-* `update()` warns and stops without installing when an update target is
-  already loaded. Restart R and run `update()` before those packages attach.
+* `update()` now warns and installs nothing when a required member is already
+  loaded; this replaces the previous error. The returned empty character
+  vector carries a `blocked` attribute listing the loaded members. Restart R
+  and run `update()` before those packages attach. `force = TRUE` still
+  bypasses the guard, with the existing Windows safety risk.
 
 # hvtiR 1.2.4
 
