@@ -21,7 +21,9 @@ update(force = FALSE)
 ## Value
 
 The character vector of `"owner/repo"` specs passed to pak, invisibly.
-Empty if nothing needed updating.
+Empty if nothing needed updating. If loaded members prevent
+installation, the empty vector has a `blocked` attribute with their
+names.
 
 ## Details
 
@@ -35,9 +37,15 @@ required version may not exist.
 `hvtiR` itself is checked by
 [`status()`](https://ehrlinger.github.io/hvtiR/reference/status.md) and
 reported here, but never installed. `update()` reuses that check;
-calling it means the installer's namespace is already loaded, which the
-loaded-namespace guard refuses. When the installer is behind, the report
-names `pak::pak("ehrlinger/hvtiR")` as the remedy.
+calling it means the installer's namespace is already loaded, so it
+cannot update itself. When the installer is behind, the report names
+`pak::pak("ehrlinger/hvtiR")` as the remedy.
+
+If a required member is already loaded, `update()` warns and installs
+nothing. Restart R and run `update()` before those packages attach. The
+returned empty character vector carries a `blocked` attribute listing
+the loaded members, so callers can distinguish this from an up-to-date
+result.
 
 ## Examples
 

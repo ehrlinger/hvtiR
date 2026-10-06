@@ -63,7 +63,7 @@
       <h1>Getting Started with hvtiR</h1>
 
       <p class="author">John Ehrlinger</p>
-      <p class="date">2026-10-02</p>
+      <p class="date">2026-10-06</p>
 
       <small class="dont-index">Source: <a href="https://github.com/ehrlinger/hvtiR/blob/main/vignettes/hvtiR.qmd" class="external-link"><code>vignettes/hvtiR.qmd</code></a></small>
       <div class="d-none name"><code></code></div>
@@ -197,11 +197,12 @@ i Remote was not consulted; versions shown are installed versions only.</code></
 </div>
 <section class="level3"><h3 id="why-it-may-refuse">Why it may refuse<a class="anchor" aria-label="anchor" href="#why-it-may-refuse"></a>
 </h3>
-<p><code><a href="../reference/update.html">hvtiR::update()</a></code> stops if a member you are about to update is already attached in the session:</p>
-<pre><code>Error: Cannot install hvtiPlotR: already loaded in this session.
-i Restart R and run this before anything attaches it.
+<p><code><a href="../reference/update.html">hvtiR::update()</a></code> warns and installs nothing if a required member is already loaded in the session:</p>
+<pre><code>Warning:
+Cannot install required hvtiPlotR: already loaded in this session.
+i No members were installed. Restart R and run `hvtiR::update()` before anything attaches it.
 i Pass `force = TRUE` to install anyway (unsafe on Windows).</code></pre>
-<p>This is not fussiness. A package whose namespace is loaded cannot be safely overwritten — on Windows the write fails outright and leaves a half-installed library. Restart R and run the update before you attach anything.</p>
+<p>This is not fussiness. A package whose namespace is loaded cannot be safely overwritten — on Windows the write fails outright and leaves a half-installed library. The returned empty character vector carries a <code>blocked</code> attribute with the loaded package names. Restart R and run the update before you attach anything.</p>
 </section></section><section class="level2"><h2 id="reproducible-installs">Reproducible installs<a class="anchor" aria-label="anchor" href="#reproducible-installs"></a>
 </h2>
 <p><code><a href="../reference/install.html">hvtiR::install()</a></code> resolves every member from GitHub <code>main</code>, so it gives you the newest code rather than a fixed one. Two people running it a week apart can end up on different commits under the same version number. When an analysis has to be reproducible, pin the versions with <a href="https://rstudio.github.io/renv/" class="external-link">renv</a>:</p>

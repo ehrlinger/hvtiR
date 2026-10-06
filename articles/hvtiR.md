@@ -147,17 +147,19 @@ pak::pak("ehrlinger/hvtiR")
 ### Why it may refuse
 
 [`hvtiR::update()`](https://ehrlinger.github.io/hvtiR/reference/update.md)
-stops if a member you are about to update is already attached in the
+warns and installs nothing if a required member is already loaded in the
 session:
 
-    Error: Cannot install hvtiPlotR: already loaded in this session.
-    i Restart R and run this before anything attaches it.
+    Warning:
+    Cannot install required hvtiPlotR: already loaded in this session.
+    i No members were installed. Restart R and run `hvtiR::update()` before anything attaches it.
     i Pass `force = TRUE` to install anyway (unsafe on Windows).
 
 This is not fussiness. A package whose namespace is loaded cannot be
 safely overwritten — on Windows the write fails outright and leaves a
-half-installed library. Restart R and run the update before you attach
-anything.
+half-installed library. The returned empty character vector carries a
+`blocked` attribute with the loaded package names. Restart R and run the
+update before you attach anything.
 
 ## Reproducible installs
 
