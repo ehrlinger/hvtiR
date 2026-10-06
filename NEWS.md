@@ -1,6 +1,11 @@
 Package: hvtiR
 Version: 1.2.4
 
+# hvtiR (unreleased)
+
+* `update()` warns and stops without installing when an update target is
+  already loaded. Restart R and run `update()` before those packages attach.
+
 # hvtiR 1.2.4
 
 * `install()` and `update()` explain a failed solve on an unmet dependency

@@ -120,6 +120,25 @@ test_that("update installs nothing when everything is current", {
   expect_message(update(), "up to date")
 })
 
+test_that("update warns and stops when an install target is loaded", {
+  local_mocked_bindings(
+    installed_version = function(pkg) {
+      if (pkg == "hvtiRutilities") "0.9.0" else "1.0.0"
+    },
+    remote_version = function(repo, ref = "main") "1.0.0",
+    check_loaded = function(targets, loaded = loadedNamespaces()) {
+      intersect(targets, "hvtiRutilities")
+    },
+    pak_install = function(specs) stop("must not install")
+  )
+
+  expect_warning(
+    result <- update(),
+    "hvtiRutilities.*already loaded.*Restart R"
+  )
+  expect_identical(result, character(0))
+})
+
 test_that("update does not call members current when GitHub is unreachable", {
   local_mocked_bindings(
     installed_version = function(pkg) "1.0.0",

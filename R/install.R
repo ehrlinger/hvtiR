@@ -358,5 +358,17 @@ update <- function(force = FALSE) {
 
   targets <- expand_targets(targets)
 
+  blocked <- check_loaded(targets)
+  if (length(blocked) > 0L && !force) {
+    cli::cli_warn(c(
+      "Cannot update {.pkg {blocked}}: already loaded in this session.",
+      i = paste0(
+        "No members were installed. Restart R, then run ",
+        "{.run hvtiR::update()} before anything attaches them."
+      )
+    ))
+    return(invisible(character(0)))
+  }
+
   install_members(targets, force = force)
 }
