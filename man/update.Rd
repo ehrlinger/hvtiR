@@ -11,7 +11,8 @@ update(force = FALSE)
 }
 \value{
 The character vector of \code{"owner/repo"} specs passed to pak,
-invisibly. Empty if nothing needed updating.
+invisibly. Empty if nothing needed updating. If loaded members prevent
+installation, the empty vector has a \code{blocked} attribute with their names.
 }
 \description{
 Installs only the members whose status is \code{"missing"} or \code{"stale"}. When
@@ -29,9 +30,13 @@ required version may not exist.
 
 \code{hvtiR} itself is checked by \code{\link[=status]{status()}} and reported here, but never
 installed. \code{update()} reuses that check; calling it means the installer's
-namespace is already loaded, which the loaded-namespace guard refuses. When
-the installer is behind, the report names \code{pak::pak("ehrlinger/hvtiR")} as
-the remedy.
+namespace is already loaded, so it cannot update itself. When the installer
+is behind, the report names \code{pak::pak("ehrlinger/hvtiR")} as the remedy.
+
+If a required member is already loaded, \code{update()} warns and installs
+nothing. Restart R and run \code{update()} before those packages attach. The
+returned empty character vector carries a \code{blocked} attribute listing the
+loaded members, so callers can distinguish this from an up-to-date result.
 }
 \examples{
 \dontrun{

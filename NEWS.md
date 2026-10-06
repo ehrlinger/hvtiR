@@ -9,6 +9,14 @@ Version: 1.2.5
   package and is published as `members.json`, so its recorded versions are
   content rather than bookkeeping.
 
+# hvtiR (unreleased)
+
+* `update()` now warns and installs nothing when a required member is already
+  loaded; this replaces the previous error. The returned empty character
+  vector carries a `blocked` attribute listing the loaded members. Restart R
+  and run `update()` before those packages attach. `force = TRUE` still
+  bypasses the guard, with the existing Windows safety risk.
+
 # hvtiR 1.2.4
 
 * `install()` and `update()` explain a failed solve on an unmet dependency

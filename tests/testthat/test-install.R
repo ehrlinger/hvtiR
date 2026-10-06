@@ -120,6 +120,73 @@ test_that("update installs nothing when everything is current", {
   expect_message(update(), "up to date")
 })
 
+test_that("update warns with blocked metadata when a target is loaded", {
+  pak_calls <- list()
+  local_mocked_bindings(
+    installed_version = function(pkg) {
+      if (pkg == "hvtiRutilities") "0.9.0" else "1.0.0"
+    },
+    remote_version = function(repo, ref = "main") "1.0.0",
+    check_loaded = function(targets, loaded = loadedNamespaces()) {
+      intersect(targets, "hvtiRutilities")
+    },
+    pak_install = function(specs) {
+      pak_calls[[length(pak_calls) + 1L]] <<- specs
+      invisible(specs)
+    }
+  )
+
+  expect_warning(
+    result <- update(),
+    "hvtiRutilities.*already loaded.*Restart R.*attaches it.*force = TRUE"
+  )
+  expect_type(result, "character")
+  expect_length(result, 0L)
+  expect_identical(attr(result, "blocked"), "hvtiRutilities")
+  expect_length(pak_calls, 0L)
+})
+
+test_that("update can be forced through its loaded-member guard", {
+  calls <- list()
+  local_mocked_bindings(
+    installed_version = function(pkg) {
+      if (pkg == "hvtiRutilities") "0.9.0" else "1.0.0"
+    },
+    remote_version = function(repo, ref = "main") "1.0.0",
+    check_loaded = function(targets, loaded = loadedNamespaces()) {
+      intersect(targets, "hvtiRutilities")
+    },
+    pak_install = function(specs) {
+      calls[[length(calls) + 1L]] <<- specs
+      invisible(specs)
+    }
+  )
+
+  update(force = TRUE)
+
+  expect_length(calls, 1L)
+  expect_identical(calls[[1L]], "ehrlinger/hvtiRutilities")
+})
+
+test_that("a loaded co-resolved dependency is reported as required", {
+  local_mocked_bindings(
+    installed_version = function(pkg) {
+      if (pkg == "hvtiRlifetables") "0.9.0" else "1.0.0"
+    },
+    remote_version = function(repo, ref = "main") "1.0.0",
+    check_loaded = function(targets, loaded = loadedNamespaces()) {
+      intersect(targets, "TemporalHazard")
+    },
+    pak_install = function(specs) stop("must not install")
+  )
+
+  expect_warning(
+    result <- update(),
+    "Cannot install required TemporalHazard.*already loaded"
+  )
+  expect_identical(attr(result, "blocked"), "TemporalHazard")
+})
+
 test_that("update does not call members current when GitHub is unreachable", {
   local_mocked_bindings(
     installed_version = function(pkg) "1.0.0",
