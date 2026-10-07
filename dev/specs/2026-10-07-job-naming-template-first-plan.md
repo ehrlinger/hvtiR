@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** `add_job()` names a job `<prefix>[.<qualifier>].<subject>.<type>.qmd` (runner `....runner.R`); every template, `open_job()` and `job_census()` read both that form and the old `<subject>-<type>-<prefix>[-<qualifier>].qmd`; and `template_list()` shows qualified templates as `dp.trends`.
+**Goal:** `add_job()` names a job `<prefix>[.<qualifier>].<subject>.<type>.qmd` (runner `<prefix>[.<qualifier>].<subject>.<type>.runner.R`); every template, `open_job()` and `job_census()` read both that form and the old `<subject>-<type>-<prefix>[-<qualifier>].qmd`; and `template_list()` shows qualified templates as `dp.trends`.
 
 **Architecture:** One new file in hvtiRtemplates, `R/job-name.R`, owns the job name: `.job_stem()` builds the new form and `.job_name_fields()` reads `c(subject, type)` from either form. `add_job()` and `open_job()` build through it, and each template's existing filename check swaps its one parsing line for a call to it, so the check's logic and messages are unchanged. Template *display* names change from `dp-trends` to `dp.trends`, and selection accepts both. The template files inside the package keep their names. In hvtiRutilities, `job_census()` gains a parser for the new form that runs before its SAS-legacy parser.
 
@@ -392,7 +392,7 @@ In `R/add-job.R`:
 
    `.runner_template()` is unchanged: it looks up `inst/runners/<template stem>-runner.R`.
 
-3. Update the roxygen block of `add_job()`. Replace every `\code{<subject>-<type>-<prefix>[-<qualifier>].qmd}` with `\code{<prefix>[.<qualifier>].<subject>.<type>.qmd}`, the runner name `\code{<subject>-<type>-<prefix>-runner.R}` with `\code{<prefix>.<subject>.<type>.runner.R}`, and the sentence about `-` separating fields with: "\code{.} separates the filename's fields, so neither \code{.} nor \code{-} may appear in a field." Add one paragraph to `@details`:
+3. Update the roxygen block of `add_job()`. Replace every `\code{<subject>-<type>-<prefix>[-<qualifier>].qmd}` with `\code{<prefix>[.<qualifier>].<subject>.<type>.qmd}`, the runner name `\code{<subject>-<type>-<prefix>-runner.R}` with `\code{<prefix>[.<qualifier>].<subject>.<type>.runner.R}`, and the sentence about `-` separating fields with: "\code{.} separates the filename's fields, so neither \code{.} nor \code{-} may appear in a field." Add one paragraph to `@details`:
 
 ```r
 #' \strong{Names before 2026-10.} Jobs were named
@@ -610,7 +610,7 @@ swaps <- c(
   "cohort-eda-dc-general" = "dc.general.cohort.eda",
   "dead_pa-hz-ac" = "ac.dead_pa.hz",
   "<subject>-<type>-<prefix>[-<qualifier>]" = "<prefix>[.<qualifier>].<subject>.<type>",
-  "<subject>-<type>-<prefix>-runner.R" = "<prefix>.<subject>.<type>.runner.R"
+  "<subject>-<type>-<prefix>-runner.R" = "<prefix>[.<qualifier>].<subject>.<type>.runner.R"
 )
 for (f in files) {
   x <- readLines(f, warn = FALSE)

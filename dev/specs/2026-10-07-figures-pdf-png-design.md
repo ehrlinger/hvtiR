@@ -2,7 +2,8 @@
 
 **Written** 2026-10-07.
 **Status** Design, approved. Not implemented.
-**Repo** `hvtiRtemplates`. Uses `hvtiPlotR::save_manuscript()` as it is.
+**Repo** `hvtiRtemplates`. Calls `ggplot2::ggsave()` directly, with
+`hvtiPlotR::save_manuscript()`'s defaults (amended while planning; see section 3a).
 Recorded in `hvtiR`; see [the overview](2026-10-07-team-review-overview.md).
 **Order** Fifth of five.
 
@@ -49,10 +50,13 @@ file)`, which writes into `graphs/<subject>-<type>/`.
 save_figure(p, name, width = 6, height = 4)
 ```
 
-- It does nothing when `SAVE_FIGURES` is `FALSE`, or when `FIGURES` is set and
-  does not include `name`.
-- Otherwise it calls `hvtiPlotR::save_manuscript()`, writing
-  `graphs/<subject>-<type>/<name>.pdf` and `<name>.png` at 300 dpi.
+- A figure is *selected* unless `SAVE_FIGURES` is `FALSE`, or `FIGURES` is set and
+  no entry of it starts the figure's name.
+- A selected figure is written as `graphs/<subject>-<type>/<name>.png` (300 dpi)
+  and `<name>.pdf`, through `ggplot2::ggsave()` for a ggplot and the graphics
+  devices for a function that draws base graphics.
+- A PNG the report itself embeds is written even when the figure is not selected,
+  so the report never shows a broken image; the switches then govern only its PDF.
 - It uses `grDevices::cairo_pdf` when `capabilities("cairo")` is `TRUE`, and the
   default PDF device otherwise.
 - It returns the two paths invisibly, so the provenance record can list them as
@@ -61,11 +65,15 @@ save_figure(p, name, width = 6, height = 4)
 **The "edit study choices" chunk** in every template that draws a figure gains:
 
 ```r
-# EDIT: save each figure as PDF (publisher) and PNG (Word).
+# Each figure is saved to graphs/ as a PNG (for Word) and a PDF (for the publisher).
+# SAVE_FIGURES <- FALSE saves neither; FIGURES keeps only the figures whose names
+# start with one of its entries, e.g. FIGURES <- c("hp-survival").
 SAVE_FIGURES <- TRUE
-# EDIT: NULL saves every figure; a vector keeps only those, e.g. c("survival").
 FIGURES <- NULL
 ```
+
+The lines carry no `EDIT:` marker: the edit guard renders any job that still has
+one as a draft, and these are optional choices with working defaults.
 
 **Each figure gets a stable name.** The help text for `FIGURES` lists each
 template's figure names, so a job with ten figures can keep two.
