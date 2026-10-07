@@ -20,3 +20,4 @@
 ^tools$
 ^\.pytest_cache$
 ^reports$
+^news$

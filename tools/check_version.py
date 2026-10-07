@@ -9,15 +9,18 @@ The guard used to require every pull request to bump, because a branch rebased
 onto a main that already took its number looks exactly like one that never
 bumped. Under the house-style cadence most pull requests deliberately leave the
 version alone, so that rule would fail nearly all of them. What separates the
-two cases is NEWS.md: work that is not being versioned lands under the standing
-`# hvtiR (unreleased)` heading, and a branch that bumped has its entry under a
-version heading instead. So an unchanged version is accepted only when the
-unreleased heading is present, which keeps the collision a failure.
+two cases is the NEWS fragment: work that is not being versioned adds its entry
+as a file of its own, `news/<branch>.md`, and a branch that bumped files its
+entries under a version heading instead. So an unchanged version is accepted
+only when the pull request adds a fragment, which keeps the collision a
+failure. That also makes this the fragment guard: a change that ships and
+carries no entry fails here. (The test once keyed on a standing
+`# hvtiR (unreleased)` heading in NEWS.md, which fragments replace.)
 
 A pull request that ships nothing needs neither. The house style gives a
 change whose every file R's built-in build exclusions or `.Rbuildignore` cover
 (`.Rbuildignore` itself among them) no NEWS entry and no bump, so an unchanged
-version passes for it with or without the heading. The workflow
+version passes for it with or without a fragment. The workflow
 hands over the base branch's `.Rbuildignore`, so a pull request cannot exempt
 itself by adding a pattern. A missing or empty list of changed files, or of
 patterns, never earns the exemption.
@@ -43,12 +46,16 @@ def read_version(text: str, label: str) -> str:
     return match.group(1)
 
 
-UNRELEASED_RE = re.compile(r"^#\s+hvtiR\s+\(unreleased\)\s*$", re.M)
+FRAGMENT_RE = re.compile(r"^news/[^/]+\.md$")
 
 
-def has_unreleased_heading(news: str) -> bool:
-    """Whether NEWS.md carries the standing unreleased heading."""
-    return bool(UNRELEASED_RE.search(news))
+def adds_fragment(added: list) -> bool:
+    """Whether the pull request adds a NEWS fragment, `news/<branch>.md`.
+
+    Only a file directly under `news/` counts, since that is all the collector
+    reads at the bump.
+    """
+    return any(FRAGMENT_RE.match(p) for p in added)
 
 
 # `tools:::inRbuildignore()` tests these before a package's own `.Rbuildignore`,
@@ -144,11 +151,11 @@ def compare_dates(base: str, head: str, today: datetime.date = None) -> list:
     return problems
 
 
-def compare(base: str, head: str, unreleased: bool = False,
+def compare(base: str, head: str, fragment: bool = False,
             nothing_ships: bool = False) -> list:
     """Problems with the head version relative to base. Empty means fine.
 
-    `unreleased` says whether NEWS.md carries the unreleased heading, which is
+    `fragment` says whether the pull request adds a `news/` fragment, which is
     what makes an unchanged version legitimate rather than a silent collision.
     `nothing_ships` says R's built-in build exclusions or `.Rbuildignore`
     cover every file the pull request touches, which makes it legitimate too.
@@ -156,12 +163,13 @@ def compare(base: str, head: str, unreleased: bool = False,
     if parse_version(head) > parse_version(base):
         return []
     if base == head:
-        if unreleased or nothing_ships:
+        if fragment or nothing_ships:
             return []
         return [
             f"DESCRIPTION Version is still {head}, unchanged from the base branch, "
-            "and NEWS.md has no '# hvtiR (unreleased)' heading. File the entry "
-            "under that heading, or bump the patch digit. Without one of the two, "
+            "and this pull request adds no NEWS fragment. Write the entry to "
+            "news/<branch>.md (with '/' in the branch name replaced by '-'), or "
+            "bump the patch digit. Without one of the two, "
             "a branch rebased onto a main that already took this number is "
             "indistinguishable from one that never bumped. A change that ships "
             "nothing, every file excluded by R's build defaults or "
@@ -171,13 +179,14 @@ def compare(base: str, head: str, unreleased: bool = False,
 
 
 def main_with(base_desc: str, head_desc: str, head_news: str,
-              changed_files: list = None, rbuildignore: list = None) -> int:
+              changed_files: list = None, rbuildignore: list = None,
+              added_files: list = None) -> int:
     """Run every check and report all problems, not just the first."""
     problems = []
     try:
         base = read_version(base_desc, "the base branch's DESCRIPTION")
         head = read_version(head_desc, "DESCRIPTION")
-        problems += compare(base, head, has_unreleased_heading(head_news),
+        problems += compare(base, head, adds_fragment(added_files or []),
                             ships_nothing(changed_files or [], rbuildignore or []))
     except ValueError as exc:
         problems.append(str(exc))
@@ -224,20 +233,25 @@ def main(argv=None) -> int:
     parser.add_argument("--news", type=Path, default=root / "NEWS.md")
     parser.add_argument("--changed-files", type=Path,
                         help="the pull request's changed paths, one per line")
+    parser.add_argument("--added-files", type=Path,
+                        help="the paths the pull request adds, one per line")
     parser.add_argument("--rbuildignore", type=Path, default=root / ".Rbuildignore",
                         help=".Rbuildignore to judge them by; CI passes the base's")
     args = parser.parse_args(argv)
 
-    changed = []
-    if args.changed_files:
-        changed = [ln.strip() for ln in args.changed_files.read_text().splitlines()
-                   if ln.strip()]
+    def read_list(path):
+        if not path:
+            return []
+        return [ln.strip() for ln in path.read_text().splitlines() if ln.strip()]
+
+    changed = read_list(args.changed_files)
     code = main_with(
         args.base_description.read_text(),
         args.description.read_text(),
         args.news.read_text(),
         changed,
         read_rbuildignore(args.rbuildignore.read_text()),
+        read_list(args.added_files),
     )
     if code == 0:
         print(f"version ok: {read_version(args.description.read_text(), 'DESCRIPTION')}")

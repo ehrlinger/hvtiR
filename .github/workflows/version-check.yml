@@ -9,10 +9,11 @@ name: version-check
 # branch rebased onto a main that already took its number looks exactly like
 # one that never bumped. Under the house-style cadence most pull requests
 # deliberately leave the version alone, so that rule would fail nearly all of
-# them. NEWS.md separates the two cases. Work that is not being versioned
-# lands under the standing "# hvtiR (unreleased)" heading, so an unchanged
-# version passes only when that heading is present and the collision stays a
-# failure.
+# them. The NEWS fragment separates the two cases. Work that is not being
+# versioned adds its entry as news/<branch>.md, so an unchanged version passes
+# only when the pull request adds one and the collision stays a failure. That
+# makes this job the fragment guard too, so hvtiR runs no separate
+# news-fragment job.
 on:
   pull_request:
     branches: [main]
@@ -31,18 +32,25 @@ jobs:
       - name: Test the version guard
         run: python3 -m unittest discover -s tools -p 'test_check_version.py'
 
+      # hvtiR has no news-fragment job (this one is its guard), so the shared
+      # fragment tooling the bump runs is tested here instead.
+      - name: Test the NEWS fragment tooling
+        run: python3 -m unittest discover -s .github/scripts -p 'test_news.py'
+
       - name: Read the base branch's DESCRIPTION
         run: git show origin/${{ github.base_ref }}:DESCRIPTION > "${RUNNER_TEMP}/base-DESCRIPTION"
 
       # A pull request whose every file .Rbuildignore excludes ships nothing,
       # so the house style gives it no NEWS entry and no bump. The script needs
-      # the file list to tell that case apart. HEAD is the pull request's merge
+      # the file list to tell that case apart, and the added files to see a
+      # news/ fragment. HEAD is the pull request's merge
       # commit, so the three-dot diff against the base is exactly what the pull
       # request adds. The patterns come from the base branch, so a pull request
       # cannot exempt itself by adding one.
       - name: List the files this pull request changes
         run: |
           git diff --name-only "origin/${{ github.base_ref }}...HEAD" > "${RUNNER_TEMP}/changed-files"
+          git diff --name-only --diff-filter=A "origin/${{ github.base_ref }}...HEAD" > "${RUNNER_TEMP}/added-files"
           git show "origin/${{ github.base_ref }}:.Rbuildignore" > "${RUNNER_TEMP}/base-Rbuildignore"
 
       - name: Check the version against the base branch
@@ -50,4 +58,5 @@ jobs:
           python3 tools/check_version.py
           --base-description "${RUNNER_TEMP}/base-DESCRIPTION"
           --changed-files "${RUNNER_TEMP}/changed-files"
+          --added-files "${RUNNER_TEMP}/added-files"
           --rbuildignore "${RUNNER_TEMP}/base-Rbuildignore"
