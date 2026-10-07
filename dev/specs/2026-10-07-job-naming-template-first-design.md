@@ -69,6 +69,23 @@ pattern runs before `legacy`, which otherwise claims any dotted name as
 The residual risk is a legacy `.qmd` that happens to fit that shape exactly; it is
 read as scaffolded. The pattern-order test in `test-job-names.R` is extended.
 
+## 3a. Amendments made while planning (2026-10-07)
+
+Recorded in [the plan](2026-10-07-job-naming-template-first-plan.md) too.
+
+1. **The census needs no catalog.** Section 3 said the census parser claims four
+   fields "when that prefix carries a qualifier", which hvtiRutilities cannot know.
+   No field contains a period, so the count settles it: three fields, no qualifier;
+   four, one. Such a name is labelled `naming = "scaffolded"`.
+2. **One line per template.** Each template keeps its own filename-check block and
+   stop message; only the splitting line changes, to
+   `.fields <- hvtiRtemplates:::.job_name_fields(.current)`, which returns
+   `c(subject, type)` from either spelling in the old order. The "one internal
+   function" of section 3 is that parser, not a replacement for the whole block.
+3. **No duplicate jobs across spellings.** `add_job()` refuses when the old
+   spelling of the same job exists, and `open_job()` opens it, so a study never
+   gains an empty second copy of a job it already has.
+
 ## 4. What does not change
 
 - **Results folders** stay `estimates/<subject>-<type>/` and
