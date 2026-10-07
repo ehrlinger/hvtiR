@@ -40,14 +40,17 @@ in two different situations that need different advice:
 - **Not rendering** (`knitr::current_input()` is `NULL`). Stop with a condition of
   class `hvtiRtemplates_not_rendered`, worded:
 
-  > This job was run interactively, so its provenance cannot be recorded. Every
+  > This job was run in the console, so its provenance cannot be recorded. Every
   > chunk above this one ran normally. To produce the report and its provenance,
-  > render the job: click **Render**, or run
-  > `quarto::quarto_render("<job file>")`.
+  > render the job: click Render, or run hvtiRtemplates::render_job() on this
+  > job's .qmd file.
 
-  The job file is the actual file name, taken from the open document where it can
-  be found (the RStudio API, guarded by `requireNamespace("rstudioapi")`), and
-  otherwise written as `"<this job>.qmd"`. The message never guesses a wrong name.
+  It names the package's own `render_job()` rather than `quarto::quarto_render()`,
+  because `render_job()` is the documented way to render a job. It does not name
+  the file. A console run has no render input to read the name from, and the
+  package deliberately takes no dependency on `rstudioapi` (`R/open-job.R` says
+  so), so the message never guesses a name. *Amended 2026-10-07, while writing
+  the plan: the first draft read the name through `rstudioapi`.*
 
 - **Rendering without the hooks.** Keep today's message. It is correct there.
 
@@ -68,13 +71,23 @@ condition and wording when it fails for this reason. Known candidates:
 A step that already handles `NULL` gracefully is left alone. The audit records
 which steps were checked, so the next template author knows the rule.
 
+*Audit result, 2026-10-07, while writing the plan:* none of them needs a change.
+The edit-marker and set-declaration guards in every template skip when
+`knitr::current_input()` is `NULL`; `.guard_partial()` returns early on a `NULL`
+input, and `test-partial-render.R` already pins that; `.attach_handoff_lineage()`
+only attaches an attribute and reads no render state. `.embed_provenance()` is the
+only step a console run trips.
+
 ## 4. Tests
 
 - `.embed_provenance()` with `knitr::current_input()` mocked to `NULL` signals
   `hvtiRtemplates_not_rendered`, and its message contains "render the job".
 - With a current input but no `QUARTO_PROJECT_DIR`, the existing hooks message is
   unchanged.
-- One test per render-only step found in section 3.
+- A console run stops before the study configuration is read, so it gives this
+  message even when R's working directory is outside the study.
+- Section 3 found no other step to change, so it adds no test; `.guard_partial(NULL)`
+  is already pinned in `test-partial-render.R`.
 
 ## 5. Out of scope
 
