@@ -1,14 +1,6 @@
 Package: hvtiR
 Version: 1.2.5
 
-# hvtiR 1.2.5
-
-* Catalog versions refreshed from CRAN and `main`: `ggBoostedTrees` dev
-  0.9.0 to 0.9.1; `hvtiPlotR` dev 2.8.3 to 2.8.4; `hvtiRtemplates` dev 1.2.2
-  to 1.2.4; `hvtiRutilities` dev 1.4.3 to 1.4.4. The catalog ships in the
-  package and is published as `members.json`, so its recorded versions are
-  content rather than bookkeeping.
-
 # hvtiR (unreleased)
 
 * `update()` now warns and installs nothing when a required member is already
@@ -16,6 +8,14 @@ Version: 1.2.5
   vector carries a `blocked` attribute listing the loaded members. Restart R
   and run `update()` before those packages attach. `force = TRUE` still
   bypasses the guard, with the existing Windows safety risk.
+
+# hvtiR 1.2.5
+
+* Catalog versions refreshed from CRAN and `main`: `ggBoostedTrees` dev
+  0.9.0 to 0.9.1; `hvtiPlotR` dev 2.8.3 to 2.8.4; `hvtiRtemplates` dev 1.2.2
+  to 1.2.4; `hvtiRutilities` dev 1.4.3 to 1.4.4. The catalog ships in the
+  package and is published as `members.json`, so its recorded versions are
+  content rather than bookkeeping.
 
 # hvtiR 1.2.4
 
