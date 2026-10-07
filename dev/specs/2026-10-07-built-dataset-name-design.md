@@ -60,7 +60,10 @@ number. The presenter deferred a rename. This design makes it a choice instead.
   DATASET <- "built"
   ```
 
-  30 templates set `DATASET` today.
+  26 templates set `DATASET` today: 23 to `"study"`, which change, and three
+  downstream jobs (`hm`, `hp`, `hs-setup`) to `NULL`, which take the dataset
+  from their upstream job and stay as they are. *(Corrected while planning; the
+  first draft said 30.)*
 - The prose blocks that explain `DATASET <- "study"` (for example `dc-gfup.qmd`
   around line 218) are updated to `"built"`.
 - `read_job_data(dataset = "study")` keeps its default; both names work.
