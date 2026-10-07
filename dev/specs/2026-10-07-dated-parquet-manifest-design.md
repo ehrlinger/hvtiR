@@ -218,6 +218,25 @@ The first `update_manifest()` on a study using today's layout (`role: source`,
 - The schema sidecar is **per version**, written at registration, not captured on
   first read.
 
+## 9a. Amendments made while planning (2026-10-07)
+
+Recorded in [the plan](2026-10-07-dated-parquet-manifest-plan.md) too.
+
+- **Where a job shows the note.** Section 6 said "a visible note at the top of the
+  report". It goes in the job's first table, "The data this job read", which
+  `read_job_data()` builds, so no template file changes. A top-of-report banner
+  would need an edit to every template, which designs 3 to 5 already make; the
+  note can move there later.
+- **hvtiRdatabuild is affected.** An analysis set identified its parent by the
+  manifest checksum plus a stat of `built.sas7bdat`, so a rebuilt but
+  unregistered SAS file would have made every set stale while R read nothing new.
+  The parent becomes the registered parquet. Sets written before the change are
+  stale once, after the study's first `update_manifest()`.
+- **Tests of the legacy read cache** that built their study with
+  `register_data()` get a fixture that writes the pre-change entry directly, so
+  the legacy path stays tested.
+- **`history:` is newest first.**
+
 ## 10. Later items
 
 - **Git.** Tying a job revision to a manifest revision, once the team has a Git

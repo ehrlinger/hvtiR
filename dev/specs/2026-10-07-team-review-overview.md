@@ -1,7 +1,7 @@
 # Team review, 2026-10-07: six changes across the family
 
 **Written** 2026-10-07.
-**Status** Six designs, approved. Design 1 has an implementation plan. None implemented.
+**Status** Six designs, approved. Designs 1 and 2 have implementation plans. None implemented.
 **Repo** `hvtiR` holds the records because the changes span `hvtiRutilities` and
 `hvtiRtemplates`, and design 6 also `hvtiRdatabuild`. Each is implemented in the
 repository it names.
@@ -22,7 +22,7 @@ The training transcript is not kept here.
 | # | design | repo | what it fixes |
 |---|---|---|---|
 | 1 | [Interactive runs say "render the job"](2026-10-07-render-the-job-design.md) ([plan](2026-10-07-render-the-job-plan.md)) | hvtiRtemplates | a console run stops at the provenance chunk with advice to run `add_job()`, which is wrong |
-| 2 | [Dated parquet and `update_manifest()`](2026-10-07-dated-parquet-manifest-design.md) | hvtiRutilities | a rebuilt `built.sas7bdat` stops every template, and the fix is hard to find and can fail silently |
+| 2 | [Dated parquet and `update_manifest()`](2026-10-07-dated-parquet-manifest-design.md) ([plan](2026-10-07-dated-parquet-manifest-plan.md)) | hvtiRutilities, then hvtiRdatabuild and hvtiRtemplates | a rebuilt `built.sas7bdat` stops every template, and the fix is hard to find and can fail silently |
 | 3 | [`"built"` as a name for the study dataset](2026-10-07-built-dataset-name-design.md) | hvtiRutilities, hvtiRtemplates | the team calls it `built`; the code calls it `"study"` |
 | 4 | [Job names: template first, periods](2026-10-07-job-naming-template-first-design.md) | hvtiRtemplates, hvtiRutilities | jobs sort by subject and the template is at the end of the name |
 | 5 | [Figures as PDF and PNG](2026-10-07-figures-pdf-png-design.md) | hvtiRtemplates | most templates save no figure files, and those that do write PNG only |
