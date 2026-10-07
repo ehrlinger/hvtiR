@@ -76,6 +76,28 @@ Templates that only display figures start saving them.
 `hvtiPlotR` stays in `Suggests`. `draft_file` arrived in 2.7.3, so the current
 `>= 2.8.0` minimum already covers it.
 
+## 3a. Amendments made while planning (2026-10-07)
+
+Recorded in [the plan](2026-10-07-figures-pdf-png-plan.md) too, which lists every
+figure, its name and its size.
+
+1. **`ggplot2::ggsave()` directly, not `hvtiPlotR::save_manuscript()`.** `hp`'s three
+   figures are base graphics, which `save_manuscript()` refuses, and several tests
+   mock `ggplot2::ggsave` to count saves. Same files, same defaults (300 dpi, cairo
+   PDF); `hvtiPlotR` stays as it is.
+2. **The switches govern the publication copies.** Eight templates embed the PNG
+   they save, so that PNG is always written; `SAVE_FIGURES` and `FIGURES` decide its
+   PDF. For a figure the report prints directly, they decide both files.
+3. **`FIGURES` matches the start of a name**, so `"dp-eda-continuous"` keeps every
+   continuous page.
+4. **No `EDIT:` markers** on the new choices, so a finished job does not render as a
+   draft (as in design 6).
+5. **A list of plots and a drawing function are accepted**, for base graphics and
+   for plot methods that may return several plots.
+6. **Sizes:** a figure saved today keeps its size; a newly saved one is 6 x 4 in, or
+   its chunk's `fig-height`. Section 5's "a rendered `ac` job" becomes `hp`, since
+   `ac` draws no figure.
+
 ## 4. Open team standards (not decided here)
 
 The training asked for team defaults with exceptions. These are for the team to
