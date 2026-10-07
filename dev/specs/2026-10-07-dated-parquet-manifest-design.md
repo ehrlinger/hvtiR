@@ -236,6 +236,17 @@ Recorded in [the plan](2026-10-07-dated-parquet-manifest-plan.md) too.
   `register_data()` get a fixture that writes the pre-change entry directly, so
   the legacy path stays tested.
 - **`history:` is newest first.**
+- **Any source format, `.parquet` included.** Registration and `update_manifest()`
+  do the same thing whatever the registered file's format (`.sas7bdat`, `.csv`,
+  `.xlsx`, `.xls`, `.rds` or `.parquet`): read it once, write
+  `<stem>_YYYYMMDD.parquet`, keep earlier versions. A `built.parquet` the team
+  supplies is the working file, exactly as `built.sas7bdat` is, and never the copy
+  jobs read. `read_clinical_data()` learns `.parquet` (through arrow) for this.
+  Because the legacy read cache of `built.sas7bdat` is also named `built.parquet`,
+  a parquet source is never treated as a cache: migration neither recovers nor
+  deletes it, and the legacy cache never writes over it. *(Added 2026-10-07 at the
+  maintainer's request; as first planned, migrating a study whose source was
+  `built.parquet` would have renamed or deleted that source.)*
 
 ## 10. Later items
 

@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Registering a study dataset converts it once to a dated parquet that R jobs read; `update_manifest()` with no arguments registers a rebuilt file as a new dated version and keeps the old one; a rebuilt but unregistered file no longer stops a job.
+**Goal:** Registering a study dataset, in any supported format including `.parquet`, converts it once to a dated parquet that R jobs read; `update_manifest()` with no arguments registers a rebuilt file as a new dated version and keeps the old one; a rebuilt but unregistered file no longer stops a job.
 
 **Architecture:** One new file in hvtiRutilities, `R/registered_versions.R`, owns everything about a registered version: naming, converting, recording, detecting a changed source, and moving a version into history. `register_data()`, `read_built()`, `verify_manifest()`, `update_manifest()`, `study_status()`, `provenance_data()` and the release-aware integrity check each gain a small branch that calls into it when a manifest entry carries a `parquet:` field. Entries without that field keep their current code path untouched, so unregistered and release-aware studies behave exactly as before. Two downstream repositories then follow: hvtiRdatabuild identifies an analysis set's parent by its registered version, and hvtiRtemplates shows the "rebuilt since registration" note in each job's data table.
 
@@ -24,6 +24,7 @@
 - The source-changed condition has class `c("hvtiRutilities_source_changed", "hvtiRutilities_out_of_date", "message", "condition")` (design 6 relies on the second class).
 - Dated names are `<stem>_YYYYMMDD.parquet`, then `<stem>_YYYYMMDD_r2.parquet`, `_r3`, and so on; the schema file is the same name with `.schema.csv`.
 - `history:` is newest first.
+- **The process is the same for every source format**: `.sas7bdat`, `.csv`, `.xlsx`, `.xls`, `.rds` and `.parquet`. A source named `<stem>.parquet` is the working file, never a cache and never the copy jobs read; no step may rename, overwrite or delete a registered source.
 - Definition of done, per repository: `devtools::test()` passes; `devtools::check()` 0 errors, 0 warnings, 0 notes; `devtools::document()` run with `man/` and `NAMESPACE` committed.
 - The planning container had no R. Run every command on a machine with R, `devtools`, `arrow` and the Quarto CLI.
 
@@ -34,6 +35,7 @@ Recorded in the design file as well.
 1. **Where a job shows the note.** The design said "a visible note at the top of the report". Every job's first table is "The data this job read", produced by `read_job_data()`. The note goes in that table as a row (Task 10), so no template file changes. A top-of-report banner would need an edit to every template, which designs 3 to 5 are already doing; it can move there later.
 2. **hvtiRdatabuild is affected.** `.built_state()` identifies an analysis set's parent by the manifest checksum plus a stat of `built.sas7bdat`. After this change a rebuilt but unregistered SAS file would make every analysis set stale although R reads nothing new. Task 9 makes the parent the registered parquet.
 3. **Legacy-path tests need a legacy fixture.** Many existing tests register a dataset to exercise the old read cache. After Task 2 registration writes the new form, so those tests get a helper that writes the old form directly (Task 2, Step 1).
+4. **Any source format, `.parquet` included** (added at the maintainer's request). `read_clinical_data()` learns `.parquet`, and a parquet source is never treated as the legacy read cache, whose name it can share (Tasks 1a and 6).
 
 ## File structure
 
@@ -42,6 +44,8 @@ Recorded in the design file as well.
 | file | change | responsibility |
 |---|---|---|
 | `R/registered_versions.R` | create | version naming, conversion, records, source-change detection, history, migration, the out-of-date condition |
+| `R/read_clinical_data.R` | modify | read `.parquet` |
+| `R/parquet_cache.R` | modify | `.reader_provenance()` names arrow for a parquet source; the legacy cache never writes over a parquet source |
 | `R/register_data.R` | modify | non-release registration writes a version |
 | `R/study_data.R` | modify | `read_built()` reads a registered version; `.normalise_built()` extracted |
 | `R/provenance.R` | modify | `provenance_data()` records the authoritative file via `.authoritative_path()` |
@@ -355,6 +359,113 @@ git commit -m "Add the registered-version core: dated parquet, records, source-c
 
 ---
 
+### Task 1a: A `.parquet` source reads like any other
+
+**Files:**
+- Modify: `R/read_clinical_data.R` (roxygen list of formats; the two "Supported formats" messages; the `switch()`)
+- Modify: `R/parquet_cache.R` (`.reader_provenance()`, `.cache_read()`)
+- Test: `tests/testthat/test-read_clinical_data.R`, `tests/testthat/test-parquet_cache.R` (append)
+
+**Interfaces:**
+- Produces: `read_clinical_data("x.parquet")` returns a data frame; `.reader_provenance("x.parquet")` returns `"arrow <version>"`; `.cache_read()` on a `.parquet` source reads it directly and writes nothing.
+
+- [ ] **Step 1: Write the failing tests**
+
+Append to `tests/testthat/test-read_clinical_data.R`:
+
+```r
+test_that("a parquet file is read like any other format", {
+  skip_if_not_installed("arrow")
+  f <- tempfile(fileext = ".parquet")
+  arrow::write_parquet(data.frame(id = 1:3, x = c(1.5, 2.5, 3.5)), f)
+  d <- read_clinical_data(f, convert_types = FALSE)
+  expect_s3_class(d, "data.frame")
+  expect_identical(nrow(d), 3L)
+  expect_identical(names(d), c("id", "x"))
+})
+
+test_that("the unsupported-format message lists parquet", {
+  expect_error(read_clinical_data(tempfile(fileext = ".json")), ".parquet", fixed = TRUE)
+})
+```
+
+Append to `tests/testthat/test-parquet_cache.R`:
+
+```r
+test_that("the legacy cache never writes over a parquet source", {
+  skip_if_not_installed("arrow")
+  dir <- withr::local_tempdir()
+  src <- file.path(dir, "built.parquet")
+  arrow::write_parquet(data.frame(id = 1:3), src)
+  before <- digest::digest(src, algo = "sha256", file = TRUE)
+  manifest <- file.path(dir, "manifest.yaml")
+
+  d <- .cache_read(src, function(f) as.data.frame(arrow::read_parquet(f)), manifest_path = manifest)
+
+  expect_identical(nrow(d), 3L)
+  expect_identical(digest::digest(src, algo = "sha256", file = TRUE), before)
+  expect_false(file.exists(file.path(dir, "built.schema.csv")))
+  expect_false(file.exists(manifest))
+  expect_identical(.reader_provenance(src), paste("arrow", as.character(utils::packageVersion("arrow"))))
+})
+```
+
+- [ ] **Step 2: Run them to verify they fail**
+
+Run: `Rscript -e 'devtools::test(filter = "read_clinical_data|parquet_cache")'`
+Expected: FAIL, "Unsupported file type: '.parquet'".
+
+- [ ] **Step 3: Write the implementation**
+
+In `R/read_clinical_data.R`:
+
+1. In the roxygen `\describe{}` list of formats, after the `.rds` item, add:
+
+```r
+#'   \item{\code{.parquet}}{Parquet files via \code{arrow::read_parquet()}; needs
+#'     the \pkg{arrow} package}
+```
+
+2. In both `stop()` messages that read `"Supported formats: .sas7bdat, .csv, .xlsx, .xls, .rds"`, change the text to `"Supported formats: .sas7bdat, .csv, .xlsx, .xls, .rds, .parquet"`.
+
+3. In the `switch(ext, ...)`, after `rds      = readRDS(file),` add:
+
+```r
+    parquet  = {
+      if (!requireNamespace("arrow", quietly = TRUE)) {
+        stop("Reading '", file, "' needs the arrow package. Install it with install.packages(\"arrow\").",
+             call. = FALSE)
+      }
+      arrow::read_parquet(file)
+    },
+```
+
+In `R/parquet_cache.R`:
+
+1. In `.reader_provenance()`, add `parquet = "arrow",` to the `switch()` before `NULL)`.
+
+2. In `.cache_read()`, directly after the `if (!.cache_enabled()) return(reader(path))` line, add:
+
+```r
+  # A parquet source has no cache: its derived name, <stem>.parquet, is the
+  # source itself, so writing the cache would overwrite the data being read.
+  if (identical(tolower(tools::file_ext(path)), "parquet")) return(reader(path))
+```
+
+- [ ] **Step 4: Run the tests**
+
+Run: `Rscript -e 'devtools::test(filter = "read_clinical_data|parquet_cache")'`
+Expected: PASS.
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add R/read_clinical_data.R R/parquet_cache.R tests/testthat man
+git commit -m "Read a parquet source like any other format, and never cache over it"
+```
+
+---
+
 ### Task 2: Registration converts, and the tests that relied on the old form are re-baselined
 
 **Files:**
@@ -427,6 +538,42 @@ test_that("register_data converts the dataset to a dated parquet", {
   expect_identical(e$source_sha256, digest::digest(file.path(data_dir, "built.csv"), algo = "sha256", file = TRUE))
   expect_identical(e$n_rows, 3L)
   expect_null(e$history)
+})
+
+test_that("a parquet source is registered the same way, and is never the copy jobs read", {
+  skip_if_not_installed("arrow")
+  root <- file.path(withr::local_tempdir(), "study")
+  suppressMessages(study_setup(root, "Parquet source", 42L))
+  data_dir <- study_dir("datasets", root)
+  src <- file.path(data_dir, "built.parquet")
+  arrow::write_parquet(data.frame(id = 1:3, dead = c(1L, 0L, 0L)), src)
+  Sys.setFileTime(src, as.POSIXct("2026-09-15 12:00:00", tz = "UTC"))
+  before <- digest::digest(src, algo = "sha256", file = TRUE)
+
+  suppressMessages(register_data(root, "built.parquet"))
+
+  e <- manifest_entry_for(root, "built.parquet")
+  expect_identical(e$parquet, "built_20260915.parquet")
+  expect_identical(e$source_sha256, before)
+  expect_identical(digest::digest(src, algo = "sha256", file = TRUE), before)
+  expect_true(file.exists(file.path(data_dir, "built_20260915.parquet")))
+  expect_match(provenance_data(cfg = study_config(root))$path, "built_20260915[.]parquet$")
+})
+
+test_that("a source already named with a date gets its own version name and is never overwritten", {
+  skip_if_not_installed("arrow")
+  root <- file.path(withr::local_tempdir(), "study")
+  suppressMessages(study_setup(root, "Dated source", 42L))
+  src <- file.path(study_dir("datasets", root), "built_20261007.parquet")
+  arrow::write_parquet(data.frame(id = 1:2), src)
+  Sys.setFileTime(src, as.POSIXct("2026-10-07 12:00:00", tz = "UTC"))
+  before <- digest::digest(src, algo = "sha256", file = TRUE)
+
+  suppressMessages(register_data(root, "built_20261007.parquet"))
+
+  e <- manifest_entry_for(root, "built_20261007.parquet")
+  expect_false(identical(e$parquet, "built_20261007.parquet"))
+  expect_identical(digest::digest(src, algo = "sha256", file = TRUE), before)
 })
 
 test_that("register_data without arrow stops and writes nothing", {
@@ -993,6 +1140,27 @@ test_that("update_manifest() registers a rebuilt source and keeps the old versio
   expect_identical(nrow(d), 4L)
 })
 
+test_that("a rebuilt parquet source is updated the same way", {
+  skip_if_not_installed("arrow")
+  root <- file.path(withr::local_tempdir(), "study")
+  suppressMessages(study_setup(root, "Parquet update", 42L))
+  src <- file.path(study_dir("datasets", root), "built.parquet")
+  arrow::write_parquet(data.frame(id = 1:3), src)
+  Sys.setFileTime(src, as.POSIXct("2026-09-15 12:00:00", tz = "UTC"))
+  suppressMessages(register_data(root, "built.parquet"))
+  arrow::write_parquet(data.frame(id = 1:4), src)
+  Sys.setFileTime(src, as.POSIXct("2026-10-07 12:00:00", tz = "UTC"))
+  withr::local_dir(root)
+
+  suppressMessages(update_manifest())
+
+  e <- manifest_entry_for(root, "built.parquet")
+  expect_identical(e$parquet, "built_20261007.parquet")
+  expect_identical(e$history[[1L]]$parquet, "built_20260915.parquet")
+  expect_true(file.exists(src))
+  expect_identical(nrow(read_built(study_config(root))), 4L)
+})
+
 test_that("a second update on the same date takes the next revision", {
   root <- versioned_study()
   withr::local_dir(root)
@@ -1262,6 +1430,46 @@ test_that("migration after an overwrite recovers the old version from the cache"
   expect_identical(verify_manifest()$status, c("OK", "OK"))
 })
 
+test_that("migrating a study whose source is built.parquet never touches the source", {
+  skip_if_not_installed("arrow")
+  root <- file.path(withr::local_tempdir(), "study")
+  suppressMessages(study_setup(root, "Legacy parquet", 42L))
+  src <- file.path(study_dir("datasets", root), "built.parquet")
+  arrow::write_parquet(data.frame(id = 1:3), src)
+  raw <- yaml::read_yaml(file.path(root, "_study.yml"))
+  raw$built <- "built.parquet"
+  yaml::write_yaml(raw, file.path(root, "_study.yml"))
+  entry <- .registration_manifest_entry(src, data.frame(id = 1:3), "2026-09-15", NULL)
+  yaml::write_yaml(list(datasets = list(entry)), file.path(root, "manifest.yaml"))
+  withr::local_dir(root)
+
+  # Unchanged: converted, and the source is left in place.
+  suppressMessages(update_manifest())
+  expect_true(file.exists(src))
+  expect_identical(manifest_entry_for(root, "built.parquet")$parquet, "built_20260915.parquet")
+})
+
+test_that("an overwritten parquet source is not mistaken for a cache", {
+  skip_if_not_installed("arrow")
+  root <- file.path(withr::local_tempdir(), "study")
+  suppressMessages(study_setup(root, "Legacy parquet overwritten", 42L))
+  src <- file.path(study_dir("datasets", root), "built.parquet")
+  arrow::write_parquet(data.frame(id = 1:3), src)
+  raw <- yaml::read_yaml(file.path(root, "_study.yml"))
+  raw$built <- "built.parquet"
+  yaml::write_yaml(raw, file.path(root, "_study.yml"))
+  entry <- .registration_manifest_entry(src, data.frame(id = 1:3), "2026-09-15", NULL)
+  yaml::write_yaml(list(datasets = list(entry)), file.path(root, "manifest.yaml"))
+  arrow::write_parquet(data.frame(id = 1:5), src)
+  Sys.setFileTime(src, as.POSIXct("2026-10-07 12:00:00", tz = "UTC"))
+  withr::local_dir(root)
+
+  expect_message(update_manifest(), "cannot be recovered", fixed = TRUE)
+  expect_true(file.exists(src))
+  expect_identical(nrow(arrow::read_parquet(src)), 5L)
+  expect_null(manifest_entry_for(root, "built.parquet")$history)
+})
+
 test_that("migration after an overwrite with no usable cache says the old version is gone", {
   skip_if_not_installed("arrow")
   root <- make_legacy_registered_study(withr::local_tempdir())
@@ -1290,6 +1498,9 @@ In `R/registered_versions.R`, replace the `.migrate_entry()` stub with:
 # its row count, column count and column record match the old entry. Rename it
 # to a dated version rather than copy it: it is the only copy.
 .recover_cached_version <- function(entry, source_path) {
+  # A parquet source has no cache: <stem>.parquet is the source itself, and
+  # renaming it would take the data away. Never recover from it.
+  if (identical(tolower(tools::file_ext(source_path)), "parquet")) return(NULL)
   cache <- .derived_paths(source_path)
   usable <- file.exists(cache$parquet) && file.exists(cache$schema) && !is.null(entry$schema_sha256) &&
     identical(digest::digest(cache$schema, algo = "sha256", file = TRUE), entry$schema_sha256)
@@ -1342,7 +1553,10 @@ In `R/registered_versions.R`, replace the `.migrate_entry()` stub with:
   }
   taken <- vapply(history, function(h) h$parquet, character(1))
   version <- .write_version(source_path, dirname(source_path), date, taken, caller = "update_manifest")
-  if (unchanged) unlink(unlist(.derived_paths(source_path)))
+  # Drop the superseded cache, but never a parquet source, whose derived name is itself.
+  if (unchanged && !identical(tolower(tools::file_ext(source_path)), "parquet")) {
+    unlink(unlist(.derived_paths(source_path)))
+  }
   list(
     entry = .versioned_entry(entry$file, version, extra = .entry_extra(entry), history = history),
     written = file.path(dirname(source_path), c(version$parquet, .version_schema_name(version$parquet))),
@@ -1673,4 +1887,5 @@ git commit -m "Show a waiting rebuilt dataset in the job's data table"
 
 - **Spec coverage.** Section 1's five problems: no named call (Task 5), silent skip without arrow (Tasks 1, 2, 5 stop with a hint), working-directory paths (Tasks 4, 5), unhelpful errors (Tasks 3, 4, 5), lost versions (Tasks 2, 5, 6). Section 3 registration: Task 2. Section 4: Task 5. Section 5 entry shape: Tasks 1, 2. Section 6 reading and verifying: Tasks 3, 4, 10. Section 7 migration: Task 6. Section 8 documentation: Tasks 2 to 5, 7. Section 11 tests: Tasks 1 to 6, 9, 10.
 - **Placeholders.** One, deliberate: the hvtiRutilities minimum version in Tasks 9 and 10, named at the bump. (Task 9's fixture, a placeholder in the first draft, is `local_study()` from `helper-analysis-set.R`.)
+- **Any source format** (amendment 4): Task 1a reads `.parquet` and guards the legacy cache; Tasks 2, 5 and 6 test a parquet source through registration, update and migration, and that no step overwrites, renames or deletes a source.
 - **Names.** `.is_versioned`, `.authoritative_path`, `.version_schema_name`, `.version_filename`, `.write_version`, `.versioned_entry`, `.history_record`, `.entry_extra`, `.source_changed`, `.source_changed_condition`, `.next_version`, `.migrate_entry`, `.update_study_manifest`, `.verify_versioned_entry`, `.default_manifest_path` are spelled the same in every task.
