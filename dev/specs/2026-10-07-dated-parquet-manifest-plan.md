@@ -1468,24 +1468,36 @@ Starts after Phase A merges and hvtiRutilities is bumped.
 - Consumes: the versioned manifest entry (`parquet`, `sha256`) written by Phase A.
 - Produces: `.built_state(cfg)` returns `list(file, sha256, size, mtime)` describing the registered parquet when the entry is versioned, and the source as before otherwise.
 
-- [ ] **Step 1: Write the failing test**
+- [ ] **Step 1: Write the failing test, and update the one it reverses**
 
-Append to `tests/testthat/test-analysis_set.R`, using the file's existing study fixture (the one its other tests use to build a registered study with an analysis set declared). If that fixture registers with `register_data()`, it now produces a versioned entry:
+`tests/testthat/helper-analysis-set.R` defines `local_study(sets)` (a study with `built.csv` registered through `register_data()`, so a versioned entry once Phase A ships) and `eda_set()`. Append to `tests/testthat/test-analysis_set.R`:
 
 ```r
 test_that("rebuilding the source without registering it does not make a set stale", {
   skip_if_not_installed("arrow")
-  # Build the study and write the set exactly as the neighbouring tests do.
-  cfg <- <the file's existing fixture call that returns a cfg with a written analysis set named "eda">
-  src <- hvtiRutilities::built_path(cfg)
-  utils::write.csv(data.frame(ccfid = 1:2), src, row.names = FALSE)  # a rebuild nobody registered
+  skip_if_not_installed("hvtiPlotR")
+  cfg <- local_study(list(eda = eda_set()))
+  write_analysis_set("eda", cfg)
+  cat("21,70,5,0,3,1\n", file = hvtiRutilities::built_path(cfg), append = TRUE)  # a rebuild nobody registered
 
   expect_no_error(read_analysis_set("eda", cfg))
   expect_match(.built_state(cfg)$file, "[.]parquet$")
 })
 ```
 
-Replace the placeholder line with the fixture call the file already uses; read the top of `test-analysis_set.R` to find it. This is the one line in the plan that depends on code the planner could not run.
+The existing test "a rewritten built dataset makes the set stale" appends the same line and expects a stop; under this change that is exactly the case that no longer stops. Change it to register the rebuild first, which is what now makes a set stale:
+
+```r
+test_that("a newly registered built dataset makes the set stale", {
+  skip_if_not_installed("arrow")
+  skip_if_not_installed("hvtiPlotR")
+  cfg <- local_study(list(eda = eda_set()))
+  write_analysis_set("eda", cfg)
+  cat("21,70,5,0,3,1\n", file = hvtiRutilities::built_path(cfg), append = TRUE)
+  withr::with_dir(cfg$root, suppressMessages(hvtiRutilities::update_manifest()))
+  expect_error(read_analysis_set("eda", hvtiRutilities::study_config(cfg$root)), "built dataset has changed")
+})
+```
 
 - [ ] **Step 2: Run it to verify it fails**
 
@@ -1660,5 +1672,5 @@ git commit -m "Show a waiting rebuilt dataset in the job's data table"
 ## Self-review
 
 - **Spec coverage.** Section 1's five problems: no named call (Task 5), silent skip without arrow (Tasks 1, 2, 5 stop with a hint), working-directory paths (Tasks 4, 5), unhelpful errors (Tasks 3, 4, 5), lost versions (Tasks 2, 5, 6). Section 3 registration: Task 2. Section 4: Task 5. Section 5 entry shape: Tasks 1, 2. Section 6 reading and verifying: Tasks 3, 4, 10. Section 7 migration: Task 6. Section 8 documentation: Tasks 2 to 5, 7. Section 11 tests: Tasks 1 to 6, 9, 10.
-- **Placeholders.** Two, both deliberate and named: Task 9's fixture line (the file's own fixture, which must be read), and the hvtiRutilities minimum version in Tasks 9 and 10 (named at the bump).
+- **Placeholders.** One, deliberate: the hvtiRutilities minimum version in Tasks 9 and 10, named at the bump. (Task 9's fixture, a placeholder in the first draft, is `local_study()` from `helper-analysis-set.R`.)
 - **Names.** `.is_versioned`, `.authoritative_path`, `.version_schema_name`, `.version_filename`, `.write_version`, `.versioned_entry`, `.history_record`, `.entry_extra`, `.source_changed`, `.source_changed_condition`, `.next_version`, `.migrate_entry`, `.update_study_manifest`, `.verify_versioned_entry`, `.default_manifest_path` are spelled the same in every task.

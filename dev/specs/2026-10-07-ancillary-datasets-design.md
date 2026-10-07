@@ -211,6 +211,33 @@ saves the result, and, when the author chooses, registers it with
 `kind = "combined"`, its `key` and its `parents`. This is the "save, with an option
 to register" step described in the training.
 
+## 7a. Amendments made while planning (2026-10-07)
+
+Recorded in [the plan](2026-10-07-ancillary-datasets-plan.md) too.
+
+1. **Parent versions live in the manifest.** `_study.yml` lists a combined
+   dataset's parent names; the versions it was built from are its manifest
+   entry's `parent_versions:`, because `manifest.yaml` is the version record and
+   `update_manifest()` writes only that file. Section 3's YAML example is
+   superseded on this point.
+2. **The cohort's key still falls back to `id`.** "No key anywhere stops"
+   applies to the joined dataset. A job reading one dataset with no registered key
+   and no `KEY` uses `ID`, as it does today.
+3. **`join_key` overrides the joined dataset's key**; `key` keeps meaning the
+   cohort's. A long join is keyed on the joined dataset's key, a reduced join on
+   `id`.
+4. **Section 7 is deferred.** The `bd` template builds the study dataset from a
+   master snapshot and never holds the registered study dataset, so "combined from
+   the study dataset and echo" does not fit it. A combined dataset is registered
+   with `register_data(kind = "combined", parents = ...)` from whatever builds it;
+   a build template for combined datasets is a later design.
+5. **Templates offer the join** as `JOIN`, `JOIN_VARS`, `REDUCE` and `JOIN_KEY` in
+   their study choices, without an `EDIT:` marker, so a finished job does not
+   render as a draft. This edits every template that reads data, after designs 3
+   to 5.
+6. **`study_status()` lists out-of-date combined datasets**, not analysis sets,
+   which hvtiRdatabuild owns.
+
 ## 8. Not in this design
 
 - Joining more than one ancillary dataset in a single read.
