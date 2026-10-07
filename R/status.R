@@ -301,9 +301,10 @@ print.hvtiR_status <- function(x, ...) {
   invisible(x)
 }
 
-# The strictest R requirement across the family: every member declares
-# Depends: R (>= 4.4.0), and test-registry-live.R fails when the strictest
-# live requirement drifts from this value. hvtiR itself
+# The strictest R requirement across the family. The hvtiR packages declare
+# Depends: R (>= 4.4.0); members also published on CRAN set their own floor
+# and may declare less. test-registry-live.R fails when the strictest live
+# requirement drifts from this value. hvtiR itself
 # deliberately requires only 4.1.0 so that this diagnostic can run on a
 # machine whose R is too old for the members.
 # Package constant; see SELF_REPO in install.R for the same convention.
