@@ -158,6 +158,11 @@ parquet, and signals a message of class `hvtiRutilities_source_changed`:
 > built.sas7bdat has changed since it was registered on 2026-10-07. This job used
 > the registered version. Run `update_manifest()` to register the new one.
 
+Signal it with both classes from the start,
+`c("hvtiRutilities_source_changed", "hvtiRutilities_out_of_date", "message", "condition")`,
+so that design 6, which adds the other out-of-date cases under the shared
+`hvtiRutilities_out_of_date`, needs no change here.
+
 **Templates** catch that class and print the same text as a visible note at the
 top of the rendered report. The job is not marked draft and does not stop. Its
 provenance sidecar already records the parquet it read (`R/provenance.R`, which

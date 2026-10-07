@@ -1,9 +1,10 @@
-# Team review, 2026-10-07: five changes across the family
+# Team review, 2026-10-07: six changes across the family
 
 **Written** 2026-10-07.
-**Status** Five designs, approved. Design 1 has an implementation plan. None implemented.
+**Status** Six designs, approved. Design 1 has an implementation plan. None implemented.
 **Repo** `hvtiR` holds the records because the changes span `hvtiRutilities` and
-`hvtiRtemplates`. Each is implemented in the repository it names.
+`hvtiRtemplates`, and design 6 also `hvtiRdatabuild`. Each is implemented in the
+repository it names.
 
 ---
 
@@ -13,10 +14,10 @@ The biostatistics team's R training on 2026-10-07 reviewed the family as the tea
 uses it: building and registering a study dataset, scaffolding and running job
 templates, and saving their output. The same day a statistician replaced
 `built.sas7bdat` in place and could not get the templates to run again. That
-session, and the team's feedback from the training, produced these five designs.
+session, and the team's feedback from the training, produced these six designs.
 The training transcript is not kept here.
 
-## The five designs, in implementation order
+## The six designs, in implementation order
 
 | # | design | repo | what it fixes |
 |---|---|---|---|
@@ -25,9 +26,11 @@ The training transcript is not kept here.
 | 3 | [`"built"` as a name for the study dataset](2026-10-07-built-dataset-name-design.md) | hvtiRutilities, hvtiRtemplates | the team calls it `built`; the code calls it `"study"` |
 | 4 | [Job names: template first, periods](2026-10-07-job-naming-template-first-design.md) | hvtiRtemplates, hvtiRutilities | jobs sort by subject and the template is at the end of the name |
 | 5 | [Figures as PDF and PNG](2026-10-07-figures-pdf-png-design.md) | hvtiRtemplates | most templates save no figure files, and those that do write PNG only |
+| 6 | [Ancillary, subset and combined datasets](2026-10-07-ancillary-datasets-design.md) | hvtiRutilities, hvtiRtemplates, hvtiRdatabuild | echoes and labs cannot be joined to the cohort without a hand-written merge, and nothing says when joined or subset data is out of date |
 
 1 is small and removes the most common confusion. 2 is the one blocking work now.
-3, 4 and 5 all edit the same job templates, so they go one after another.
+3, 4 and 5 all edit the same job templates, so they go one after another. 6 needs 2
+(it uses the dated versions) and is otherwise independent.
 
 ## Decisions made
 
@@ -41,6 +44,10 @@ The training transcript is not kept here.
 - Jobs are named `<prefix>[.<qualifier>].<subject>.<type>.qmd`.
 - Every figure is saved as PDF and PNG by default, with a switch and a selection.
 - A console run fails loudly at provenance, saying "render the job".
+- Datasets have a kind (built, subset, ancillary, combined) and a key, recorded at
+  registration; a job may override the key. A job may join one ancillary dataset to
+  its cohort, long or reduced to one row per patient. Out-of-date data runs with a
+  note giving the fix, except a stale analysis set in a final render, which stops.
 
 ## Raised in the training, not designed here
 
