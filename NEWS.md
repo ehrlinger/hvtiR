@@ -15,6 +15,10 @@ Version: 1.2.5
   and run `update()` before those packages attach. `force = TRUE` still
   bypasses the guard, with the existing Windows safety risk.
 
+* `DESCRIPTION` now declares the Quarto command line tool in
+  `SystemRequirements`. The vignettes have always needed it to build; the
+  field makes that visible to installers and to `R CMD check`.
+
 # hvtiR 1.2.5
 
 * Catalog versions refreshed from CRAN and `main`: `ggBoostedTrees` dev
