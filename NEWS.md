@@ -3,6 +3,12 @@ Version: 1.2.5
 
 # hvtiR (unreleased)
 
+* Vignettes put the table of contents on the left and use the full width
+  of the window, the same layout as the HVTI Quarto books and the
+  hvtiRtemplates jobs. `vignettes/_quarto.yml` sets it once for every
+  vignette, and `pkgdown/extra.css` gives the pkgdown site's articles the
+  same arrangement.
+
 * `update()` now warns and installs nothing when a required member is already
   loaded; this replaces the previous error. The returned empty character
   vector carries a `blocked` attribute listing the loaded members. Restart R
