@@ -24,6 +24,15 @@ permissions:
   contents: write
   pull-requests: write
 
+concurrency:
+  # One in-flight run per workflow per ref. Without this every push starts a
+  # fresh run while the superseded one keeps holding a runner, and the queue
+  # grows faster than it drains -- one run sat queued for 410 minutes on
+  # 2026-08-17 behind work that had already been replaced. Protected branches
+  # are exempt, so a release run is never cancelled mid-flight.
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ !github.ref_protected }}
+
 jobs:
   refresh:
     runs-on: ubuntu-latest
@@ -85,24 +94,20 @@ jobs:
 
       # Without this the pull request changes catalog.csv and nothing else,
       # which is exactly the shape check_version.py rejects: version unchanged
-      # from the base AND no standing "# hvtiR (unreleased)" heading to file
-      # under. Both guards are right and the machine pull request could satisfy
-      # neither, so every refresh needed a hand-written NEWS commit first.
-      #
-      # It is not occasional. The unreleased heading is REMOVED by every naming
-      # commit, so a refresh landing between a bump and the next unreleased
-      # change fails every time -- and that is most of them, since cutting a
-      # release is what prompts someone to look at the catalog.
+      # from the base AND no news/ fragment added. Both guards are right and the
+      # machine pull request could satisfy neither, so every refresh needed a
+      # hand-written NEWS commit first. The fragment is dated, so a refresh
+      # merged last week and not yet collected keeps its own file.
       #
       # Runs unconditionally: the tool is a no-op when nothing moved, and
       # gating it on the drift report would mean parsing prose to decide
       # whether to write a file.
-      - name: File the change under the unreleased heading
+      - name: Write the NEWS fragment
         run: |
           python3 tools/news_catalog_entry.py \
             --before "${RUNNER_TEMP}/catalog-before.csv" \
             --after inst/extdata/catalog.csv \
-            --news NEWS.md
+            --news-dir news
 
       - name: Open a pull request if anything moved
         id: pr
@@ -132,7 +137,7 @@ jobs:
           delete-branch: true
           add-paths: |
             inst/extdata/catalog.csv
-            NEWS.md
+            news/*.md
           body: |
             Automated refresh of the catalog's `cran_version` and
             `dev_version` columns from their live oracles.

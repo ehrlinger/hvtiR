@@ -8,8 +8,8 @@ that a build failure instead of a surprise.
 import unittest
 
 from check_version import (
+    adds_fragment,
     compare,
-    has_unreleased_heading,
     main_with,
     parse_version,
     read_rbuildignore,
@@ -62,18 +62,18 @@ class CompareTests(unittest.TestCase):
         # Not our business to police gaps, only that it moved forward.
         self.assertEqual(compare("1.0.5", "1.0.9"), [])
 
-    def test_an_unchanged_version_passes_with_an_unreleased_heading(self):
-        # The cadence case: a pull request files its entry under the unreleased
-        # heading and leaves Version: alone.
-        self.assertEqual(compare("1.0.5", "1.0.5", unreleased=True), [])
+    def test_an_unchanged_version_passes_with_a_fragment(self):
+        # The cadence case: a pull request writes its entry to news/<branch>.md
+        # and leaves Version: alone.
+        self.assertEqual(compare("1.0.5", "1.0.5", fragment=True), [])
 
-    def test_a_lower_version_fails_even_with_an_unreleased_heading(self):
-        # The unreleased heading excuses standing still, never going backwards.
-        self.assertTrue(compare("1.0.5", "1.0.4", unreleased=True))
+    def test_a_lower_version_fails_even_with_a_fragment(self):
+        # A fragment excuses standing still, never going backwards.
+        self.assertTrue(compare("1.0.5", "1.0.4", fragment=True))
 
     def test_an_unchanged_version_passes_when_nothing_ships(self):
         # House style: a change .Rbuildignore excludes in full gets no NEWS
-        # entry and no bump, so it may stand still without the heading.
+        # entry and no bump, so it may stand still without a fragment.
         self.assertEqual(compare("1.0.5", "1.0.5", nothing_ships=True), [])
 
     def test_a_lower_version_fails_even_when_nothing_ships(self):
@@ -133,23 +133,23 @@ class ShipsNothingTests(unittest.TestCase):
                          ["^tools$", "^\\.github$"])
 
 
-class UnreleasedHeadingTests(unittest.TestCase):
-    def test_the_heading_is_found(self):
-        self.assertTrue(
-            has_unreleased_heading("# hvtiR (unreleased)\n\n* merged work\n")
-        )
+class FragmentTests(unittest.TestCase):
+    def test_a_fragment_is_found(self):
+        self.assertTrue(adds_fragment(["R/install.R", "news/fix-update.md"]))
 
-    def test_a_version_heading_is_not_mistaken_for_it(self):
-        self.assertFalse(has_unreleased_heading("# hvtiR 1.0.6\n"))
+    def test_no_fragment(self):
+        self.assertFalse(adds_fragment(["R/install.R", "NEWS.md"]))
 
-    def test_another_package_s_unreleased_heading_does_not_count(self):
-        self.assertFalse(has_unreleased_heading("# hvtiPlotR (unreleased)\n"))
+    def test_an_empty_list_has_no_fragment(self):
+        self.assertFalse(adds_fragment([]))
 
-    def test_a_level_two_heading_does_not_count(self):
-        # The family settled on level-1 version headings. A "##" heading is the
-        # old shape this repository used alone, and accepting it would let the
-        # inconsistency quietly return.
-        self.assertFalse(has_unreleased_heading("## hvtiR (unreleased)\n"))
+    def test_a_nested_file_does_not_count(self):
+        # The collector reads news/*.md only, so a file below it would never
+        # reach NEWS.md.
+        self.assertFalse(adds_fragment(["news/sub/fix.md"]))
+
+    def test_a_non_markdown_file_does_not_count(self):
+        self.assertFalse(adds_fragment(["news/fix.txt"]))
 
 
 class NewsAgreementTests(unittest.TestCase):
@@ -173,19 +173,27 @@ class NewsAgreementTests(unittest.TestCase):
         news = "Package: hvtiR\nVersion: 1.0.5\n\n# hvtiR 1.0.5\n"
         self.assertEqual(main_with(self.BASE, self.BASE, news), 1)
 
-    def test_an_unbumped_version_passes_when_news_has_an_unreleased_heading(self):
-        # End to end: no bump, entry filed under the unreleased heading. This is
-        # what most pull requests now look like.
+    def test_an_unbumped_version_passes_when_it_adds_a_fragment(self):
+        # End to end: no bump, entry written to a news/ fragment. This is what
+        # most pull requests now look like.
+        news = "Package: hvtiR\nVersion: 1.0.5\n\n# hvtiR 1.0.5\n"
+        changed = ["R/install.R", "news/fix-update.md"]
+        self.assertEqual(main_with(self.BASE, self.BASE, news, changed, IGNORE,
+                                   ["news/fix-update.md"]), 0)
+
+    def test_an_unreleased_heading_no_longer_excuses_an_unbumped_version(self):
+        # The heading fragments replaced. An entry filed there instead of in a
+        # fragment is the old habit, and must not pass silently.
         news = (
             "Package: hvtiR\nVersion: 1.0.5\n\n"
             "# hvtiR (unreleased)\n\n* Merged work awaiting a version.\n\n"
             "# hvtiR 1.0.5\n"
         )
-        self.assertEqual(main_with(self.BASE, self.BASE, news), 0)
+        changed = ["R/install.R", "NEWS.md"]
+        self.assertEqual(main_with(self.BASE, self.BASE, news, changed, IGNORE), 1)
 
-    def test_an_unbumped_change_that_ships_nothing_passes_without_the_heading(self):
-        # End to end: the case right after a bump, when the heading is gone and
-        # a workflow or contract change lands with no entry.
+    def test_an_unbumped_change_that_ships_nothing_passes_without_a_fragment(self):
+        # End to end: a workflow or contract change lands with no entry.
         news = "Package: hvtiR\nVersion: 1.0.5\n\n# hvtiR 1.0.5\n"
         changed = [".github/workflows/pkgdown.yaml", "AGENTS.md"]
         self.assertEqual(main_with(self.BASE, self.BASE, news, changed, IGNORE), 0)

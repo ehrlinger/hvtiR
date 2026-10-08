@@ -1,19 +1,13 @@
-"""File a NEWS entry for a catalog refresh, so the refresh can pass its own gate.
+"""Write a NEWS fragment for a catalog refresh, so the refresh can pass its own gate.
 
 Why this exists
 ---------------
 `catalog-versions.yml` opens a pull request that changes
 `inst/extdata/catalog.csv` and nothing else. `check_version.py` fails exactly
-that shape: the version is unchanged from the base branch AND there is no
-standing `# hvtiR (unreleased)` heading to file the entry under. Both guards
-are right, and the machine pull request could satisfy neither on its own, so
-every such refresh needed a hand-written NEWS commit before it could merge.
-
-It is not an occasional collision. The unreleased heading is REMOVED by every
-naming commit, so a refresh landing between a bump and the next unreleased
-change hits this every time -- and that is most of them, since cutting a
-release is what tends to prompt someone to look at the catalog. 1.1.6 was
-named minutes before the refresh that exposed it.
+that shape: the version is unchanged from the base branch AND the pull request
+adds no `news/` fragment. Both guards are right, and the machine pull request
+could not satisfy either on its own, so every such refresh needed a
+hand-written NEWS commit before it could merge.
 
 The entry is warranted on merits, not written to appease a check.
 `catalog.csv` ships in the package and is published as `members.json`, which
@@ -22,15 +16,16 @@ its recorded versions is content.
 
 What it does
 ------------
-Compares two catalogs, and when a recorded version moved:
+Compares two catalogs, and when a recorded version moved, writes one bullet
+naming every package that moved, and in which column, to
+`news/chore-catalog-version-refresh-<date>.md`. The bump collects it into
+NEWS.md with the other fragments.
 
-  * ensures a `# hvtiR (unreleased)` heading exists, creating it directly
-    above the newest version heading when it does not;
-  * appends one bullet naming every package that moved and in which column.
-
-It NEVER creates a second unreleased heading, and never duplicates a bullet it
-has already written -- the refresh branch is regenerated weekly and reruns must
-converge rather than accumulate.
+The date keeps each week's fragment a file of its own. A plain
+`news/<branch>.md` would collide with last week's when that refresh has merged
+and not yet been collected: overwriting it would lose last week's bullet, and
+editing it would not count as adding a fragment. A rerun on the same day
+rewrites the same file, so reruns converge rather than accumulate.
 
 Standard library only -- no pip install step on the runner.
 """
@@ -38,13 +33,12 @@ from __future__ import annotations
 
 import argparse
 import csv
-import re
+import datetime
 import sys
 import textwrap
 from pathlib import Path
 
-UNRELEASED = "# hvtiR (unreleased)"
-UNRELEASED_RE = re.compile(r"^#\s+hvtiR\s+\(unreleased\)\s*$", re.M)
+FRAGMENT_STEM = "chore-catalog-version-refresh"
 VERSION_COLUMNS = ("cran_version", "dev_version")
 MARKER = "Catalog versions refreshed"
 
@@ -91,53 +85,30 @@ def bullet(moved: list[str]) -> str:
     return textwrap.fill(text, width=76, subsequent_indent="  ")
 
 
-def insert(news: str, line: str) -> str:
-    """Put `line` in the unreleased section, creating the heading if needed."""
-    if line in news:
-        return news  # already filed; reruns must converge
-
-    unreleased = UNRELEASED_RE.search(news)
-    if unreleased:
-        start = unreleased.end()
-        nxt = news.find("\n# ", start)
-        end = len(news) if nxt == -1 else nxt
-        section = news[start:end].rstrip("\n")
-        return news[:start] + section + "\n" + line + "\n\n" + news[end:].lstrip("\n")
-
-    # No unreleased section: open one directly above the newest version
-    # heading, which is where the next naming commit expects to find it.
-    first = news.find("\n# hvtiR ")
-    if first == -1:
-        raise SystemExit("error: NEWS.md has no '# hvtiR <version>' heading to "
-                         "anchor the unreleased section above")
-    at = first + 1
-    return news[:at] + f"{UNRELEASED}\n\n{line}\n\n" + news[at:]
+def fragment_path(news_dir: Path, day: datetime.date) -> Path:
+    """This run's fragment: one file per day, so weeks never collide."""
+    return news_dir / f"{FRAGMENT_STEM}-{day.isoformat()}.md"
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     parser.add_argument("--before", required=True, type=Path)
     parser.add_argument("--after", required=True, type=Path)
-    parser.add_argument("--news", required=True, type=Path)
+    parser.add_argument("--news-dir", type=Path, default=Path("news"))
+    parser.add_argument("--date", type=datetime.date.fromisoformat,
+                        default=datetime.datetime.now(datetime.timezone.utc).date(),
+                        help="the fragment's date, YYYY-MM-DD; default today (UTC)")
     args = parser.parse_args()
 
     moved = describe(read_catalog(args.before), read_catalog(args.after))
     if not moved:
-        print("No recorded version moved; NEWS.md left alone.")
+        print("No recorded version moved; no fragment written.")
         return 0
 
-    try:
-        news = args.news.read_text()
-    except OSError as err:
-        raise SystemExit(f"error: could not read {args.news}: {err}")
-
-    updated = insert(news, bullet(moved))
-    if updated == news:
-        print(f"Entry already filed for: {'; '.join(moved)}")
-        return 0
-
-    args.news.write_text(updated)
-    print(f"Filed under '{UNRELEASED}': {'; '.join(moved)}")
+    path = fragment_path(args.news_dir, args.date)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(bullet(moved) + "\n")
+    print(f"Wrote {path}: {'; '.join(moved)}")
     return 0
 
 

@@ -1,4 +1,5 @@
 """Tests for news_catalog_entry.py."""
+import datetime
 import importlib.util
 import unittest
 from pathlib import Path
@@ -10,30 +11,6 @@ nce = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(nce)
 
 HEAD = "package,repo,cran_version,dev_version\n"
-NEWS_NAMED = """Package: hvtiR
-Version: 1.1.6
-
-# hvtiR 1.1.6
-
-* Something already released.
-
-# hvtiR 1.1.5
-
-* Older.
-"""
-NEWS_UNRELEASED = """Package: hvtiR
-Version: 1.1.6
-
-# hvtiR (unreleased)
-
-* Someone else's pending work.
-
-# hvtiR 1.1.6
-
-* Something already released.
-"""
-
-
 def catalog(tmp, stem, *rows):
     p = Path(tmp) / f"{stem}.csv"
     p.write_text(HEAD + "".join(f"{a},ehrlinger/{a},{b},{c}\n" for a, b, c in rows))
@@ -80,48 +57,56 @@ class DescribeTests(unittest.TestCase):
                 nce.read_catalog(p)
 
 
-class InsertTests(unittest.TestCase):
-    LINE = "* Catalog versions refreshed from CRAN and `main`: x."
+class FragmentPathTests(unittest.TestCase):
+    DAY = datetime.date(2026, 10, 12)
 
-    def test_creates_the_heading_above_the_newest_version(self):
-        out = nce.insert(NEWS_NAMED, self.LINE)
-        self.assertEqual(out.count(nce.UNRELEASED), 1)
-        self.assertLess(out.index(nce.UNRELEASED), out.index("# hvtiR 1.1.6"))
-        self.assertIn(self.LINE, out)
+    def test_the_fragment_is_dated_under_news(self):
+        self.assertEqual(nce.fragment_path(Path("news"), self.DAY),
+                         Path("news/chore-catalog-version-refresh-2026-10-12.md"))
 
-    def test_inline_heading_text_does_not_count_as_a_heading(self):
-        news = NEWS_NAMED.replace(
-            "* Something already released.",
-            "* This release mentions `# hvtiR (unreleased)` in prose.",
-        )
-        out = nce.insert(news, self.LINE)
-        actual_heading = "\n# hvtiR (unreleased)\n"
-        self.assertEqual(out.count(actual_heading), 1)
-        self.assertLess(out.index(actual_heading), out.index("# hvtiR 1.1.6"))
-        self.assertLess(out.index(self.LINE), out.index("# hvtiR 1.1.6"))
+    def test_a_later_week_never_reuses_an_uncollected_fragment(self):
+        # Last week's refresh merged and has not been collected yet. This
+        # week's must be a new file, or its bullet would be lost or would be an
+        # edit rather than an added fragment.
+        later = nce.fragment_path(Path("news"), self.DAY + datetime.timedelta(7))
+        self.assertNotEqual(later, nce.fragment_path(Path("news"), self.DAY))
 
-    def test_appends_into_an_existing_section_without_a_second_heading(self):
-        out = nce.insert(NEWS_UNRELEASED, self.LINE)
-        self.assertEqual(out.count(nce.UNRELEASED), 1)
-        self.assertIn("Someone else's pending work.", out)
-        self.assertLess(out.index("Someone else's pending work."),
-                        out.index(self.LINE))
-        self.assertLess(out.index(self.LINE), out.index("# hvtiR 1.1.6"))
 
-    def test_rerunning_does_not_duplicate_the_bullet(self):
-        # The refresh branch is regenerated weekly; reruns must converge.
-        once = nce.insert(NEWS_NAMED, self.LINE)
-        twice = nce.insert(once, self.LINE)
-        self.assertEqual(once, twice)
-        self.assertEqual(twice.count(self.LINE), 1)
+class MainTests(unittest.TestCase):
+    def run_main(self, tmp, before, after, day="2026-10-12"):
+        import sys
+        argv = sys.argv
+        sys.argv = ["x", "--before", str(before), "--after", str(after),
+                    "--news-dir", str(Path(tmp) / "news"), "--date", day]
+        try:
+            return nce.main()
+        finally:
+            sys.argv = argv
 
-    def test_the_dcf_header_is_left_above_the_new_heading(self):
-        out = nce.insert(NEWS_NAMED, self.LINE)
-        self.assertTrue(out.startswith("Package: hvtiR\nVersion: 1.1.6\n"))
+    def test_a_move_writes_one_bullet_to_the_fragment(self):
+        with TemporaryDirectory() as tmp:
+            b = catalog(tmp, "b", ("hvtiR", "", "1.0.0"))
+            a = catalog(tmp, "a", ("hvtiR", "", "1.0.1"))
+            self.assertEqual(self.run_main(tmp, b, a), 0)
+            text = (Path(tmp) / "news/chore-catalog-version-refresh-2026-10-12.md").read_text()
+            self.assertTrue(text.startswith("* Catalog versions refreshed"))
+            self.assertIn("`hvtiR` dev 1.0.0 to 1.0.1", " ".join(text.split()))
 
-    def test_news_with_no_version_heading_is_rejected(self):
-        with self.assertRaises(SystemExit):
-            nce.insert("Package: hvtiR\nVersion: 1.1.6\n", self.LINE)
+    def test_rerunning_the_same_day_converges(self):
+        with TemporaryDirectory() as tmp:
+            b = catalog(tmp, "b", ("hvtiR", "", "1.0.0"))
+            a = catalog(tmp, "a", ("hvtiR", "", "1.0.1"))
+            self.run_main(tmp, b, a)
+            self.run_main(tmp, b, a)
+            files = list((Path(tmp) / "news").iterdir())
+            self.assertEqual(len(files), 1)
+            self.assertEqual(files[0].read_text().count("* Catalog"), 1)
+
+    def test_no_move_writes_nothing(self):
+        with TemporaryDirectory() as tmp:
+            b = catalog(tmp, "b", ("hvtiR", "", "1.0.0"))
+            self.assertEqual(self.run_main(tmp, b, b), 0)
+            self.assertFalse((Path(tmp) / "news").exists())
 
 
 class BulletTests(unittest.TestCase):
