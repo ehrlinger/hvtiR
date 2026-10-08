@@ -63,7 +63,7 @@ green PR as broader assurance than it gives.
 | `check-manual.yaml` | the PDF manual build |
 | `pkgdown.yaml` | the site build |
 | `house-style.yaml` | drift between the composed `.claude/house-style.md` and the upstream standard |
-| `version-check.yml` | a PR whose `Version:` went backwards, or stood still with no `# hvtiR (unreleased)` heading while shipping something (it ships nothing only when R’s built-in build exclusions or the base’s `.Rbuildignore` cover every file it touches, `.Rbuildignore` itself among them); or a `DESCRIPTION`/`NEWS.md` version disagreement |
+| `version-check.yml` | a PR whose `Version:` went backwards, or stood still with no `news/` fragment added while shipping something (it ships nothing only when R’s built-in build exclusions or the base’s `.Rbuildignore` cover every file it touches, `.Rbuildignore` itself among them); or a `DESCRIPTION`/`NEWS.md` version disagreement |
 | `lint.yaml` | [`lintr::lint_package()`](https://lintr.r-lib.org/reference/lint.html), **and** a `docs-current` job that reruns `roxygenise()` and fails on any diff in `man/`, `NAMESPACE` or `DESCRIPTION` |
 | `test-coverage.yaml` | test failures under coverage; the codecov upload does not fail CI when no token is configured |
 
@@ -198,15 +198,20 @@ green PR as broader assurance than it gives.
 - **Patch-digit bumps only**, as fixes land. Minor and major are the
   maintainer’s decision.
 - **Bump when you name a version, not when you merge.** A pull request
-  lands without touching `Version:`. Its entry goes under a
-  `# hvtiR (unreleased)` heading in `NEWS.md`, which you add when it is
-  not already there. A separate commit then renames that heading to the
-  new version and updates `DESCRIPTION` and its `Date`, at most once a
-  day. The heading is gone again after a bump, so the next change
-  re-adds it. `.claude/house-style.md` carries the rule and the
-  reasoning. That commit updates the DCF `Version:` line at the top of
-  `NEWS.md` too.
-- **A change that ships nothing gets no `NEWS.md` entry and no bump.**
+  lands without touching `Version:` and without editing `NEWS.md`. Its
+  entry goes in a file of its own, `news/<branch>.md` with `/` in the
+  branch name replaced by `-`: the bullet or bullets exactly as they
+  will read in `NEWS.md`, and no heading. Two pull requests open at once
+  never touch the same file, so they no longer conflict at the top of
+  `NEWS.md`. A separate commit then moves `Version:` in `DESCRIPTION`
+  and its `Date`, at most once a day, and runs
+  `python3 .github/scripts/news.py collect`, which files the fragments
+  under `# hvtiR X.Y.Z` in merge order, updates the DCF `Version:` line
+  at the top of `NEWS.md`, and deletes them. The `version` job in
+  `version-check.yml` fails a pull request that ships something, leaves
+  `Version:` alone and adds no fragment. `.claude/house-style.md`
+  carries the rule and the reasoning.
+- **A change that ships nothing gets no `news/` fragment and no bump.**
   That is one where R’s built-in build exclusions or `.Rbuildignore`
   cover every file it touches, here `.github/`, `AGENTS.md`,
   `CLAUDE.md`, `dev/`, `tools/` and `.Rbuildignore` itself among others.
