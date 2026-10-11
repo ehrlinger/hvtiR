@@ -1,7 +1,7 @@
 Package: hvtiR
-Version: 1.2.5
+Version: 1.2.6
 
-# hvtiR (unreleased)
+# hvtiR 1.2.6
 
 * `update()` now warns and installs nothing when a required member is already
   loaded; this replaces the previous error. The returned empty character
@@ -12,6 +12,18 @@ Version: 1.2.5
 * `DESCRIPTION` now declares the Quarto command line tool in
   `SystemRequirements`. The vignettes have always needed it to build; the
   field makes that visible to installers and to `R CMD check`.
+
+* The pkgdown site's articles put the table of contents on the left and use
+  the full width of the window, the same layout as the HVTI Quarto books and
+  the hvtiRtemplates jobs, through `pkgdown/extra.css`. The installed
+  vignettes keep the Quarto engine's own minimal format.
+
+* Catalog versions refreshed from CRAN and `main`: `ggRandomForests` CRAN
+  3.5.3 to 3.5.4; `hvtiPlotR` dev 2.8.4 to 2.8.5; `hvtiRimputation` dev
+  0.1.1 to 0.1.2; `hvtiRpropensity` dev 0.1.10 to 0.1.11; `hvtiRtemplates`
+  dev 1.2.4 to 1.3.0; `hvtiRutilities` dev 1.4.4 to 1.5.1. The catalog ships
+  in the package and is published as `members.json`, so its recorded
+  versions are content rather than bookkeeping.
 
 # hvtiR 1.2.5
 
