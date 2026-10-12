@@ -509,9 +509,12 @@ class RVersionSemantics(unittest.TestCase):
         self.assertEqual(rows[0]["satisfied"], "FALSE")
 
 
-class PreservedRowsAreRejudged(FloorsInMain):
+class PreservedRowsAreRejudged(unittest.TestCase):
     """A dependent whose DESCRIPTION is unreadable keeps its declaration, but
     the verdict is recomputed against the refreshed dependency version."""
+
+    CATALOG = FloorsInMain.CATALOG
+    run_main = FloorsInMain.run_main
 
     def test_an_upstream_that_caught_up_clears_the_failure(self):
         import tempfile
