@@ -67,6 +67,23 @@ jobs:
           hvtiR::install()
           print(hvtiR::status())
 
+      # The committed table is as old as the last Monday refresh, and a floor
+      # added since would be missed, so rebuild it from today's main first. The
+      # rewrite stays on the runner. Exit 2 (an oracle unreadable, recorded rows
+      # kept) is tolerated; 3 (an unsatisfiable hard floor) is the failure the
+      # install step above would already have hit.
+      - name: Refresh the floor table from main
+        run: |
+          set +e
+          python3 tools/refresh_catalog_versions.py inst/extdata/catalog.csv
+          status=$?
+          set -e
+          case "$status" in
+            0|2) ;;
+            *) echo "::error::refresh_catalog_versions.py exited $status; see above."
+               exit "$status" ;;
+          esac
+
       # Consumers are read from the floor table, not listed: a member that
       # starts importing a sibling is tested from the next run on.
       - name: Find the members that import a sibling
@@ -83,10 +100,12 @@ jobs:
           print("list=" + " ".join(f"{p}={repo[p]}" for p in consumers))
           EOF
 
-      # Each suite runs from the consumer's own main checkout against the
-      # family installed above. Its other test dependencies come from
-      # DESCRIPTION; upgrade = FALSE keeps the installed siblings in place.
-      # Every consumer runs even when one fails, so the summary says which.
+      # Each suite is checked out at the commit pak installed (RemoteSha), not
+      # at main's head: a merge between the install and the checkout would
+      # otherwise run one revision's tests against another revision's code.
+      # Its other test dependencies come from DESCRIPTION; upgrade = FALSE
+      # keeps the installed siblings in place. Every consumer runs even when
+      # one fails, so the summary says which.
       - name: Test each consumer against the installed family
         env:
           CONSUMERS: ${{ steps.consumers.outputs.list }}
@@ -97,12 +116,21 @@ jobs:
           for entry in $CONSUMERS; do
             pkg="${entry%%=*}"; repo="${entry#*=}"
             echo "::group::$pkg"
-            git clone --depth 1 "https://github.com/$repo" "$RUNNER_TEMP/$pkg"
+            sha=$(Rscript -e "cat(utils::packageDescription('$pkg')\$RemoteSha)")
+            if [ -z "$sha" ]; then
+              echo "::error::$pkg has no RemoteSha, so it did not come from GitHub; cannot match its tests to it."
+              echo "| $pkg | **fail** (no RemoteSha) |" >> "$GITHUB_STEP_SUMMARY"
+              failed="$failed $pkg"; echo "::endgroup::"; continue
+            fi
+            git init -q "$RUNNER_TEMP/$pkg"
+            git -C "$RUNNER_TEMP/$pkg" fetch -q --depth 1 "https://github.com/$repo" "$sha"
+            git -C "$RUNNER_TEMP/$pkg" checkout -q FETCH_HEAD
+            echo "$pkg at ${sha:0:7}"
             if Rscript -e "pak::local_install_dev_deps('$RUNNER_TEMP/$pkg', upgrade = FALSE, ask = FALSE)" &&
                Rscript -e "r <- as.data.frame(testthat::test_local('$RUNNER_TEMP/$pkg', reporter = 'summary', stop_on_failure = FALSE)); bad <- sum(r\$failed) + sum(r\$error); cat(sprintf('\n%s: %d tests, %d failed or errored, %d skipped\n', '$pkg', nrow(r), bad, sum(r\$skipped))); quit(status = as.integer(bad > 0))"; then
-              echo "| $pkg | pass |" >> "$GITHUB_STEP_SUMMARY"
+              echo "| $pkg | pass (${sha:0:7}) |" >> "$GITHUB_STEP_SUMMARY"
             else
-              echo "| $pkg | **fail** |" >> "$GITHUB_STEP_SUMMARY"
+              echo "| $pkg | **fail** (${sha:0:7}) |" >> "$GITHUB_STEP_SUMMARY"
               failed="$failed $pkg"
             fi
             echo "::endgroup::"
