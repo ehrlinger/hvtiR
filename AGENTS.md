@@ -134,8 +134,9 @@ Do not read a green PR as broader assurance than it gives.
   `require_extra_approval_for_unattributed_changes` on, `require_code_owner_review` off,
   and the repository admin role as the bypass actor.
   **All fourteen also enforce `required_status_checks`**, since the ruleset updates of
-  2026-09-04 (`hvtiRimputation` on 2026-09-08). Here that is nine contexts: the three
-  `R-CMD-check` matrix jobs, `lint`, `docs-current`, `house-style`, `pkgdown`,
+  2026-09-04 (`hvtiRimputation` on 2026-09-08). Here that is seven contexts: `ubuntu-latest (release)`,
+  the one `R-CMD-check` leg a pull request runs (since 2026-10-12; macOS runs on a push to
+  `main`, Windows in the weekly sweep), `lint`, `docs-current`, `house-style`, `pkgdown`,
   `test-coverage` and `version`. What differs between repositories is the list of
   contexts, which follows each one's workflows, and two parameters. Only
   `ggRandomForests` sets `strict_required_status_checks_policy`, so a pull request there
