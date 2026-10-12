@@ -63,6 +63,7 @@ jobs:
           # rewrites the file in place, so this is the only chance to hold the
           # previous values.
           cp inst/extdata/catalog.csv "${RUNNER_TEMP}/catalog-before.csv"
+          cp inst/extdata/family-floors.csv "${RUNNER_TEMP}/floors-before.csv"
           python3 tools/refresh_catalog_versions.py inst/extdata/catalog.csv \
             2>&1 | tee refresh.log
           refresh_status=${PIPESTATUS[0]}
@@ -75,8 +76,11 @@ jobs:
           # refreshed, no pull request, and no annotation, because the guard
           # below keys on status 2 -- a stale record that looks checked, which
           # is the exact failure this job exists to prevent.
+          # 3 is an unsatisfiable hard floor between members. It is allowed
+          # through here so the pull request still opens carrying the report;
+          # the last step fails the job on it.
           case "$refresh_status" in
-            0|2) ;;
+            0|2|3) ;;
             *) echo "::error::refresh_catalog_versions.py exited $refresh_status, which it never does deliberately; the catalog was not refreshed this run."
                exit "$refresh_status" ;;
           esac
@@ -107,6 +111,8 @@ jobs:
           python3 tools/news_catalog_entry.py \
             --before "${RUNNER_TEMP}/catalog-before.csv" \
             --after inst/extdata/catalog.csv \
+            --floors-before "${RUNNER_TEMP}/floors-before.csv" \
+            --floors-after inst/extdata/family-floors.csv \
             --news-dir news
 
       - name: Open a pull request if anything moved
@@ -137,6 +143,7 @@ jobs:
           delete-branch: true
           add-paths: |
             inst/extdata/catalog.csv
+            inst/extdata/family-floors.csv
             news/*.md
           body: |
             Automated refresh of the catalog's `cran_version` and
@@ -153,6 +160,12 @@ jobs:
             If a row is reported as an **unexplained gap**, `main` is ahead of
             CRAN without that being recorded. Either set its `dev_ahead` to
             `expected`, or cut the release.
+
+            `family-floors.csv` records every version floor one member declares
+            on another, against what `main` carries. An **unsatisfiable floor**
+            (Depends, Imports or LinkingTo) breaks `install()` for every user
+            and fails this job; release the dependency or lower the floor. An
+            **unsatisfied suggests floor** is reported and does not fail.
 
       # Without the PAT the pull request above carries no checks at all, so it
       # cannot meet the required status checks on `main` and needs a bypass to
@@ -184,4 +197,15 @@ jobs:
         # as a command at all.
         run: |
           echo "::error::An oracle was unreadable and nothing drifted, so no pull request was opened; the catalog still holds its previously recorded values and they were not re-verified this run. See the refresh step for which ones."
+          exit 1
+
+      # The exception to "never fail" at the top of this file. Drift is
+      # routine; an unsatisfiable hard floor between members is not drift. It
+      # breaks install() for every user, because members resolve from main in
+      # one pak call, so it must be loud. The pull request above already
+      # carries the table and the report.
+      - name: Fail on an unsatisfiable floor between members
+        if: steps.refresh.outputs.status == '3'
+        run: |
+          echo "::error::A member declares a Depends/Imports/LinkingTo floor on another member that main does not meet, so install() fails for every user. See 'unsatisfiable floor' in the refresh step and family-floors.csv."
           exit 1

@@ -1,0 +1,14 @@
+package,field,dependency,op,floor,dependency_dev,satisfied
+hvtiRdatabuild,Imports,hvtiRutilities,>=,1.5.1,1.5.2,TRUE
+hvtiRdatabuild,Suggests,hvtiPlotR,,,2.8.6,
+hvtiRlifetables,Imports,TemporalHazard,>=,1.2.0,1.2.14,TRUE
+hvtiRtemplates,Imports,hvtiRutilities,>=,1.5.1,1.5.2,TRUE
+hvtiRtemplates,Suggests,TemporalHazard,>=,1.2.12,1.2.14,TRUE
+hvtiRtemplates,Suggests,ggBoostedTrees,>=,0.9.1,0.9.2,TRUE
+hvtiRtemplates,Suggests,ggRandomForests,>=,4.0.0,4.0.0,TRUE
+hvtiRtemplates,Suggests,hvtiPlotR,>=,2.8.0,2.8.6,TRUE
+hvtiRtemplates,Suggests,hvtiRbootstrap,>=,0.9.3,0.9.5,TRUE
+hvtiRtemplates,Suggests,hvtiRdatabuild,>=,0.2.3,0.3.0,TRUE
+hvtiRtemplates,Suggests,hvtiRlifetables,>=,0.1.2,0.1.5,TRUE
+hvtiRtemplates,Suggests,hvtiRpropensity,>=,0.1.10,0.1.11,TRUE
+hvtiRtemplates,Suggests,hvtiRtables,>=,1.0.1,1.0.3,TRUE

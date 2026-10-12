@@ -338,3 +338,217 @@ class UnexplainedGaps(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+# ---- family floors -----------------------------------------------------------
+
+MEMBERS = [
+    {"package": "alpha", "family": "member", "dev_version": "1.5.1"},
+    {"package": "beta", "family": "member", "dev_version": "0.3.0"},
+    {"package": "gamma", "family": "member", "dev_version": "2.0.0"},
+    {"package": "hazard", "family": "related", "dev_version": ""},
+]
+
+
+def desc(name, **fields):
+    lines = [f"Package: {name}", "Version: 9.9.9"]
+    lines += [f"{k}: {v}" for k, v in fields.items()]
+    return "\n".join(lines) + "\n"
+
+
+class FamilyFloors(unittest.TestCase):
+    def rows_for(self, descriptions):
+        return refresher.family_floors(MEMBERS, descriptions)
+
+    def test_a_member_floor_on_a_member_is_recorded(self):
+        rows = self.rows_for({"beta": desc("beta", Imports="alpha (>= 1.5.1)")})
+        self.assertEqual(rows, [{
+            "package": "beta", "field": "Imports", "dependency": "alpha",
+            "op": ">=", "floor": "1.5.1", "dependency_dev": "1.5.1",
+            "satisfied": "TRUE",
+        }])
+
+    def test_a_strict_floor_is_not_met_by_the_same_version(self):
+        # R reads (> 1.5.1) as strictly newer; 1.5.1 itself does not meet it.
+        rows = self.rows_for({"beta": desc("beta", Imports="alpha (> 1.5.1)")})
+        self.assertEqual(rows[0]["op"], ">")
+        self.assertEqual(rows[0]["satisfied"], "FALSE")
+
+    def test_a_strict_floor_below_main_is_met(self):
+        rows = self.rows_for({"beta": desc("beta", Imports="alpha (> 1.5.0)")})
+        self.assertEqual(rows[0]["satisfied"], "TRUE")
+
+    def test_packages_outside_the_family_are_ignored(self):
+        rows = self.rows_for({"beta": desc(
+            "beta", Imports="cli (>= 3.0.0), alpha (>= 1.0.0), hazard (>= 1.0)")})
+        self.assertEqual([r["dependency"] for r in rows], ["alpha"])
+
+    def test_a_continuation_line_is_read(self):
+        text = ("Package: beta\nVersion: 0.3.0\nImports:\n    cli,\n"
+                "    alpha (>=\n        1.6.0)\n")
+        rows = self.rows_for({"beta": text})
+        self.assertEqual(rows[0]["floor"], "1.6.0")
+        self.assertEqual(rows[0]["satisfied"], "FALSE")
+
+    def test_a_floor_past_main_is_unsatisfied(self):
+        rows = self.rows_for({"beta": desc("beta", Imports="alpha (>= 1.5.2)")})
+        self.assertEqual(rows[0]["satisfied"], "FALSE")
+
+    def test_versions_compare_numerically_not_as_text(self):
+        # "1.10.0" sorts before "1.9.0" as text; a floor of 1.9.0 is met.
+        members = [dict(MEMBERS[0], dev_version="1.10.0")] + MEMBERS[1:]
+        rows = refresher.family_floors(
+            members, {"beta": desc("beta", Imports="alpha (>= 1.9.0)")})
+        self.assertEqual(rows[0]["satisfied"], "TRUE")
+
+    def test_a_dependency_with_no_floor_is_recorded_without_a_verdict(self):
+        rows = self.rows_for({"beta": desc("beta", Suggests="gamma")})
+        self.assertEqual(rows[0]["op"], "")
+        self.assertEqual(rows[0]["floor"], "")
+        self.assertEqual(rows[0]["satisfied"], "")
+
+    def test_rows_are_sorted_for_a_stable_diff(self):
+        rows = self.rows_for({
+            "gamma": desc("gamma", Suggests="beta (>= 0.1.0)"),
+            "beta": desc("beta", Suggests="gamma (>= 1.0.0)",
+                         Imports="alpha (>= 1.0.0)"),
+        })
+        self.assertEqual([(r["package"], r["field"]) for r in rows],
+                         [("beta", "Imports"), ("beta", "Suggests"),
+                          ("gamma", "Suggests")])
+
+
+class HardFloorVerdict(unittest.TestCase):
+    def test_only_hard_fields_break_an_install(self):
+        rows = [
+            {"package": "beta", "field": "Imports", "dependency": "alpha",
+             "op": ">=", "floor": "1.6.0", "dependency_dev": "1.5.1",
+             "satisfied": "FALSE"},
+            {"package": "beta", "field": "Suggests", "dependency": "gamma",
+             "op": ">=", "floor": "3.0.0", "dependency_dev": "2.0.0",
+             "satisfied": "FALSE"},
+        ]
+        hard, soft = refresher.unsatisfied_floors(rows)
+        self.assertEqual([r["dependency"] for r in hard], ["alpha"])
+        self.assertEqual([r["dependency"] for r in soft], ["gamma"])
+
+
+class FloorsInMain(unittest.TestCase):
+    """main() writes the table and exits 3 on an unsatisfiable hard floor."""
+
+    CATALOG = ("package,repo,family,cran,cran_version,dev_version,dev_ahead\n"
+               "alpha,o/alpha,member,,,1.5.1,\n"
+               "beta,o/beta,member,,,0.3.0,\n")
+
+    def run_main(self, tmp, responses, prior_floors=None):
+        import pathlib
+        catalog = pathlib.Path(tmp) / "catalog.csv"
+        floors = pathlib.Path(tmp) / "family-floors.csv"
+        catalog.write_text(self.CATALOG)
+        if prior_floors is not None:
+            floors.write_text(prior_floors)
+        with mock.patch.object(refresher, "fetch", stub_fetch(responses)), \
+                mock.patch("sys.stdout", new_callable=io.StringIO) as out, \
+                mock.patch("sys.stderr", new_callable=io.StringIO):
+            code = refresher.main([str(catalog), "--floors", str(floors)])
+        return code, floors.read_text(), out.getvalue()
+
+    def test_a_satisfied_table_exits_clean(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmp:
+            code, table, _ = self.run_main(tmp, {
+                "o/alpha": (200, desc("alpha")),
+                "o/beta": (200, desc("beta", Imports="alpha (>= 1.5.1)")),
+            })
+        self.assertEqual(code, 0)
+        self.assertIn("beta,Imports,alpha,>=,1.5.1,9.9.9,TRUE", table)
+
+    def test_an_unsatisfiable_hard_floor_exits_3_and_says_so(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmp:
+            code, table, out = self.run_main(tmp, {
+                "o/alpha": (200, desc("alpha")),
+                "o/beta": (200, desc("beta", Imports="alpha (>= 10.0.0)")),
+            })
+        self.assertEqual(code, 3)
+        self.assertIn("FALSE", table)
+        self.assertIn("unsatisfiable floor: beta Imports alpha (>= 10.0.0)", out)
+
+    def test_an_unsatisfied_suggests_floor_warns_but_exits_clean(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmp:
+            code, _, out = self.run_main(tmp, {
+                "o/alpha": (200, desc("alpha")),
+                "o/beta": (200, desc("beta", Suggests="alpha (>= 10.0.0)")),
+            })
+        self.assertEqual(code, 0)
+        self.assertIn("unsatisfied suggests floor: beta Suggests alpha", out)
+
+    def test_an_unreadable_description_keeps_its_recorded_rows(self):
+        import tempfile
+        prior = ("package,field,dependency,op,floor,dependency_dev,satisfied\n"
+                 "beta,Imports,alpha,>=,1.0.0,1.5.1,TRUE\n")
+        with tempfile.TemporaryDirectory() as tmp:
+            code, table, _ = self.run_main(
+                tmp, {"o/alpha": (200, desc("alpha")), "o/beta": (429, "")},
+                prior_floors=prior)
+        self.assertEqual(code, 2)
+        self.assertIn("beta,Imports,alpha,>=,1.0.0", table)
+
+
+class RVersionSemantics(unittest.TestCase):
+    """Comparisons follow R's package_version(), where 1.5.0 == 1.5."""
+
+    def test_trailing_zeros_are_equal(self):
+        self.assertEqual(refresher.version_key("1.5.0"), refresher.version_key("1.5"))
+
+    def test_a_strict_floor_on_a_shorter_version_is_not_met_by_its_zero_form(self):
+        members = [dict(MEMBERS[0], dev_version="1.5.0")] + MEMBERS[1:]
+        rows = refresher.family_floors(
+            members, {"beta": desc("beta", Imports="alpha (> 1.5)")})
+        self.assertEqual(rows[0]["satisfied"], "FALSE")
+
+
+class PreservedRowsAreRejudged(unittest.TestCase):
+    """A dependent whose DESCRIPTION is unreadable keeps its declaration, but
+    the verdict is recomputed against the refreshed dependency version."""
+
+    CATALOG = FloorsInMain.CATALOG
+    run_main = FloorsInMain.run_main
+
+    def test_an_upstream_that_caught_up_clears_the_failure(self):
+        import tempfile
+        prior = ("package,field,dependency,op,floor,dependency_dev,satisfied\n"
+                 "beta,Imports,alpha,>=,1.6.0,1.5.1,FALSE\n")
+        with tempfile.TemporaryDirectory() as tmp:
+            code, table, out = self.run_main(
+                tmp, {"o/alpha": (200, "Package: alpha\nVersion: 1.6.0\n"),
+                      "o/beta": (429, "")},
+                prior_floors=prior)
+        self.assertEqual(code, 2)
+        self.assertIn("beta,Imports,alpha,>=,1.6.0,1.6.0,TRUE", table)
+        self.assertNotIn("unsatisfiable floor", out)
+
+
+class CheckSeesFloorDrift(unittest.TestCase):
+    CATALOG = FloorsInMain.CATALOG
+
+    def test_a_raised_floor_with_unchanged_versions_is_drift(self):
+        import pathlib
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmp:
+            catalog = pathlib.Path(tmp) / "catalog.csv"
+            table = pathlib.Path(tmp) / "family-floors.csv"
+            catalog.write_text(self.CATALOG)
+            table.write_text(
+                "package,field,dependency,op,floor,dependency_dev,satisfied\n"
+                "beta,Imports,alpha,>=,1.0.0,1.5.1,TRUE\n")
+            responses = {"o/alpha": (200, "Package: alpha\nVersion: 1.5.1\n"),
+                         "o/beta": (200, "Package: beta\nVersion: 0.3.0\n"
+                                         "Imports: alpha (>= 1.5.0)\n")}
+            with mock.patch.object(refresher, "fetch", stub_fetch(responses)), \
+                    mock.patch("sys.stdout", new_callable=io.StringIO), \
+                    mock.patch("sys.stderr", new_callable=io.StringIO):
+                code = refresher.main([str(catalog), "--floors", str(table),
+                                       "--check"])
+        self.assertEqual(code, 1)

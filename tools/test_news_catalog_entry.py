@@ -127,3 +127,61 @@ class BulletTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+FLOOR_HEADER = "package,field,dependency,op,floor,dependency_dev,satisfied\n"
+
+
+def floors(tmp, stem, *lines):
+    path = Path(tmp) / f"{stem}-floors.csv"
+    path.write_text(FLOOR_HEADER + "".join(line + "\n" for line in lines))
+    return path
+
+
+class FloorTableTests(unittest.TestCase):
+    """A floor-only refresh must still produce a fragment, or check_version
+    rejects the machine pull request that commits family-floors.csv."""
+
+    def run_main(self, tmp, cat, fb, fa):
+        import sys
+        argv = sys.argv
+        sys.argv = ["x", "--before", str(cat), "--after", str(cat),
+                    "--floors-before", str(fb), "--floors-after", str(fa),
+                    "--news-dir", str(Path(tmp) / "news"), "--date", "2026-10-12"]
+        try:
+            return nce.main()
+        finally:
+            sys.argv = argv
+
+    def fragment(self, tmp):
+        return " ".join((Path(tmp) / "news/chore-catalog-version-refresh-2026-10-12.md")
+                        .read_text().split())
+
+    def test_a_raised_floor_alone_writes_a_fragment(self):
+        with TemporaryDirectory() as tmp:
+            cat = catalog(tmp, "c", ("hvtiR", "", "1.0.0"))
+            fb = floors(tmp, "b", "beta,Imports,alpha,>=,1.0.0,1.5.1,TRUE")
+            fa = floors(tmp, "a", "beta,Imports,alpha,>=,1.5.0,1.5.1,TRUE")
+            self.assertEqual(self.run_main(tmp, cat, fb, fa), 0)
+            self.assertIn("`beta` Imports `alpha` (>= 1.0.0) to (>= 1.5.0)",
+                          self.fragment(tmp))
+
+    def test_an_added_and_a_removed_floor_are_both_named(self):
+        with TemporaryDirectory() as tmp:
+            cat = catalog(tmp, "c", ("hvtiR", "", "1.0.0"))
+            fb = floors(tmp, "b", "beta,Imports,alpha,>=,1.0.0,1.5.1,TRUE")
+            fa = floors(tmp, "a", "beta,Suggests,gamma,,,2.0.0,")
+            self.run_main(tmp, cat, fb, fa)
+            text = self.fragment(tmp)
+            self.assertIn("`beta` Suggests `gamma` added", text)
+            self.assertIn("`beta` Imports `alpha` (>= 1.0.0) removed", text)
+
+    def test_a_moved_dependency_version_alone_is_not_a_floor_change(self):
+        # dependency_dev and satisfied follow the versions, which the catalog
+        # bullet already narrates; only the declaration is floor news.
+        with TemporaryDirectory() as tmp:
+            cat = catalog(tmp, "c", ("hvtiR", "", "1.0.0"))
+            fb = floors(tmp, "b", "beta,Imports,alpha,>=,1.0.0,1.5.1,TRUE")
+            fa = floors(tmp, "a", "beta,Imports,alpha,>=,1.0.0,1.5.2,TRUE")
+            self.run_main(tmp, cat, fb, fa)
+            self.assertFalse((Path(tmp) / "news").exists())

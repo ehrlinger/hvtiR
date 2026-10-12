@@ -21,6 +21,12 @@ naming every package that moved, and in which column, to
 `news/chore-catalog-version-refresh-<date>.md`. The bump collects it into
 NEWS.md with the other fragments.
 
+The job also commits `inst/extdata/family-floors.csv`. A floor raised with
+every version unchanged would otherwise be the same gate failure, so a change
+to a declared floor (added, removed, or a new operator or version) writes a
+bullet of its own. A moved `dependency_dev` or verdict is not floor news: it
+follows a version move, which the catalog bullet already names.
+
 The date keeps each week's fragment a file of its own. A plain
 `news/<branch>.md` would collide with last week's when that refresh has merged
 and not yet been collected: overwriting it would lose last week's bullet, and
@@ -41,6 +47,7 @@ from pathlib import Path
 FRAGMENT_STEM = "chore-catalog-version-refresh"
 VERSION_COLUMNS = ("cran_version", "dev_version")
 MARKER = "Catalog versions refreshed"
+FLOOR_MARKER = "Family floors refreshed"
 
 
 def read_catalog(path: Path) -> dict[str, dict]:
@@ -74,6 +81,47 @@ def describe(before: dict[str, dict], after: dict[str, dict]) -> list[str]:
     return moved
 
 
+def read_floors(path: Path | None) -> dict[tuple, tuple]:
+    """{(package, field, dependency): (op, floor)}; empty when no table."""
+    if path is None or not path.exists():
+        return {}
+    with path.open(newline="") as handle:
+        return {(r["package"], r["field"], r["dependency"]):
+                (r.get("op", "") or (">=" if r.get("floor") else ""),
+                 r.get("floor", ""))
+                for r in csv.DictReader(handle)}
+
+
+def describe_floors(before: dict[tuple, tuple],
+                    after: dict[tuple, tuple]) -> list[str]:
+    """One phrase per declaration added, removed or changed, sorted."""
+    def floor(op_floor: tuple) -> str:
+        op, version = op_floor
+        return f" ({op} {version})" if version else ""
+
+    moved = []
+    for key in sorted(set(before) | set(after)):
+        package, field, dependency = key
+        name = f"`{package}` {field} `{dependency}`"
+        if key not in before:
+            moved.append(f"{name}{floor(after[key])} added")
+        elif key not in after:
+            moved.append(f"{name}{floor(before[key])} removed")
+        elif before[key] != after[key]:
+            was = floor(before[key]).strip() or "(no floor)"
+            now = floor(after[key]).strip() or "(no floor)"
+            moved.append(f"{name} {was} to {now}")
+    return moved
+
+
+def floor_bullet(moved: list[str]) -> str:
+    """The floor table's own bullet, wrapped like the catalog one."""
+    text = (f"* {FLOOR_MARKER} from `main`: {'; '.join(moved)}. "
+            f"`family-floors.csv` ships in the package and records the version "
+            f"floors members declare on one another.")
+    return textwrap.fill(text, width=76, subsequent_indent="  ")
+
+
 def bullet(moved: list[str]) -> str:
     """One wrapped bullet. Wrapped because every other entry in NEWS.md is,
     and a single long line makes the file's diffs unreadable for the humans
@@ -94,6 +142,10 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     parser.add_argument("--before", required=True, type=Path)
     parser.add_argument("--after", required=True, type=Path)
+    parser.add_argument("--floors-before", type=Path,
+                        help="family-floors.csv before the refresh")
+    parser.add_argument("--floors-after", type=Path,
+                        help="family-floors.csv after the refresh")
     parser.add_argument("--news-dir", type=Path, default=Path("news"))
     parser.add_argument("--date", type=datetime.date.fromisoformat,
                         default=datetime.datetime.now(datetime.timezone.utc).date(),
@@ -101,14 +153,18 @@ def main() -> int:
     args = parser.parse_args()
 
     moved = describe(read_catalog(args.before), read_catalog(args.after))
-    if not moved:
-        print("No recorded version moved; no fragment written.")
+    floors = describe_floors(read_floors(args.floors_before),
+                             read_floors(args.floors_after))
+    if not moved and not floors:
+        print("No recorded version or floor moved; no fragment written.")
         return 0
 
+    bullets = ([bullet(moved)] if moved else []) + \
+              ([floor_bullet(floors)] if floors else [])
     path = fragment_path(args.news_dir, args.date)
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(bullet(moved) + "\n")
-    print(f"Wrote {path}: {'; '.join(moved)}")
+    path.write_text("\n".join(bullets) + "\n")
+    print(f"Wrote {path}: {'; '.join(moved + floors)}")
     return 0
 
 

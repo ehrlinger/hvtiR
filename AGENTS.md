@@ -94,6 +94,22 @@ Do not read a green PR as broader assurance than it gives.
 - **`NEWS.md` uses a DCF header** (`Package:` and `Version:` above the first heading), as
   ggRandomForests does. ⚠️ `hvtiRtemplates` uses plain markdown headings with no `Version:`
   line. Match the local file.
+- **`inst/extdata/family-floors.csv` is the record of floors between members**, written by
+  the catalog-versions job from each member's `DESCRIPTION` on `main`. No other tool reads
+  those floors: `dependency_floors()` drops every `Remotes:` package. An unsatisfiable
+  `Depends`, `Imports` or `LinkingTo` floor fails that job, the one deliberate exception to
+  its never-fail rule, because it breaks `install()` for every user.
+- **Family release order: validate dependents before any tag.** Merge the leaf bumps (no
+  family dependency) without tagging. Refresh the catalog, so dependents come from today's
+  floor table, not last Monday's. Validate each dependent of a member that moved: re-run its
+  latest `main` push run (`gh run rerun <id>`); GitHub allows that only within 30 days and
+  50 times, so when it is unavailable run `family-integration.yml`, and dispatch the
+  dependent's own R-CMD-check only as a last resort (it runs the full weekly sweep). Then tag.
+  Never raise a floor before the version it names is on `main`, and read `>` as strictly
+  newer. Before bumping `hvtiR`, refresh again: no `Depends`/`Imports`/`LinkingTo` row may be
+  `FALSE`; empty cells (no floor) are fine and a `FALSE` `Suggests` row is a warning. Then run
+  `family-integration.yml` and bump on green. See
+  `dev/specs/2026-10-12-family-version-coherence-design.md`.
 
 ## Gotchas
 
