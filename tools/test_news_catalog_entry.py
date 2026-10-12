@@ -221,3 +221,28 @@ class FloorTableTests(unittest.TestCase):
             fa = floors(tmp, "a", "beta,Imports,alpha,>=,1.0.0,1.5.2,TRUE")
             self.run_main(tmp, cat, fb, fa)
             self.assertFalse((Path(tmp) / "news").exists())
+
+
+class FragmentLayoutTests(unittest.TestCase):
+    """Two bullets in one fragment are separated by a blank line, as every
+    other entry in NEWS.md is."""
+
+    def test_the_catalog_and_floor_bullets_are_a_blank_line_apart(self):
+        with TemporaryDirectory() as tmp:
+            cb = catalog(tmp, "cb", ("hvtiR", "", "1.0.0"))
+            ca = catalog(tmp, "ca", ("hvtiR", "", "1.0.1"))
+            fb = floors(tmp, "b", "beta,Imports,alpha,>=,1.0.0,1.5.1,TRUE")
+            fa = floors(tmp, "a", "beta,Imports,alpha,>=,1.5.0,1.5.1,TRUE")
+            import sys
+            argv = sys.argv
+            sys.argv = ["x", "--before", str(cb), "--after", str(ca),
+                        "--floors-before", str(fb), "--floors-after", str(fa),
+                        "--news-dir", str(Path(tmp) / "news"),
+                        "--date", "2026-10-12"]
+            try:
+                nce.main()
+            finally:
+                sys.argv = argv
+            text = (Path(tmp) / "news/chore-catalog-version-refresh-2026-10-12.md").read_text()
+        self.assertIn("\n\n* Family floors refreshed", text)
+        self.assertTrue(text.endswith("\n") and not text.endswith("\n\n"))
