@@ -20,6 +20,14 @@ the version-marking convention that failed had relied on.
 intent: a deliberate pre-CRAN development line and a stale row look identical.
 It is preserved from the existing file and maintained by hand.
 
+It also writes the family floor table, `inst/extdata/family-floors.csv`: one
+row per version floor a member declares on another member, read from the same
+DESCRIPTION files. No other tool reads those floors (`dependency_floors()` in
+R/status.R drops every `Remotes:` package), and `install()` resolves members
+from `main` in one pak call, so a floor raised past a sibling's `main` breaks
+every install. An unsatisfiable `Depends`/`Imports`/`LinkingTo` floor exits 3;
+see dev/specs/2026-10-12-family-version-coherence-design.md.
+
 Standard library only -- this runs on a CI runner with no pip install step.
 """
 from __future__ import annotations
@@ -27,6 +35,7 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import re
 import subprocess
 import sys
 import time
@@ -41,6 +50,13 @@ AHEAD_VALUES = ("", "expected", "unexpected")
 # runner, and three requests fired inside a millisecond meet the same closed
 # window three times.
 RETRY_WAIT = 1
+
+# Fields whose floors the table records, and the ones that break an install.
+# A Suggests floor degrades a template; it does not stop pak from solving.
+FLOOR_FIELDS = ("Depends", "Imports", "LinkingTo", "Suggests")
+HARD_FIELDS = ("Depends", "Imports", "LinkingTo")
+FLOOR_COLUMNS = ("package", "field", "dependency", "floor", "dependency_dev",
+                 "satisfied")
 
 CRAN_URL = "https://crandb.r-pkg.org/{pkg}"
 DEV_URL = "https://raw.githubusercontent.com/{repo}/main/DESCRIPTION"
@@ -85,6 +101,12 @@ def fetch(url: str, attempts: int = 3, timeout: int = 25) -> tuple[int, str]:
 
 
 def dev_version(repo: str, expected: bool) -> tuple[str | None, int]:
+    """See `dev_description()`; this drops the body."""
+    version, code, _ = dev_description(repo, expected)
+    return version, code
+
+
+def dev_description(repo: str, expected: bool) -> tuple[str | None, int, str]:
     """Version: from the repo's DESCRIPTION on main, with the status seen.
 
     The value is None when unreadable. The status rides along so the caller
@@ -104,18 +126,21 @@ def dev_version(repo: str, expected: bool) -> tuple[str | None, int]:
     correct. For a row that should have one, 404 is a failure -- the caller
     keeps the recorded version and reports it, rather than blanking a
     known-good value and staying silent about it.
+
+    The body rides along too, so the floor table reads the same file rather
+    than fetching every DESCRIPTION a second time.
     """
     code, body = fetch(DEV_URL.format(repo=repo))
     if code == 404:
-        return (None if expected else ""), code
+        return (None if expected else ""), code, ""
     if code != 200:
-        return None, code
+        return None, code, ""
     for line in body.splitlines():
         if line.startswith("Version:"):
-            return line.split(":", 1)[1].strip(), code
+            return line.split(":", 1)[1].strip(), code, body
     # Reached main and read a DESCRIPTION with no Version: field. That is a
     # malformed file, not an absent package, so report it rather than blank.
-    return (None if expected else ""), code
+    return (None if expected else ""), code, ""
 
 
 def why_unreadable(code: int) -> str:
@@ -174,8 +199,13 @@ def cran_version(pkg: str) -> str | None:
     return version
 
 
-def refresh(rows: list[dict]) -> tuple[list[dict], list[str]]:
+def refresh(rows: list[dict],
+            descriptions: dict[str, str] | None = None
+            ) -> tuple[list[dict], list[str]]:
     """Return refreshed rows and a list of human-readable failures.
+
+    When `descriptions` is given, each DESCRIPTION read from `main` is stored
+    in it under the row's package name, for the floor table.
 
     A row whose oracle could not be read keeps its existing recorded value and
     is reported. Overwriting a known-good version with an empty string because
@@ -195,7 +225,10 @@ def refresh(rows: list[dict]) -> tuple[list[dict], list[str]]:
             row["cran_version"] = ""
 
         if row.get("repo"):
-            live, code = dev_version(row["repo"], expects_description(row))
+            live, code, body = dev_description(row["repo"],
+                                               expects_description(row))
+            if body and descriptions is not None:
+                descriptions[row["package"]] = body
             if live is None:
                 failures.append(
                     f"{row['package']}: could not read DESCRIPTION on main "
@@ -209,6 +242,69 @@ def refresh(rows: list[dict]) -> tuple[list[dict], list[str]]:
         row.setdefault("dev_ahead", "")
 
     return rows, failures
+
+
+def dcf_fields(text: str) -> dict[str, str]:
+    """A DESCRIPTION's fields, continuation lines joined with a space."""
+    fields: dict[str, str] = {}
+    key = None
+    for line in text.splitlines():
+        if line[:1] in (" ", "\t") and key:
+            fields[key] += " " + line.strip()
+        elif ":" in line:
+            key, _, value = line.partition(":")
+            key = key.strip()
+            fields[key] = value.strip()
+    return fields
+
+
+DEPENDENCY = re.compile(
+    r"^([A-Za-z][A-Za-z0-9.]*)\s*(?:\(\s*>=?\s*([0-9][0-9.-]*)\s*\))?$")
+
+
+def version_key(version: str) -> tuple[int, ...]:
+    """Numeric sort key, so 1.10.0 is newer than 1.9.0."""
+    return tuple(int(part) for part in re.split(r"[.-]", version) if part.isdigit())
+
+
+def family_floors(rows: list[dict], descriptions: dict[str, str]) -> list[dict]:
+    """Table rows for every dependency one member declares on another.
+
+    Members are the catalog rows with `family == "member"`, so the table covers
+    a new member the day it is added. `satisfied` is empty for a dependency
+    declared without a floor: there is nothing to meet.
+    """
+    dev = {r["package"]: r.get("dev_version", "") for r in rows
+           if r.get("family") == "member"}
+    table = []
+    for package, text in descriptions.items():
+        if package not in dev:
+            continue
+        fields = dcf_fields(text)
+        for field in FLOOR_FIELDS:
+            for entry in fields.get(field, "").split(","):
+                match = DEPENDENCY.match(entry.strip())
+                if not match or match.group(1) not in dev:
+                    continue
+                name, floor = match.group(1), match.group(2) or ""
+                on_main = dev[name]
+                satisfied = ""
+                if floor and on_main:
+                    satisfied = ("TRUE" if version_key(on_main) >= version_key(floor)
+                                 else "FALSE")
+                table.append({"package": package, "field": field,
+                              "dependency": name, "floor": floor,
+                              "dependency_dev": on_main,
+                              "satisfied": satisfied})
+    return sorted(table, key=lambda r: (r["package"], FLOOR_FIELDS.index(r["field"]),
+                                        r["dependency"]))
+
+
+def unsatisfied_floors(table: list[dict]) -> tuple[list[dict], list[dict]]:
+    """(hard, soft): unmet floors that break an install, and ones that do not."""
+    unmet = [r for r in table if r["satisfied"] == "FALSE"]
+    return ([r for r in unmet if r["field"] in HARD_FIELDS],
+            [r for r in unmet if r["field"] not in HARD_FIELDS])
 
 
 def unexplained_gaps(rows: list[dict]) -> list[str]:
@@ -237,6 +333,9 @@ def main(argv: list[str] | None = None) -> int:
                         help="report drift without writing the file; exits 0 "
                              "for no drift, 1 for drift, 2 if an oracle "
                              "could not be read and nothing was verified")
+    parser.add_argument("--floors", type=Path,
+                        default=Path("inst/extdata/family-floors.csv"),
+                        help="the family floor table to rewrite")
     args = parser.parse_args(argv)
 
     with args.catalog.open(newline="") as handle:
@@ -250,7 +349,8 @@ def main(argv: list[str] | None = None) -> int:
 
     before = [(r["package"], r.get("cran_version", ""), r.get("dev_version", ""))
               for r in rows]
-    rows, failures = refresh(rows)
+    descriptions: dict[str, str] = {}
+    rows, failures = refresh(rows, descriptions)
     after = [(r["package"], r["cran_version"], r["dev_version"]) for r in rows]
 
     for was, now in zip(before, after):
@@ -265,6 +365,26 @@ def main(argv: list[str] | None = None) -> int:
     for failure in failures:
         print(f"WARNING {failure}; kept the recorded value", file=sys.stderr)
 
+    # A member whose DESCRIPTION could not be read keeps its recorded floor
+    # rows, for the same reason a version is kept: an outage is not a change.
+    table = family_floors(rows, descriptions)
+    if args.floors.exists():
+        with args.floors.open(newline="") as handle:
+            prior = list(csv.DictReader(handle))
+        read = set(descriptions)
+        table += [r for r in prior if r["package"] not in read]
+        table.sort(key=lambda r: (r["package"], FLOOR_FIELDS.index(r["field"]),
+                                  r["dependency"]))
+    hard, soft = unsatisfied_floors(table)
+    for r in hard:
+        print(f"unsatisfiable floor: {r['package']} {r['field']} "
+              f"{r['dependency']} (>= {r['floor']}) but main carries "
+              f"{r['dependency_dev']}; install() fails until this is fixed")
+    for r in soft:
+        print(f"unsatisfied suggests floor: {r['package']} {r['field']} "
+              f"{r['dependency']} (>= {r['floor']}) but main carries "
+              f"{r['dependency_dev']}")
+
     if args.check:
         # An unreadable oracle outranks "no drift". A failed fetch keeps the
         # recorded value, so `before == after` holds just as firmly when every
@@ -272,6 +392,8 @@ def main(argv: list[str] | None = None) -> int:
         # Returning 0 for the second case is the "result-shaped nothing" this
         # module's own docstring warns against, and it would let a check job
         # go green having confirmed no version anywhere.
+        if hard:
+            return 3
         if failures:
             return 2
         return 1 if before != after else 0
@@ -281,6 +403,17 @@ def main(argv: list[str] | None = None) -> int:
         writer.writeheader()
         writer.writerows(rows)
 
+    with args.floors.open("w", newline="") as handle:
+        writer = csv.DictWriter(handle, fieldnames=FLOOR_COLUMNS,
+                                quoting=csv.QUOTE_MINIMAL)
+        writer.writeheader()
+        writer.writerows(table)
+
+    # An unsatisfiable hard floor outranks everything: it breaks install() for
+    # every user, which no unread oracle does. 3, so the workflow can open the
+    # pull request carrying the report and fail the job afterwards.
+    if hard:
+        return 3
     # A failed fetch is not a failed run: the file is still correct, just not
     # fully re-verified. Exit non-zero only so the schedule surfaces it.
     return 2 if failures else 0

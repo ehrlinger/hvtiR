@@ -1,7 +1,7 @@
 # Family version coherence: design
 
 **Date:** 2026-10-12
-**Status:** proposed. Not implemented.
+**Status:** piece 1 (the floor table) and piece 2 (the release rule) implemented 2026-10-12; piece 3 (the integration run) not yet.
 **Effect on prior records:** none. It extends the catalog-versions job and the
 one-call `pak` rule; it reverses nothing.
 

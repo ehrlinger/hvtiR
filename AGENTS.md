@@ -94,6 +94,18 @@ Do not read a green PR as broader assurance than it gives.
 - **`NEWS.md` uses a DCF header** (`Package:` and `Version:` above the first heading), as
   ggRandomForests does. ⚠️ `hvtiRtemplates` uses plain markdown headings with no `Version:`
   line. Match the local file.
+- **`inst/extdata/family-floors.csv` is the record of floors between members**, written by
+  the catalog-versions job from each member's `DESCRIPTION` on `main`. No other tool reads
+  those floors: `dependency_floors()` drops every `Remotes:` package. An unsatisfiable
+  `Depends`, `Imports` or `LinkingTo` floor fails that job, the one deliberate exception to
+  its never-fail rule, because it breaks `install()` for every user.
+- **Family release order follows the floor table.** Tag members with no family dependency
+  first. When a member that others depend on merges to `main`, re-run the latest `main` push
+  run of each dependent (`gh run rerun <id>`, not a dispatch, which starts the full weekly
+  sweep) before tagging either; dependents are the table's rows whose `dependency` moved.
+  Never raise a floor before the version it names is on `main`. Refresh the catalog last,
+  with every floor `TRUE`, then bump `hvtiR`. See
+  `dev/specs/2026-10-12-family-version-coherence-design.md`.
 
 ## Gotchas
 
