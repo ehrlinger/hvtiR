@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">hvtiR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.2.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.2.7</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -40,6 +40,13 @@
       <small>Source: <a href="https://github.com/ehrlinger/hvtiR/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.2.7" id="hvtir-127">hvtiR 1.2.7<a class="anchor" aria-label="anchor" href="#hvtir-127"></a></h2>
+<ul><li><p>Catalog versions refreshed from CRAN and <code>main</code>: <code>TemporalHazard</code> dev 1.2.12 to 1.2.14. The catalog ships in the package and is published as <code>members.json</code>, so its recorded versions are content rather than bookkeeping.</p></li>
+<li><p>New <code>inst/extdata/family-floors.csv</code> records every version floor one family member declares on another, read from each member’s <code>DESCRIPTION</code> on <code>main</code> by the weekly catalog-versions job. A floor <code>main</code> does not meet in <code>Depends</code>, <code>Imports</code> or <code>LinkingTo</code> would break <code><a href="../reference/install.html">install()</a></code>, which resolves members from <code>main</code> in one call, so that job now fails on one; a <code>Suggests</code> floor is reported only.</p></li>
+<li><p>Catalog versions refreshed from CRAN and <code>main</code>: <code>TemporalHazard</code> dev 1.2.14 to 1.2.15; <code>ggBoostedTrees</code> dev 0.9.1 to 0.9.2; <code>hvtiPlotR</code> dev 2.8.5 to 2.8.6; <code>hvtiRbootstrap</code> dev 0.9.4 to 0.9.5; <code>hvtiRdatabuild</code> dev 0.2.4 to 0.3.0; <code>hvtiRimputation</code> dev 0.1.2 to 0.1.3; <code>hvtiRlifetables</code> dev 0.1.4 to 0.1.5; <code>hvtiRtemplates</code> dev 1.3.0 to 1.3.1; <code>hvtiRutilities</code> dev 1.5.1 to 1.5.2. The catalog ships in the package and is published as <code>members.json</code>, so its recorded versions are content rather than bookkeeping.</p></li>
+<li><p>Family floors refreshed from <code>main</code>: <code>hvtiRtemplates</code> Suggests <code>hvtiRdatabuild</code> (&gt;= 0.2.3) to (&gt;= 0.3.0). <code>family-floors.csv</code> ships in the package and records the version floors members declare on one another.</p></li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.2.6" id="hvtir-126">hvtiR 1.2.6<a class="anchor" aria-label="anchor" href="#hvtir-126"></a></h2>
 <ul><li><p><code><a href="../reference/update.html">update()</a></code> now warns and installs nothing when a required member is already loaded; this replaces the previous error. The returned empty character vector carries a <code>blocked</code> attribute listing the loaded members. Restart R and run <code><a href="../reference/update.html">update()</a></code> before those packages attach. <code>force = TRUE</code> still bypasses the guard, with the existing Windows safety risk.</p></li>
