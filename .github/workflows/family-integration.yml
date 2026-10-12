@@ -14,9 +14,6 @@ name: family-integration
 # members' own matrices answer the platform question.
 
 on:
-  # TEMPORARY: proof run for the review fixes; removed before merge.
-  push:
-    branches: [ci/family-integration]
   workflow_dispatch:
   schedule:
     # Mondays 08:00 UTC, two hours after the catalog refresh at 06:00, so a
