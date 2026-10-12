@@ -1,0 +1,114 @@
+name: family-integration
+
+# Each member's CI proves that member against whatever its siblings' main held
+# when the run installed them. Nothing else proves the family together. This
+# installs every member the way users do, hvtiR::install() in one pak call
+# from GitHub main, then runs the test suite of every member that imports a
+# sibling against that installed family.
+#
+# It is not a required check anywhere: a member pull request must not wait on
+# thirteen repositories. Run it before bumping hvtiR, and bump only on green.
+# See dev/specs/2026-10-12-family-version-coherence-design.md, piece 3.
+#
+# Linux release only. The question is "does this combination work"; the
+# members' own matrices answer the platform question.
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Mondays 08:00 UTC, two hours after the catalog refresh at 06:00, so a
+    # floor the refresh just reported is tested against the same main.
+    - cron: "0 8 * * 1"
+
+permissions: read-all
+
+concurrency:
+  # One in-flight run per workflow per ref. Without this every push starts a
+  # fresh run while the superseded one keeps holding a runner, and the queue
+  # grows faster than it drains -- one run sat queued for 410 minutes on
+  # 2026-08-17 behind work that had already been replaced. Protected branches
+  # are exempt, so a release run is never cancelled mid-flight.
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ !github.ref_protected }}
+
+jobs:
+  integration:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      NOT_CRAN: "true"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: r-lib/actions/setup-pandoc@v2
+
+      # hvtiRtemplates renders Quarto jobs in its tests.
+      - uses: quarto-dev/quarto-actions/setup@v2
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true
+
+      - name: Install pak and hvtiR from this checkout
+        shell: Rscript {0}
+        run: |
+          install.packages("pak")
+          pak::local_install(".", upgrade = FALSE, ask = FALSE)
+
+      # The step under test. install() hands every member spec to pak in one
+      # call, so this alone proves co-resolution and every hard floor
+      # together. A failure here is what a user would see.
+      - name: Install the family with hvtiR::install()
+        shell: Rscript {0}
+        run: |
+          hvtiR::install()
+          print(hvtiR::status())
+
+      # From here on, every step reads this record, never GitHub main, which
+      # can move between steps. Consumers come from the INSTALLED DESCRIPTION
+      # files: a member whose installed code imports a sibling is tested even
+      # if main has since dropped the import, and no fetch can silently drop
+      # one. See tools/family_integration.R.
+      - name: Record the installed family
+        run: Rscript tools/family_integration.R record "$RUNNER_TEMP"
+
+      # Per consumer: check out the installed revision (RemoteSha), pin its
+      # Remotes: to the recorded SHAs so its dev dependencies cannot swap a
+      # sibling for a newer main (upgrade = FALSE does not pin a GitHub SHA),
+      # install them, verify the family did not move, then test. Every step
+      # returns on failure, so one consumer's broken checkout fails that
+      # consumer and the loop goes on: under Actions' bash -e an unguarded
+      # git fetch would end the step and skip every later consumer.
+      - name: Test each consumer against the installed family
+        run: |
+          run_consumer() {
+            local pkg="$1" repo="$2" sha="$3" dir="$RUNNER_TEMP/src-$1"
+            git init -q "$dir" || return 1
+            git -C "$dir" fetch -q --depth 1 "https://github.com/$repo" "$sha" || return 1
+            git -C "$dir" checkout -q FETCH_HEAD || return 1
+            Rscript tools/family_integration.R pin "$dir" "$RUNNER_TEMP/family.tsv" || return 1
+            Rscript -e "pak::local_install_dev_deps('$dir', upgrade = FALSE, ask = FALSE)" || return 1
+            Rscript tools/family_integration.R verify "$RUNNER_TEMP/family.tsv" || return 1
+            Rscript -e "r <- as.data.frame(testthat::test_local('$dir', reporter = 'summary', stop_on_failure = FALSE)); bad <- sum(r\$failed) + sum(r\$error); cat(sprintf('\n%s: %d tests, %d failed or errored, %d skipped\n', '$pkg', nrow(r), bad, sum(r\$skipped))); quit(status = as.integer(bad > 0))" || return 1
+          }
+          failed=""
+          echo "| member | revision | result |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|---|---|---|" >> "$GITHUB_STEP_SUMMARY"
+          while IFS=$'\t' read -r pkg repo sha; do
+            echo "::group::$pkg at ${sha:0:7}"
+            if run_consumer "$pkg" "$repo" "$sha"; then
+              echo "| $pkg | ${sha:0:7} | pass |" >> "$GITHUB_STEP_SUMMARY"
+            else
+              echo "| $pkg | ${sha:0:7} | **fail** |" >> "$GITHUB_STEP_SUMMARY"
+              failed="$failed $pkg"
+            fi
+            echo "::endgroup::"
+          done < "$RUNNER_TEMP/consumers.tsv"
+          if [ ! -s "$RUNNER_TEMP/consumers.tsv" ]; then
+            echo "::error::No consumers recorded; nothing was tested."
+            exit 1
+          fi
+          if [ -n "$failed" ]; then
+            echo "::error::Failed against the installed family:$failed"
+            exit 1
+          fi
