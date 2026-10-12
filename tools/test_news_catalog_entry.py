@@ -61,8 +61,12 @@ class FragmentPathTests(unittest.TestCase):
     DAY = datetime.date(2026, 10, 12)
 
     def test_the_fragment_is_dated_under_news(self):
-        self.assertEqual(nce.fragment_path(Path("news"), self.DAY),
-                         Path("news/chore-catalog-version-refresh-2026-10-12.md"))
+        # An empty directory, not the repository's own news/: fragment_path()
+        # skips names that exist, and the real news/ can hold today's.
+        with TemporaryDirectory() as tmp:
+            news = Path(tmp) / "news"
+            self.assertEqual(nce.fragment_path(news, self.DAY),
+                             news / "chore-catalog-version-refresh-2026-10-12.md")
 
     def test_a_later_week_never_reuses_an_uncollected_fragment(self):
         # Last week's refresh merged and has not been collected yet. This
@@ -70,6 +74,21 @@ class FragmentPathTests(unittest.TestCase):
         # edit rather than an added fragment.
         later = nce.fragment_path(Path("news"), self.DAY + datetime.timedelta(7))
         self.assertNotEqual(later, nce.fragment_path(Path("news"), self.DAY))
+
+    def test_a_same_day_refresh_never_reuses_a_merged_fragment(self):
+        # 2026-10-12: a refresh merged in the morning and was not collected;
+        # the afternoon refresh rewrote the same dated file, which dropped the
+        # morning's bullet and was an edit, not an added fragment, so
+        # check_version failed it. The checkout is main, so a name already
+        # there belongs to a merged refresh; take the next free one.
+        with TemporaryDirectory() as tmp:
+            news = Path(tmp)
+            (news / "chore-catalog-version-refresh-2026-10-12.md").write_text("x")
+            self.assertEqual(nce.fragment_path(news, self.DAY).name,
+                             "chore-catalog-version-refresh-2026-10-12-2.md")
+            (news / "chore-catalog-version-refresh-2026-10-12-2.md").write_text("y")
+            self.assertEqual(nce.fragment_path(news, self.DAY).name,
+                             "chore-catalog-version-refresh-2026-10-12-3.md")
 
 
 class MainTests(unittest.TestCase):
@@ -92,15 +111,32 @@ class MainTests(unittest.TestCase):
             self.assertTrue(text.startswith("* Catalog versions refreshed"))
             self.assertIn("`hvtiR` dev 1.0.0 to 1.0.1", " ".join(text.split()))
 
-    def test_rerunning_the_same_day_converges(self):
+    def test_rerunning_from_the_same_base_converges(self):
+        # Each workflow run starts from a fresh checkout of main, which does
+        # not hold an unmerged refresh's fragment, so a rerun picks the same
+        # name and the pull request branch is rewritten, not added to.
+        names = []
+        for _ in range(2):
+            with TemporaryDirectory() as tmp:
+                b = catalog(tmp, "b", ("hvtiR", "", "1.0.0"))
+                a = catalog(tmp, "a", ("hvtiR", "", "1.0.1"))
+                self.run_main(tmp, b, a)
+                names.append([f.name for f in (Path(tmp) / "news").iterdir()])
+        self.assertEqual(names[0], names[1])
+        self.assertEqual(len(names[0]), 1)
+
+    def test_a_merged_fragment_from_today_is_left_intact(self):
         with TemporaryDirectory() as tmp:
+            news = Path(tmp) / "news"
+            news.mkdir()
+            morning = news / "chore-catalog-version-refresh-2026-10-12.md"
+            morning.write_text("* the morning's bullet\n")
             b = catalog(tmp, "b", ("hvtiR", "", "1.0.0"))
             a = catalog(tmp, "a", ("hvtiR", "", "1.0.1"))
             self.run_main(tmp, b, a)
-            self.run_main(tmp, b, a)
-            files = list((Path(tmp) / "news").iterdir())
-            self.assertEqual(len(files), 1)
-            self.assertEqual(files[0].read_text().count("* Catalog"), 1)
+            self.assertEqual(morning.read_text(), "* the morning's bullet\n")
+            self.assertTrue((news / "chore-catalog-version-refresh-2026-10-12-2.md")
+                            .exists())
 
     def test_no_move_writes_nothing(self):
         with TemporaryDirectory() as tmp:
