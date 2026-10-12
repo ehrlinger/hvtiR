@@ -1,7 +1,7 @@
 # Family version coherence: design
 
 **Date:** 2026-10-12
-**Status:** piece 1 (the floor table) and piece 2 (the release rule) implemented 2026-10-12; piece 3 (the integration run) not yet.
+**Status:** implemented 2026-10-12: piece 1 (the floor table) and piece 2 (the release rule) in #122, piece 3 (the integration run) in `family-integration.yml`.
 **Effect on prior records:** none. It extends the catalog-versions job and the
 one-call `pak` rule; it reverses nothing.
 **Revised 2026-10-12** after review of #121: unversioned rows and warning-only
@@ -184,9 +184,12 @@ against it.
 
 ## Open questions
 
-1. **Time budget for piece 3.** `hvtiRtemplates`' suite renders Quarto jobs and
-   is the slowest in the family. Measure the first run before choosing weekly
-   or per-release.
+1. **Time budget for piece 3.** Measured on the first run, 2026-10-12 (run
+   38290174346): 14 minutes. Installing the family through `install()` took
+   3.8 minutes; the three consumers' suites took 9.6 minutes together
+   (`hvtiRdatabuild` 287 tests, `hvtiRlifetables` 80, `hvtiRtemplates` 858, no
+   failures). Cheap enough for both the weekly schedule and every `hvtiR`
+   release, so it keeps both.
 2. **Should a `Suggests` floor ever fail?** `hvtiRtemplates` suggests ten
    members, and a template that needs a newer member fails at render time,
    not install time. Starting as a warning; revisit if one reaches an analyst.
