@@ -30,8 +30,11 @@ follows a version move, which the catalog bullet already names.
 The date keeps each week's fragment a file of its own. A plain
 `news/<branch>.md` would collide with last week's when that refresh has merged
 and not yet been collected: overwriting it would lose last week's bullet, and
-editing it would not count as adding a fragment. A rerun on the same day
-rewrites the same file, so reruns converge rather than accumulate.
+editing it would not count as adding a fragment. The same holds within a day:
+a name the checkout already holds belongs to a merged refresh, so the next
+free `-2`, `-3`, ... is used. A rerun before merge starts from the same `main`,
+lands on the same name and rewrites its pull request branch, so reruns
+converge rather than accumulate.
 
 Standard library only -- no pip install step on the runner.
 """
@@ -134,8 +137,22 @@ def bullet(moved: list[str]) -> str:
 
 
 def fragment_path(news_dir: Path, day: datetime.date) -> Path:
-    """This run's fragment: one file per day, so weeks never collide."""
-    return news_dir / f"{FRAGMENT_STEM}-{day.isoformat()}.md"
+    """This run's fragment: dated, and never a name `news_dir` already holds.
+
+    The job runs on a fresh checkout of `main`, so a fragment already there
+    belongs to a refresh that has merged and not yet been collected. Writing
+    over it drops that refresh's bullet and turns an added fragment into an
+    edit, which check_version rejects; both happened on 2026-10-12, when two
+    refreshes merged the same day. So the next free `-2`, `-3`, ... is taken.
+    An unmerged refresh's fragment lives only on its pull request branch, so a
+    rerun still lands on the same name and rewrites that branch.
+    """
+    stem = f"{FRAGMENT_STEM}-{day.isoformat()}"
+    path, n = news_dir / f"{stem}.md", 1
+    while path.exists():
+        n += 1
+        path = news_dir / f"{stem}-{n}.md"
+    return path
 
 
 def main() -> int:
