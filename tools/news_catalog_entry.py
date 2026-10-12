@@ -180,7 +180,8 @@ def main() -> int:
               ([floor_bullet(floors)] if floors else [])
     path = fragment_path(args.news_dir, args.date)
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text("\n".join(bullets) + "\n")
+    # A blank line between bullets, as between every other entry in NEWS.md.
+    path.write_text("\n\n".join(bullets) + "\n")
     print(f"Wrote {path}: {'; '.join(moved + floors)}")
     return 0
 
