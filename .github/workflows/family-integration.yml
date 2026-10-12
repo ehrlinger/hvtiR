@@ -14,6 +14,9 @@ name: family-integration
 # members' own matrices answer the platform question.
 
 on:
+  # TEMPORARY: proof run for the review fixes; removed before merge.
+  push:
+    branches: [ci/family-integration]
   workflow_dispatch:
   schedule:
     # Mondays 08:00 UTC, two hours after the catalog refresh at 06:00, so a
@@ -64,74 +67,50 @@ jobs:
           hvtiR::install()
           print(hvtiR::status())
 
-      # The committed table is as old as the last Monday refresh, and a floor
-      # added since would be missed, so rebuild it from today's main first. The
-      # rewrite stays on the runner. Exit 2 (an oracle unreadable, recorded rows
-      # kept) is tolerated; 3 (an unsatisfiable hard floor) is the failure the
-      # install step above would already have hit.
-      - name: Refresh the floor table from main
-        run: |
-          set +e
-          python3 tools/refresh_catalog_versions.py inst/extdata/catalog.csv
-          status=$?
-          set -e
-          case "$status" in
-            0|2) ;;
-            *) echo "::error::refresh_catalog_versions.py exited $status; see above."
-               exit "$status" ;;
-          esac
+      # From here on, every step reads this record, never GitHub main, which
+      # can move between steps. Consumers come from the INSTALLED DESCRIPTION
+      # files: a member whose installed code imports a sibling is tested even
+      # if main has since dropped the import, and no fetch can silently drop
+      # one. See tools/family_integration.R.
+      - name: Record the installed family
+        run: Rscript tools/family_integration.R record "$RUNNER_TEMP"
 
-      # Consumers are read from the floor table, not listed: a member that
-      # starts importing a sibling is tested from the next run on.
-      - name: Find the members that import a sibling
-        id: consumers
-        run: |
-          python3 - <<'EOF' >> "$GITHUB_OUTPUT"
-          import csv
-          hard = {"Depends", "Imports", "LinkingTo"}
-          with open("inst/extdata/family-floors.csv", newline="") as f:
-              consumers = sorted({r["package"] for r in csv.DictReader(f)
-                                  if r["field"] in hard})
-          with open("inst/extdata/catalog.csv", newline="") as f:
-              repo = {r["package"]: r["repo"] for r in csv.DictReader(f)}
-          print("list=" + " ".join(f"{p}={repo[p]}" for p in consumers))
-          EOF
-
-      # Each suite is checked out at the commit pak installed (RemoteSha), not
-      # at main's head: a merge between the install and the checkout would
-      # otherwise run one revision's tests against another revision's code.
-      # Its other test dependencies come from DESCRIPTION; upgrade = FALSE
-      # keeps the installed siblings in place. Every consumer runs even when
-      # one fails, so the summary says which.
+      # Per consumer: check out the installed revision (RemoteSha), pin its
+      # Remotes: to the recorded SHAs so its dev dependencies cannot swap a
+      # sibling for a newer main (upgrade = FALSE does not pin a GitHub SHA),
+      # install them, verify the family did not move, then test. Every step
+      # returns on failure, so one consumer's broken checkout fails that
+      # consumer and the loop goes on: under Actions' bash -e an unguarded
+      # git fetch would end the step and skip every later consumer.
       - name: Test each consumer against the installed family
-        env:
-          CONSUMERS: ${{ steps.consumers.outputs.list }}
         run: |
+          run_consumer() {
+            local pkg="$1" repo="$2" sha="$3" dir="$RUNNER_TEMP/src-$1"
+            git init -q "$dir" || return 1
+            git -C "$dir" fetch -q --depth 1 "https://github.com/$repo" "$sha" || return 1
+            git -C "$dir" checkout -q FETCH_HEAD || return 1
+            Rscript tools/family_integration.R pin "$dir" "$RUNNER_TEMP/family.tsv" || return 1
+            Rscript -e "pak::local_install_dev_deps('$dir', upgrade = FALSE, ask = FALSE)" || return 1
+            Rscript tools/family_integration.R verify "$RUNNER_TEMP/family.tsv" || return 1
+            Rscript -e "r <- as.data.frame(testthat::test_local('$dir', reporter = 'summary', stop_on_failure = FALSE)); bad <- sum(r\$failed) + sum(r\$error); cat(sprintf('\n%s: %d tests, %d failed or errored, %d skipped\n', '$pkg', nrow(r), bad, sum(r\$skipped))); quit(status = as.integer(bad > 0))" || return 1
+          }
           failed=""
-          echo "| member | result |" >> "$GITHUB_STEP_SUMMARY"
-          echo "|---|---|" >> "$GITHUB_STEP_SUMMARY"
-          for entry in $CONSUMERS; do
-            pkg="${entry%%=*}"; repo="${entry#*=}"
-            echo "::group::$pkg"
-            sha=$(Rscript -e "cat(utils::packageDescription('$pkg')\$RemoteSha)")
-            if [ -z "$sha" ]; then
-              echo "::error::$pkg has no RemoteSha, so it did not come from GitHub; cannot match its tests to it."
-              echo "| $pkg | **fail** (no RemoteSha) |" >> "$GITHUB_STEP_SUMMARY"
-              failed="$failed $pkg"; echo "::endgroup::"; continue
-            fi
-            git init -q "$RUNNER_TEMP/$pkg"
-            git -C "$RUNNER_TEMP/$pkg" fetch -q --depth 1 "https://github.com/$repo" "$sha"
-            git -C "$RUNNER_TEMP/$pkg" checkout -q FETCH_HEAD
-            echo "$pkg at ${sha:0:7}"
-            if Rscript -e "pak::local_install_dev_deps('$RUNNER_TEMP/$pkg', upgrade = FALSE, ask = FALSE)" &&
-               Rscript -e "r <- as.data.frame(testthat::test_local('$RUNNER_TEMP/$pkg', reporter = 'summary', stop_on_failure = FALSE)); bad <- sum(r\$failed) + sum(r\$error); cat(sprintf('\n%s: %d tests, %d failed or errored, %d skipped\n', '$pkg', nrow(r), bad, sum(r\$skipped))); quit(status = as.integer(bad > 0))"; then
-              echo "| $pkg | pass (${sha:0:7}) |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| member | revision | result |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|---|---|---|" >> "$GITHUB_STEP_SUMMARY"
+          while IFS=$'\t' read -r pkg repo sha; do
+            echo "::group::$pkg at ${sha:0:7}"
+            if run_consumer "$pkg" "$repo" "$sha"; then
+              echo "| $pkg | ${sha:0:7} | pass |" >> "$GITHUB_STEP_SUMMARY"
             else
-              echo "| $pkg | **fail** (${sha:0:7}) |" >> "$GITHUB_STEP_SUMMARY"
+              echo "| $pkg | ${sha:0:7} | **fail** |" >> "$GITHUB_STEP_SUMMARY"
               failed="$failed $pkg"
             fi
             echo "::endgroup::"
-          done
+          done < "$RUNNER_TEMP/consumers.tsv"
+          if [ ! -s "$RUNNER_TEMP/consumers.tsv" ]; then
+            echo "::error::No consumers recorded; nothing was tested."
+            exit 1
+          fi
           if [ -n "$failed" ]; then
             echo "::error::Failed against the installed family:$failed"
             exit 1
