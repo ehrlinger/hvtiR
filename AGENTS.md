@@ -99,12 +99,16 @@ Do not read a green PR as broader assurance than it gives.
   those floors: `dependency_floors()` drops every `Remotes:` package. An unsatisfiable
   `Depends`, `Imports` or `LinkingTo` floor fails that job, the one deliberate exception to
   its never-fail rule, because it breaks `install()` for every user.
-- **Family release order follows the floor table.** Tag members with no family dependency
-  first. When a member that others depend on merges to `main`, re-run the latest `main` push
-  run of each dependent (`gh run rerun <id>`, not a dispatch, which starts the full weekly
-  sweep) before tagging either; dependents are the table's rows whose `dependency` moved.
-  Never raise a floor before the version it names is on `main`. Refresh the catalog last,
-  with every floor `TRUE`, then bump `hvtiR`. See
+- **Family release order: validate dependents before any tag.** Merge the leaf bumps (no
+  family dependency) without tagging. Refresh the catalog, so dependents come from today's
+  floor table, not last Monday's. Validate each dependent of a member that moved: re-run its
+  latest `main` push run (`gh run rerun <id>`); GitHub allows that only within 30 days and
+  50 times, so when it is unavailable run `family-integration.yml`, and dispatch the
+  dependent's own R-CMD-check only as a last resort (it runs the full weekly sweep). Then tag.
+  Never raise a floor before the version it names is on `main`, and read `>` as strictly
+  newer. Before bumping `hvtiR`, refresh again: no `Depends`/`Imports`/`LinkingTo` row may be
+  `FALSE`; empty cells (no floor) are fine and a `FALSE` `Suggests` row is a warning. Then run
+  `family-integration.yml` and bump on green. See
   `dev/specs/2026-10-12-family-version-coherence-design.md`.
 
 ## Gotchas

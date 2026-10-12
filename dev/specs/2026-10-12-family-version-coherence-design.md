@@ -4,6 +4,11 @@
 **Status:** piece 1 (the floor table) and piece 2 (the release rule) implemented 2026-10-12; piece 3 (the integration run) not yet.
 **Effect on prior records:** none. It extends the catalog-versions job and the
 one-call `pak` rule; it reverses nothing.
+**Revised 2026-10-12** after review of #121: unversioned rows and warning-only
+`Suggests` floors are explicit; the re-run rule has a fallback past GitHub's
+re-run limits; dependents are validated before any tag is published; the table
+keeps the comparison operator; dependents come from a refreshed graph; and the
+integration run tests the revision `pak` installed.
 
 ## The problem
 
@@ -70,9 +75,16 @@ per dependency one member declares on another:
 | `package` | the member that declares the floor |
 | `field` | `Depends`, `Imports`, `LinkingTo` or `Suggests` |
 | `dependency` | the member it names |
-| `floor` | the version in `(>= x.y.z)`, empty when none is given |
+| `op` | `>=` or `>`, empty when no floor is given |
+| `floor` | the version in the floor, empty when none is given |
 | `dependency_dev` | that member's `Version:` on `main`, from the catalog |
 | `satisfied` | `TRUE`, `FALSE`, or empty when there is no floor |
+
+The operator is kept. R reads `(> 1.5.1)` as strictly newer, so version 1.5.1
+meets `(>= 1.5.1)` and does not meet `(> 1.5.1)`; `dependency_floors()` keeps the
+same distinction. An empty `satisfied` cell is a dependency declared with no
+floor (`hvtiRdatabuild` suggests `hvtiPlotR` that way): there is nothing to meet,
+and it is never a failure.
 
 The pull request the job already opens carries this file's diff, so a raised
 floor shows up as a reviewed change, the way a moved version does now.
@@ -89,18 +101,27 @@ Shipping the table in `inst/extdata` costs a few kilobytes and lets `doctor()`
 later explain a broken install offline. That use is out of scope here; the file
 is shipped now so the later change needs no data migration.
 
-### 2. The release rule: re-run dependents after a sibling merges
+### 2. The release rule: validate dependents before tagging
 
 Added to `AGENTS.md`, under releases, and to the family release checklist:
 
-> When a member that others depend on merges to `main`, re-run the latest `main`
-> push run of each dependent before tagging either. Dependents are the rows of
-> `family-floors.csv` whose `dependency` is the member that moved.
+> When a member that others depend on merges to `main`, validate each dependent
+> against it before publishing a tag for either. Choose dependents from a
+> refreshed floor table, not the committed one: run the catalog refresh first,
+> since a floor added this week is not in last Monday's table.
 
-Re-run, not dispatch. `gh run rerun <id>` repeats the push matrix (Linux release,
-oldrel and macOS) and installs siblings fresh from `main`. A `workflow_dispatch`
-would start the full weekly sweep, Windows and devel included, for a question
-those legs do not answer.
+Validation, in order of preference:
+
+1. **Re-run** the dependent's latest `main` push run: `gh run rerun <id>`. It
+   repeats the push matrix (Linux release, oldrel and macOS) and installs
+   siblings fresh from `main`, which is the question being asked.
+2. **When a re-run is not available**, run `family-integration.yml` (piece 3).
+   GitHub allows a re-run only within 30 days of the original run and at most
+   50 times, so a quiet dependent, or an upstream that moves often, eventually
+   has no run to repeat. The integration run is fresh, and scoped to exactly the
+   dependents. A `workflow_dispatch` of the dependent's own R-CMD-check is the
+   last resort: it runs the full weekly sweep, Windows and devel included, which
+   is more than the question needs but always available.
 
 Automating this with `repository_dispatch` from each member to its dependents
 was considered and deferred: it needs a token with write access in every
@@ -114,11 +135,16 @@ A new workflow, `family-integration.yml`, in this repository:
 1. Installs the whole family from `main` in one `pak` call, through the same
    spec list `install()` builds. This alone proves co-resolution and every hard
    floor together.
-2. Checks out each member that consumes a sibling (today `hvtiRdatabuild`,
-   `hvtiRlifetables` and `hvtiRtemplates`, read from `family-floors.csv` rather
-   than listed) and runs its `testthat` suite against the installed family, with
+2. Refreshes the floor table on the runner, then reads the members that import a
+   sibling from it (today `hvtiRdatabuild`, `hvtiRlifetables` and
+   `hvtiRtemplates`) rather than listing them, so a floor added since the last
+   Monday refresh is covered.
+3. Checks each one out **at the commit `pak` installed** (the installed
+   package's `RemoteSha`), not at `main`'s head: a merge between the install
+   and the checkout would otherwise test one revision's suite against another
+   revision's code. Runs its `testthat` suite against the installed family, with
    `NOT_CRAN=true`.
-3. Reports per member. It is not a required check anywhere.
+4. Reports per member. It is not a required check anywhere.
 
 Triggers: `workflow_dispatch`, weekly after the catalog refresh, and as a step of
 the `hvtiR` release: run it, and bump only on green. Leaves are not tested here:
@@ -129,12 +155,21 @@ members' own matrices answer the platform question.
 
 ## The release sequence this supports
 
-1. Tag the leaves (members with no family dependencies), in any order.
-2. Re-run the dependents' `main` push runs (piece 2); merge and tag them.
-3. `hvtiRtemplates` last among members, raising only floors whose versions are
+Nothing is tagged until the members that depend on it have been validated
+against it.
+
+1. Merge the leaf bumps (members with no family dependencies) to `main`. Do not
+   tag them yet.
+2. Run the catalog refresh, so the floor table reflects today's `main`.
+3. Validate the dependents of every member that moved (piece 2): re-run, or the
+   integration run when a re-run is unavailable.
+4. Tag the leaves. Merge, validate and tag the dependents the same way,
+   `hvtiRtemplates` last among members, raising only floors whose versions are
    on `main` (piece 1 reports any that are not).
-4. Run the catalog refresh. Its floor table must be all `TRUE`.
-5. Run `family-integration.yml` (piece 3). Bump `hvtiR` on green.
+5. Run the catalog refresh again. No `Depends`, `Imports` or `LinkingTo` row may
+   be `FALSE`. Empty cells (no floor) are fine; a `FALSE` `Suggests` row is a
+   warning to read, not a blocker.
+6. Run `family-integration.yml` (piece 3). Bump `hvtiR` on green.
 
 ## Alternatives considered
 

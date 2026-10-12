@@ -364,8 +364,19 @@ class FamilyFloors(unittest.TestCase):
         rows = self.rows_for({"beta": desc("beta", Imports="alpha (>= 1.5.1)")})
         self.assertEqual(rows, [{
             "package": "beta", "field": "Imports", "dependency": "alpha",
-            "floor": "1.5.1", "dependency_dev": "1.5.1", "satisfied": "TRUE",
+            "op": ">=", "floor": "1.5.1", "dependency_dev": "1.5.1",
+            "satisfied": "TRUE",
         }])
+
+    def test_a_strict_floor_is_not_met_by_the_same_version(self):
+        # R reads (> 1.5.1) as strictly newer; 1.5.1 itself does not meet it.
+        rows = self.rows_for({"beta": desc("beta", Imports="alpha (> 1.5.1)")})
+        self.assertEqual(rows[0]["op"], ">")
+        self.assertEqual(rows[0]["satisfied"], "FALSE")
+
+    def test_a_strict_floor_below_main_is_met(self):
+        rows = self.rows_for({"beta": desc("beta", Imports="alpha (> 1.5.0)")})
+        self.assertEqual(rows[0]["satisfied"], "TRUE")
 
     def test_packages_outside_the_family_are_ignored(self):
         rows = self.rows_for({"beta": desc(
@@ -392,6 +403,7 @@ class FamilyFloors(unittest.TestCase):
 
     def test_a_dependency_with_no_floor_is_recorded_without_a_verdict(self):
         rows = self.rows_for({"beta": desc("beta", Suggests="gamma")})
+        self.assertEqual(rows[0]["op"], "")
         self.assertEqual(rows[0]["floor"], "")
         self.assertEqual(rows[0]["satisfied"], "")
 
@@ -410,9 +422,11 @@ class HardFloorVerdict(unittest.TestCase):
     def test_only_hard_fields_break_an_install(self):
         rows = [
             {"package": "beta", "field": "Imports", "dependency": "alpha",
-             "floor": "1.6.0", "dependency_dev": "1.5.1", "satisfied": "FALSE"},
+             "op": ">=", "floor": "1.6.0", "dependency_dev": "1.5.1",
+             "satisfied": "FALSE"},
             {"package": "beta", "field": "Suggests", "dependency": "gamma",
-             "floor": "3.0.0", "dependency_dev": "2.0.0", "satisfied": "FALSE"},
+             "op": ">=", "floor": "3.0.0", "dependency_dev": "2.0.0",
+             "satisfied": "FALSE"},
         ]
         hard, soft = refresher.unsatisfied_floors(rows)
         self.assertEqual([r["dependency"] for r in hard], ["alpha"])
@@ -447,7 +461,7 @@ class FloorsInMain(unittest.TestCase):
                 "o/beta": (200, desc("beta", Imports="alpha (>= 1.5.1)")),
             })
         self.assertEqual(code, 0)
-        self.assertIn("beta,Imports,alpha,1.5.1,9.9.9,TRUE", table)
+        self.assertIn("beta,Imports,alpha,>=,1.5.1,9.9.9,TRUE", table)
 
     def test_an_unsatisfiable_hard_floor_exits_3_and_says_so(self):
         import tempfile
@@ -472,11 +486,11 @@ class FloorsInMain(unittest.TestCase):
 
     def test_an_unreadable_description_keeps_its_recorded_rows(self):
         import tempfile
-        prior = ("package,field,dependency,floor,dependency_dev,satisfied\n"
-                 "beta,Imports,alpha,1.0.0,1.5.1,TRUE\n")
+        prior = ("package,field,dependency,op,floor,dependency_dev,satisfied\n"
+                 "beta,Imports,alpha,>=,1.0.0,1.5.1,TRUE\n")
         with tempfile.TemporaryDirectory() as tmp:
             code, table, _ = self.run_main(
                 tmp, {"o/alpha": (200, desc("alpha")), "o/beta": (429, "")},
                 prior_floors=prior)
         self.assertEqual(code, 2)
-        self.assertIn("beta,Imports,alpha,1.0.0", table)
+        self.assertIn("beta,Imports,alpha,>=,1.0.0", table)

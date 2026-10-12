@@ -55,8 +55,8 @@ RETRY_WAIT = 1
 # A Suggests floor degrades a template; it does not stop pak from solving.
 FLOOR_FIELDS = ("Depends", "Imports", "LinkingTo", "Suggests")
 HARD_FIELDS = ("Depends", "Imports", "LinkingTo")
-FLOOR_COLUMNS = ("package", "field", "dependency", "floor", "dependency_dev",
-                 "satisfied")
+FLOOR_COLUMNS = ("package", "field", "dependency", "op", "floor",
+                 "dependency_dev", "satisfied")
 
 CRAN_URL = "https://crandb.r-pkg.org/{pkg}"
 DEV_URL = "https://raw.githubusercontent.com/{repo}/main/DESCRIPTION"
@@ -258,8 +258,11 @@ def dcf_fields(text: str) -> dict[str, str]:
     return fields
 
 
+# The operator is kept, not normalised: R reads (> 1.5.1) as strictly newer,
+# so 1.5.1 meets (>= 1.5.1) and does not meet (> 1.5.1). dependency_floors()
+# in R/status.R keeps the same distinction.
 DEPENDENCY = re.compile(
-    r"^([A-Za-z][A-Za-z0-9.]*)\s*(?:\(\s*>=?\s*([0-9][0-9.-]*)\s*\))?$")
+    r"^([A-Za-z][A-Za-z0-9.]*)\s*(?:\(\s*(>=?)\s*([0-9][0-9.-]*)\s*\))?$")
 
 
 def version_key(version: str) -> tuple[int, ...]:
@@ -286,14 +289,16 @@ def family_floors(rows: list[dict], descriptions: dict[str, str]) -> list[dict]:
                 match = DEPENDENCY.match(entry.strip())
                 if not match or match.group(1) not in dev:
                     continue
-                name, floor = match.group(1), match.group(2) or ""
+                name = match.group(1)
+                op, floor = match.group(2) or "", match.group(3) or ""
                 on_main = dev[name]
                 satisfied = ""
                 if floor and on_main:
-                    satisfied = ("TRUE" if version_key(on_main) >= version_key(floor)
-                                 else "FALSE")
+                    have, need = version_key(on_main), version_key(floor)
+                    met = have > need if op == ">" else have >= need
+                    satisfied = "TRUE" if met else "FALSE"
                 table.append({"package": package, "field": field,
-                              "dependency": name, "floor": floor,
+                              "dependency": name, "op": op, "floor": floor,
                               "dependency_dev": on_main,
                               "satisfied": satisfied})
     return sorted(table, key=lambda r: (r["package"], FLOOR_FIELDS.index(r["field"]),
@@ -378,11 +383,11 @@ def main(argv: list[str] | None = None) -> int:
     hard, soft = unsatisfied_floors(table)
     for r in hard:
         print(f"unsatisfiable floor: {r['package']} {r['field']} "
-              f"{r['dependency']} (>= {r['floor']}) but main carries "
+              f"{r['dependency']} ({r['op']} {r['floor']}) but main carries "
               f"{r['dependency_dev']}; install() fails until this is fixed")
     for r in soft:
         print(f"unsatisfied suggests floor: {r['package']} {r['field']} "
-              f"{r['dependency']} (>= {r['floor']}) but main carries "
+              f"{r['dependency']} ({r['op']} {r['floor']}) but main carries "
               f"{r['dependency_dev']}")
 
     if args.check:
