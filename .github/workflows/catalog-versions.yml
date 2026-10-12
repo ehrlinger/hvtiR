@@ -63,6 +63,7 @@ jobs:
           # rewrites the file in place, so this is the only chance to hold the
           # previous values.
           cp inst/extdata/catalog.csv "${RUNNER_TEMP}/catalog-before.csv"
+          cp inst/extdata/family-floors.csv "${RUNNER_TEMP}/floors-before.csv"
           python3 tools/refresh_catalog_versions.py inst/extdata/catalog.csv \
             2>&1 | tee refresh.log
           refresh_status=${PIPESTATUS[0]}
@@ -110,6 +111,8 @@ jobs:
           python3 tools/news_catalog_entry.py \
             --before "${RUNNER_TEMP}/catalog-before.csv" \
             --after inst/extdata/catalog.csv \
+            --floors-before "${RUNNER_TEMP}/floors-before.csv" \
+            --floors-after inst/extdata/family-floors.csv \
             --news-dir news
 
       - name: Open a pull request if anything moved

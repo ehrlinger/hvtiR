@@ -494,3 +494,58 @@ class FloorsInMain(unittest.TestCase):
                 prior_floors=prior)
         self.assertEqual(code, 2)
         self.assertIn("beta,Imports,alpha,>=,1.0.0", table)
+
+
+class RVersionSemantics(unittest.TestCase):
+    """Comparisons follow R's package_version(), where 1.5.0 == 1.5."""
+
+    def test_trailing_zeros_are_equal(self):
+        self.assertEqual(refresher.version_key("1.5.0"), refresher.version_key("1.5"))
+
+    def test_a_strict_floor_on_a_shorter_version_is_not_met_by_its_zero_form(self):
+        members = [dict(MEMBERS[0], dev_version="1.5.0")] + MEMBERS[1:]
+        rows = refresher.family_floors(
+            members, {"beta": desc("beta", Imports="alpha (> 1.5)")})
+        self.assertEqual(rows[0]["satisfied"], "FALSE")
+
+
+class PreservedRowsAreRejudged(FloorsInMain):
+    """A dependent whose DESCRIPTION is unreadable keeps its declaration, but
+    the verdict is recomputed against the refreshed dependency version."""
+
+    def test_an_upstream_that_caught_up_clears_the_failure(self):
+        import tempfile
+        prior = ("package,field,dependency,op,floor,dependency_dev,satisfied\n"
+                 "beta,Imports,alpha,>=,1.6.0,1.5.1,FALSE\n")
+        with tempfile.TemporaryDirectory() as tmp:
+            code, table, out = self.run_main(
+                tmp, {"o/alpha": (200, "Package: alpha\nVersion: 1.6.0\n"),
+                      "o/beta": (429, "")},
+                prior_floors=prior)
+        self.assertEqual(code, 2)
+        self.assertIn("beta,Imports,alpha,>=,1.6.0,1.6.0,TRUE", table)
+        self.assertNotIn("unsatisfiable floor", out)
+
+
+class CheckSeesFloorDrift(unittest.TestCase):
+    CATALOG = FloorsInMain.CATALOG
+
+    def test_a_raised_floor_with_unchanged_versions_is_drift(self):
+        import pathlib
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmp:
+            catalog = pathlib.Path(tmp) / "catalog.csv"
+            table = pathlib.Path(tmp) / "family-floors.csv"
+            catalog.write_text(self.CATALOG)
+            table.write_text(
+                "package,field,dependency,op,floor,dependency_dev,satisfied\n"
+                "beta,Imports,alpha,>=,1.0.0,1.5.1,TRUE\n")
+            responses = {"o/alpha": (200, "Package: alpha\nVersion: 1.5.1\n"),
+                         "o/beta": (200, "Package: beta\nVersion: 0.3.0\n"
+                                         "Imports: alpha (>= 1.5.0)\n")}
+            with mock.patch.object(refresher, "fetch", stub_fetch(responses)), \
+                    mock.patch("sys.stdout", new_callable=io.StringIO), \
+                    mock.patch("sys.stderr", new_callable=io.StringIO):
+                code = refresher.main([str(catalog), "--floors", str(table),
+                                       "--check"])
+        self.assertEqual(code, 1)

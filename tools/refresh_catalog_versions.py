@@ -266,8 +266,25 @@ DEPENDENCY = re.compile(
 
 
 def version_key(version: str) -> tuple[int, ...]:
-    """Numeric sort key, so 1.10.0 is newer than 1.9.0."""
-    return tuple(int(part) for part in re.split(r"[.-]", version) if part.isdigit())
+    """Numeric sort key, compared the way R's package_version() compares.
+
+    1.10.0 is newer than 1.9.0, and trailing zero components do not count:
+    R reads 1.5.0 and 1.5 as equal, so 1.5.0 does not meet (> 1.5). Python
+    tuples would call (1, 5, 0) newer than (1, 5).
+    """
+    key = [int(part) for part in re.split(r"[.-]", version) if part.isdigit()]
+    while key and key[-1] == 0:
+        key.pop()
+    return tuple(key)
+
+
+def verdict(op: str, floor: str, on_main: str) -> str:
+    """"TRUE"/"FALSE" for a floor against main's version; "" when there is
+    no floor, or no recorded version to judge it against."""
+    if not floor or not on_main:
+        return ""
+    have, need = version_key(on_main), version_key(floor)
+    return "TRUE" if (have > need if op == ">" else have >= need) else "FALSE"
 
 
 def family_floors(rows: list[dict], descriptions: dict[str, str]) -> list[dict]:
@@ -292,15 +309,10 @@ def family_floors(rows: list[dict], descriptions: dict[str, str]) -> list[dict]:
                 name = match.group(1)
                 op, floor = match.group(2) or "", match.group(3) or ""
                 on_main = dev[name]
-                satisfied = ""
-                if floor and on_main:
-                    have, need = version_key(on_main), version_key(floor)
-                    met = have > need if op == ">" else have >= need
-                    satisfied = "TRUE" if met else "FALSE"
                 table.append({"package": package, "field": field,
                               "dependency": name, "op": op, "floor": floor,
                               "dependency_dev": on_main,
-                              "satisfied": satisfied})
+                              "satisfied": verdict(op, floor, on_main)})
     return sorted(table, key=lambda r: (r["package"], FLOOR_FIELDS.index(r["field"]),
                                         r["dependency"]))
 
@@ -370,14 +382,27 @@ def main(argv: list[str] | None = None) -> int:
     for failure in failures:
         print(f"WARNING {failure}; kept the recorded value", file=sys.stderr)
 
-    # A member whose DESCRIPTION could not be read keeps its recorded floor
-    # rows, for the same reason a version is kept: an outage is not a change.
+    # A member whose DESCRIPTION could not be read keeps its recorded
+    # declarations, for the same reason a version is kept: an outage is not a
+    # change. Only the declaration is kept. The dependency's version and the
+    # verdict are recomputed from this run, or an upstream that has since
+    # caught up would go on failing the job against its old version.
     table = family_floors(rows, descriptions)
+    prior: list[dict] = []
     if args.floors.exists():
         with args.floors.open(newline="") as handle:
-            prior = list(csv.DictReader(handle))
+            prior = [{c: r.get(c, "") for c in FLOOR_COLUMNS}
+                     for r in csv.DictReader(handle)]
+        dev = {r["package"]: r.get("dev_version", "") for r in rows}
         read = set(descriptions)
-        table += [r for r in prior if r["package"] not in read]
+        for r in prior:
+            if r["package"] in read:
+                continue
+            # A table written before the op column existed meant >=.
+            op = r["op"] or (">=" if r["floor"] else "")
+            on_main = dev.get(r["dependency"], r["dependency_dev"])
+            table.append(dict(r, op=op, dependency_dev=on_main,
+                              satisfied=verdict(op, r["floor"], on_main)))
         table.sort(key=lambda r: (r["package"], FLOOR_FIELDS.index(r["field"]),
                                   r["dependency"]))
     hard, soft = unsatisfied_floors(table)
@@ -397,11 +422,13 @@ def main(argv: list[str] | None = None) -> int:
         # Returning 0 for the second case is the "result-shaped nothing" this
         # module's own docstring warns against, and it would let a check job
         # go green having confirmed no version anywhere.
+        # The floor table is drift too: a raised floor with every version
+        # unchanged rewrites it on a normal run, so --check must not call it 0.
         if hard:
             return 3
         if failures:
             return 2
-        return 1 if before != after else 0
+        return 1 if before != after or table != prior else 0
 
     with args.catalog.open("w", newline="") as handle:
         writer = csv.DictWriter(handle, fieldnames=fields, quoting=csv.QUOTE_MINIMAL)
