@@ -146,6 +146,30 @@ test_that("update warns with blocked metadata when a target is loaded", {
   expect_length(pak_calls, 0L)
 })
 
+test_that("update says it installed nothing even when warnings are lost", {
+  local_mocked_bindings(
+    installed_version = function(pkg) {
+      if (pkg == "hvtiRutilities") "0.9.0" else "1.0.0"
+    },
+    remote_version = function(repo, ref = "main") "1.0.0",
+    check_loaded = function(targets, loaded = loadedNamespaces()) {
+      intersect(targets, "hvtiRutilities")
+    },
+    pak_install = function(specs) stop("must not install")
+  )
+
+  msgs <- character(0)
+  withCallingHandlers(
+    suppressWarnings(update()),
+    message = function(m) {
+      msgs <<- c(msgs, conditionMessage(m))
+      invokeRestart("muffleMessage")
+    }
+  )
+
+  expect_true(any(grepl("Nothing installed.*hvtiRutilities.*loaded", msgs)))
+})
+
 test_that("update can be forced through its loaded-member guard", {
   calls <- list()
   local_mocked_bindings(

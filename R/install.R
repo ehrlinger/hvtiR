@@ -208,6 +208,12 @@ install_members <- function(packages,
     )
 
     if (loaded_action == "warning") {
+      # A warning prints after the call returns, and is lost entirely under
+      # suppressWarnings() or options(warn = -1). Say it now as well, so
+      # "update did nothing" never happens without a word.
+      cli::cli_alert_danger(
+        "Nothing installed: {.pkg {blocked}} {?is/are} loaded in this session."
+      )
       cli::cli_warn(condition)
       return(invisible(structure(character(0), blocked = blocked)))
     }
