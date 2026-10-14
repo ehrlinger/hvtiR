@@ -286,3 +286,23 @@ Documentation prose — README, roxygen `@description` and `@details`,
 release copy — follows the house voice. This package’s README is the
 family’s front door; it is read by people who have installed nothing
 yet, so it must not assume any of the other packages.
+
+## Release ordering
+
+This package is **tier last, after the family** in the hvtiR release
+order. It installs the family rather than importing it. Bump it when its
+install list or the floors it checks change.
+
+- **Order follows hard dependencies (`Imports`) only.** `Suggests` never
+  forces an order; it matters only when a version floor moves.
+- **A floor on another hvtiR package moves only in this package’s own
+  bump**, to the version it was tested against, and only when it relies
+  on something new there.
+- **Before a bump merges, run each dependent’s tests against this
+  package’s branch**: install it into a scratch library and run
+  `R_LIBS=<lib> Rscript -e 'devtools::test()'` in the dependent.
+- **Tag every bump** `vX.Y.Z`. `Remotes` are unpinned, so a floor is
+  checked against the dependency’s `main`, not a tag.
+
+The full policy and dependency graph are in the maintainer’s Obsidian
+vault at `Projects/hvtiR release ordering.md`.
