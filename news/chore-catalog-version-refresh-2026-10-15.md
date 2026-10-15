@@ -10,6 +10,6 @@
   `hvtiRpropensity` added; `hvtiRpropensity` Suggests `hvtiPlotR` added;
   `hvtiRtemplates` Suggests `hvtiPlotR` (>= 2.8.0) to (>= 2.8.9);
   `hvtiRtemplates` Suggests `hvtiRpropensity` (>= 0.1.10) to (>= 0.2.0);
-  `hvtiRtemplates` Suggests `hvtiRtables` (>= 1.0.1) to (>= 1.0.5). `family-
-  floors.csv` ships in the package and records the version floors members
-  declare on one another.
+  `hvtiRtemplates` Suggests `hvtiRtables` (>= 1.0.1) to (>= 1.0.5).
+  `family-floors.csv` ships in the package and records the version floors
+  members declare on one another.
