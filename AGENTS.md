@@ -108,7 +108,10 @@ Do not read a green PR as broader assurance than it gives.
   Never raise a floor before the version it names is on `main`, and read `>` as strictly
   newer. Before bumping `hvtiR`, refresh again: no `Depends`/`Imports`/`LinkingTo` row may be
   `FALSE`; empty cells (no floor) are fine and a `FALSE` `Suggests` row is a warning. Then run
-  `family-integration.yml` and bump on green. See
+  `family-integration.yml` and bump on green. Once `hvtiRtemplates` is tagged (or would
+  have been, when only a package its templates draw with moved), rebuild and publish its
+  template gallery against the installed release, as its `AGENTS.md` describes: the gallery
+  is built by hand, and on 2026-10-15 it was found a week behind. See
   `dev/specs/2026-10-12-family-version-coherence-design.md`.
 
 ## Gotchas
