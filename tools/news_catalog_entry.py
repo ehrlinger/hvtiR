@@ -122,18 +122,22 @@ def floor_bullet(moved: list[str]) -> str:
     text = (f"* {FLOOR_MARKER} from `main`: {'; '.join(moved)}. "
             f"`family-floors.csv` ships in the package and records the version "
             f"floors members declare on one another.")
-    return textwrap.fill(text, width=76, subsequent_indent="  ")
+    return textwrap.fill(text, width=76, subsequent_indent="  ",
+                         break_on_hyphens=False)
 
 
 def bullet(moved: list[str]) -> str:
     """One wrapped bullet. Wrapped because every other entry in NEWS.md is,
     and a single long line makes the file's diffs unreadable for the humans
-    who write the entries either side of it."""
+    who write the entries either side of it. Neither bullet breaks at a
+    hyphen: inside a code span such as `family-floors.csv`, that break
+    renders as two words."""
     body = "; ".join(moved)
     text = (f"* {MARKER} from CRAN and `main`: {body}. The catalog ships in "
             f"the package and is published as `members.json`, so its recorded "
             f"versions are content rather than bookkeeping.")
-    return textwrap.fill(text, width=76, subsequent_indent="  ")
+    return textwrap.fill(text, width=76, subsequent_indent="  ",
+                         break_on_hyphens=False)
 
 
 def fragment_path(news_dir: Path, day: datetime.date) -> Path:

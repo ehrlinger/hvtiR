@@ -160,6 +160,18 @@ class BulletTests(unittest.TestCase):
         self.assertTrue(all(l.startswith("  ")
                             for l in line.splitlines()[1:]), line)
 
+    def test_a_hyphenated_name_is_never_split_across_lines(self):
+        # The 2026-10-15 refresh wrapped after "`family-", which Markdown
+        # renders as "family- floors.csv" (#131). These are that day's moves.
+        moved = ["`hvtiPlotR` Suggests `hvtiRpropensity` added",
+                 "`hvtiRpropensity` Suggests `hvtiPlotR` added",
+                 "`hvtiRtemplates` Suggests `hvtiPlotR` (>= 2.8.0) to (>= 2.8.9)",
+                 "`hvtiRtemplates` Suggests `hvtiRpropensity` (>= 0.1.10) to (>= 0.2.0)",
+                 "`hvtiRtemplates` Suggests `hvtiRtables` (>= 1.0.1) to (>= 1.0.5)"]
+        for text in (nce.floor_bullet(moved), nce.bullet(moved)):
+            self.assertNotIn("-\n", text, text)
+        self.assertIn("`family-floors.csv`", nce.floor_bullet(moved))
+
 
 if __name__ == "__main__":
     unittest.main()
