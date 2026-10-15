@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">hvtiR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.2.7</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.2.8</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -40,6 +40,12 @@
       <small>Source: <a href="https://github.com/ehrlinger/hvtiR/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.2.8" id="hvtir-128">hvtiR 1.2.8<a class="anchor" aria-label="anchor" href="#hvtir-128"></a></h2>
+<ul><li><p><code><a href="../reference/update.html">update()</a></code> now says at once that it installed nothing when a member it needs is already loaded, naming the loaded members. Until now the only signal was a warning, which prints after the call returns and vanishes under <code><a href="https://rdrr.io/r/base/warning.html" class="external-link">suppressWarnings()</a></code> or <code>options(warn = -1)</code>, so <code><a href="../reference/update.html">update()</a></code> could stop after “hvtiR is current” without a word about the members it skipped.</p></li>
+<li><p>Catalog versions refreshed from CRAN and <code>main</code>: <code>TemporalHazard</code> dev 1.2.15 to 1.2.16; <code>hvtiPlotR</code> dev 2.8.6 to 2.8.10; <code>hvtiRdatabuild</code> dev 0.3.0 to 0.3.1; <code>hvtiRpropensity</code> dev 0.1.11 to 0.2.1; <code>hvtiRtables</code> dev 1.0.3 to 1.0.5; <code>hvtiRtemplates</code> dev 1.3.1 to 1.4.0; <code>hvtiRutilities</code> dev 1.5.2 to 1.5.4. The catalog ships in the package and is published as <code>members.json</code>, so its recorded versions are content rather than bookkeeping.</p></li>
+<li><p>Family floors refreshed from <code>main</code>: <code>hvtiPlotR</code> Suggests <code>hvtiRpropensity</code> added; <code>hvtiRpropensity</code> Suggests <code>hvtiPlotR</code> added; <code>hvtiRtemplates</code> Suggests <code>hvtiPlotR</code> (&gt;= 2.8.0) to (&gt;= 2.8.9); <code>hvtiRtemplates</code> Suggests <code>hvtiRpropensity</code> (&gt;= 0.1.10) to (&gt;= 0.2.0); <code>hvtiRtemplates</code> Suggests <code>hvtiRtables</code> (&gt;= 1.0.1) to (&gt;= 1.0.5). <code>family-floors.csv</code> ships in the package and records the version floors members declare on one another.</p></li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.2.7" id="hvtir-127">hvtiR 1.2.7<a class="anchor" aria-label="anchor" href="#hvtir-127"></a></h2>
 <ul><li><p>Catalog versions refreshed from CRAN and <code>main</code>: <code>TemporalHazard</code> dev 1.2.12 to 1.2.14. The catalog ships in the package and is published as <code>members.json</code>, so its recorded versions are content rather than bookkeeping.</p></li>
