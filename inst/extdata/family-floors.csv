@@ -13,4 +13,4 @@ hvtiRtemplates,Suggests,hvtiRbootstrap,>=,0.9.3,0.9.6,TRUE
 hvtiRtemplates,Suggests,hvtiRdatabuild,>=,0.3.0,0.3.1,TRUE
 hvtiRtemplates,Suggests,hvtiRlifetables,>=,0.1.2,0.1.5,TRUE
 hvtiRtemplates,Suggests,hvtiRpropensity,>=,0.2.0,0.2.1,TRUE
-hvtiRtemplates,Suggests,hvtiRtables,>=,1.0.5,1.0.5,TRUE
+hvtiRtemplates,Suggests,hvtiRtables,>=,1.0.7,1.0.7,TRUE
