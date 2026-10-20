@@ -154,6 +154,22 @@ library. The returned empty character vector carries a `blocked` attribute
 with the loaded package names. Restart R and run the update before you attach
 anything.
 
+### Set up a study
+
+```{r setup-study, eval = FALSE}
+install.packages("pak")
+pak::pak("ehrlinger/hvtiR")
+hvtiR::setup(
+  study = "EDIT: the Study Tracker title",
+  study_tracker_id = 0L  # EDIT: the Study Tracker ID
+)
+```
+
+Run this once per study, in the study project, before anything else: it cleans
+up template copies first and only then locks the packages, so the lockfile
+records what the study uses and not what the templates happened to mention. It
+is safe to rerun.
+
 ## Reproducible installs
 
 `hvtiR::install()` resolves every member from GitHub `main`, so it gives you

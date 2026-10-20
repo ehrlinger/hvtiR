@@ -29,6 +29,22 @@ Then install every member:
 hvtiR::install()
 ```
 
+### Set up a study
+
+```r
+install.packages("pak")
+pak::pak("ehrlinger/hvtiR")
+hvtiR::setup(
+  study = "EDIT: the Study Tracker title",
+  study_tracker_id = 0L  # EDIT: the Study Tracker ID
+)
+```
+
+Run this once per study, in the study project, before anything else: it cleans
+up template copies first and only then locks the packages, so the lockfile
+records what the study uses and not what the templates happened to mention. It
+is safe to rerun.
+
 ## Keeping current
 
 ```r
