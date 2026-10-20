@@ -161,13 +161,18 @@ install.packages("pak")
 pak::pak("ehrlinger/hvtiR")
 hvtiR::setup(
   study = "EDIT: the Study Tracker title",
-  study_tracker_id = 0L  # EDIT: the Study Tracker ID
+  study_tracker_id = 0L,  # EDIT: the Study Tracker ID
+  root = "EDIT: the study directory"
 )
 ```
 
-Run this once per study, before anything else, from a session started outside
-the study project, passing `root = "<study>"`: it cleans up template copies first and only then locks the packages,
-so the lockfile records what the study declares and not what the templates
+Run this once per study, before anything else, from an R session started
+outside any project, passing `root =`. From inside the study's RStudio project
+it stops before installing anything and names the command to run: it replaces
+packages that session has loaded. It also stops the study using renv's
+per-user cache, so the shared library holds real copies a teammate can read,
+and reinstalls any package that was only a link into someone's home. It cleans
+up template copies first and only then locks the packages, so the lockfile records what the study declares and not what the templates
 happened to mention. For an existing (legacy) study pass `adopt = TRUE`, which
 is what cleans up its template copies. A study that already has a `renv.lock`
 keeps its locked versions, and every package that lockfile recorded is declared

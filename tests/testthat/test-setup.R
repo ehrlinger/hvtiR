@@ -62,6 +62,8 @@ local_setup <- function(run_status = 0L,
       renv_present <<- TRUE
     },
     session_library = function() session_lib,
+    renv_state = function(...) "installed",
+    cheap_study_root = function() getwd(),
     github_credentials_available = function() credentials,
     subdir_remotes = function(...) subdir,
     unresolved_imports = function(...) gone,
@@ -404,4 +406,207 @@ test_that("no _study.yml falls back to the working directory", {
   expect_identical(
     normalizePath(log$setup_args$root), normalizePath(getwd())
   )
+})
+# setup() from inside the study: the guard comes before anything installs.
+
+test_that("setup aborts with renv active, before anything can install", {
+  seen <- character(0)
+  local_mocked_bindings(
+    renv_state = function(...) "active",
+    utilities_fn = function(name) {
+      seen <<- c(seen, "utilities_fn")
+      stop("must not be reached")
+    },
+    pak_install = function(specs) {
+      seen <<- c(seen, "pak_install")
+      stop("must not be reached")
+    },
+    install_members = function(...) {
+      seen <<- c(seen, "install_members")
+      stop("must not be reached")
+    },
+    session_library = function() "/nonexistent/session/lib"
+  )
+  withr::local_envvar(RENV_PROJECT = "/studies/demo")
+  err <- tryCatch(setup("A study", 7L), error = conditionMessage)
+  expect_match(err, "/studies/demo", fixed = TRUE)
+  expect_match(err, "root =", fixed = TRUE)
+  expect_match(err, "outside", fixed = TRUE)
+  expect_identical(seen, character(0))
+})
+
+test_that("an explicit root is named in the message when renv is active", {
+  local_mocked_bindings(
+    renv_state = function(...) "active",
+    utilities_fn = function(name) stop("must not be reached")
+  )
+  withr::local_envvar(RENV_PROJECT = "/studies/demo")
+  err <- tryCatch(
+    setup("A study", 7L, root = "/studies/other"), error = conditionMessage
+  )
+  expect_match(err, "/studies/other", fixed = TRUE)
+})
+
+test_that("an old hvtiRutilities and root NULL install nothing first", {
+  installed <- FALSE
+  root <- withr::local_tempdir()
+  dir.create(file.path(root, "renv", "library"), recursive = TRUE)
+  local_mocked_bindings(
+    renv_state = function(...) "installed",
+    installed_version = function(pkg) "0.3.0",
+    cheap_study_root = function() root,
+    install_members = function(...) installed <<- TRUE,
+    pak_install = function(...) installed <<- TRUE,
+    session_library = function() file.path(root, "renv", "library")
+  )
+  expect_error(setup("A study", 7L), "outside")
+  expect_false(installed)
+})
+
+test_that("cheap_study_root prefers RENV_PROJECT and installs nothing", {
+  withr::local_envvar(RENV_PROJECT = "/studies/demo")
+  expect_identical(cheap_study_root(), "/studies/demo")
+  withr::local_envvar(RENV_PROJECT = "")
+  local_mocked_bindings(installed_version = function(pkg) NA_character_)
+  expect_identical(cheap_study_root(), getwd())
+})
+
+# The child's library cleanup.
+
+lib_fixture <- function(env = parent.frame()) {
+  # testthat helper, not attached when lintr runs.
+  # nolint next: object_usage_linter.
+  skip_on_os("windows")
+  base <- withr::local_tempdir(.local_envir = env)
+  lib <- file.path(base, "lib")
+  dir.create(lib)
+  targets <- file.path(base, "targets")
+  dir.create(targets)
+  dir.create(file.path(targets, "good"))
+  dir.create(file.path(targets, "locked"))
+  writeLines("x", file.path(targets, "locked", "f"))
+  dir.create(file.path(lib, "real"))
+  file.symlink(file.path(targets, "gone"), file.path(lib, "dangling"))
+  file.symlink(file.path(targets, "locked"), file.path(lib, "unreadable"))
+  file.symlink(file.path(targets, "good"), file.path(lib, "readable"))
+  Sys.chmod(file.path(targets, "locked"), "000")
+  withr::defer(Sys.chmod(file.path(targets, "locked"), "755"), envir = env)
+  list(lib = lib, targets = targets)
+}
+
+run_unlink <- function(lib) {
+  env <- new.env()
+  env$lib <- lib
+  # Defined in setup.R; lintr cannot resolve it across source files.
+  # nolint next: object_usage_linter.
+  code <- unlink_expr("lib")
+  out <- capture.output(eval(parse(text = code), env))
+  paste(out, collapse = "\n")
+}
+
+test_that("unlink_expr removes unreadable links and nothing else", {
+  skip_if(identical(Sys.info()[["user"]], "root"), "root reads everything")
+  fx <- lib_fixture()
+  out <- run_unlink(fx$lib)
+  expect_false(file.exists(file.path(fx$lib, "dangling")))
+  expect_false("unreadable" %in% list.files(fx$lib))
+  expect_true(nzchar(Sys.readlink(file.path(fx$lib, "readable"))))
+  expect_true(dir.exists(file.path(fx$lib, "real")))
+  # targets untouched
+  expect_true(dir.exists(file.path(fx$targets, "locked")))
+  Sys.chmod(file.path(fx$targets, "locked"), "755")
+  expect_true(file.exists(file.path(fx$targets, "locked", "f")))
+  expect_match(out, "HVTIR_UNLINKED=", fixed = TRUE)
+  expect_match(out, "dangling", fixed = TRUE)
+  expect_match(out, "unreadable", fixed = TRUE)
+  expect_no_match(out, "readable,|,readable$|=readable")
+})
+
+test_that("unlink_expr prints nothing when the library is clean", {
+  skip_on_os("windows")
+  lib <- withr::local_tempdir()
+  dir.create(file.path(lib, "real"))
+  expect_identical(run_unlink(lib), "")
+})
+
+test_that("unlink_expr removes pak's staging _cache directory", {
+  skip_on_os("windows")
+  lib <- withr::local_tempdir()
+  dir.create(file.path(lib, "_cache", "tmp"), recursive = TRUE)
+  writeLines("x", file.path(lib, "_cache", "tmp", "f"))
+  out <- run_unlink(lib)
+  expect_false(dir.exists(file.path(lib, "_cache")))
+  expect_match(out, "HVTIR_UNLINKED=_cache", fixed = TRUE)
+})
+
+test_that("unlink_expr keeps a _cache package and never follows a link", {
+  skip_on_os("windows")
+  lib <- withr::local_tempdir()
+  dir.create(file.path(lib, "_cache"))
+  writeLines("Package: x", file.path(lib, "_cache", "DESCRIPTION"))
+  run_unlink(lib)
+  expect_true(dir.exists(file.path(lib, "_cache")))
+
+  lib2 <- withr::local_tempdir()
+  target <- withr::local_tempdir()
+  writeLines("x", file.path(target, "f"))
+  file.symlink(target, file.path(lib2, "_cache"))
+  out <- run_unlink(lib2)
+  expect_true(file.exists(file.path(target, "f")))
+  expect_true(nzchar(Sys.readlink(file.path(lib2, "_cache"))))
+  expect_identical(out, "")
+})
+
+test_that("the child cleans, drops the cache, isolates, then restores", {
+  expr <- install_expr("/tmp", c("hvtiR", "arrow"))
+  at <- function(s) regexpr(s, expr, fixed = TRUE)[[1L]]
+  expect_true(at("renv::load(") < at("HVTIR_UNLINKED="))
+  # The cleanup comes first: a leftover _cache makes renv's own scan fail.
+  expect_true(at("HVTIR_UNLINKED=") < at("use.cache(FALSE"))
+  expect_true(at("use.cache(FALSE") < at("renv::isolate("))
+  expect_true(at("renv::isolate(") < at("renv::restore("))
+  expect_true(at("renv::restore(") < at("renv::install("))
+  expect_match(expr, "options(renv.config.pak.enabled = FALSE)", fixed = TRUE)
+  expect_match(expr, "snapshot.type('explicit'", fixed = TRUE)
+})
+
+test_that("setup reports the links the child removed", {
+  root <- withr::local_tempdir()
+  local_setup(run_output = "HVTIR_UNLINKED=dplyr,_cache\nHVTIR_LIB=@LIB@\n")
+  expect_message(setup("A study", 7L, root = root), "dplyr")
+})
+
+# install() and update() warn about a shared library full of dead links.
+
+test_that("library_debris finds unreadable links and a leftover _cache", {
+  skip_if(identical(Sys.info()[["user"]], "root"), "root reads everything")
+  fx <- lib_fixture()
+  dir.create(file.path(fx$lib, "_cache"))
+  expect_setequal(
+    library_debris(fx$lib), c("_cache", "dangling", "unreadable")
+  )
+})
+
+test_that("install_members warns about debris when renv is active", {
+  local_mocked_bindings(
+    pak_install = function(specs) invisible(specs),
+    renv_state = function(...) "active",
+    session_library = function() "/study/renv/library",
+    library_debris = function(lib) c("dplyr", "_cache")
+  )
+  expect_warning(
+    install_members("hvtiPlotR"), "use.cache(FALSE)", fixed = TRUE
+  )
+  expect_warning(
+    install_members("hvtiPlotR"), "dplyr", fixed = TRUE
+  )
+})
+
+test_that("install_members is quiet about debris without an active project", {
+  local_mocked_bindings(
+    pak_install = function(specs) invisible(specs),
+    renv_state = function(...) "installed",
+    library_debris = function(lib) stop("must not be asked")
+  )
+  expect_no_warning(install_members("hvtiPlotR"))
 })

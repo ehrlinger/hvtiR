@@ -269,6 +269,52 @@ guard_expr <- function(p) {
   )
 }
 
+#' Entries of a library that block renv and pak
+#'
+#' A study's `renv/library` is shared by the team, but renv's default cache is
+#' per user, so the library fills with symlinks into home caches that a
+#' teammate cannot read. pak sees such a link as "not installed" and cannot
+#' replace it. Base R only: [unlink_expr()] ships this function to the child.
+#' A failed pak install also leaves its staging directory, `_cache`, a real
+#' directory without a `DESCRIPTION`, which renv then trips over on every scan.
+#' @param lib A library path.
+#' @return Names of the entries: `_cache` when it is that leftover, then each
+#'   symlink whose target is missing or unreadable.
+#' @noRd
+# Package constant, spelled like MIN_R_VERSION.
+# nolint next: object_name_linter.
+DEBRIS_SRC <- paste(
+  "function(lib) {",
+  "entries <- list.files(lib, all.files = TRUE, no.. = TRUE);",
+  "path <- file.path(lib, entries);",
+  "link <- nzchar(Sys.readlink(path));",
+  "dead <- link & (!file.exists(path) | file.access(path, 4L) != 0L);",
+  "staging <- entries == '_cache' & !link & dir.exists(path) &",
+  "!file.exists(file.path(path, 'DESCRIPTION'));",
+  "c(entries[staging], entries[dead]) }"
+)
+library_debris <- eval(parse(text = DEBRIS_SRC))
+
+#' The child's code to clear [library_debris()] from the project library
+#'
+#' Removes each link itself, never its target and never recursively; the one
+#' real directory it removes is pak's `_cache`. Prints `HVTIR_UNLINKED=` with
+#' the names when it removed any; the following restore reinstalls them.
+#' @param lib_var Name of the child's variable holding the library path.
+#' @return One string of R code.
+#' @noRd
+unlink_expr <- function(lib_var) {
+  paste0(
+    "library_debris <- ", DEBRIS_SRC, "; ",
+    "gone <- library_debris(", lib_var, "); ",
+    "for (g in gone) { x <- file.path(", lib_var, ", g); ",
+    "if (nzchar(Sys.readlink(x))) file.remove(x) else ",
+    "unlink(x, recursive = TRUE) }; ",
+    "if (length(gone)) cat('\\nHVTIR_UNLINKED=', ",
+    "paste(gone, collapse = ','), '\\n', sep = ''); "
+  )
+}
+
 #' The child process's install step
 #' @param root The study root.
 #' @param packages Declared package names.
@@ -293,6 +339,11 @@ install_expr <- function(root, packages, subdir = character(0)) {
   paste0(
     pak_off(),
     "renv::load(", p, "); ",
+    "lib <- renv::paths$library(project = ", p, "); ",
+    # Clear first: a leftover `_cache` makes renv's own library scan fail.
+    unlink_expr("lib"),
+    "renv::settings$use.cache(FALSE, project = ", p, "); ",
+    "renv::isolate(project = ", p, "); ",
     "renv::settings$snapshot.type('explicit', project = ", p, "); ",
     "renv::restore(project = ", p, ", prompt = FALSE); ",
     "before <- vapply(renv::lockfile_read(file.path(", p, ", 'renv.lock'))",
@@ -305,6 +356,63 @@ install_expr <- function(root, packages, subdir = character(0)) {
     "renv::snapshot(project = ", p, ", prompt = FALSE); ",
     "cat('\\nHVTIR_LIB=', .libPaths()[1L], '\\n', sep = '')"
   )
+}
+
+#' The study root, found without installing anything
+#'
+#' Used by the guard in [setup()], which must run before anything can install.
+#' The active renv project when there is one, else the study enclosing the
+#' working directory if `hvtiRutilities` is already installed (any version),
+#' else the working directory.
+#' @return A path.
+#' @noRd
+cheap_study_root <- function() {
+  project <- Sys.getenv("RENV_PROJECT", "")
+  if (nzchar(project)) return(project)
+  if (is.na(installed_version("hvtiRutilities"))) return(getwd())
+  study_root_or_wd(getExportedValue("hvtiRutilities", "study_root"))
+}
+
+#' Call `study_root`, falling back to the working directory outside a study
+#' @param study_root The function.
+#' @noRd
+study_root_or_wd <- function(study_root) {
+  tryCatch(study_root(), error = function(e) {
+    # hvtiRutilities' exact wording; any other error is real.
+    if (!grepl("no _study.yml found", conditionMessage(e), fixed = TRUE)) {
+      stop(e)
+    }
+    getwd()
+  })
+}
+
+#' Refuse to run from inside the study
+#'
+#' `setup()` replaces packages this session has loaded and would install into
+#' the study library through this session.
+#' @param root The study root, or `NULL`.
+#' @noRd
+guard_session <- function(root) {
+  active <- renv_state() == "active"
+  guess <- if (is.null(root)) cheap_study_root() else root
+  if (!active && !path_within(session_library(), guess)) return(invisible())
+  # Read by cli's glue below, which lintr cannot see.
+  # nolint next: object_usage_linter.
+  target <- if (is.null(root) && nzchar(Sys.getenv("RENV_PROJECT", ""))) {
+    Sys.getenv("RENV_PROJECT")
+  } else {
+    guess
+  }
+  cli::cli_abort(c(
+    paste(
+      "{.fn setup} replaces packages this session has loaded, and would",
+      "install into the study's library through this session."
+    ),
+    i = paste(
+      "Run it from a session started outside any project:",
+      "{.code hvtiR::setup(root = \"{target}\", ...)}."
+    )
+  ))
 }
 
 #' Set up a study's environment
@@ -326,7 +434,16 @@ install_expr <- function(root, packages, subdir = character(0)) {
 #' decision.
 #'
 #' `setup()` replaces packages in the study's library, so run it from a
-#' session started outside the study project, passing `root`.
+#' session started outside the study project, passing `root`. From inside
+#' the project it stops before installing anything, and names the command to
+#' run.
+#'
+#' In the install, the study stops using renv's per-user cache
+#' (`renv::settings$use.cache(FALSE)`, kept in `renv/settings.json`, so it
+#' applies to everyone), links already in the library are copied in
+#' (`renv::isolate()`), and any link whose target the user cannot read is
+#' removed, as is pak's leftover `_cache` directory, and the package
+#' reinstalled. A shared library cannot depend on one user's home.
 #'
 #' Safe to rerun: each step checks before it acts.
 #'
@@ -344,7 +461,10 @@ install_expr <- function(root, packages, subdir = character(0)) {
 #' @export
 #' @examples
 #' \dontrun{
-#' setup(study = "Study Tracker title", study_tracker_id = 1234L)
+#' setup(
+#'   study = "Study Tracker title", study_tracker_id = 1234L,
+#'   root = "/studies/example"
+#' )
 #' }
 setup <- function(study, study_tracker_id, root = NULL, adopt = FALSE, ...) {
   if (getRversion() < MIN_R_VERSION) {
@@ -358,27 +478,9 @@ setup <- function(study, study_tracker_id, root = NULL, adopt = FALSE, ...) {
       i = "Use {.fn hvtiRutilities::study_setup} for a study without renv."
     ))
   }
+  guard_session(root)
   if (is.null(root)) {
-    study_root <- utilities_fn("study_root")
-    root <- tryCatch(study_root(), error = function(e) {
-      # hvtiRutilities' exact wording; any other error is real.
-      if (!grepl("no _study.yml found", conditionMessage(e), fixed = TRUE)) {
-        stop(e)
-      }
-      getwd()
-    })
-  }
-  if (path_within(session_library(), root)) {
-    cli::cli_abort(c(
-      paste(
-        "{.fn setup} replaces packages in the study's library, which this",
-        "session has loaded."
-      ),
-      i = paste(
-        "Run it from a session started outside the study project, passing",
-        "{.code root = \"<study>\"}."
-      )
-    ))
+    root <- study_root_or_wd(utilities_fn("study_root"))
   }
   if (!github_credentials_available()) {
     cli::cli_alert_warning(paste(
@@ -442,6 +544,16 @@ setup <- function(study, study_tracker_id, root = NULL, adopt = FALSE, ...) {
   result <- run_in_study(
     install_expr(root, packages, subdir = subdir_remotes()), root
   )
+  unlinked <- grep("^HVTIR_UNLINKED=", strsplit(result$output, "\n")[[1L]],
+                   value = TRUE)
+  if (length(unlinked)) {
+    gone <- strsplit(sub("^HVTIR_UNLINKED=", "", unlinked[1L]), ",",
+                     fixed = TRUE)[[1L]]
+    cli::cli_alert_info(paste(
+      "Removed {length(gone)} unreadable cache link{?s} from the study's",
+      "library and reinstalled: {.pkg {gone}}."
+    ))
+  }
   moved <- grep("^HVTIR_CHANGED=", strsplit(result$output, "\n")[[1L]],
                 value = TRUE)
   if (length(moved)) {
