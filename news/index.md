@@ -1,5 +1,158 @@
 # Changelog
 
+## hvtiR 1.3.1
+
+- Catalog versions refreshed from CRAN and `main`: `hvtiRutilities` dev
+  1.5.7 to 1.5.8. The catalog ships in the package and is published as
+  `members.json`, so its recorded versions are content rather than
+  bookkeeping.
+
+- Family floors refreshed from `main`: `hvtiRtemplates` Suggests
+  `hvtiRtables` (\>= 1.0.7) to (\>= 1.0.8). `family-floors.csv` ships in
+  the package and records the version floors members declare on one
+  another.
+
+- [`setup()`](https://ehrlinger.github.io/hvtiR/reference/setup.md) now
+  checks that it is not running inside the study before it does anything
+  that can install. With a renv project active, or the session library
+  under the study root, it stops and names the command to run from a
+  session started outside the project,
+  `hvtiR::setup(root = "<study>", ...)`. Before, resolving the root
+  could install `hvtiRutilities` into the study’s own library first.
+
+- [`setup()`](https://ehrlinger.github.io/hvtiR/reference/setup.md)
+  finds the study root without installing anything: it uses
+  `RENV_PROJECT` when set, and asks `hvtiRutilities` only when it is
+  already installed.
+
+- [`setup()`](https://ehrlinger.github.io/hvtiR/reference/setup.md)
+  stops the study using renv’s per-user cache
+  (`renv::settings$use.cache(FALSE)`, stored in `renv/settings.json` so
+  it applies to the whole team) and runs `renv::isolate()` before
+  restoring. It removes, and so reinstalls, any library link whose
+  target the user cannot read, and pak’s leftover `_cache` staging
+  directory, and reports what it removed. This fixes “Unable to move
+  package” failures in a library shared by several users.
+
+- [`install()`](https://ehrlinger.github.io/hvtiR/reference/install.md)
+  and
+  [`update()`](https://ehrlinger.github.io/hvtiR/reference/update.md)
+  warn, with the fix, when run from an active study project whose
+  library holds links the user cannot read or a leftover `_cache`
+  directory.
+
+- [`setup()`](https://ehrlinger.github.io/hvtiR/reference/setup.md)
+  reports a failed install without crashing. The child’s output is
+  cleaned (carriage returns, colour codes, invalid bytes, braces) before
+  it reaches the message, and the full raw output is saved to
+  `hvtiR-setup-<time>.log` in the session’s temporary directory, which
+  the message names.
+
+- [`setup()`](https://ehrlinger.github.io/hvtiR/reference/setup.md) no
+  longer needs a personal GitHub token. It installs the family with pak
+  into the study’s library (pak carries a shared token, so a server’s
+  shared IP does not exhaust GitHub’s anonymous API limit) and keeps
+  renv for the environment: restore, then the pak install, then the
+  lockfile snapshot, in explicit mode. The `LinkingTo` packages pak
+  skips are installed from the configured repositories, which the
+  snapshot’s validation needs. With no token it now warns instead of
+  stopping, since only restoring a package the lockfile pins on GitHub
+  can need one. A token held only in the git credential store is still
+  passed on as `GITHUB_PAT` for the run.
+
+- [`setup()`](https://ehrlinger.github.io/hvtiR/reference/setup.md) no
+  longer installs subdirectory remotes ahead of the rest to work around
+  a renv 1.2.4 unpack bug: pak handles them, so the workaround and its
+  `Remotes` parsing are removed.
+
+- [`setup()`](https://ehrlinger.github.io/hvtiR/reference/setup.md)
+  finds the study root without loading `hvtiRutilities`: loading it left
+  its namespace in use and blocked the upgrade that follows. It uses
+  `RENV_PROJECT`, else the nearest `_study.yml` at or above the working
+  directory, else the working directory.
+
+- A link in the study’s library whose target is readable but whose
+  `DESCRIPTION` is not is now treated as unreadable and removed (the
+  link only). A real package directory whose `DESCRIPTION` the user
+  cannot read is never deleted:
+  [`setup()`](https://ehrlinger.github.io/hvtiR/reference/setup.md)
+  stops before changing anything, names the packages, and says their
+  owner or an administrator must fix the permissions
+  (`chmod -R g+rX <library>/<pkg>`) or remove them.
+
+- The
+  [`install()`](https://ehrlinger.github.io/hvtiR/reference/install.md)
+  and
+  [`update()`](https://ehrlinger.github.io/hvtiR/reference/update.md)
+  warning now gives the manual repair in the order that works: remove
+  `_cache`, remove each broken link, then
+  `renv::settings$use.cache(FALSE)`, `renv::isolate()` and
+  `renv::restore()`.
+
+- The check that no locked package moved now runs after the `LinkingTo`
+  fill, immediately before the snapshot, because the fill installs
+  through renv and can move a locked package.
+
+- That check now compares `RemoteSha` as well as `Version`, so a GitHub
+  package locked at one commit and rebuilt from another is caught even
+  when its version is unchanged.
+
+- When the check trips,
+  [`setup()`](https://ehrlinger.github.io/hvtiR/reference/setup.md)
+  first removes the packages this run added to the study’s library, then
+  restores the moved locked packages, so the library matches the
+  lockfile again. If that restore fails (restoring a GitHub-locked
+  package needs a personal token), the message names the packages that
+  could not be restored and the token steps. The lockfile is unchanged
+  either way.
+
+- The pak install now uses the repositories the study’s `renv.lock`
+  records, falling back to the session’s, instead of the session’s
+  alone.
+
+- [`setup()`](https://ehrlinger.github.io/hvtiR/reference/setup.md) runs
+  its child R processes from a script file instead of an `-e` argument.
+  R truncated a long `-e` argument, so a study with about 155 locked
+  packages ran half a script and stopped with “The install did not
+  report the study’s library path”.
+
+- [`setup()`](https://ehrlinger.github.io/hvtiR/reference/setup.md)
+  installs from the binary form of a Posit Package Manager source URL.
+  When the study’s `renv.lock` records `.../cran/latest` and the session
+  has `.../cran/__linux__/<distro>/latest` (same host, path and
+  snapshot), pak, the restore and the `LinkingTo` fill use the binary
+  URL and `renv.lock` is rewritten to record it, so installs no longer
+  compile from source (arrow failed on RHEL 8’s default compiler). No
+  other repository is changed.
+
+- [`setup()`](https://ehrlinger.github.io/hvtiR/reference/setup.md) no
+  longer reports false moves from its lock guard. It compares versions
+  as versions (`1.2-5` is `1.2.5`) and looks packages up across every
+  library on the path, so recommended packages in R’s system library
+  (`mgcv`, `nlme`, `survival`, …) are found.
+
+- New `upgrade` argument to
+  [`setup()`](https://ehrlinger.github.io/hvtiR/reference/setup.md). The
+  default, `TRUE`, lets the install move locked versions the declared
+  family needs, lists each move and records it in `renv.lock`.
+  `upgrade = FALSE` keeps a study in revision on its locked versions:
+  the guard rolls back as before, and its message now says how to move
+  them.
+
+- [`setup()`](https://ehrlinger.github.io/hvtiR/reference/setup.md) now
+  resolves unmet version requirements before it snapshots. It reads
+  `Depends`, `Imports` and `LinkingTo` of every package in the study
+  library and finds packages that are absent or below a floor (`>=`,
+  `>`, `==`), as renv’s snapshot validation would. With `upgrade = TRUE`
+  (the default) it installs them through renv from the binary
+  repositories and checks again; the lock guard then reports any locked
+  package those installs moved, and a moved package it raised is listed
+  under “Other unmet requirements resolved”. What stays unmet, or
+  anything at all with `upgrade = FALSE`, stops
+  [`setup()`](https://ehrlinger.github.io/hvtiR/reference/setup.md)
+  before the snapshot with each requirement listed and `renv.lock`
+  unchanged.
+
 ## hvtiR 1.3.0
 
 - Catalog versions refreshed from CRAN and `main`: `hvtiRtables` dev
