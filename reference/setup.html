@@ -4,13 +4,13 @@ renv if it is missing, and turns off RStudio's .RData restore and save;
 runs hvtiRutilities::study_setup() with renv on, which cleans up template
 copies before renv when adopting; declares hvtiR, every member and the
 packages they need in the study's DESCRIPTION; installs them into the
-study's library in a fresh R process; snapshots; checks that every
+study's library with pak and renv; snapshots; checks that every
 package's dependencies resolve there; and restarts into the project."><meta property="og:description" content="The one command a study needs before analysis. In order: checks R, installs
 renv if it is missing, and turns off RStudio's .RData restore and save;
 runs hvtiRutilities::study_setup() with renv on, which cleans up template
 copies before renv when adopting; declares hvtiR, every member and the
 packages they need in the study's DESCRIPTION; installs them into the
-study's library in a fresh R process; snapshots; checks that every
+study's library with pak and renv; snapshots; checks that every
 package's dependencies resolve there; and restarts into the project."></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
@@ -59,7 +59,7 @@ renv if it is missing, and turns off RStudio's <code>.RData</code> restore and s
 runs <code><a href="https://ehrlinger.github.io/hvtiRutilities/reference/study_setup.html">hvtiRutilities::study_setup()</a></code> with renv on, which cleans up template
 copies before renv when adopting; declares <code>hvtiR</code>, every member and the
 packages they need in the study's <code>DESCRIPTION</code>; installs them into the
-study's library in a fresh R process; snapshots; checks that every
+study's library with pak and renv; snapshots; checks that every
 package's dependencies resolve there; and restarts into the project.</p>
     </div>
 
@@ -111,14 +111,32 @@ out. They are restored, and only packages the lockfile lacks are installed.
 Moving a study's versions is <code><a href="update.html">update()</a></code>'s job, and the study owner's
 decision.</p>
 <p><code>setup()</code> replaces packages in the study's library, so run it from a
-session started outside the study project, passing <code>root</code>.</p>
+session started outside the study project, passing <code>root</code>. From inside
+the project it stops before installing anything, and names the command to
+run.</p>
+<p>In the install, the study stops using renv's per-user cache
+(<code>renv::settings$use.cache(FALSE)</code>, kept in <code>renv/settings.json</code>, so it
+applies to everyone), links already in the library are copied in
+(<code>renv::isolate()</code>), and any link whose target the user cannot read is
+removed, as is pak's leftover <code>_cache</code> directory, and the package
+reinstalled. A shared library cannot depend on one user's home.</p>
+<p>No personal GitHub token is needed. The family is installed with pak, which
+carries a shared token, into the study's library, and renv keeps the
+environment: it restores the lockfile first, then snapshots, and installs
+from the configured repositories the build-time (<code>LinkingTo</code>) dependencies
+pak skips. Restoring a package the lockfile pins on GitHub goes through
+renv, which has no shared token; a <code>GITHUB_PAT</code> (or a token in the git
+credential store) covers that, and <code>setup()</code> warns when there is none.</p>
 <p>Safe to rerun: each step checks before it acts.</p>
     </div>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
-<span class="r-in"><span><span class="fu">setup</span><span class="op">(</span>study <span class="op">=</span> <span class="st">"Study Tracker title"</span>, study_tracker_id <span class="op">=</span> <span class="fl">1234L</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">setup</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  study <span class="op">=</span> <span class="st">"Study Tracker title"</span>, study_tracker_id <span class="op">=</span> <span class="fl">1234L</span>,</span></span>
+<span class="r-in"><span>  root <span class="op">=</span> <span class="st">"/studies/example"</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 </code></pre></div>
     </div>
