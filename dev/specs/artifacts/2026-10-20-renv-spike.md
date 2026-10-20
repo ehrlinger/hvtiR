@@ -43,3 +43,20 @@ with pak disabled.
   to read the hvtiRutilities fields (as instructed); the lock read for the fields used `force = TRUE`
   in a separate follow-up run on a persistent project dir (tempdir is deleted on exit).
 - Check 4 line also prints the running R version. Checks themselves unchanged.
+
+## Check 5: renv's own installer, pak OFF
+
+Fresh project (bare init, explicit mode, `Depends: hvtiRutilities`), child run with
+`RENV_CONFIG_PAK_ENABLED=FALSE`; `renv::install('ehrlinger/hvtiRutilities', prompt = FALSE)` then a plain
+`renv::snapshot(prompt = FALSE)` (no `force`).
+
+- 5a. Install succeeded (exit 0). renv installed `cpp11` 0.5.5 and `progress` 1.2.3 as binaries along with the rest.
+- 5b. The plain snapshot succeeded (exit 0) with no `cpp11`/`progress` validation error; both are in the lockfile.
+  `force = TRUE` is not needed with renv's own installer.
+- 5c. hvtiRutilities in the lockfile: `Source: GitHub`, `RemoteRepo: hvtiRutilities`,
+  `RemoteUsername: ehrlinger`, `RemoteRef: main`, `RemoteSha: a4425af4...`, `Version: 1.5.5`
+  (the pak run recorded `RemoteRef: HEAD` and a `RemotePkgRef`; this run records `main`).
+- 5d. Wall time: install 23.5 s, snapshot 1.0 s. The pak run's install was ~48.5 s (pak's own
+  summary line, which also includes its first-time setup); not a controlled comparison.
+- Side observation: the snapshot header listed the CRAN packages under an internal repository URL
+  (`lri-ppm00.lerner.ccf.org:4242/cran/latest`) rather than the `cloud.r-project.org` of the first run.
