@@ -50,6 +50,10 @@ sequence ran renv first.
    `renv.lock` restores the locked versions and adds only what the declaration
    names and the lockfile lacks. Moving versions is a separate, explicit
    `hvtiR::update()` by the study owner.
+   On the first conversion of a study whose lockfile was made in implicit
+   mode, every package that lockfile records (except renv) is declared before
+   the switch, so explicit mode drops nothing it pinned (decided 2026-10-20,
+   over dropping-with-a-report and refusing; found in the Part D review).
 5. **`study_setup()` defaults change:** `cleanup = adopt`, `renv = TRUE`. Both
    stay arguments; see below.
 
