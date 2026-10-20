@@ -45,11 +45,19 @@ sequence ran renv first.
    full set up front. A function that still finds an optional package missing
    offers to install it into the project library, declares it, and snapshots,
    rather than printing an `install.packages()` line.
-4. **An existing lockfile is restored, never upgraded.** Studies in revision
-   must not move package versions. `setup()` on a study with a valid
-   `renv.lock` restores the locked versions and adds only what the declaration
-   names and the lockfile lacks. Moving versions is a separate, explicit
-   `hvtiR::update()` by the study owner.
+4. **An existing lockfile is restored, then moved only as far as the family
+   needs, and every move is reported.** `setup()` restores the locked versions
+   and installs what the declaration names and the lockfile lacks. When the
+   current family needs newer versions of locked packages, `upgrade = TRUE`
+   (the default) moves them and lists each move, family packages and the
+   dependencies they need in separate groups; `upgrade = FALSE` keeps a study
+   in revision on its locked versions, rolls back and stops.
+   <sub>Decided 2026-10-20 after the first adoption of a production study
+   (COMMENCE): its lockfile pinned hvtiRutilities 0.3.0, so restore-never-
+   upgrade made `setup()` refuse the very adoption it exists for. The
+   original rule (never upgrade; moving versions is `update()`'s job) is
+   superseded; `update()` manages a user's library, not a study's
+   lockfile.</sub>
    On the first conversion of a study whose lockfile was made in implicit
    mode, every package that lockfile records (except renv) is declared before
    the switch, so explicit mode drops nothing it pinned (decided 2026-10-20,

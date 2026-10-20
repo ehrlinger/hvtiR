@@ -30,7 +30,7 @@ local_setup <- function(run_status = 0L,
                           package = character(), missing = character()
                         ),
                         locked_r = NA_character_, locked = NULL,
-                        credentials = TRUE,
+                        credentials = TRUE, lock_repos = NULL,
                         root_error = "study_config(): no _study.yml found.",
                         env = parent.frame()) {
   log <- new.env()
@@ -60,7 +60,12 @@ local_setup <- function(run_status = 0L,
         step("read_lock")
         return(list(
           status = 0L,
-          output = paste0("HVTIR_LOCKED=", paste(locked, collapse = ","), "\n")
+          output = paste0(
+            "HVTIR_LOCKED=", paste(locked, collapse = ","), "\n",
+            if (!is.null(lock_repos)) {
+              paste0("HVTIR_REPOS=", lock_repos, "\n")
+            }
+          )
         ))
       }
       if (grepl("HVTIR_LOCKVER", expr, fixed = TRUE)) {
@@ -511,7 +516,10 @@ test_that("a locked package moved by the install stops, lockfile unchanged", {
   expect_match(err, "2.0", fixed = TRUE)
   expect_match(err, "pkgC", fixed = TRUE)
   expect_match(err, "unchanged", fixed = TRUE)
-  expect_match(err, "update", fixed = TRUE)
+  expect_match(err, "upgrade = TRUE", fixed = TRUE)
+  expect_match(err, "the default", fixed = TRUE)
+  expect_match(err, "upgrade = FALSE", fixed = TRUE)
+  expect_no_match(err, "update", fixed = TRUE)
 })
 
 test_that("the LinkingTo fill defaults to renv::install, with no test hook", {
@@ -522,8 +530,10 @@ test_that("the LinkingTo fill defaults to renv::install, with no test hook", {
 
 # The guard and its cleanup, run against a temporary library.
 
-run_guard <- function(lib, before, sha, libpkgs, restore_error = NULL) {
+run_guard <- function(lib, before, sha, libpkgs, restore_error = NULL,
+                      upgrade = FALSE) {
   env <- new.env()
+  env$upgrade <- upgrade
   env$lib <- lib
   env$before <- before
   env$sha <- sha
@@ -593,12 +603,118 @@ test_that("a failed rollback restore is named and the guard still exits 3", {
   expect_match(res$out, "QUIT", fixed = TRUE)
 })
 
-test_that("child 1 reports RemoteSha, the library's packages and the repos", {
+test_that("the guard compares versions as versions, not strings", {
+  lib <- withr::local_tempdir()
+  fake_pkg(lib, "pkgA")
+  writeLines(c("Package: pkgA", "Version: 1.2-5", "Title: x"),
+             file.path(lib, "pkgA", "DESCRIPTION"))
+  res <- run_guard(lib, c(pkgA = "1.2-5"), c(pkgA = ""), "pkgA")
+  expect_identical(res$out, "")
+  expect_null(res$restored)
+  res <- run_guard(lib, c(pkgA = "1.2-6"), c(pkgA = ""), "pkgA")
+  expect_match(res$out, "HVTIR_CHANGED=pkgA", fixed = TRUE)
+})
+
+test_that("the guard finds a recommended package in the system library", {
+  lib <- withr::local_tempdir()
+  sys <- withr::local_tempdir()
+  fake_pkg(sys, "mgcv")
+  withr::local_libpaths(sys, action = "prefix")
+  res <- run_guard(lib, c(mgcv = "1.0"), c(mgcv = ""), character(0))
+  expect_identical(res$out, "")
+  expect_null(res$restored)
+  res <- run_guard(lib, c(nowhere = "1.0"), c(nowhere = ""), character(0))
+  expect_match(res$out, "HVTIR_CHANGED=nowhere:1.0->NA", fixed = TRUE)
+})
+
+test_that("with upgrade the guard reports the moves and does not roll back", {
+  lib <- withr::local_tempdir()
+  sha_pkg(lib, "pkgA", "bbb")
+  fake_pkg(lib, "pakAdded")
+  res <- run_guard(
+    lib, c(pkgA = "0.9"), c(pkgA = "aaa"), "pkgA", upgrade = TRUE
+  )
+  expect_match(res$out, "HVTIR_MOVED=pkgA:0.9->1.0", fixed = TRUE)
+  expect_match(res$out, "RemoteSha aaa->bbb", fixed = TRUE)
+  expect_no_match(res$out, "QUIT", fixed = TRUE)
+  expect_no_match(res$out, "HVTIR_CHANGED", fixed = TRUE)
+  expect_null(res$restored)
+  expect_true(dir.exists(file.path(lib, "pakAdded")))
+})
+
+test_that("child 2 carries the upgrade flag", {
+  expect_match(finish_expr("/tmp", c(pkgA = "1.0")),
+               "upgrade <- TRUE", fixed = TRUE)
+  expect_match(finish_expr("/tmp", c(pkgA = "1.0"), upgrade = FALSE),
+               "upgrade <- FALSE", fixed = TRUE)
+})
+
+test_that("setup() by default reports the moves and carries on", {
+  root <- withr::local_tempdir()
+  log <- local_setup(
+    run_output = paste0(
+      "HVTIR_MOVED=pkgA:0.9->1.0,pkgB:1.0->2.0 (RemoteSha aaa->bbb)\n",
+      "HVTIR_LIB=@LIB@\n"
+    )
+  )
+  expect_message(
+    setup("A study", 7L, root = root), "pkgB"
+  )
+  expect_match(log$expr, "upgrade <- TRUE", fixed = TRUE)
+  expect_identical(utils::tail(log$steps, 1L), "open")
+  expect_false("upgrade" %in% names(log$setup_args))
+  log <- local_setup()
+  setup("A study", 7L, root = root, upgrade = FALSE)
+  expect_match(log$expr, "upgrade <- FALSE", fixed = TRUE)
+})
+
+test_that("moves are grouped: the family, then the dependencies it needs", {
+  mixed <- grouped_moves(c(
+    "hvtiRutilities:0.3.0->1.5.8 (RemoteSha 5585df8->eedc575)",
+    "officer:0.7.4->0.7.7"
+  ))
+  expect_identical(
+    unname(mixed),
+    c("Family packages",
+      "hvtiRutilities 0.3.0 -> 1.5.8 (RemoteSha 5585df8 -> eedc575)",
+      "Dependencies the family needs", "officer 0.7.4 -> 0.7.7")
+  )
+  fam <- grouped_moves(c("hvtiR:1.0->1.1", "hvtiRutilities:1->2"))
+  expect_identical(sum(names(fam) == "i"), 1L)
+  expect_identical(unname(fam)[1L], "Family packages")
+  deps <- grouped_moves("officer:0.7.4->0.7.7")
+  expect_identical(unname(deps)[1L], "Dependencies the family needs")
+  expect_length(deps, 2L)
+})
+
+test_that("the abort lists a guard trip in the same two groups", {
+  root <- withr::local_tempdir()
+  local_setup(
+    run_status = 3L,
+    run_output = paste0(
+      "HVTIR_CHANGED=hvtiRutilities:0.3.0->1.5.8,officer:0.7.4->0.7.7\n"
+    )
+  )
+  err <- tryCatch(
+    setup("A study", 7L, root = root, upgrade = FALSE),
+    error = conditionMessage
+  )
+  expect_match(err, "Family packages", fixed = TRUE)
+  expect_match(err, "Dependencies the family needs", fixed = TRUE)
+  expect_match(err, "officer 0.7.4 -> 0.7.7", fixed = TRUE)
+})
+
+test_that("child 1 reports RemoteSha and the library's packages", {
   expr <- restore_expr("/tmp")
   at <- anchor_at(expr)
   expect_match(expr, "RemoteSha", fixed = TRUE)
   expect_true(at("renv::restore(") < at("HVTIR_LIBPKGS="))
-  expect_true(at("renv::restore(") < at("HVTIR_REPOS="))
+})
+
+test_that("the lockfile read reports repos, else the session's", {
+  expr <- locked_expr("/tmp")
+  expect_match(expr, "HVTIR_REPOS=", fixed = TRUE)
+  expect_match(expr, "$R$Repositories", fixed = TRUE)
   expect_match(expr, "getOption('repos')", fixed = TRUE)
 })
 
@@ -612,11 +728,15 @@ test_that("child 2 is given the library's packages and the locked SHAs", {
 
 test_that("setup parses sha, library packages and repos from child 1", {
   root <- withr::local_tempdir()
-  log <- local_setup(restore_output = paste0(
-    "HVTIR_LIB=@LIB@\nHVTIR_LOCKVER=pkgA:1.0:abc,pkgB:2.0:\n",
-    "HVTIR_LIBPKGS=pkgA,pkgB\n",
-    "HVTIR_REPOS=CRAN=https://cran.example;P=https://p.example\n"
-  ))
+  writeLines("{}", file.path(root, "renv.lock"))
+  log <- local_setup(
+    locked = c("pkgA", "pkgB"),
+    lock_repos = "CRAN=https://cran.example;P=https://p.example",
+    restore_output = paste0(
+      "HVTIR_LIB=@LIB@\nHVTIR_LOCKVER=pkgA:1.0:abc,pkgB:2.0:\n",
+      "HVTIR_LIBPKGS=pkgA,pkgB\n"
+    )
+  )
   setup("A study", 7L, root = root)
   expect_identical(
     log$pak_lib[[1L]]$repos,
@@ -1024,4 +1144,266 @@ test_that("install_members is quiet about debris without an active project", {
     library_debris = function(lib) stop("must not be asked")
   )
   expect_no_warning(install_members("hvtiPlotR"))
+})
+
+test_that("run_in_study runs code too long for an -e argument", {
+  skip_on_cran()
+  root <- withr::local_tempdir()
+  vec <- paste0("'pkg", seq_len(3000L), "'", collapse = ", ")
+  expr <- paste0("x <- c(", vec, "); cat('N=', length(x), '\\n', sep = '')")
+  expect_gt(nchar(expr), 20000L)
+  res <- run_in_study(expr, root)
+  expect_identical(res$status, 0L)
+  expect_match(res$output, "N=3000", fixed = TRUE)
+})
+
+src <- "https://ppm.example:4242/cran/latest"
+bin <- "https://ppm.example:4242/cran/__linux__/centos8/latest"
+
+test_that("binary_repos swaps a source URL for the session's binary form", {
+  expect_identical(binary_repos(c(CRAN = src), c(CRAN = bin)), c(CRAN = bin))
+  expect_identical(
+    binary_repos(c(CRAN = paste0(src, "/")), c(CRAN = bin)), c(CRAN = bin)
+  )
+})
+
+test_that("binary_repos keeps the study URL when the session's differs", {
+  other_host <- sub("ppm.example", "other.example", bin, fixed = TRUE)
+  other_port <- sub("4242", "4243", bin, fixed = TRUE)
+  other_path <- sub("/cran/", "/bioc/", bin, fixed = TRUE)
+  dated <- sub("latest", "2026-10-01", bin, fixed = TRUE)
+  for (session in c(other_host, other_port, other_path, dated, src)) {
+    expect_identical(binary_repos(c(CRAN = src), c(CRAN = session)),
+                     c(CRAN = src))
+  }
+  expect_identical(
+    binary_repos(c(CRAN = sub("latest", "2026-10-01", src)), c(CRAN = bin)),
+    c(CRAN = sub("latest", "2026-10-01", src))
+  )
+})
+
+test_that("binary_repos leaves a binary or non-PPM study URL alone", {
+  expect_identical(binary_repos(c(CRAN = bin), c(CRAN = bin)), c(CRAN = bin))
+  cran <- "https://cloud.r-project.org"
+  expect_identical(binary_repos(c(CRAN = cran), c(CRAN = bin)), c(CRAN = cran))
+  expect_identical(
+    binary_repos(c(CRAN = "https://cran.r-project.org/"), c(CRAN = bin)),
+    c(CRAN = "https://cran.r-project.org/")
+  )
+  expect_null(binary_repos(NULL, c(CRAN = bin)))
+})
+
+test_that("binary_repos handles several named repos independently", {
+  p <- "https://ppm.example:4242/bioc/latest"
+  got <- binary_repos(
+    c(CRAN = src, BIOC = p, X = "https://x.example/r"),
+    c(CRAN = bin,
+      other = "https://ppm.example:4242/bioc/__linux__/rhel9/latest")
+  )
+  expect_identical(
+    unname(got),
+    c(bin, "https://ppm.example:4242/bioc/__linux__/rhel9/latest",
+      "https://x.example/r")
+  )
+  expect_named(got, c("CRAN", "BIOC", "X"))
+})
+
+test_that("setup installs, restores and records the binary URL", {
+  root <- withr::local_tempdir()
+  writeLines("{}", file.path(root, "renv.lock"))
+  withr::local_options(repos = c(CRAN = bin))
+  log <- local_setup(
+    locked = "pkgA", lock_repos = paste0("CRAN=", src),
+    restore_output = "HVTIR_LIB=@LIB@\nHVTIR_LOCKVER=pkgA:1.0:\n"
+  )
+  msgs <- testthat::capture_messages(setup("A study", 7L, root = root))
+  expect_identical(log$pak_lib[[1L]]$repos, c(CRAN = bin))
+  expect_match(log$expr1, bin, fixed = TRUE)
+  expect_match(log$expr1, "repos = hvtir_repos", fixed = TRUE)
+  expect_match(log$expr, bin, fixed = TRUE)
+  expect_match(log$expr, "lockfile_write", fixed = TRUE)
+  expect_false(grepl(src, log$expr, fixed = TRUE))
+  expect_match(paste(msgs, collapse = ""), "recording it in renv.lock",
+               fixed = TRUE)
+})
+
+test_that("setup keeps the study URL when the session has no binary form", {
+  root <- withr::local_tempdir()
+  writeLines("{}", file.path(root, "renv.lock"))
+  withr::local_options(repos = c(CRAN = "https://elsewhere.example/cran"))
+  log <- local_setup(
+    locked = "pkgA", lock_repos = paste0("CRAN=", src),
+    restore_output = "HVTIR_LIB=@LIB@\nHVTIR_LOCKVER=pkgA:1.0:\n"
+  )
+  msgs <- testthat::capture_messages(setup("A study", 7L, root = root))
+  expect_identical(log$pak_lib[[1L]]$repos, c(CRAN = src))
+  expect_match(log$expr1, src, fixed = TRUE)
+  expect_match(log$expr, src, fixed = TRUE)
+  expect_false(grepl("lockfile_write", log$expr, fixed = TRUE))
+  expect_false(grepl("recording it", paste(msgs, collapse = ""), fixed = TRUE))
+})
+
+# The version-floor step, run against temporary libraries.
+
+dep_pkg <- function(lib, name, version, ...) {
+  dir.create(file.path(lib, name))
+  writeLines(
+    c(paste("Package:", name), paste("Version:", version), "Title: x", ...),
+    file.path(lib, name, "DESCRIPTION")
+  )
+}
+
+test_that("a dependency below its floor is selected; a met one is not", {
+  lib <- withr::local_tempdir()
+  dep_pkg(lib, "pkgA", "1.0", "Imports: pkgB (>= 2.0), stats")
+  dep_pkg(lib, "pkgB", "1.0")
+  # Defined in setup.R; lintr cannot resolve it across source files.
+  # nolint next: object_usage_linter.
+  got <- unmet_requirements(lib, lib)
+  expect_identical(got$dep, "pkgB")
+  expect_identical(got$has, "1.0")
+  dep_pkg(lib, "pkgC", "1.0", "Depends: R (>= 4.0), pkgB (> 1.0)",
+          "LinkingTo: pkgD (== 3.0)")
+  got <- unmet_requirements(lib, lib)
+  expect_setequal(got$dep, c("pkgB", "pkgD"))
+  expect_true(is.na(got$has[got$dep == "pkgD"]))
+  unlink(file.path(lib, "pkgB"), recursive = TRUE)
+  dep_pkg(lib, "pkgB", "2.0")
+  dep_pkg(lib, "pkgD", "3.0")
+  expect_identical(nrow(unmet_requirements(lib, lib)), 0L)
+})
+
+test_that("dash and dot versions are equal in the floor check", {
+  lib <- withr::local_tempdir()
+  dep_pkg(lib, "pkgA", "1.0", "Imports: pkgB (>= 1.2.5)")
+  dep_pkg(lib, "pkgB", "1.2-5")
+  expect_identical(nrow(unmet_requirements(lib, lib)), 0L)
+  dep_pkg(lib, "pkgE", "1.0", "Imports: pkgF (>= 1.2-5)")
+  dep_pkg(lib, "pkgF", "1.2.5")
+  expect_identical(nrow(unmet_requirements(lib, lib)), 0L)
+})
+
+test_that("a dependency found only in a second library path is installed", {
+  lib <- withr::local_tempdir()
+  sys <- withr::local_tempdir()
+  dep_pkg(lib, "pkgA", "1.0", "Imports: mgcv (>= 1.8)")
+  dep_pkg(sys, "mgcv", "1.9")
+  expect_identical(nrow(unmet_requirements(lib, c(lib, sys))), 0L)
+  expect_identical(unmet_requirements(lib, lib)$dep, "mgcv")
+})
+
+# Run the child step for real, with fakes for install and quit.
+run_floors <- function(lib, upgrade, fix = NULL, repos = NULL) {
+  env <- new.env()
+  env$lib <- lib
+  env$upgrade <- upgrade
+  env$hvtir_repos <- repos
+  env$installed <- NULL
+  env$fake_install <- function(x, ...) {
+    assign("installed", x, envir = env)
+    if (!is.null(fix)) fix()
+  }
+  code <- floors_expr("/tmp", "fake_install", repos)
+  code <- sub("quit(status = 5L, save = 'no')", "cat('QUIT5\\n')", code,
+              fixed = TRUE)
+  out <- paste(capture.output(eval(parse(text = code), env)), collapse = "\n")
+  list(out = out, installed = env$installed)
+}
+
+test_that("with upgrade the floor step installs, rechecks, and reports", {
+  lib <- withr::local_tempdir()
+  dep_pkg(lib, "pkgA", "1.0", "Imports: pkgB (>= 2.0)")
+  dep_pkg(lib, "pkgB", "1.0")
+  fix <- function() {
+    unlink(file.path(lib, "pkgB"), recursive = TRUE)
+    dep_pkg(lib, "pkgB", "2.1")
+  }
+  res <- run_floors(lib, TRUE, fix)
+  expect_identical(res$installed, "pkgB")
+  expect_match(res$out, "HVTIR_RAISED=pkgB", fixed = TRUE)
+  expect_no_match(res$out, "HVTIR_UNMET", fixed = TRUE)
+  expect_no_match(res$out, "QUIT5", fixed = TRUE)
+  res <- run_floors(lib, TRUE, repos = c(CRAN = "https://x"))
+  expect_null(res$installed)
+  expect_identical(res$out, "")
+})
+
+test_that("with upgrade, what stays unmet exits 5 before the snapshot", {
+  lib <- withr::local_tempdir()
+  dep_pkg(lib, "pkgA", "1.0", "Imports: pkgB (>= 2.0), pkgC (> 1.0)")
+  dep_pkg(lib, "pkgB", "1.0")
+  res <- run_floors(lib, TRUE)
+  expect_identical(res$installed, c("pkgB", "pkgC"))
+  expect_match(res$out, "HVTIR_UNMET=pkgA needs pkgB (>= 2.0), has 1.0;",
+               fixed = TRUE)
+  expect_match(res$out, "pkgA needs pkgC (> 1.0), has none", fixed = TRUE)
+  expect_match(res$out, "QUIT5", fixed = TRUE)
+})
+
+test_that("without upgrade the floor step installs nothing and exits 5", {
+  lib <- withr::local_tempdir()
+  dep_pkg(lib, "pkgA", "1.0", "Imports: pkgB (>= 2.0)")
+  dep_pkg(lib, "pkgB", "1.0")
+  res <- run_floors(lib, FALSE)
+  expect_null(res$installed)
+  expect_match(res$out, "HVTIR_UNMET=pkgA needs pkgB (>= 2.0), has 1.0",
+               fixed = TRUE)
+  expect_match(res$out, "QUIT5", fixed = TRUE)
+})
+
+test_that("child 2 meets floors after the LinkingTo fill, before the guard", {
+  at <- anchor_at(finish_expr("/tmp", c(pkgA = "1.0"), repos = c(CRAN = "u")))
+  expect_true(at("LinkingTo") < at("unmet <- unmet_requirements(lib)"))
+  expect_true(at("unmet <- unmet_requirements(lib)") < at("quit(status = 5L"))
+  expect_true(at("quit(status = 5L") < at("changed <- "))
+  expect_match(finish_expr("/tmp", c(pkgA = "1.0"), repos = c(CRAN = "u")),
+               "unique(unmet$dep), project = ", fixed = TRUE)
+  expect_match(finish_expr("/tmp", c(pkgA = "1.0"), repos = c(CRAN = "u")),
+               "prompt = FALSE, repos = hvtir_repos); cat('\\nHVTIR_RAISED",
+               fixed = TRUE)
+})
+
+test_that("setup() aborts on unmet requirements, lockfile unchanged", {
+  root <- withr::local_tempdir()
+  local_setup(
+    run_status = 5L,
+    run_output = paste0(
+      "HVTIR_UNMET=readxl needs cpp11 (>= 0.5.5), has 0.5.4;",
+      "devtools needs pak (>= 0.9.3), has 0.9.2\n"
+    )
+  )
+  err <- tryCatch(
+    setup("A study", 7L, root = root, upgrade = FALSE),
+    error = conditionMessage
+  )
+  expect_match(err, "readxl needs cpp11 (>= 0.5.5), has 0.5.4", fixed = TRUE)
+  expect_match(err, "devtools needs pak", fixed = TRUE)
+  expect_match(err, "renv.lock", fixed = TRUE)
+  expect_match(err, "unchanged", fixed = TRUE)
+  expect_match(err, "upgrade = TRUE", fixed = TRUE)
+  expect_match(err, "installing the required versions", fixed = TRUE)
+  err <- tryCatch(setup("A study", 7L, root = root), error = conditionMessage)
+  expect_match(err, "still unmet", fixed = TRUE)
+  expect_no_match(err, "(the default) resolves", fixed = TRUE)
+})
+
+test_that("raised packages that moved get their own group in the report", {
+  got <- grouped_moves(
+    c("hvtiR:1.0->1.1", "officer:0.7.4->0.7.7", "cpp11:0.5.4->0.5.5"),
+    raised = "cpp11"
+  )
+  expect_identical(
+    unname(got),
+    c("Family packages", "hvtiR 1.0 -> 1.1",
+      "Dependencies the family needs", "officer 0.7.4 -> 0.7.7",
+      "Other unmet requirements resolved", "cpp11 0.5.4 -> 0.5.5")
+  )
+  root <- withr::local_tempdir()
+  local_setup(
+    run_output = paste0(
+      "HVTIR_RAISED=cpp11\nHVTIR_MOVED=cpp11:0.5.4->0.5.5\nHVTIR_LIB=@LIB@\n"
+    )
+  )
+  expect_message(setup("A study", 7L, root = root),
+                 "Other unmet requirements resolved")
 })
