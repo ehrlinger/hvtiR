@@ -288,7 +288,8 @@ DEBRIS_SRC <- paste(
   "entries <- list.files(lib, all.files = TRUE, no.. = TRUE);",
   "path <- file.path(lib, entries);",
   "link <- nzchar(Sys.readlink(path));",
-  "dead <- link & (!file.exists(path) | file.access(path, 4L) != 0L);",
+  "dead <- link & (!file.exists(path) | file.access(path, 4L) != 0L |",
+  "(dir.exists(path) & file.access(path, 1L) != 0L));",
   "staging <- entries == '_cache' & !link & dir.exists(path) &",
   "!file.exists(file.path(path, 'DESCRIPTION'));",
   "c(entries[staging], entries[dead]) }"
@@ -391,8 +392,11 @@ study_root_or_wd <- function(study_root) {
 #' `setup()` replaces packages this session has loaded and would install into
 #' the study library through this session.
 #' @param root The study root, or `NULL`.
+#' @param study,study_tracker_id,adopt As passed to [setup()], quoted back in
+#'   the command the message offers.
 #' @noRd
-guard_session <- function(root) {
+guard_session <- function(root, study, study_tracker_id,
+                          adopt = FALSE) {
   active <- renv_state() == "active"
   guess <- if (is.null(root)) cheap_study_root() else root
   if (!active && !path_within(session_library(), guess)) return(invisible())
@@ -403,14 +407,22 @@ guard_session <- function(root) {
   } else {
     guess
   }
+  # Read by cli's glue below, which lintr cannot see.
+  # nolint next: object_usage_linter.
+  cmd <- paste0(
+    "hvtiR::setup(root = ", deparse1(target), ", study = ", deparse1(study),
+    ", study_tracker_id = ", deparse1(study_tracker_id),
+    if (isTRUE(adopt)) ", adopt = TRUE", ", ...)"
+  )
   cli::cli_abort(c(
     paste(
       "{.fn setup} replaces packages this session has loaded, and would",
       "install into the study's library through this session."
     ),
+    i = "Run it from a session started outside any project: {.code {cmd}}",
     i = paste(
-      "Run it from a session started outside any project:",
-      "{.code hvtiR::setup(root = \"{target}\", ...)}."
+      "In RStudio, File > Close Project; check that",
+      "{.code Sys.getenv(\"RENV_PROJECT\")} is empty."
     )
   ))
 }
@@ -478,7 +490,7 @@ setup <- function(study, study_tracker_id, root = NULL, adopt = FALSE, ...) {
       i = "Use {.fn hvtiRutilities::study_setup} for a study without renv."
     ))
   }
-  guard_session(root)
+  guard_session(root, study, study_tracker_id, adopt)
   if (is.null(root)) {
     root <- study_root_or_wd(utilities_fn("study_root"))
   }
@@ -546,14 +558,6 @@ setup <- function(study, study_tracker_id, root = NULL, adopt = FALSE, ...) {
   )
   unlinked <- grep("^HVTIR_UNLINKED=", strsplit(result$output, "\n")[[1L]],
                    value = TRUE)
-  if (length(unlinked)) {
-    gone <- strsplit(sub("^HVTIR_UNLINKED=", "", unlinked[1L]), ",",
-                     fixed = TRUE)[[1L]]
-    cli::cli_alert_info(paste(
-      "Removed {length(gone)} unreadable cache link{?s} from the study's",
-      "library and reinstalled: {.pkg {gone}}."
-    ))
-  }
   moved <- grep("^HVTIR_CHANGED=", strsplit(result$output, "\n")[[1L]],
                 value = TRUE)
   if (length(moved)) {
@@ -580,6 +584,14 @@ setup <- function(study, study_tracker_id, root = NULL, adopt = FALSE, ...) {
       "Installing the study's packages failed.",
       x = "{tail_lines(result$output)}",
       hint
+    ))
+  }
+  if (length(unlinked)) {
+    gone <- strsplit(sub("^HVTIR_UNLINKED=", "", unlinked[1L]), ",",
+                     fixed = TRUE)[[1L]]
+    cli::cli_alert_info(paste(
+      "Removed {length(gone)} unreadable cache link{?s} from the study's",
+      "library and reinstalled: {.pkg {gone}}."
     ))
   }
   lib <- sub(

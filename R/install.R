@@ -321,7 +321,8 @@ warn_shared_cache <- function() {
     i = paste(
       "They link into a cache this user cannot read, or are left over from",
       "a failed install. Run {.code renv::settings$use.cache(FALSE)} and",
-      "{.code renv::isolate()} in the study, then remove the links, or run",
+      "{.code renv::isolate()} in the study, then remove each LINK only,",
+      "never its target ({.code file.remove(<link>)}), or run",
       "{.code hvtiR::setup(root = \"<study>\")} from a session started",
       "outside the project."
     )

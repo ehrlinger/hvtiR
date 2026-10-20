@@ -432,6 +432,9 @@ test_that("setup aborts with renv active, before anything can install", {
   expect_match(err, "/studies/demo", fixed = TRUE)
   expect_match(err, "root =", fixed = TRUE)
   expect_match(err, "outside", fixed = TRUE)
+  expect_match(err, "A study", fixed = TRUE)
+  expect_match(err, "study_tracker_id = 7L", fixed = TRUE)
+  expect_match(err, "Close Project", fixed = TRUE)
   expect_identical(seen, character(0))
 })
 
@@ -445,6 +448,12 @@ test_that("an explicit root is named in the message when renv is active", {
     setup("A study", 7L, root = "/studies/other"), error = conditionMessage
   )
   expect_match(err, "/studies/other", fixed = TRUE)
+  expect_match(err, "Close Project", fixed = TRUE)
+  err <- tryCatch(
+    setup("A study", 7L, root = "/studies/other", adopt = TRUE),
+    error = conditionMessage
+  )
+  expect_match(err, "adopt = TRUE", fixed = TRUE)
 })
 
 test_that("an old hvtiRutilities and root NULL install nothing first", {
@@ -522,6 +531,20 @@ test_that("unlink_expr removes unreadable links and nothing else", {
   expect_no_match(out, "readable,|,readable$|=readable")
 })
 
+test_that("a link to an unsearchable directory is removed, target kept", {
+  skip_on_os("windows")
+  skip_if(identical(Sys.info()[["user"]], "root"), "root reads everything")
+  fx <- lib_fixture()
+  tgt <- file.path(fx$targets, "noexec")
+  dir.create(tgt)
+  file.symlink(tgt, file.path(fx$lib, "noexec"))
+  Sys.chmod(tgt, "444")
+  withr::defer(Sys.chmod(tgt, "755"))
+  run_unlink(fx$lib)
+  expect_false("noexec" %in% list.files(fx$lib))
+  expect_true(dir.exists(tgt))
+})
+
 test_that("unlink_expr prints nothing when the library is clean", {
   skip_on_os("windows")
   lib <- withr::local_tempdir()
@@ -570,6 +593,23 @@ test_that("the child cleans, drops the cache, isolates, then restores", {
   expect_match(expr, "snapshot.type('explicit'", fixed = TRUE)
 })
 
+test_that("setup does not claim a reinstall when the install failed", {
+  root <- withr::local_tempdir()
+  local_setup(run_output = "HVTIR_UNLINKED=dplyr\n", run_status = 1L)
+  msgs <- character(0)
+  tryCatch(
+    withCallingHandlers(
+      setup("A study", 7L, root = root),
+      message = function(m) {
+        msgs <<- c(msgs, conditionMessage(m))
+        invokeRestart("muffleMessage")
+      }
+    ),
+    error = function(e) NULL
+  )
+  expect_false(any(grepl("reinstalled", msgs, fixed = TRUE)))
+})
+
 test_that("setup reports the links the child removed", {
   root <- withr::local_tempdir()
   local_setup(run_output = "HVTIR_UNLINKED=dplyr,_cache\nHVTIR_LIB=@LIB@\n")
@@ -599,6 +639,9 @@ test_that("install_members warns about debris when renv is active", {
   )
   expect_warning(
     install_members("hvtiPlotR"), "dplyr", fixed = TRUE
+  )
+  expect_warning(
+    install_members("hvtiPlotR"), "file.remove", fixed = TRUE
   )
 })
 
