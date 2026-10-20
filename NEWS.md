@@ -1,5 +1,40 @@
 Package: hvtiR
-Version: 1.2.9
+Version: 1.3.0
+
+# hvtiR 1.3.0
+
+* Catalog versions refreshed from CRAN and `main`: `hvtiRtables` dev 1.0.5
+  to 1.0.7. The catalog ships in the package and is published as
+  `members.json`, so its recorded versions are content rather than
+  bookkeeping.
+
+* Family floors refreshed from `main`: `hvtiRtemplates` Suggests
+  `hvtiRtables` (>= 1.0.5) to (>= 1.0.7). `family-floors.csv` ships in the
+  package and records the version floors members declare on one another.
+
+* New `setup()` sets up a study's environment in one command: it cleans up template copies before renv,
+  declares the family and the packages it needs, installs them into the study's library, and snapshots.
+  renv runs in explicit mode, so the lockfile records what the study declares.
+  A study with a `renv.lock` keeps its locked versions, and every package that lockfile recorded is declared on first conversion.
+* `doctor()` reports a member whose dependencies are not on the library path, and a study lockfile made
+  under a different R.
+* `setup()` installs the subdirectory remotes that members pin (read from their DESCRIPTIONs, such as `boostmtree`)
+  in a first `renv::install()` call, which works around a renv 1.2.4 failure ("target file ... already exists") on a cold cache.
+* `setup()` warns before it writes anything when no GitHub credentials are found, and says how to create them,
+  and a failed install that reports missing authentication credentials says so too.
+* `setup()` never upgrades a locked package: if declaring a new package would move a locked dependency, it restores the locked versions, leaves `renv.lock` unchanged and stops, naming the change; `update()` is the way to move versions.
+
+* Catalog versions refreshed from CRAN and `main`: `ggBoostedTrees` dev
+  0.9.2 to 0.9.3; `hvtiPlotR` dev 2.8.11 to 2.8.14; `hvtiRdatabuild` dev
+  0.3.1 to 0.3.2; `hvtiRtables` dev 1.0.7 to 1.0.8; `hvtiRutilities` dev
+  1.5.5 to 1.5.7. The catalog ships in the package and is published as
+  `members.json`, so its recorded versions are content rather than
+  bookkeeping.
+
+* Family floors refreshed from `main`: `hvtiRdatabuild` Imports
+  `hvtiRutilities` (>= 1.5.1) to (>= 1.5.2); `hvtiRtemplates` Imports
+  `hvtiRutilities` (>= 1.5.1) to (>= 1.5.2). `family-floors.csv` ships in
+  the package and records the version floors members declare on one another.
 
 # hvtiR 1.2.9
 
