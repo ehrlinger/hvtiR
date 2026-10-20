@@ -4,7 +4,7 @@ hvtiRdatabuild,Imports,hvtiRutilities,>=,1.5.2,1.5.7,TRUE
 hvtiRdatabuild,Suggests,hvtiPlotR,,,2.8.14,
 hvtiRlifetables,Imports,TemporalHazard,>=,1.2.0,1.2.16,TRUE
 hvtiRpropensity,Suggests,hvtiPlotR,,,2.8.14,
-hvtiRtemplates,Imports,hvtiRutilities,>=,1.5.2,1.5.7,TRUE
+hvtiRtemplates,Imports,hvtiRutilities,>=,1.5.7,1.5.7,TRUE
 hvtiRtemplates,Suggests,TemporalHazard,>=,1.2.12,1.2.16,TRUE
 hvtiRtemplates,Suggests,ggBoostedTrees,>=,0.9.1,0.9.3,TRUE
 hvtiRtemplates,Suggests,ggRandomForests,>=,4.0.0,4.0.0,TRUE
