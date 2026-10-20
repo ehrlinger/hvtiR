@@ -516,7 +516,10 @@ test_that("a locked package moved by the install stops, lockfile unchanged", {
   expect_match(err, "2.0", fixed = TRUE)
   expect_match(err, "pkgC", fixed = TRUE)
   expect_match(err, "unchanged", fixed = TRUE)
-  expect_match(err, "update", fixed = TRUE)
+  expect_match(err, "upgrade = TRUE", fixed = TRUE)
+  expect_match(err, "the default", fixed = TRUE)
+  expect_match(err, "upgrade = FALSE", fixed = TRUE)
+  expect_no_match(err, "update", fixed = TRUE)
 })
 
 test_that("the LinkingTo fill defaults to renv::install, with no test hook", {
@@ -527,8 +530,10 @@ test_that("the LinkingTo fill defaults to renv::install, with no test hook", {
 
 # The guard and its cleanup, run against a temporary library.
 
-run_guard <- function(lib, before, sha, libpkgs, restore_error = NULL) {
+run_guard <- function(lib, before, sha, libpkgs, restore_error = NULL,
+                      upgrade = FALSE) {
   env <- new.env()
+  env$upgrade <- upgrade
   env$lib <- lib
   env$before <- before
   env$sha <- sha
@@ -596,6 +601,107 @@ test_that("a failed rollback restore is named and the guard still exits 3", {
   expect_match(res$out, "no token", fixed = TRUE)
   expect_match(res$out, "HVTIR_CHANGED=pkgA", fixed = TRUE)
   expect_match(res$out, "QUIT", fixed = TRUE)
+})
+
+test_that("the guard compares versions as versions, not strings", {
+  lib <- withr::local_tempdir()
+  fake_pkg(lib, "pkgA")
+  writeLines(c("Package: pkgA", "Version: 1.2-5", "Title: x"),
+             file.path(lib, "pkgA", "DESCRIPTION"))
+  res <- run_guard(lib, c(pkgA = "1.2-5"), c(pkgA = ""), "pkgA")
+  expect_identical(res$out, "")
+  expect_null(res$restored)
+  res <- run_guard(lib, c(pkgA = "1.2-6"), c(pkgA = ""), "pkgA")
+  expect_match(res$out, "HVTIR_CHANGED=pkgA", fixed = TRUE)
+})
+
+test_that("the guard finds a recommended package in the system library", {
+  lib <- withr::local_tempdir()
+  sys <- withr::local_tempdir()
+  fake_pkg(sys, "mgcv")
+  withr::local_libpaths(sys, action = "prefix")
+  res <- run_guard(lib, c(mgcv = "1.0"), c(mgcv = ""), character(0))
+  expect_identical(res$out, "")
+  expect_null(res$restored)
+  res <- run_guard(lib, c(nowhere = "1.0"), c(nowhere = ""), character(0))
+  expect_match(res$out, "HVTIR_CHANGED=nowhere:1.0->NA", fixed = TRUE)
+})
+
+test_that("with upgrade the guard reports the moves and does not roll back", {
+  lib <- withr::local_tempdir()
+  sha_pkg(lib, "pkgA", "bbb")
+  fake_pkg(lib, "pakAdded")
+  res <- run_guard(
+    lib, c(pkgA = "0.9"), c(pkgA = "aaa"), "pkgA", upgrade = TRUE
+  )
+  expect_match(res$out, "HVTIR_MOVED=pkgA:0.9->1.0", fixed = TRUE)
+  expect_match(res$out, "RemoteSha aaa->bbb", fixed = TRUE)
+  expect_no_match(res$out, "QUIT", fixed = TRUE)
+  expect_no_match(res$out, "HVTIR_CHANGED", fixed = TRUE)
+  expect_null(res$restored)
+  expect_true(dir.exists(file.path(lib, "pakAdded")))
+})
+
+test_that("child 2 carries the upgrade flag", {
+  expect_match(finish_expr("/tmp", c(pkgA = "1.0")),
+               "upgrade <- TRUE", fixed = TRUE)
+  expect_match(finish_expr("/tmp", c(pkgA = "1.0"), upgrade = FALSE),
+               "upgrade <- FALSE", fixed = TRUE)
+})
+
+test_that("setup() by default reports the moves and carries on", {
+  root <- withr::local_tempdir()
+  log <- local_setup(
+    run_output = paste0(
+      "HVTIR_MOVED=pkgA:0.9->1.0,pkgB:1.0->2.0 (RemoteSha aaa->bbb)\n",
+      "HVTIR_LIB=@LIB@\n"
+    )
+  )
+  expect_message(
+    setup("A study", 7L, root = root), "pkgB"
+  )
+  expect_match(log$expr, "upgrade <- TRUE", fixed = TRUE)
+  expect_identical(utils::tail(log$steps, 1L), "open")
+  expect_false("upgrade" %in% names(log$setup_args))
+  log <- local_setup()
+  setup("A study", 7L, root = root, upgrade = FALSE)
+  expect_match(log$expr, "upgrade <- FALSE", fixed = TRUE)
+})
+
+test_that("moves are grouped: the family, then the dependencies it needs", {
+  mixed <- grouped_moves(c(
+    "hvtiRutilities:0.3.0->1.5.8 (RemoteSha 5585df8->eedc575)",
+    "officer:0.7.4->0.7.7"
+  ))
+  expect_identical(
+    unname(mixed),
+    c("Family packages",
+      "hvtiRutilities 0.3.0 -> 1.5.8 (RemoteSha 5585df8 -> eedc575)",
+      "Dependencies the family needs", "officer 0.7.4 -> 0.7.7")
+  )
+  fam <- grouped_moves(c("hvtiR:1.0->1.1", "hvtiRutilities:1->2"))
+  expect_identical(sum(names(fam) == "i"), 1L)
+  expect_identical(unname(fam)[1L], "Family packages")
+  deps <- grouped_moves("officer:0.7.4->0.7.7")
+  expect_identical(unname(deps)[1L], "Dependencies the family needs")
+  expect_length(deps, 2L)
+})
+
+test_that("the abort lists a guard trip in the same two groups", {
+  root <- withr::local_tempdir()
+  local_setup(
+    run_status = 3L,
+    run_output = paste0(
+      "HVTIR_CHANGED=hvtiRutilities:0.3.0->1.5.8,officer:0.7.4->0.7.7\n"
+    )
+  )
+  err <- tryCatch(
+    setup("A study", 7L, root = root, upgrade = FALSE),
+    error = conditionMessage
+  )
+  expect_match(err, "Family packages", fixed = TRUE)
+  expect_match(err, "Dependencies the family needs", fixed = TRUE)
+  expect_match(err, "officer 0.7.4 -> 0.7.7", fixed = TRUE)
 })
 
 test_that("child 1 reports RemoteSha and the library's packages", {

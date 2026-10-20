@@ -1,0 +1,2 @@
+* `setup()` no longer reports false moves from its lock guard. It compares versions as versions (`1.2-5` is `1.2.5`) and looks packages up across every library on the path, so recommended packages in R's system library (`mgcv`, `nlme`, `survival`, ...) are found.
+* New `upgrade` argument to `setup()`. The default, `TRUE`, lets the install move locked versions the declared family needs, lists each move and records it in `renv.lock`. `upgrade = FALSE` keeps a study in revision on its locked versions: the guard rolls back as before, and its message now says how to move them.

@@ -4,7 +4,7 @@
 \alias{setup}
 \title{Set up a study's environment}
 \usage{
-setup(study, study_tracker_id, root = NULL, adopt = FALSE, ...)
+setup(study, study_tracker_id, root = NULL, adopt = FALSE, upgrade = TRUE, ...)
 }
 \arguments{
 \item{study}{The Study Tracker title.}
@@ -16,6 +16,14 @@ directory, or the working directory.}
 
 \item{adopt}{Set up an existing study, adding only what is missing.
 Adopting cleans up template copies unless \code{cleanup = FALSE} is passed.}
+
+\item{upgrade}{Whether the install may move versions the lockfile pins.
+The default, \code{TRUE}, moves them when the declared family needs newer
+ones: the guard lists each move (package, old and new version,
+\code{RemoteSha} changes) and the snapshot records the new versions. Pass
+\code{FALSE} for a study in revision, whose versions must not move: a locked
+package the install would move then stops the run and \code{renv.lock} is
+left unchanged.}
 
 \item{...}{Passed to \code{hvtiRutilities::study_setup()}, such as \code{cleanup},
 \code{template_dir} or \code{owner}. \code{renv} is not accepted: \code{setup()} always uses
@@ -40,8 +48,9 @@ renv runs in explicit mode: the lockfile records what the study's
 that already has a \code{renv.lock} keeps its locked versions, and on first
 conversion every package that lockfile recorded is declared, so none drop
 out. They are restored, and only packages the lockfile lacks are installed.
-Moving a study's versions is \code{\link[=update]{update()}}'s job, and the study owner's
-decision.
+By default (\code{upgrade = TRUE}) it moves locked versions the declared family
+needs and says which; \code{upgrade = FALSE} keeps a study in revision on its
+locked versions.
 
 \code{setup()} replaces packages in the study's library, so run it from a
 session started outside the study project, passing \code{root}. From inside
