@@ -20,6 +20,7 @@
 - No `git add -A` after a test run (failing runs write `tests/testthat/_problems/`). Stage named files.
 - Release order: **Part A (`hvtiRtemplates`, `hvtiRdatabuild`) merges before Part B**; then B, C, D. A version floor on another family package moves only in the depending package's own bump.
 - Commit messages end with `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`.
+- A call that uses an argument or function from another family package is checked against the **floor** in `DESCRIPTION`, not against that package's `main`: raise the floor in the same PR when the floor predates it. (Part A shipped `renv =` against a `hvtiRutilities (>= 1.5.1)` floor; the arguments arrived in 1.5.2. Found in review on #365 and hvtiRdatabuild#95.)
 
 ## File map
 
