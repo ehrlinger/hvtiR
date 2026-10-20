@@ -148,15 +148,125 @@ path_within <- function(path, dir) {
   identical(path, dir) || startsWith(path, paste0(sub("/$", "", dir), "/"))
 }
 
+#' Subdirectory remotes the members pin
+#'
+#' Parses a DESCRIPTION `Remotes` field and keeps the GitHub entries whose repo
+#' has a subdirectory, `[name=]owner/repo/subdir[@ref]`. See [subdir_remotes()]
+#' for why they are wanted.
+#' @param remotes The `Remotes` field, one string (entries separated by commas
+#'   or newlines), or `NA`/`NULL`.
+#' @return A character vector of specs, named by the package each installs
+#'   (the `name=` part, else the subdirectory's last component).
+#' @noRd
+parse_subdir_remotes <- function(remotes) {
+  if (length(remotes) != 1L || is.na(remotes)) return(character(0))
+  entries <- trimws(strsplit(remotes, "[,\n]")[[1L]])
+  entries <- entries[nzchar(entries)]
+  # `owner/repo/subdir[@ref]`, optionally `name=` and `github::`. Any other
+  # host (`gitlab::`, `url::`) carries a colon and falls out here.
+  pattern <- paste0(
+    "^(?:([A-Za-z0-9_.]+)=)?(?:github::)?",
+    "[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+/([A-Za-z0-9_./-]+)(?:@\\S+)?$"
+  )
+  hit <- grepl(pattern, entries, perl = TRUE)
+  entries <- entries[hit]
+  name <- sub(pattern, "\\1", entries, perl = TRUE)
+  subdir <- sub(pattern, "\\2", entries, perl = TRUE)
+  name[!nzchar(name)] <- basename(subdir[!nzchar(name)])
+  names(entries) <- name
+  entries[!duplicated(entries)]
+}
+
+#' Subdirectory remotes that the members' DESCRIPTIONs pin
+#'
+#' Workaround for a renv 1.2.4 bug in `renv_graph_install()`: a package with a
+#' `RemoteSubdir` (such as boostmtree, which ggBoostedTrees pins to a
+#' subdirectory of `boostmtree_src`) must be unpacked before it builds. When it
+#' becomes ready while every install slot is busy it is unpacked into staging,
+#' then prepared again on the next pass and fails "target file ... already
+#' exists". That needs a cold renv cache, which is every new study. Installing
+#' these packages in a first, separate `renv::install()` call means the main
+#' call finds them satisfied and never takes the unpack path. The pins are read
+#' from GitHub, not written here, because the tags move. Remove this, and the
+#' first install call in [install_expr()], once renv fixes the bug.
+#'
+#' A member whose DESCRIPTION cannot be read is named in a warning, not
+#' skipped silently: the main install may still succeed on a warm cache.
+#' @param registry The registry, as returned by [members()].
+#' @return A character vector of specs named by package, without duplicates.
+#' @noRd
+subdir_remotes <- function(registry = members()) {
+  found <- character(0)
+  for (i in seq_len(nrow(registry))) {
+    dcf <- fetch_description(registry$repo[i])
+    if (is.null(dcf)) {
+      cli::cli_warn(c(
+        "Could not read {.pkg {registry$package[i]}}'s DESCRIPTION.",
+        i = paste(
+          "Its subdirectory remotes cannot be installed ahead of the rest;",
+          "the install may fail on a cold {.pkg renv} cache."
+        )
+      ))
+      next
+    }
+    remotes <- if ("Remotes" %in% colnames(dcf)) dcf[1L, "Remotes"] else NA
+    found <- c(found, parse_subdir_remotes(remotes))
+  }
+  found[!duplicated(found)]
+}
+
+#' Can renv reach GitHub with credentials?
+#'
+#' Without them, GitHub's anonymous API limit (60 an hour, shared by everyone
+#' behind one address) stops an install of this size. The child inherits this
+#' session's environment, so a `GITHUB_PAT` set here is enough.
+#' @return `TRUE` or `FALSE`.
+#' @noRd
+github_credentials_available <- function() {
+  if (nzchar(Sys.getenv("GITHUB_PAT"))) return(TRUE)
+  if (!requireNamespace("gitcreds", quietly = TRUE)) return(FALSE)
+  tryCatch(
+    {
+      gitcreds::gitcreds_get("https://github.com")
+      TRUE
+    },
+    error = function(e) FALSE
+  )
+}
+
+#' How to give renv GitHub credentials
+#' @noRd
+github_credentials_hint <- function() {
+  c(
+    i = paste(
+      "Create a token with {.code usethis::create_github_token()}, then store",
+      "it with {.code gitcreds::gitcreds_set()}, or set {.envvar GITHUB_PAT}",
+      "in {.file ~/.Renviron}."
+    )
+  )
+}
+
 #' The child process's install step
 #' @param root The study root.
 #' @param packages Declared package names.
+#' @param subdir Subdirectory remotes, as from [subdir_remotes()]; installed in
+#'   a separate first call (see there for why), when not in the lockfile.
 #' @return One string of R code.
 #' @noRd
-install_expr <- function(root, packages) {
+install_expr <- function(root, packages, subdir = character(0)) {
   p <- deparse1(normalizePath(root, winslash = "/"))
   names_ <- deparse1(packages, width.cutoff = 500L)
   specs <- deparse1(install_specs(packages), width.cutoff = 500L)
+  first <- ""
+  if (length(subdir)) {
+    first <- paste0(
+      "pre <- ", deparse1(unname(subdir), width.cutoff = 500L), "; ",
+      "pre <- pre[!", deparse1(names(subdir), width.cutoff = 500L),
+      " %in% locked]; ",
+      "if (length(pre)) renv::install(pre, project = ", p,
+      ", prompt = FALSE); "
+    )
+  }
   paste0(
     pak_off(),
     "renv::load(", p, "); ",
@@ -164,6 +274,7 @@ install_expr <- function(root, packages) {
     "renv::restore(project = ", p, ", prompt = FALSE); ",
     "locked <- names(renv::lockfile_read(file.path(", p, ", 'renv.lock'))",
     "$Packages); ",
+    first,
     "add <- ", specs, "[!", names_, " %in% locked]; ",
     "if (length(add)) renv::install(add, project = ", p, ", prompt = FALSE); ",
     "renv::snapshot(project = ", p, ", prompt = FALSE); ",
@@ -241,6 +352,14 @@ setup <- function(study, study_tracker_id, root = NULL, adopt = FALSE, ...) {
       )
     ))
   }
+  if (!github_credentials_available()) {
+    cli::cli_alert_warning(paste(
+      "No GitHub credentials found. Installing from GitHub without them hits",
+      "GitHub's anonymous rate limit (60 requests an hour, shared by",
+      "everyone behind one address), and the install is likely to fail."
+    ))
+    cli::cli_bullets(github_credentials_hint())
+  }
   # Defined in status.R; lintr cannot resolve it across source files.
   # nolint next: object_usage_linter.
   locked_r <- lockfile_r_version(root)
@@ -292,11 +411,18 @@ setup <- function(study, study_tracker_id, root = NULL, adopt = FALSE, ...) {
   cli::cli_alert_info(
     "Installing the study's packages; this can take several minutes."
   )
-  result <- run_in_study(install_expr(root, packages), root)
+  result <- run_in_study(
+    install_expr(root, packages, subdir = subdir_remotes()), root
+  )
   if (result$status != 0L) {
+    hint <- NULL
+    if (grepl("authentication credentials", result$output, fixed = TRUE)) {
+      hint <- github_credentials_hint()
+    }
     cli::cli_abort(c(
       "Installing the study's packages failed.",
-      x = "{tail_lines(result$output)}"
+      x = "{tail_lines(result$output)}",
+      hint
     ))
   }
   lib <- sub(

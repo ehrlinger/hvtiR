@@ -18,6 +18,7 @@ local_setup <- function(run_status = 0L,
                           package = character(), missing = character()
                         ),
                         locked_r = NA_character_, locked = NULL,
+                        credentials = TRUE, subdir = character(0),
                         env = parent.frame()) {
   log <- new.env()
   lib <- withr::local_tempdir(.local_envir = env)
@@ -60,6 +61,8 @@ local_setup <- function(run_status = 0L,
       renv_present <<- TRUE
     },
     session_library = function() session_lib,
+    github_credentials_available = function() credentials,
+    subdir_remotes = function(...) subdir,
     unresolved_imports = function(...) gone,
     lockfile_r_version = function(...) locked_r,
     set_workspace_prefs = function() step("prefs"),
@@ -239,4 +242,124 @@ test_that("a lockfile made under another R says the snapshot records this R", {
   root <- withr::local_tempdir()
   local_setup(locked_r = "4.4.1")
   expect_message(setup("A study", 7L, root = root), "snapshot will record")
+})
+
+remotes_field <- paste(
+  "boostmtree=ehrlinger/boostmtree_src/boostmtree@v2.0.7-ccf,",
+  "ehrlinger/hvtiRutilities,",
+  "gitlab::someone/proj/sub,",
+  "url::https://example.org/a/b/c"
+)
+
+test_that("only GitHub remotes with a subdirectory are kept", {
+  got <- parse_subdir_remotes(remotes_field)
+  expect_identical(
+    got,
+    c(boostmtree = "boostmtree=ehrlinger/boostmtree_src/boostmtree@v2.0.7-ccf")
+  )
+})
+
+test_that("a subdirectory remote with no name= is named by its subdirectory", {
+  got <- parse_subdir_remotes("github::o/r/pkgdir@main\no/plain")
+  expect_identical(names(got), "pkgdir")
+  expect_identical(unname(got), "github::o/r/pkgdir@main")
+})
+
+test_that("a missing Remotes field gives nothing", {
+  expect_identical(parse_subdir_remotes(NA), character(0))
+  expect_identical(parse_subdir_remotes(NULL), character(0))
+})
+
+test_that("subdir_remotes reads each member, dedupes, and warns on a failure", {
+  registry <- data.frame(
+    package = c("a", "b", "c"), repo = c("o/a", "o/b", "o/c")
+  )
+  local_mocked_bindings(
+    fetch_description = function(repo, ...) {
+      if (repo == "o/c") return(NULL)
+      cbind(Remotes = "boostmtree=o/src/boostmtree@v1")
+    }
+  )
+  expect_warning(got <- subdir_remotes(registry), "c")
+  expect_identical(unname(got), "boostmtree=o/src/boostmtree@v1")
+  expect_identical(names(got), "boostmtree")
+})
+
+test_that("subdirectory remotes install after restore and before the rest", {
+  expr <- install_expr(
+    "/tmp", c("hvtiR", "arrow"),
+    subdir = c(boostmtree = "boostmtree=o/src/boostmtree@v1")
+  )
+  at <- function(s) regexpr(s, expr, fixed = TRUE)[[1L]]
+  expect_true(at("renv::restore(") < at("boostmtree=o/src/boostmtree@v1"))
+  expect_true(at("boostmtree=o/src/boostmtree@v1") < at("add <- "))
+  expect_true(at("pre <- pre[!\"boostmtree\" %in% locked]") > 0)
+  expect_equal(lengths(regmatches(expr, gregexpr("renv::install(", expr,
+                                                 fixed = TRUE))), 2L)
+})
+
+test_that("with no subdirectory remotes the child makes one install call", {
+  expr <- install_expr("/tmp", c("hvtiR", "arrow"))
+  expect_equal(lengths(regmatches(expr, gregexpr("renv::install(", expr,
+                                                 fixed = TRUE))), 1L)
+})
+
+test_that("setup passes the subdirectory remotes to the child", {
+  root <- withr::local_tempdir()
+  log <- local_setup(subdir = c(boostmtree = "boostmtree=o/src/boostmtree@v1"))
+  setup("A study", 7L, root = root)
+  expect_match(log$expr, "boostmtree=o/src/boostmtree@v1", fixed = TRUE)
+})
+
+test_that("missing GitHub credentials warn and name the fix", {
+  root <- withr::local_tempdir()
+  log <- local_setup(credentials = FALSE)
+  expect_message(
+    setup("A study", 7L, root = root), "rate limit"
+  )
+  expect_message(
+    setup("A study", 7L, root = root), "gitcreds_set"
+  )
+  expect_identical(log$steps[[1L]], "prefs")
+})
+
+test_that("with credentials there is no credentials warning", {
+  root <- withr::local_tempdir()
+  local_setup(credentials = TRUE)
+  expect_no_match(
+    capture.output(setup("A study", 7L, root = root), type = "message"),
+    "rate limit"
+  )
+})
+
+test_that("a GITHUB_PAT counts as credentials", {
+  withr::local_envvar(GITHUB_PAT = "x")
+  expect_true(github_credentials_available())
+})
+
+test_that("with no PAT and no gitcreds there are no credentials", {
+  withr::local_envvar(GITHUB_PAT = "")
+  local_mocked_bindings(
+    requireNamespace = function(...) FALSE, .package = "base"
+  )
+  expect_false(github_credentials_available())
+})
+
+test_that("a failed install with an authentication error adds the hint", {
+  root <- withr::local_tempdir()
+  local_setup(
+    run_status = 1L,
+    run_output = "GitHub authentication credentials are not available\n"
+  )
+  expect_error(setup("A study", 7L, root = root), "gitcreds_set")
+})
+
+test_that("a failed install without that error carries no hint", {
+  root <- withr::local_tempdir()
+  local_setup(run_status = 1L, run_output = "boom\n")
+  expect_error(
+    setup("A study", 7L, root = root), "boom"
+  )
+  err <- tryCatch(setup("A study", 7L, root = root), error = conditionMessage)
+  expect_no_match(err, "gitcreds_set")
 })
