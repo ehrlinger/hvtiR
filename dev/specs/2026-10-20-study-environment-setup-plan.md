@@ -126,6 +126,9 @@ Branch: `git -C ~/Documents/GitHub/hvtiRtemplates worktree add ../hvtiRtemplates
 # defaults: a call that relied on the old ones would start a real renv
 # environment for every temporary study, or stop for want of the template
 # corpus, which exists only on the analysis server.
+# An empty argument, as in x[, 1], is the missing symbol; binding it to a name errors.
+is_empty_arg <- function(a) is.symbol(a) && !nzchar(as.character(a))
+
 calls_to <- function(e, fn) {
   found <- list()
   walk <- function(x) {
@@ -139,9 +142,9 @@ calls_to <- function(e, fn) {
         ""
       }
       if (identical(name, fn)) found[[length(found) + 1L]] <<- x
-      for (arg in as.list(x)[-1L]) if (!identical(arg, quote(expr = ))) walk(arg)
+      for (i in seq_along(x)[-1L]) if (!is_empty_arg(x[[i]])) walk(x[[i]])
     } else if (is.expression(x) || is.pairlist(x)) {
-      for (arg in as.list(x)) if (!identical(arg, quote(expr = ))) walk(arg)
+      for (i in seq_along(x)) if (!is_empty_arg(x[[i]])) walk(x[[i]])
     }
   }
   walk(e)
