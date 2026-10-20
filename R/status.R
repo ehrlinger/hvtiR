@@ -380,23 +380,37 @@ renv_state <- function(installed = renv_available(),
 #'
 #' @param packages Character vector of package names; uninstalled ones are
 #'   skipped.
-#' @param lib.loc Library paths to search.
+#' @param lib_loc Library paths to search.
 #' @return A data frame with character columns `package` and `missing`.
 #' @noRd
-unresolved_imports <- function(packages, lib.loc = .libPaths()) {
-  base <- rownames(utils::installed.packages(lib.loc = .Library, priority = "base"))
-  found <- function(p) length(find.package(p, lib.loc = lib.loc, quiet = TRUE)) > 0L
+unresolved_imports <- function(packages, lib_loc = .libPaths()) {
+  base <- rownames(
+    utils::installed.packages(lib.loc = .Library, priority = "base")
+  )
+  found <- function(p) {
+    length(find.package(p, lib.loc = lib_loc, quiet = TRUE)) > 0L
+  }
+  fields <- c("Depends", "Imports", "LinkingTo")
   rows <- lapply(packages, function(p) {
-    path <- find.package(p, lib.loc = lib.loc, quiet = TRUE)
-    if (!length(path)) return(NULL)
-    dcf <- read.dcf(file.path(path[1L], "DESCRIPTION"), fields = c("Depends", "Imports", "LinkingTo"))
-    deps <- trimws(sub("\\(.*$", "", unlist(strsplit(dcf[!is.na(dcf)], ",", fixed = TRUE))))
+    path <- find.package(p, lib.loc = lib_loc, quiet = TRUE)
+    if (!length(path)) {
+      return(NULL)
+    }
+    dcf <- read.dcf(file.path(path[1L], "DESCRIPTION"), fields = fields)
+    deps <- unlist(strsplit(dcf[!is.na(dcf)], ",", fixed = TRUE))
+    deps <- trimws(sub("\\(.*$", "", deps))
     deps <- setdiff(deps[nzchar(deps)], c("R", base))
     gone <- deps[!vapply(deps, found, logical(1))]
-    if (length(gone)) data.frame(package = p, missing = gone, stringsAsFactors = FALSE)
+    if (length(gone)) {
+      data.frame(package = p, missing = gone, stringsAsFactors = FALSE)
+    }
   })
   out <- do.call(rbind, rows)
-  if (is.null(out)) data.frame(package = character(), missing = character()) else out
+  if (is.null(out)) {
+    data.frame(package = character(), missing = character())
+  } else {
+    out
+  }
 }
 
 #' The R version a study's renv.lock records
@@ -409,9 +423,12 @@ unresolved_imports <- function(packages, lib.loc = .libPaths()) {
 #' @noRd
 lockfile_r_version <- function(root) {
   path <- file.path(root, "renv.lock")
-  if (!file.exists(path)) return(NA_character_)
+  if (!file.exists(path)) {
+    return(NA_character_)
+  }
   text <- paste(readLines(path, warn = FALSE), collapse = "\n")
-  hit <- regmatches(text, regexec('"R"\\s*:\\s*\\{[^}]*?"Version"\\s*:\\s*"([^"]+)"', text, perl = TRUE))[[1L]]
+  pattern <- '"R"\\s*:\\s*\\{[^}]*?"Version"\\s*:\\s*"([^"]+)"'
+  hit <- regmatches(text, regexec(pattern, text, perl = TRUE))[[1L]]
   if (length(hit) == 2L) hit[2L] else NA_character_
 }
 
@@ -705,18 +722,33 @@ doctor <- function(remote = TRUE) {
     gone <- unresolved_imports(c("hvtiR", members()$package))
     for (i in seq_len(nrow(gone))) {
       cli::cli_alert_danger(
-        "{.pkg {gone$package[i]}} is installed, but its dependency {.pkg {gone$missing[i]}} is not on this library path"
+        paste0(
+          "{.pkg {gone$package[i]}} is installed, but its dependency ",
+          "{.pkg {gone$missing[i]}} is not on this library path"
+        )
       )
     }
     if (nrow(gone)) {
-      cli::cli_alert_info("Run {.code hvtiR::setup()} in the study project; do not install these one at a time.")
+      cli::cli_alert_info(
+        paste0(
+          "Run {.code hvtiR::setup()} in the study project; ",
+          "do not install these one at a time."
+        )
+      )
     }
 
     project <- Sys.getenv("RENV_PROJECT", "")
-    locked_r <- if (nzchar(project)) lockfile_r_version(project) else NA_character_
+    locked_r <- if (nzchar(project)) {
+      lockfile_r_version(project)
+    } else {
+      NA_character_
+    }
     if (!is.na(locked_r) && !identical(locked_r, as.character(current))) {
       cli::cli_alert_warning(
-        "This study's {.file renv.lock} was made under R {locked_r}; this session runs R {current}."
+        paste0(
+          "This study's {.file renv.lock} was made under R {locked_r}; ",
+          "this session runs R {current}."
+        )
       )
     }
 
