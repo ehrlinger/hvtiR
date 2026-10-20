@@ -255,13 +255,49 @@ DEBRIS_SRC <- paste(
   "entries <- list.files(lib, all.files = TRUE, no.. = TRUE);",
   "path <- file.path(lib, entries);",
   "link <- nzchar(Sys.readlink(path));",
+  "desc <- file.path(path, 'DESCRIPTION');",
   "dead <- link & (!file.exists(path) | file.access(path, 4L) != 0L |",
-  "(dir.exists(path) & file.access(path, 1L) != 0L));",
+  "(dir.exists(path) & file.access(path, 1L) != 0L) |",
+  "(file.exists(desc) & file.access(desc, 4L) != 0L));",
   "staging <- entries == '_cache' & !link & dir.exists(path) &",
   "!file.exists(file.path(path, 'DESCRIPTION'));",
   "c(entries[staging], entries[dead]) }"
 )
 library_debris <- eval(parse(text = DEBRIS_SRC))
+
+#' Real packages in a library whose `DESCRIPTION` the user cannot read
+#'
+#' These belong to a teammate and are not ours to delete, so setup stops and
+#' names them. Base R only: [unreadable_expr()] ships it to the child.
+#' @param lib A library path.
+#' @return Names of the package directories (not links) with an existing but
+#'   unreadable `DESCRIPTION`.
+#' @noRd
+# Package constant, spelled like MIN_R_VERSION.
+# nolint next: object_name_linter.
+UNREADABLE_SRC <- paste(
+  "function(lib) {",
+  "entries <- list.files(lib, all.files = TRUE, no.. = TRUE);",
+  "path <- file.path(lib, entries);",
+  "desc <- file.path(path, 'DESCRIPTION');",
+  "entries[!nzchar(Sys.readlink(path)) & dir.exists(path) &",
+  "file.exists(desc) & file.access(desc, 4L) != 0L] }"
+)
+library_unreadable <- eval(parse(text = UNREADABLE_SRC))
+
+#' The child's code to stop on [library_unreadable()] packages
+#' @param lib_var Name of the child's variable holding the library path.
+#' @return One string of R code.
+#' @noRd
+unreadable_expr <- function(lib_var) {
+  paste0(
+    "library_unreadable <- ", UNREADABLE_SRC, "; ",
+    "bad <- library_unreadable(", lib_var, "); ",
+    "if (length(bad)) { cat('\\nHVTIR_UNREADABLE=', ",
+    "paste(bad, collapse = ','), ",
+    "'\\n', sep = ''); quit(status = 4L, save = 'no') }; "
+  )
+}
 
 #' The child's code to clear [library_debris()] from the project library
 #'
@@ -293,6 +329,7 @@ restore_expr <- function(root) {
     pak_off(),
     "renv::load(", p, "); ",
     "lib <- renv::paths$library(project = ", p, "); ",
+    unreadable_expr("lib"),
     # Clear first: a leftover `_cache` makes renv's own library scan fail.
     unlink_expr("lib"),
     "renv::settings$use.cache(FALSE, project = ", p, "); ",
@@ -393,6 +430,19 @@ abort_stage <- function(result, raw) {
         "versions were restored."
       ),
       i = "{.fn update} is the deliberate way to move a study's versions."
+    ))
+  }
+  bad <- child_value(result$output, "HVTIR_UNREADABLE")
+  if (length(bad)) {
+    pkgs <- strsplit(bad[1L], ",", fixed = TRUE)[[1L]]
+    cli::cli_abort(c(
+      "These packages in the study's library cannot be read by you:",
+      stats::setNames(pkgs, rep("x", length(pkgs))),
+      i = paste(
+        "Their owner (or an administrator) must fix the permissions, for",
+        "example {.code chmod -R g+rX <library>/<pkg>}, or remove them.",
+        "{.fn setup} will not delete another user's files."
+      )
     ))
   }
   if (result$status != 0L) {

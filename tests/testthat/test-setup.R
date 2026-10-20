@@ -706,6 +706,73 @@ test_that("unlink_expr keeps a _cache package and never follows a link", {
   expect_identical(out, "")
 })
 
+test_that("a link whose DESCRIPTION is unreadable is removed, target kept", {
+  skip_on_os("windows")
+  skip_if(identical(Sys.info()[["user"]], "root"), "root reads everything")
+  fx <- lib_fixture()
+  tgt <- file.path(fx$targets, "nodesc")
+  dir.create(tgt)
+  writeLines("Package: nodesc", file.path(tgt, "DESCRIPTION"))
+  file.symlink(tgt, file.path(fx$lib, "nodesc"))
+  Sys.chmod(file.path(tgt, "DESCRIPTION"), "000")
+  withr::defer(Sys.chmod(file.path(tgt, "DESCRIPTION"), "644"))
+  expect_true("nodesc" %in% library_debris(fx$lib))
+  run_unlink(fx$lib)
+  expect_false("nodesc" %in% list.files(fx$lib))
+  expect_true(file.exists(file.path(tgt, "DESCRIPTION")))
+})
+
+run_unreadable <- function(lib) {
+  env <- new.env()
+  env$lib <- lib
+  # Defined in setup.R; lintr cannot resolve it across source files.
+  # nolint next: object_usage_linter.
+  code <- unreadable_expr("lib")
+  code <- sub("quit(status = 4L, save = 'no')", "cat('QUIT')", code,
+              fixed = TRUE)
+  paste(capture.output(eval(parse(text = code), env)), collapse = "\n")
+}
+
+test_that("a real package with an unreadable DESCRIPTION is kept and named", {
+  skip_on_os("windows")
+  skip_if(identical(Sys.info()[["user"]], "root"), "root reads everything")
+  lib <- withr::local_tempdir()
+  dir.create(file.path(lib, "theirs"))
+  dir.create(file.path(lib, "fine"))
+  writeLines("Package: theirs", file.path(lib, "theirs", "DESCRIPTION"))
+  writeLines("Package: fine", file.path(lib, "fine", "DESCRIPTION"))
+  Sys.chmod(file.path(lib, "theirs", "DESCRIPTION"), "000")
+  withr::defer(Sys.chmod(file.path(lib, "theirs", "DESCRIPTION"), "644"))
+  expect_identical(library_unreadable(lib), "theirs")
+  expect_false("theirs" %in% library_debris(lib))
+  out <- run_unreadable(lib)
+  expect_match(out, "HVTIR_UNREADABLE=theirs", fixed = TRUE)
+  expect_match(out, "QUIT", fixed = TRUE)
+  expect_true(dir.exists(file.path(lib, "theirs")))
+  expect_identical(run_unreadable(withr::local_tempdir()), "")
+})
+
+test_that("child 1 stops on unreadable packages before changing anything", {
+  expr <- restore_expr("/tmp")
+  at <- function(s) regexpr(s, expr, fixed = TRUE)[[1L]]
+  expect_true(at("HVTIR_UNREADABLE=") < at("HVTIR_UNLINKED="))
+  expect_true(at("quit(status = 4L") < at("use.cache(FALSE"))
+})
+
+test_that("setup names unreadable packages and says who fixes them", {
+  root <- withr::local_tempdir()
+  log <- local_setup(
+    restore_status = 4L,
+    restore_output = "HVTIR_UNREADABLE=theirs,other\n"
+  )
+  err <- tryCatch(setup("A study", 7L, root = root), error = conditionMessage)
+  expect_match(err, "theirs", fixed = TRUE)
+  expect_match(err, "other", fixed = TRUE)
+  expect_match(err, "chmod -R g+rX", fixed = TRUE)
+  expect_match(err, "administrator", fixed = TRUE)
+  expect_length(log$pak_lib, 0L)
+})
+
 test_that("child 1 cleans, drops the cache, isolates, then restores", {
   expr <- restore_expr("/tmp")
   at <- function(s) regexpr(s, expr, fixed = TRUE)[[1L]]
@@ -757,22 +824,29 @@ test_that("library_debris finds unreadable links and a leftover _cache", {
   )
 })
 
-test_that("install_members warns about debris when renv is active", {
+test_that("install_members warns about debris, repair steps in order", {
   local_mocked_bindings(
     pak_install = function(specs) invisible(specs),
     renv_state = function(...) "active",
     session_library = function() "/study/renv/library",
     library_debris = function(lib) c("dplyr", "_cache")
   )
-  expect_warning(
-    install_members("hvtiPlotR"), "use.cache(FALSE)", fixed = TRUE
+  msg <- NULL
+  withCallingHandlers(
+    install_members("hvtiPlotR"),
+    warning = function(w) {
+      msg <<- conditionMessage(w)
+      invokeRestart("muffleWarning")
+    }
   )
-  expect_warning(
-    install_members("hvtiPlotR"), "dplyr", fixed = TRUE
-  )
-  expect_warning(
-    install_members("hvtiPlotR"), "file.remove", fixed = TRUE
-  )
+  expect_match(msg, "dplyr", fixed = TRUE)
+  at <- function(s) regexpr(s, msg, fixed = TRUE)[[1L]]
+  steps <- c("_cache", "file.remove", "use.cache(FALSE)", "isolate()",
+             "renv::restore()")
+  pos <- vapply(steps, at, 1L)
+  expect_true(all(pos > 0L))
+  expect_identical(order(pos), seq_along(steps))
+  expect_true(at("Sys.readlink") < at("file.remove"))
 })
 
 test_that("install_members is quiet about debris without an active project", {
