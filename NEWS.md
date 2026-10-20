@@ -33,7 +33,7 @@ Version: 1.3.0
 
 * Family floors refreshed from `main`: `hvtiRdatabuild` Imports
   `hvtiRutilities` (>= 1.5.1) to (>= 1.5.2); `hvtiRtemplates` Imports
-  `hvtiRutilities` (>= 1.5.1) to (>= 1.5.2). `family-floors.csv` ships in
+  `hvtiRutilities` (>= 1.5.1) to (>= 1.5.7). `family-floors.csv` ships in
   the package and records the version floors members declare on one another.
 
 # hvtiR 1.2.9
