@@ -204,11 +204,23 @@ Cannot install required hvtiPlotR: already loaded in this session.
 i No members were installed. Restart R and run `hvtiR::update()` before anything attaches it.
 i Pass `force = TRUE` to install anyway (unsafe on Windows).</code></pre>
 <p>This is not fussiness. A package whose namespace is loaded cannot be safely overwritten — on Windows the write fails outright and leaves a half-installed library. The returned empty character vector carries a <code>blocked</code> attribute with the loaded package names. Restart R and run the update before you attach anything.</p>
-</section></section><section class="level2"><h2 id="reproducible-installs">Reproducible installs<a class="anchor" aria-label="anchor" href="#reproducible-installs"></a>
+</section></section><section class="level2"><h2 id="set-up-a-study">Set up a study<a class="anchor" aria-label="anchor" href="#set-up-a-study"></a>
+</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb12"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"pak"</span><span class="op">)</span></span>
+<span><span class="fu">pak</span><span class="fu">::</span><span class="fu"><a href="https://pak.r-lib.org/reference/pak.html" class="external-link">pak</a></span><span class="op">(</span><span class="st">"ehrlinger/hvtiR"</span><span class="op">)</span></span>
+<span><span class="fu">hvtiR</span><span class="fu">::</span><span class="fu"><a href="../reference/setup.html">setup</a></span><span class="op">(</span></span>
+<span>  study <span class="op">=</span> <span class="st">"EDIT: the Study Tracker title"</span>,</span>
+<span>  study_tracker_id <span class="op">=</span> <span class="fl">0L</span>  <span class="co"># EDIT: the Study Tracker ID</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+</div>
+<p>Run this once per study, before anything else, from a session started outside the study project, passing <code>root = "&lt;study&gt;"</code>: it cleans up template copies first and only then locks the packages, so the lockfile records what the study declares and not what the templates happened to mention. For an existing (legacy) study pass <code>adopt = TRUE</code>, which is what cleans up its template copies. A study that already has a <code>renv.lock</code> keeps its locked versions, and every package that lockfile recorded is declared on first conversion, so none drop out. It is safe to rerun.</p>
+</section><section class="level2"><h2 id="reproducible-installs">Reproducible installs<a class="anchor" aria-label="anchor" href="#reproducible-installs"></a>
 </h2>
 <p><code><a href="../reference/install.html">hvtiR::install()</a></code> resolves every member from GitHub <code>main</code>, so it gives you the newest code rather than a fixed one. Two people running it a week apart can end up on different commits under the same version number. When an analysis has to be reproducible, pin the versions with <a href="https://rstudio.github.io/renv/" class="external-link">renv</a>:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">renv</span><span class="fu">::</span><span class="fu">init</span><span class="op">(</span><span class="op">)</span>      <span class="co"># once per project</span></span>
 <span><span class="fu">hvtiR</span><span class="fu">::</span><span class="fu"><a href="../reference/install.html">install</a></span><span class="op">(</span><span class="op">)</span>  <span class="co"># installs into the project library</span></span>
 <span><span class="fu">renv</span><span class="fu">::</span><span class="fu">snapshot</span><span class="op">(</span><span class="op">)</span>  <span class="co"># records every package, and each member's commit</span></span></code></pre></div>
@@ -218,7 +230,7 @@ i Pass `force = TRUE` to install anyway (unsafe on Windows).</code></pre>
 </section><section class="level2"><h2 id="when-something-will-not-install">When something will not install<a class="anchor" aria-label="anchor" href="#when-something-will-not-install"></a>
 </h2>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">hvtiR</span><span class="fu">::</span><span class="fu"><a href="../reference/doctor.html">doctor</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 </div>
 <p>The doctor reports on your environment ahead of the status table: the installed <code>hvtiR</code> version, your R version against the family’s strictest requirement, your platform, whether <code>pak</code> is installed to install members with, the package repositories R is configured to use, and whether an <code>renv</code> project is active.</p>

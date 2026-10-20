@@ -14,6 +14,8 @@ Install and update the package family
   : Install every hvtiR member
 - [`update()`](https://ehrlinger.github.io/hvtiR/reference/update.md) :
   Update out-of-date hvtiR members
+- [`setup()`](https://ehrlinger.github.io/hvtiR/reference/setup.md) :
+  Set up a study's environment
 
 ## Checking
 

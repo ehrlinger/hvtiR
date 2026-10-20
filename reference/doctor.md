@@ -8,8 +8,11 @@ reason retained by
 [`status()`](https://ehrlinger.github.io/hvtiR/reference/status.md).
 With `remote`, it also reads each member's `DESCRIPTION` from GitHub and
 names every dependency floor the repositories cannot meet, such as
-`varPro (>= 3.3.0)` against a snapshot that predates it. This is the
-report to run first when a member will not install.
+`varPro (>= 3.3.0)` against a snapshot that predates it. It also names
+any installed member whose dependency is missing from the library path,
+and warns when the study's `renv.lock` was made under a different R
+version than the running one. This is the report to run first when a
+member will not install.
 
 ## Usage
 

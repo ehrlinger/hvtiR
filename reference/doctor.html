@@ -6,14 +6,20 @@ full member status table. When a remote check fails, reports the reason
 retained by status(). With remote, it also reads each member's
 DESCRIPTION from GitHub and names every dependency floor the repositories
 cannot meet, such as varPro (&amp;gt;= 3.3.0) against a snapshot that predates
-it. This is the report to run first when a member will not install."><meta property="og:description" content="Reports the running R version against the strictest requirement in the
+it. It also names any installed member whose dependency is missing from the
+library path, and warns when the study's renv.lock was made under a
+different R version than the running one. This is the report to run first
+when a member will not install."><meta property="og:description" content="Reports the running R version against the strictest requirement in the
 package family, whether pak is installed, the platform, the configured
 package repositories (warning when one is a dated snapshot), and then the
 full member status table. When a remote check fails, reports the reason
 retained by status(). With remote, it also reads each member's
 DESCRIPTION from GitHub and names every dependency floor the repositories
 cannot meet, such as varPro (&amp;gt;= 3.3.0) against a snapshot that predates
-it. This is the report to run first when a member will not install."></head><body>
+it. It also names any installed member whose dependency is missing from the
+library path, and warns when the study's renv.lock was made under a
+different R version than the running one. This is the report to run first
+when a member will not install."></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -63,7 +69,10 @@ full member status table. When a remote check fails, reports the reason
 retained by <code><a href="status.html">status()</a></code>. With <code>remote</code>, it also reads each member's
 <code>DESCRIPTION</code> from GitHub and names every dependency floor the repositories
 cannot meet, such as <code>varPro (&gt;= 3.3.0)</code> against a snapshot that predates
-it. This is the report to run first when a member will not install.</p>
+it. It also names any installed member whose dependency is missing from the
+library path, and warns when the study's <code>renv.lock</code> was made under a
+different R version than the running one. This is the report to run first
+when a member will not install.</p>
     </div>
 
     <div class="section level2">
