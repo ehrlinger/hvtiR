@@ -415,19 +415,25 @@ child_value <- function(output, key) {
   sub(paste0("^", key, "="), "", lines)
 }
 
-#' The study root, found without installing anything
+#' The study root, found without installing or loading anything
 #'
 #' Used by the guard in [setup()], which must run before anything can install.
-#' The active renv project when there is one, else the study enclosing the
-#' working directory if `hvtiRutilities` is already installed (any version),
-#' else the working directory.
+#' Base R only: loading `hvtiRutilities` here would leave its namespace loaded
+#' and block the upgrade that follows. The active renv project when there is
+#' one, else the nearest directory at or above the working directory that holds
+#' `_study.yml`, else the working directory.
 #' @return A path.
 #' @noRd
 cheap_study_root <- function() {
   project <- Sys.getenv("RENV_PROJECT", "")
   if (nzchar(project)) return(project)
-  if (is.na(installed_version("hvtiRutilities"))) return(getwd())
-  study_root_or_wd(getExportedValue("hvtiRutilities", "study_root"))
+  dir <- normalizePath(getwd(), winslash = "/")
+  repeat {
+    if (file.exists(file.path(dir, "_study.yml"))) return(dir)
+    parent <- dirname(dir)
+    if (identical(parent, dir)) return(getwd())
+    dir <- parent
+  }
 }
 
 #' Call `study_root`, falling back to the working directory outside a study

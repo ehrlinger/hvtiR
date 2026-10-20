@@ -582,8 +582,27 @@ test_that("an old hvtiRutilities and root NULL install nothing first", {
 test_that("cheap_study_root prefers RENV_PROJECT and installs nothing", {
   withr::local_envvar(RENV_PROJECT = "/studies/demo")
   expect_identical(cheap_study_root(), "/studies/demo")
+})
+
+test_that("cheap_study_root walks up to _study.yml without loading anything", {
   withr::local_envvar(RENV_PROJECT = "")
-  local_mocked_bindings(installed_version = function(pkg) NA_character_)
+  top <- normalizePath(withr::local_tempdir(), winslash = "/")
+  deep <- file.path(top, "a", "b")
+  dir.create(deep, recursive = TRUE)
+  writeLines("study: x", file.path(top, "_study.yml"))
+  withr::local_dir(deep)
+  loaded <- loadedNamespaces()
+  local_mocked_bindings(installed_version = function(pkg) "1.5.5")
+  expect_identical(cheap_study_root(), top)
+  expect_identical(loadedNamespaces(), loaded)
+  expect_false(isNamespaceLoaded("hvtiRutilities") &&
+                 !"hvtiRutilities" %in% loaded)
+})
+
+test_that("cheap_study_root falls back to the working directory", {
+  withr::local_envvar(RENV_PROJECT = "")
+  wd <- withr::local_tempdir()
+  withr::local_dir(wd)
   expect_identical(cheap_study_root(), getwd())
 })
 
