@@ -23,6 +23,7 @@ Suggests:
     knitr,
     pak,
     quarto,
+    rstudioapi,
     testthat (>= 3.2.0)
 VignetteBuilder: quarto
 SystemRequirements: Quarto command line tool
