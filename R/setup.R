@@ -412,7 +412,7 @@ guard_session <- function(root, study, study_tracker_id,
   cmd <- paste0(
     "hvtiR::setup(root = ", deparse1(target), ", study = ", deparse1(study),
     ", study_tracker_id = ", deparse1(study_tracker_id),
-    if (isTRUE(adopt)) ", adopt = TRUE", ", ...)"
+    if (isTRUE(adopt)) ", adopt = TRUE", ")"
   )
   cli::cli_abort(c(
     paste(
