@@ -59,6 +59,8 @@ utilities_fn <- function(name) {
 #' project; this session's namespaces came from another library. renv's own
 #' installer, not its pak back end: pak skips LinkingTo packages and the
 #' snapshot's validation then aborts (spike check 5). Never force the snapshot.
+#' The caller's code turns the pak back end off itself (see `pak_off()`), since
+#' `system2(env =)` does not work on Windows.
 #' @param expr R code, one string.
 #' @param root The study root.
 #' @return A list: `status` (integer) and `output` (one string).
@@ -68,7 +70,7 @@ run_in_study <- function(expr, root) {
   on.exit(setwd(owd), add = TRUE)
   out <- suppressWarnings(system2(
     file.path(R.home("bin"), "Rscript"), c("--vanilla", "-e", shQuote(expr)),
-    stdout = TRUE, stderr = TRUE, env = "RENV_CONFIG_PAK_ENABLED=FALSE"
+    stdout = TRUE, stderr = TRUE
   ))
   status <- attr(out, "status")
   list(
@@ -108,6 +110,44 @@ open_project <- function(root) {
   invisible(NULL)
 }
 
+#' Code that turns renv's pak back end off in the child
+#' @noRd
+pak_off <- function() "options(renv.config.pak.enabled = FALSE); "
+
+#' The child's code to read the package names a lockfile records
+#' @param root The study root.
+#' @return One string of R code.
+#' @noRd
+locked_expr <- function(root) {
+  p <- deparse1(file.path(normalizePath(root, winslash = "/"), "renv.lock"))
+  paste0(
+    pak_off(),
+    "cat('\\nHVTIR_LOCKED=', paste(names(renv::lockfile_read(", p,
+    ")$Packages), collapse = ','), '\\n', sep = '')"
+  )
+}
+
+#' The first library of this session
+#' @noRd
+session_library <- function() .libPaths()[1L]
+
+#' The last lines of a child's output
+#' @param output One string.
+#' @param n Lines to keep.
+#' @noRd
+tail_lines <- function(output, n = 40L) {
+  lines <- strsplit(output, "\n", fixed = TRUE)[[1L]]
+  paste(utils::tail(lines, n), collapse = "\n")
+}
+
+#' Is `path` inside `dir`?
+#' @noRd
+path_within <- function(path, dir) {
+  path <- normalizePath(path, winslash = "/", mustWork = FALSE)
+  dir <- normalizePath(dir, winslash = "/", mustWork = FALSE)
+  identical(path, dir) || startsWith(path, paste0(sub("/$", "", dir), "/"))
+}
+
 #' The child process's install step
 #' @param root The study root.
 #' @param packages Declared package names.
@@ -118,6 +158,7 @@ install_expr <- function(root, packages) {
   names_ <- deparse1(packages, width.cutoff = 500L)
   specs <- deparse1(install_specs(packages), width.cutoff = 500L)
   paste0(
+    pak_off(),
     "renv::load(", p, "); ",
     "renv::settings$snapshot.type('explicit', project = ", p, "); ",
     "renv::restore(project = ", p, ", prompt = FALSE); ",
@@ -132,17 +173,24 @@ install_expr <- function(root, packages) {
 
 #' Set up a study's environment
 #'
-#' The one command a study needs before analysis. In order: checks R and
-#' turns off RStudio's `.RData` restore and save; runs
-#' `hvtiRutilities::study_setup()` with renv on, which cleans up template
+#' The one command a study needs before analysis. In order: checks R, installs
+#' renv if it is missing, and turns off RStudio's `.RData` restore and save;
+#' runs `hvtiRutilities::study_setup()` with renv on, which cleans up template
 #' copies before renv when adopting; declares `hvtiR`, every member and the
 #' packages they need in the study's `DESCRIPTION`; installs them into the
 #' study's library in a fresh R process; snapshots; checks that every
 #' package's dependencies resolve there; and restarts into the project.
 #'
-#' A study that already has a `renv.lock` keeps its locked versions: they are
-#' restored, and only packages the lockfile lacks are installed. Moving a
-#' study's versions is [update()]'s job, and the study owner's decision.
+#' renv runs in explicit mode: the lockfile records what the study's
+#' `DESCRIPTION` declares, not whatever the code happens to mention. A study
+#' that already has a `renv.lock` keeps its locked versions, and on first
+#' conversion every package that lockfile recorded is declared, so none drop
+#' out. They are restored, and only packages the lockfile lacks are installed.
+#' Moving a study's versions is [update()]'s job, and the study owner's
+#' decision.
+#'
+#' `setup()` replaces packages in the study's library, so run it from a
+#' session started outside the study project, passing `root`.
 #'
 #' Safe to rerun: each step checks before it acts.
 #'
@@ -153,7 +201,9 @@ install_expr <- function(root, packages) {
 #' @param adopt Set up an existing study, adding only what is missing.
 #'   Adopting cleans up template copies unless `cleanup = FALSE` is passed.
 #' @param ... Passed to `hvtiRutilities::study_setup()`, such as `cleanup`,
-#'   `template_dir` or `owner`.
+#'   `template_dir` or `owner`. `renv` is not accepted: `setup()` always uses
+#'   renv, so use `hvtiRutilities::study_setup()` directly for a study without
+#'   it.
 #' @return The study status from `hvtiRutilities::study_setup()`, invisibly.
 #' @export
 #' @examples
@@ -166,8 +216,30 @@ setup <- function(study, study_tracker_id, root = NULL, adopt = FALSE, ...) {
       "R {getRversion()} is below the {MIN_R_VERSION} the family requires."
     )
   }
+  if ("renv" %in% names(list(...))) {
+    cli::cli_abort(c(
+      "{.fn setup} always uses renv; {.arg renv} cannot be passed.",
+      i = "Use {.fn hvtiRutilities::study_setup} for a study without renv."
+    ))
+  }
   if (is.null(root)) {
-    root <- tryCatch(utilities_fn("study_root")(), error = function(e) getwd())
+    study_root <- utilities_fn("study_root")
+    root <- tryCatch(study_root(), error = function(e) {
+      if (!grepl("_study.yml", conditionMessage(e), fixed = TRUE)) stop(e)
+      getwd()
+    })
+  }
+  if (path_within(session_library(), root)) {
+    cli::cli_abort(c(
+      paste(
+        "{.fn setup} replaces packages in the study's library, which this",
+        "session has loaded."
+      ),
+      i = paste(
+        "Run it from a session started outside the study project, passing",
+        "{.code root = \"<study>\"}."
+      )
+    ))
   }
   # Defined in status.R; lintr cannot resolve it across source files.
   # nolint next: object_usage_linter.
@@ -175,10 +247,38 @@ setup <- function(study, study_tracker_id, root = NULL, adopt = FALSE, ...) {
   if (!is.na(locked_r) && !identical(locked_r, as.character(getRversion()))) {
     cli::cli_alert_warning(paste(
       "This study's {.file renv.lock} was made under R {locked_r};",
-      "this session runs R {getRversion()}."
+      "this session runs R {getRversion()}, and the snapshot will record",
+      "R {getRversion()}."
     ))
   }
+  # Defined in status.R; lintr cannot resolve it across source files.
+  # nolint next: object_usage_linter.
+  if (!renv_available()) {
+    pak_install("renv")
+    # nolint next: object_usage_linter.
+    if (!renv_available()) {
+      cli::cli_abort(c(
+        "{.pkg renv} is required and could not be installed.",
+        i = 'Install it with {.code install.packages("renv")}, then try again.'
+      ))
+    }
+  }
   set_workspace_prefs()
+
+  lock_path <- file.path(root, "renv.lock")
+  locked <- character(0)
+  if (file.exists(lock_path)) {
+    read <- run_in_study(locked_expr(root), root)
+    line <- grep("^HVTIR_LOCKED=", strsplit(read$output, "\n")[[1L]],
+                 value = TRUE)
+    if (read$status != 0L || length(line) != 1L) {
+      cli::cli_abort(c(
+        "Could not read the packages {.file renv.lock} records.",
+        x = "{tail_lines(read$output)}"
+      ))
+    }
+    locked <- strsplit(sub("^HVTIR_LOCKED=", "", line), ",", fixed = TRUE)[[1L]]
+  }
 
   status <- utilities_fn("study_setup")(
     root = root, study = study, study_tracker_id = study_tracker_id,
@@ -186,19 +286,29 @@ setup <- function(study, study_tracker_id, root = NULL, adopt = FALSE, ...) {
   )
   root <- normalizePath(root, winslash = "/", mustWork = TRUE)
 
-  packages <- declared_packages()
+  packages <- union(declared_packages(), setdiff(locked, "renv"))
   utilities_fn("study_declare")(packages, root = root)
 
+  cli::cli_alert_info(
+    "Installing the study's packages; this can take several minutes."
+  )
   result <- run_in_study(install_expr(root, packages), root)
   if (result$status != 0L) {
-    cli::cli_abort(
-      c("Installing the study's packages failed.", x = "{result$output}")
-    )
+    cli::cli_abort(c(
+      "Installing the study's packages failed.",
+      x = "{tail_lines(result$output)}"
+    ))
   }
   lib <- sub(
     "^HVTIR_LIB=", "",
     grep("^HVTIR_LIB=", strsplit(result$output, "\n")[[1L]], value = TRUE)
   )
+  if (length(lib) != 1L || !dir.exists(lib)) {
+    cli::cli_abort(c(
+      "The install did not report the study's library path.",
+      x = "{tail_lines(result$output)}"
+    ))
+  }
   # Defined in status.R; lintr cannot resolve it across source files.
   # nolint next: object_usage_linter.
   gone <- unresolved_imports(packages, lib_loc = c(lib, .Library))

@@ -40,10 +40,13 @@ hvtiR::setup(
 )
 ```
 
-Run this once per study, in the study project, before anything else: it cleans
-up template copies first and only then locks the packages, so the lockfile
-records what the study uses and not what the templates happened to mention. It
-is safe to rerun.
+Run this once per study, before anything else, from a session started outside
+the study project, passing `root = "<study>"`: it cleans up template copies first and only then locks the packages,
+so the lockfile records what the study declares and not what the templates
+happened to mention. For an existing (legacy) study pass `adopt = TRUE`, which
+is what cleans up its template copies. A study that already has a `renv.lock`
+keeps its locked versions, and every package that lockfile recorded is declared
+on first conversion, so none drop out. It is safe to rerun.
 
 ## Keeping current
 
