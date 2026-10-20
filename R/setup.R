@@ -68,8 +68,15 @@ utilities_fn <- function(name) {
 run_in_study <- function(expr, root) {
   owd <- setwd(root)
   on.exit(setwd(owd), add = TRUE)
+  # A file, not `-e`: R truncates a long -e argument, and the code embeds the
+  # locked versions of every package, which runs to tens of kilobytes.
+  script <- tempfile(fileext = ".R")
+  on.exit(unlink(script), add = TRUE)
+  con <- file(script, open = "w", encoding = "UTF-8")
+  writeLines(expr, con)
+  close(con)
   out <- suppressWarnings(system2(
-    file.path(R.home("bin"), "Rscript"), c("--vanilla", "-e", shQuote(expr)),
+    file.path(R.home("bin"), "Rscript"), c("--vanilla", shQuote(script)),
     stdout = TRUE, stderr = TRUE
   ))
   status <- attr(out, "status")

@@ -1025,3 +1025,14 @@ test_that("install_members is quiet about debris without an active project", {
   )
   expect_no_warning(install_members("hvtiPlotR"))
 })
+
+test_that("run_in_study runs code too long for an -e argument", {
+  skip_on_cran()
+  root <- withr::local_tempdir()
+  vec <- paste0("'pkg", seq_len(3000L), "'", collapse = ", ")
+  expr <- paste0("x <- c(", vec, "); cat('N=', length(x), '\\n', sep = '')")
+  expect_gt(nchar(expr), 20000L)
+  res <- run_in_study(expr, root)
+  expect_identical(res$status, 0L)
+  expect_match(res$output, "N=3000", fixed = TRUE)
+})
