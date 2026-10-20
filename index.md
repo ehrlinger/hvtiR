@@ -48,11 +48,16 @@ link into someone’s home. It cleans up template copies first and only
 then locks the packages, so the lockfile records what the study declares
 and not what the templates happened to mention. For an existing (legacy)
 study pass `adopt = TRUE`, which is what cleans up its template copies.
-A study that already has a `renv.lock` keeps its locked versions, and
-every package that lockfile recorded is declared on first conversion, so
-none drop out. No personal GitHub token is needed: the packages are
-installed with pak, which carries a shared token, and renv keeps the
-environment (lockfile, restore, snapshot). It is safe to rerun.
+A study that already has a `renv.lock` keeps its locked versions unless
+the declared family needs newer ones, in which case
+[`setup()`](https://ehrlinger.github.io/hvtiR/reference/setup.md) moves
+them, lists each move and records them (`upgrade = TRUE`, the default;
+pass `upgrade = FALSE` for a study in revision, whose versions must not
+move), and every package that lockfile recorded is declared on first
+conversion, so none drop out. No personal GitHub token is needed: the
+packages are installed with pak, which carries a shared token, and renv
+keeps the environment (lockfile, restore, snapshot). It is safe to
+rerun.
 
 ## Keeping current
 

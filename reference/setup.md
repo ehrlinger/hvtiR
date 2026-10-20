@@ -13,7 +13,7 @@ restarts into the project.
 ## Usage
 
 ``` r
-setup(study, study_tracker_id, root = NULL, adopt = FALSE, ...)
+setup(study, study_tracker_id, root = NULL, adopt = FALSE, upgrade = TRUE, ...)
 ```
 
 ## Arguments
@@ -35,6 +35,16 @@ setup(study, study_tracker_id, root = NULL, adopt = FALSE, ...)
 
   Set up an existing study, adding only what is missing. Adopting cleans
   up template copies unless `cleanup = FALSE` is passed.
+
+- upgrade:
+
+  Whether the install may move versions the lockfile pins. The default,
+  `TRUE`, moves them when the declared family needs newer ones: the
+  guard lists each move (package, old and new version, `RemoteSha`
+  changes) and the snapshot records the new versions. Pass `FALSE` for a
+  study in revision, whose versions must not move: a locked package the
+  install would move then stops the run and `renv.lock` is left
+  unchanged.
 
 - ...:
 
@@ -58,9 +68,9 @@ renv runs in explicit mode: the lockfile records what the study's
 study that already has a `renv.lock` keeps its locked versions, and on
 first conversion every package that lockfile recorded is declared, so
 none drop out. They are restored, and only packages the lockfile lacks
-are installed. Moving a study's versions is
-[`update()`](https://ehrlinger.github.io/hvtiR/reference/update.md)'s
-job, and the study owner's decision.
+are installed. By default (`upgrade = TRUE`) it moves locked versions
+the declared family needs and says which; `upgrade = FALSE` keeps a
+study in revision on its locked versions.
 
 `setup()` replaces packages in the study's library, so run it from a
 session started outside the study project, passing `root`. From inside
