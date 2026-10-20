@@ -33,7 +33,7 @@ install_specs <- function(packages, registry = members()) {
 }
 
 # The hvtiRutilities release that carries study_declare() and study_need().
-# Set to Part B's released version when this merges.
+# 1.5.6 (hvtiRutilities#231, versioned in #232).
 # Package constant, spelled like MIN_R_VERSION.
 # nolint next: object_name_linter.
 UTILITIES_FLOOR <- "1.5.6"
