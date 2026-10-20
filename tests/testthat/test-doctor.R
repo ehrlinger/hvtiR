@@ -248,3 +248,44 @@ test_that("doctor offline skips the dependency floor check", {
 
   expect_no_match(doctor_text(), "Dependency floors")
 })
+
+test_that("unresolved_imports names an installed package's missing dependency", {
+  lib <- withr::local_tempdir()
+  dir.create(file.path(lib, "fakepkg"))
+  writeLines(c("Package: fakepkg", "Version: 1.0.0", "Imports: utils, nosuchpkgxyz (>= 1.0)"),
+             file.path(lib, "fakepkg", "DESCRIPTION"))
+  out <- unresolved_imports(c("fakepkg", "notinstalled"), lib.loc = c(lib, .Library))
+  expect_identical(out$package, "fakepkg")
+  expect_identical(out$missing, "nosuchpkgxyz")
+})
+
+test_that("lockfile_r_version reads the R block, not a package version", {
+  root <- withr::local_tempdir()
+  writeLines(c('{', '  "R": {', '    "Version": "4.6.1",', '    "Repositories": [', '      {"Name": "CRAN"}',
+               '    ]', '  },', '  "Packages": {"renv": {"Version": "1.2.4"}}', '}'),
+             file.path(root, "renv.lock"))
+  expect_identical(lockfile_r_version(root), "4.6.1")
+  expect_identical(lockfile_r_version(withr::local_tempdir()), NA_character_)
+})
+
+test_that("doctor reports a member whose dependency is missing", {
+  local_mocked_bindings(
+    fetch_description = function(...) NULL,
+    unresolved_imports = function(...) data.frame(package = "hvtiRutilities", missing = "digest"),
+    lockfile_r_version = function(...) NA_character_
+  )
+  out <- capture.output(doctor(remote = FALSE))
+  expect_match(out, "hvtiRutilities.*digest", all = FALSE)
+  expect_match(out, "hvtiR::setup", all = FALSE)
+})
+
+test_that("doctor warns when the study's lockfile was made under another R", {
+  withr::local_envvar(RENV_PROJECT = withr::local_tempdir())
+  local_mocked_bindings(
+    fetch_description = function(...) NULL,
+    unresolved_imports = function(...) data.frame(package = character(), missing = character()),
+    lockfile_r_version = function(...) "4.4.1"
+  )
+  out <- capture.output(doctor(remote = FALSE))
+  expect_match(out, "4[.]4[.]1", all = FALSE)
+})
