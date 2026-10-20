@@ -56,10 +56,20 @@ sequence ran renv first.
 ### `cleanup = adopt`, overridable
 
 An adopted study is almost always a legacy study carrying template copies, so
-adopting implies cleaning. The default is lazy, `cleanup = adopt`, so it reads
-`adopt` after the interactive "adopt it?" prompt may have set it to `TRUE`; the
-prompt path cleans too, with no extra code. A caller can still pass
-`adopt = TRUE, cleanup = FALSE`.
+adopting implies cleaning. `cleanup` defaults to `adopt`, resolved **after**
+the interactive "adopt it?" prompt, so an adoption accepted there cleans too.
+This needs explicit code (`missing(cleanup)` recorded on entry, the default
+applied after the prompt): `study_setup()` validates its flags and the template
+corpus before the prompt, which would force a lazy default with the caller's
+`adopt`. A caller can still pass `adopt = TRUE, cleanup = FALSE`.
+
+The defaults change in `study_setup()` itself, not only in `setup()`
+(decided 2026-10-20, over keeping them in `setup()`): about 155 existing calls
+across `hvtiRutilities`, `hvtiRtemplates` and `hvtiRdatabuild` tests and
+examples relied on the old defaults, and each gets `renv = FALSE` (and
+`cleanup = FALSE` with `adopt`) explicitly. The downstream packages make that
+change first, since passing the arguments is valid against today's
+`hvtiRutilities`, and a guard test fails on any implicit call.
 
 Consequence, stated in NEWS: adopting a study where `template_dir`
 (`/programs/development/template`) does not exist now stops with an error
@@ -135,7 +145,8 @@ that differs from the lockfile's R.
   `.study_init_renv()` writes the explicit-mode setting before its snapshot.
   `.study_renvignore()` gains `tp.*` and `old_RF_templates*/`, for studies set
   up before explicit mode.
-- **On-demand installs.** One internal helper, `.need_package(pkg, caller)`,
+- **`study_declare(packages, root)`** (exported) writes the study `DESCRIPTION`.
+- **On-demand installs.** One exported function, `study_need(packages, root, caller, note, only_in_renv)`,
   replaces the "Install it with `install.packages()`" stops (today
   `read_clinical_data.R` and `registered_versions.R`):
   - installed: return;
