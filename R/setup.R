@@ -34,6 +34,8 @@ install_specs <- function(packages, registry = members()) {
 
 # The hvtiRutilities release that carries study_declare() and study_need().
 # Set to Part B's released version when this merges.
+# Package constant, spelled like MIN_R_VERSION.
+# nolint next: object_name_linter.
 UTILITIES_FLOOR <- "1.5.6"
 
 #' An exported hvtiRutilities function, installing the package first if needed
@@ -167,6 +169,8 @@ setup <- function(study, study_tracker_id, root = NULL, adopt = FALSE, ...) {
   if (is.null(root)) {
     root <- tryCatch(utilities_fn("study_root")(), error = function(e) getwd())
   }
+  # Defined in status.R; lintr cannot resolve it across source files.
+  # nolint next: object_usage_linter.
   locked_r <- lockfile_r_version(root)
   if (!is.na(locked_r) && !identical(locked_r, as.character(getRversion()))) {
     cli::cli_alert_warning(paste(
@@ -195,6 +199,8 @@ setup <- function(study, study_tracker_id, root = NULL, adopt = FALSE, ...) {
     "^HVTIR_LIB=", "",
     grep("^HVTIR_LIB=", strsplit(result$output, "\n")[[1L]], value = TRUE)
   )
+  # Defined in status.R; lintr cannot resolve it across source files.
+  # nolint next: object_usage_linter.
   gone <- unresolved_imports(packages, lib_loc = c(lib, .Library))
   if (nrow(gone)) {
     bullets <- paste(gone$package, "needs", gone$missing)

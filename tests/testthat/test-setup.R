@@ -30,6 +30,7 @@ local_setup <- function(run_status = 0L,
       step("declare")
     }
   )
+  # nolint next: object_usage_linter.
   local_mocked_bindings(
     utilities_fn = function(name) fns[[name]],
     run_in_study = function(expr, root) {
@@ -71,7 +72,7 @@ test_that("setup passes cleanup through when given", {
   expect_false(log$setup_args$cleanup)
 })
 
-test_that("the install restores, installs only what the lockfile lacks, snapshots", {
+test_that("the install restores, adds what is missing, snapshots", {
   root <- withr::local_tempdir()
   log <- local_setup()
   setup("A study", 7L, root = root)
