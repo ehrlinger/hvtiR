@@ -8,3 +8,4 @@
   in a first `renv::install()` call, which works around a renv 1.2.4 failure ("target file ... already exists") on a cold cache.
 * `setup()` warns before it writes anything when no GitHub credentials are found, and says how to create them,
   and a failed install that reports missing authentication credentials says so too.
+* `setup()` never upgrades a locked package: if declaring a new package would move a locked dependency, it restores the locked versions, leaves `renv.lock` unchanged and stops, naming the change; `update()` is the way to move versions.

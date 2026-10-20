@@ -19,6 +19,7 @@ local_setup <- function(run_status = 0L,
                         ),
                         locked_r = NA_character_, locked = NULL,
                         credentials = TRUE, subdir = character(0),
+                        root_error = "study_config(): no _study.yml found.",
                         env = parent.frame()) {
   log <- new.env()
   lib <- withr::local_tempdir(.local_envir = env)
@@ -26,7 +27,7 @@ local_setup <- function(run_status = 0L,
   log$steps <- character(0)
   step <- function(x) log$steps <- c(log$steps, x)
   fns <- list(
-    study_root = function(...) stop("no study"),
+    study_root = function(...) stop(root_error),
     study_setup = function(...) {
       log$setup_args <- list(...)
       step("study_setup")
@@ -362,4 +363,45 @@ test_that("a failed install without that error carries no hint", {
   )
   err <- tryCatch(setup("A study", 7L, root = root), error = conditionMessage)
   expect_no_match(err, "gitcreds_set")
+})
+
+test_that("the child records locked versions, then compares before snapshot", {
+  expr <- install_expr("/tmp", c("hvtiR", "arrow"))
+  at <- function(s) regexpr(s, expr, fixed = TRUE)[[1L]]
+  expect_true(at("before <- ") > 0)
+  expect_true(at("before <- ") < at("renv::install("))
+  expect_true(at("renv::install(") < at("changed <- "))
+  expect_true(at("changed <- ") < at("packages = changed"))
+  expect_true(at("packages = changed") < at("HVTIR_CHANGED="))
+  expect_true(at("HVTIR_CHANGED=") < at("quit(status = 3L"))
+  expect_true(at("quit(status = 3L") < at("renv::snapshot("))
+})
+
+test_that("a locked package moved by the install stops, lockfile unchanged", {
+  root <- withr::local_tempdir()
+  local_setup(
+    run_status = 3L,
+    run_output = "HVTIR_CHANGED=pkgA:1.0->2.0,pkgC:0.1->0.2\n"
+  )
+  expect_error(setup("A study", 7L, root = root), "pkgA")
+  err <- tryCatch(setup("A study", 7L, root = root), error = conditionMessage)
+  expect_match(err, "1.0", fixed = TRUE)
+  expect_match(err, "2.0", fixed = TRUE)
+  expect_match(err, "pkgC", fixed = TRUE)
+  expect_match(err, "unchanged", fixed = TRUE)
+  expect_match(err, "update", fixed = TRUE)
+})
+
+test_that("a malformed _study.yml is not mistaken for no study", {
+  local_setup(root_error = "malformed YAML in _study.yml")
+  expect_error(setup("A study", 7L), "malformed YAML")
+})
+
+test_that("no _study.yml falls back to the working directory", {
+  log <- local_setup()
+  withr::local_dir(withr::local_tempdir())
+  setup("A study", 7L)
+  expect_identical(
+    normalizePath(log$setup_args$root), normalizePath(getwd())
+  )
 })

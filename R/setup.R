@@ -246,6 +246,29 @@ github_credentials_hint <- function() {
   )
 }
 
+#' The child's check that no locked package moved
+#'
+#' A locked dependency can be upgraded to satisfy a newly declared package, and
+#' the snapshot would then record it. Compares each locked version with the
+#' project library; on a difference restores those packages, reports them and
+#' exits 3 without snapshotting.
+#' @param p The study root, deparsed.
+#' @return One string of R code.
+#' @noRd
+guard_expr <- function(p) {
+  paste0(
+    "now <- vapply(names(before), function(n) tryCatch(",
+    "as.character(utils::packageVersion(n, lib.loc = .libPaths()[1L])), ",
+    "error = function(e) NA_character_), ''); ",
+    "changed <- names(before)[is.na(now) | now != before]; ",
+    "if (length(changed)) { ",
+    "renv::restore(project = ", p, ", packages = changed, prompt = FALSE); ",
+    "cat('\\nHVTIR_CHANGED=', paste0(changed, ':', before[changed], '->', ",
+    "now[changed], collapse = ','), '\\n', sep = ''); ",
+    "quit(status = 3L, save = 'no') }; "
+  )
+}
+
 #' The child process's install step
 #' @param root The study root.
 #' @param packages Declared package names.
@@ -272,11 +295,13 @@ install_expr <- function(root, packages, subdir = character(0)) {
     "renv::load(", p, "); ",
     "renv::settings$snapshot.type('explicit', project = ", p, "); ",
     "renv::restore(project = ", p, ", prompt = FALSE); ",
-    "locked <- names(renv::lockfile_read(file.path(", p, ", 'renv.lock'))",
-    "$Packages); ",
+    "before <- vapply(renv::lockfile_read(file.path(", p, ", 'renv.lock'))",
+    "$Packages, function(x) as.character(x$Version), ''); ",
+    "locked <- names(before); ",
     first,
     "add <- ", specs, "[!", names_, " %in% locked]; ",
     "if (length(add)) renv::install(add, project = ", p, ", prompt = FALSE); ",
+    guard_expr(p),
     "renv::snapshot(project = ", p, ", prompt = FALSE); ",
     "cat('\\nHVTIR_LIB=', .libPaths()[1L], '\\n', sep = '')"
   )
@@ -336,7 +361,10 @@ setup <- function(study, study_tracker_id, root = NULL, adopt = FALSE, ...) {
   if (is.null(root)) {
     study_root <- utilities_fn("study_root")
     root <- tryCatch(study_root(), error = function(e) {
-      if (!grepl("_study.yml", conditionMessage(e), fixed = TRUE)) stop(e)
+      # hvtiRutilities' exact wording; any other error is real.
+      if (!grepl("no _study.yml found", conditionMessage(e), fixed = TRUE)) {
+        stop(e)
+      }
       getwd()
     })
   }
@@ -414,6 +442,23 @@ setup <- function(study, study_tracker_id, root = NULL, adopt = FALSE, ...) {
   result <- run_in_study(
     install_expr(root, packages, subdir = subdir_remotes()), root
   )
+  moved <- grep("^HVTIR_CHANGED=", strsplit(result$output, "\n")[[1L]],
+                value = TRUE)
+  if (length(moved)) {
+    moves <- strsplit(sub("^HVTIR_CHANGED=", "", moved[1L]), ",",
+                      fixed = TRUE)[[1L]]
+    names(moves) <- rep("x", length(moves))
+    cli::cli_abort(c(
+      "Installing the declared packages would have moved locked versions.",
+      moves,
+      i = paste(
+        "A newly declared package needs newer versions of packages the",
+        "lockfile pins. {.file renv.lock} was left unchanged and the locked",
+        "versions were restored."
+      ),
+      i = "{.fn update} is the deliberate way to move a study's versions."
+    ))
+  }
   if (result$status != 0L) {
     hint <- NULL
     if (grepl("authentication credentials", result$output, fixed = TRUE)) {
