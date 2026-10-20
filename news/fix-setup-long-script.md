@@ -1,1 +1,0 @@
-* `setup()` runs its child R processes from a script file instead of an `-e` argument. R truncated a long `-e` argument, so a study with about 155 locked packages ran half a script and stopped with "The install did not report the study's library path".

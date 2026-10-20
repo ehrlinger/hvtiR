@@ -1,10 +1,10 @@
 package,field,dependency,op,floor,dependency_dev,satisfied
 hvtiPlotR,Suggests,hvtiRpropensity,,,0.2.1,
-hvtiRdatabuild,Imports,hvtiRutilities,>=,1.5.2,1.5.7,TRUE
+hvtiRdatabuild,Imports,hvtiRutilities,>=,1.5.2,1.5.8,TRUE
 hvtiRdatabuild,Suggests,hvtiPlotR,,,2.8.14,
 hvtiRlifetables,Imports,TemporalHazard,>=,1.2.0,1.2.16,TRUE
 hvtiRpropensity,Suggests,hvtiPlotR,,,2.8.14,
-hvtiRtemplates,Imports,hvtiRutilities,>=,1.5.7,1.5.7,TRUE
+hvtiRtemplates,Imports,hvtiRutilities,>=,1.5.7,1.5.8,TRUE
 hvtiRtemplates,Suggests,TemporalHazard,>=,1.2.12,1.2.16,TRUE
 hvtiRtemplates,Suggests,ggBoostedTrees,>=,0.9.1,0.9.3,TRUE
 hvtiRtemplates,Suggests,ggRandomForests,>=,4.0.0,4.0.0,TRUE
@@ -13,4 +13,4 @@ hvtiRtemplates,Suggests,hvtiRbootstrap,>=,0.9.3,0.9.6,TRUE
 hvtiRtemplates,Suggests,hvtiRdatabuild,>=,0.3.0,0.3.2,TRUE
 hvtiRtemplates,Suggests,hvtiRlifetables,>=,0.1.2,0.1.5,TRUE
 hvtiRtemplates,Suggests,hvtiRpropensity,>=,0.2.0,0.2.1,TRUE
-hvtiRtemplates,Suggests,hvtiRtables,>=,1.0.7,1.0.8,TRUE
+hvtiRtemplates,Suggests,hvtiRtables,>=,1.0.8,1.0.8,TRUE
