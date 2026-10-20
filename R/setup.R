@@ -131,13 +131,40 @@ locked_expr <- function(root) {
 #' @noRd
 session_library <- function() .libPaths()[1L]
 
-#' The last lines of a child's output
+#' The last lines of a child's output, safe to hand to cli
+#'
+#' Child output carries carriage-return progress, ANSI escapes and
+#' sometimes invalid UTF-8, none of which cli's wrapping tolerates. Braces
+#' are doubled so glue prints them rather than evaluating them.
 #' @param output One string.
 #' @param n Lines to keep.
+#' @return Character vector, one element per line.
 #' @noRd
 tail_lines <- function(output, n = 40L) {
-  lines <- strsplit(output, "\n", fixed = TRUE)[[1L]]
-  paste(utils::tail(lines, n), collapse = "\n")
+  output <- iconv(paste(output, collapse = "\n"), "UTF-8", "UTF-8", sub = "?")
+  lines <- cli::ansi_strip(unlist(strsplit(output, "[\r\n]+")))
+  lines <- lines[nzchar(trimws(lines))]
+  lines <- gsub("\\}", "}}", gsub("\\{", "{{", lines))
+  utils::tail(lines, n)
+}
+
+#' Bullets for a child's output, one `x` bullet per line
+#' @noRd
+output_bullets <- function(output, n = 40L) {
+  lines <- tail_lines(output, n)
+  names(lines) <- rep("x", length(lines))
+  lines
+}
+
+#' Save a child's full raw output where the abort can name it
+#' @noRd
+save_setup_log <- function(output) {
+  path <- file.path(
+    tempdir(), paste0("hvtiR-setup-", format(Sys.time(), "%Y%m%d-%H%M%S"),
+                      ".log")
+  )
+  writeBin(charToRaw(enc2native(paste0(output, collapse = "\n"))), path)
+  path
 }
 
 #' Is `path` inside `dir`?
@@ -215,34 +242,41 @@ subdir_remotes <- function(registry = members()) {
   found[!duplicated(found)]
 }
 
-#' Can renv reach GitHub with credentials?
-#'
-#' Without them, GitHub's anonymous API limit (60 an hour, shared by everyone
-#' behind one address) stops an install of this size. The child inherits this
-#' session's environment, so a `GITHUB_PAT` set here is enough.
-#' @return `TRUE` or `FALSE`.
+#' A GitHub token from the git credential store
+#' @return The token, or `NULL` when there is none.
 #' @noRd
-github_credentials_available <- function() {
-  if (nzchar(Sys.getenv("GITHUB_PAT"))) return(TRUE)
-  if (!requireNamespace("gitcreds", quietly = TRUE)) return(FALSE)
+gitcreds_token <- function() {
+  if (!requireNamespace("gitcreds", quietly = TRUE)) return(NULL)
   tryCatch(
-    {
-      gitcreds::gitcreds_get("https://github.com")
-      TRUE
-    },
-    error = function(e) FALSE
+    gitcreds::gitcreds_get("https://github.com")$password,
+    error = function(e) NULL
   )
 }
 
-#' How to give renv GitHub credentials
+#' Can renv reach GitHub with credentials?
+#'
+#' renv has no token of its own (pak's bundled one does not reach it), and
+#' GitHub's anonymous API limit stops an install of this size. The child
+#' inherits this session's environment, so a `GITHUB_PAT` is enough.
+#' @return `TRUE` or `FALSE`.
+#' @noRd
+github_credentials_available <- function() {
+  nzchar(Sys.getenv("GITHUB_PAT")) || !is.null(gitcreds_token())
+}
+
+#' How to give renv a GitHub token
 #' @noRd
 github_credentials_hint <- function() {
   c(
     i = paste(
-      "Create a token with {.code usethis::create_github_token()}, then store",
-      "it with {.code gitcreds::gitcreds_set()}, or set {.envvar GITHUB_PAT}",
-      "in {.file ~/.Renviron}."
-    )
+      "Create a token with {.code usethis::create_github_token()},",
+      "scope {.val repo}."
+    ),
+    i = paste(
+      "Put {.code GITHUB_PAT=<token>} in {.file ~/.Renviron}",
+      "({.code usethis::edit_r_environ()})."
+    ),
+    i = "Restart R, then check {.code nzchar(Sys.getenv(\"GITHUB_PAT\"))}."
   )
 }
 
@@ -495,12 +529,17 @@ setup <- function(study, study_tracker_id, root = NULL, adopt = FALSE, ...) {
     root <- study_root_or_wd(utilities_fn("study_root"))
   }
   if (!github_credentials_available()) {
-    cli::cli_alert_warning(paste(
-      "No GitHub credentials found. Installing from GitHub without them hits",
-      "GitHub's anonymous rate limit (60 requests an hour, shared by",
-      "everyone behind one address), and the install is likely to fail."
+    cli::cli_abort(c(
+      "{.pkg renv} needs a GitHub token to install the family.",
+      github_credentials_hint()
     ))
-    cli::cli_bullets(github_credentials_hint())
+  }
+  if (!nzchar(Sys.getenv("GITHUB_PAT"))) {
+    token <- gitcreds_token()
+    if (!is.null(token)) {
+      Sys.setenv(GITHUB_PAT = token)
+      on.exit(Sys.unsetenv("GITHUB_PAT"), add = TRUE)
+    }
   }
   # Defined in status.R; lintr cannot resolve it across source files.
   # nolint next: object_usage_linter.
@@ -535,7 +574,7 @@ setup <- function(study, study_tracker_id, root = NULL, adopt = FALSE, ...) {
     if (read$status != 0L || length(line) != 1L) {
       cli::cli_abort(c(
         "Could not read the packages {.file renv.lock} records.",
-        x = "{tail_lines(read$output)}"
+        output_bullets(read$output)
       ))
     }
     locked <- strsplit(sub("^HVTIR_LOCKED=", "", line), ",", fixed = TRUE)[[1L]]
@@ -556,6 +595,8 @@ setup <- function(study, study_tracker_id, root = NULL, adopt = FALSE, ...) {
   result <- run_in_study(
     install_expr(root, packages, subdir = subdir_remotes()), root
   )
+  raw_output <- result$output
+  result$output <- iconv(raw_output, "UTF-8", "UTF-8", sub = "?")
   unlinked <- grep("^HVTIR_UNLINKED=", strsplit(result$output, "\n")[[1L]],
                    value = TRUE)
   moved <- grep("^HVTIR_CHANGED=", strsplit(result$output, "\n")[[1L]],
@@ -563,6 +604,7 @@ setup <- function(study, study_tracker_id, root = NULL, adopt = FALSE, ...) {
   if (length(moved)) {
     moves <- strsplit(sub("^HVTIR_CHANGED=", "", moved[1L]), ",",
                       fixed = TRUE)[[1L]]
+    moves <- gsub("\\}", "}}", gsub("\\{", "{{", moves))
     names(moves) <- rep("x", length(moves))
     cli::cli_abort(c(
       "Installing the declared packages would have moved locked versions.",
@@ -576,14 +618,12 @@ setup <- function(study, study_tracker_id, root = NULL, adopt = FALSE, ...) {
     ))
   }
   if (result$status != 0L) {
-    hint <- NULL
-    if (grepl("authentication credentials", result$output, fixed = TRUE)) {
-      hint <- github_credentials_hint()
-    }
+    auth <- grepl("authentication credentials", result$output, fixed = TRUE)
     cli::cli_abort(c(
       "Installing the study's packages failed.",
-      x = "{tail_lines(result$output)}",
-      hint
+      if (auth) c("renv has no GitHub token.", github_credentials_hint()),
+      output_bullets(result$output),
+      i = "Full output: {.file {save_setup_log(raw_output)}}"
     ))
   }
   if (length(unlinked)) {
@@ -601,7 +641,8 @@ setup <- function(study, study_tracker_id, root = NULL, adopt = FALSE, ...) {
   if (length(lib) != 1L || !dir.exists(lib)) {
     cli::cli_abort(c(
       "The install did not report the study's library path.",
-      x = "{tail_lines(result$output)}"
+      output_bullets(result$output),
+      i = "Full output: {.file {save_setup_log(raw_output)}}"
     ))
   }
   # Defined in status.R; lintr cannot resolve it across source files.

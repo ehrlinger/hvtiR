@@ -210,6 +210,31 @@ test_that("a failed lockfile read stops", {
   expect_error(setup("A study", 7L, root = root), "boom")
 })
 
+test_that("a failed install reports the real error and keeps the log", {
+  root <- withr::local_tempdir()
+  local_setup()
+  messy <- paste0(
+    "Downloading 10%\rDownloading 90%\r\n",
+    "\033[32mOK\033[39m installed {curly} braces\n",
+    "bad byte ", rawToChar(as.raw(c(0x66, 0xff))), "\n",
+    "Error: boom\n"
+  )
+  local_mocked_bindings(
+    run_in_study = function(expr, root) list(status = 1L, output = messy)
+  )
+  err <- tryCatch(setup("A study", 7L, root = root), error = identity)
+  msg <- conditionMessage(err)
+  expect_match(msg, "boom", fixed = TRUE)
+  expect_match(msg, "curly", fixed = TRUE)
+  expect_match(msg, "hvtiR-setup-", fixed = TRUE)
+  expect_false(grepl("ansi_strwrap", msg, fixed = TRUE))
+  pat <- "[^ '\n]*hvtiR-setup-[^ '\n]*\\.log"
+  log_file <- regmatches(msg, regexpr(pat, msg))
+  expect_true(file.exists(log_file))
+  saved <- rawToChar(readBin(log_file, "raw", file.size(log_file)))
+  expect_true(grepl("Downloading 10%", saved, fixed = TRUE, useBytes = TRUE))
+})
+
 test_that("the child turns renv's pak back end off in code, not env", {
   root <- withr::local_tempdir()
   log <- local_setup()
@@ -314,25 +339,35 @@ test_that("setup passes the subdirectory remotes to the child", {
   expect_match(log$expr, "boostmtree=o/src/boostmtree@v1", fixed = TRUE)
 })
 
-test_that("missing GitHub credentials warn and name the fix", {
+test_that("missing GitHub credentials abort before any write", {
   root <- withr::local_tempdir()
   log <- local_setup(credentials = FALSE)
-  expect_message(
-    setup("A study", 7L, root = root), "rate limit"
-  )
-  expect_message(
-    setup("A study", 7L, root = root), "gitcreds_set"
-  )
-  expect_identical(log$steps[[1L]], "prefs")
+  expect_error(setup("A study", 7L, root = root), "GITHUB_PAT")
+  expect_error(setup("A study", 7L, root = root), "create_github_token")
+  expect_identical(log$steps, character(0))
 })
 
-test_that("with credentials there is no credentials warning", {
+test_that("with credentials there is no credentials error", {
   root <- withr::local_tempdir()
   local_setup(credentials = TRUE)
-  expect_no_match(
-    capture.output(setup("A study", 7L, root = root), type = "message"),
-    "rate limit"
+  expect_no_error(setup("A study", 7L, root = root))
+})
+
+test_that("a gitcreds token reaches the child as GITHUB_PAT, then goes", {
+  root <- withr::local_tempdir()
+  withr::local_envvar(GITHUB_PAT = NA)
+  local_setup(credentials = TRUE)
+  seen <- NULL
+  local_mocked_bindings(
+    gitcreds_token = function() "tok",
+    run_in_study = function(expr, root) {
+      seen <<- Sys.getenv("GITHUB_PAT", NA)
+      list(status = 0L, output = paste0("HVTIR_LIB=", tempdir(), "\n"))
+    }
   )
+  try(suppressMessages(setup("A study", 7L, root = root)), silent = TRUE)
+  expect_identical(seen, "tok")
+  expect_identical(Sys.getenv("GITHUB_PAT", NA), NA_character_)
 })
 
 test_that("a GITHUB_PAT counts as credentials", {
@@ -342,9 +377,7 @@ test_that("a GITHUB_PAT counts as credentials", {
 
 test_that("with no PAT and no gitcreds there are no credentials", {
   withr::local_envvar(GITHUB_PAT = "")
-  local_mocked_bindings(
-    requireNamespace = function(...) FALSE, .package = "base"
-  )
+  local_mocked_bindings(gitcreds_token = function() NULL)
   expect_false(github_credentials_available())
 })
 
@@ -354,7 +387,7 @@ test_that("a failed install with an authentication error adds the hint", {
     run_status = 1L,
     run_output = "GitHub authentication credentials are not available\n"
   )
-  expect_error(setup("A study", 7L, root = root), "gitcreds_set")
+  expect_error(setup("A study", 7L, root = root), "create_github_token")
 })
 
 test_that("a failed install without that error carries no hint", {
@@ -364,7 +397,7 @@ test_that("a failed install without that error carries no hint", {
     setup("A study", 7L, root = root), "boom"
   )
   err <- tryCatch(setup("A study", 7L, root = root), error = conditionMessage)
-  expect_no_match(err, "gitcreds_set")
+  expect_no_match(err, "create_github_token")
 })
 
 test_that("the child records locked versions, then compares before snapshot", {
