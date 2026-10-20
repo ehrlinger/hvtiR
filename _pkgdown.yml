@@ -48,6 +48,7 @@ reference:
   contents:
   - install
   - update
+  - setup
 
 - title: Checking
   desc: Report what is installed and diagnose what is wrong

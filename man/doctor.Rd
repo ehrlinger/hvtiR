@@ -23,7 +23,10 @@ full member status table. When a remote check fails, reports the reason
 retained by \code{\link[=status]{status()}}. With \code{remote}, it also reads each member's
 \code{DESCRIPTION} from GitHub and names every dependency floor the repositories
 cannot meet, such as \verb{varPro (>= 3.3.0)} against a snapshot that predates
-it. This is the report to run first when a member will not install.
+it. It also names any installed member whose dependency is missing from the
+library path, and warns when the study's \code{renv.lock} was made under a
+different R version than the running one. This is the report to run first
+when a member will not install.
 }
 \examples{
 # Offline: environment checks plus what is installed

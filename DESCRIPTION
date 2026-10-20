@@ -20,10 +20,13 @@ Imports:
     utils
 Suggests:
     curl,
+    gitcreds,
     knitr,
     pak,
     quarto,
-    testthat (>= 3.2.0)
+    rstudioapi,
+    testthat (>= 3.2.0),
+    withr
 VignetteBuilder: quarto
 SystemRequirements: Quarto command line tool
     (<https://github.com/quarto-dev/quarto-cli>)
