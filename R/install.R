@@ -190,6 +190,7 @@ install_members <- function(packages,
     return(invisible(character(0)))
   }
 
+  warn_shared_cache()
   blocked <- check_loaded(packages)
 
   if (length(blocked) > 0L && !force) {
@@ -299,6 +300,43 @@ report_self <- function(self) {
   }
 
   invisible(NULL)
+}
+
+#' Warn when the active study's library holds links this user cannot read
+#'
+#' A library shared by the team but linked into one user's renv cache leaves
+#' pak unable to replace those packages ([library_debris()]).
+#' @noRd
+warn_shared_cache <- function() {
+  if (renv_state() != "active") return(invisible(NULL))
+  # Defined in setup.R; lintr cannot resolve it across source files.
+  # nolint next: object_usage_linter.
+  debris <- library_debris(session_library())
+  if (length(debris) == 0L) return(invisible(NULL))
+  cli::cli_warn(c(
+    paste(
+      "This study's library holds entries pak cannot replace:",
+      "{.val {debris}}."
+    ),
+    i = paste(
+      "They link into a cache this user cannot read, or are left over from",
+      "a failed install. Repair in this order, in the study, or run",
+      "{.code hvtiR::setup(root = \"<study>\")} from a session started",
+      "outside the project:"
+    ),
+    paste(
+      "1. Remove {.file <library>/_cache} if present: a real folder, so",
+      "{.code unlink(<path>, recursive = TRUE)}, only once",
+      "{.code Sys.readlink(<path>)} is empty."
+    ),
+    paste(
+      "2. Remove each broken LINK with {.code file.remove(<link>)}, never",
+      "its target."
+    ),
+    "3. Then {.code renv::settings$use.cache(FALSE)}.",
+    "4. Then {.code renv::isolate()}.",
+    "5. Then {.code renv::restore()}."
+  ))
 }
 
 #' Install every hvtiR member

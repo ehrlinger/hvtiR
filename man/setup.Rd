@@ -31,7 +31,7 @@ renv if it is missing, and turns off RStudio's \code{.RData} restore and save;
 runs \code{hvtiRutilities::study_setup()} with renv on, which cleans up template
 copies before renv when adopting; declares \code{hvtiR}, every member and the
 packages they need in the study's \code{DESCRIPTION}; installs them into the
-study's library in a fresh R process; snapshots; checks that every
+study's library with pak and renv; snapshots; checks that every
 package's dependencies resolve there; and restarts into the project.
 }
 \details{
@@ -44,12 +44,32 @@ Moving a study's versions is \code{\link[=update]{update()}}'s job, and the stud
 decision.
 
 \code{setup()} replaces packages in the study's library, so run it from a
-session started outside the study project, passing \code{root}.
+session started outside the study project, passing \code{root}. From inside
+the project it stops before installing anything, and names the command to
+run.
+
+In the install, the study stops using renv's per-user cache
+(\code{renv::settings$use.cache(FALSE)}, kept in \code{renv/settings.json}, so it
+applies to everyone), links already in the library are copied in
+(\code{renv::isolate()}), and any link whose target the user cannot read is
+removed, as is pak's leftover \verb{_cache} directory, and the package
+reinstalled. A shared library cannot depend on one user's home.
+
+No personal GitHub token is needed. The family is installed with pak, which
+carries a shared token, into the study's library, and renv keeps the
+environment: it restores the lockfile first, then snapshots, and installs
+from the configured repositories the build-time (\code{LinkingTo}) dependencies
+pak skips. Restoring a package the lockfile pins on GitHub goes through
+renv, which has no shared token; a \code{GITHUB_PAT} (or a token in the git
+credential store) covers that, and \code{setup()} warns when there is none.
 
 Safe to rerun: each step checks before it acts.
 }
 \examples{
 \dontrun{
-setup(study = "Study Tracker title", study_tracker_id = 1234L)
+setup(
+  study = "Study Tracker title", study_tracker_id = 1234L,
+  root = "/studies/example"
+)
 }
 }
