@@ -175,73 +175,6 @@ path_within <- function(path, dir) {
   identical(path, dir) || startsWith(path, paste0(sub("/$", "", dir), "/"))
 }
 
-#' Subdirectory remotes the members pin
-#'
-#' Parses a DESCRIPTION `Remotes` field and keeps the GitHub entries whose repo
-#' has a subdirectory, `[name=]owner/repo/subdir[@ref]`. See [subdir_remotes()]
-#' for why they are wanted.
-#' @param remotes The `Remotes` field, one string (entries separated by commas
-#'   or newlines), or `NA`/`NULL`.
-#' @return A character vector of specs, named by the package each installs
-#'   (the `name=` part, else the subdirectory's last component).
-#' @noRd
-parse_subdir_remotes <- function(remotes) {
-  if (length(remotes) != 1L || is.na(remotes)) return(character(0))
-  entries <- trimws(strsplit(remotes, "[,\n]")[[1L]])
-  entries <- entries[nzchar(entries)]
-  # `owner/repo/subdir[@ref]`, optionally `name=` and `github::`. Any other
-  # host (`gitlab::`, `url::`) carries a colon and falls out here.
-  pattern <- paste0(
-    "^(?:([A-Za-z0-9_.]+)=)?(?:github::)?",
-    "[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+/([A-Za-z0-9_./-]+)(?:@\\S+)?$"
-  )
-  hit <- grepl(pattern, entries, perl = TRUE)
-  entries <- entries[hit]
-  name <- sub(pattern, "\\1", entries, perl = TRUE)
-  subdir <- sub(pattern, "\\2", entries, perl = TRUE)
-  name[!nzchar(name)] <- basename(subdir[!nzchar(name)])
-  names(entries) <- name
-  entries[!duplicated(entries)]
-}
-
-#' Subdirectory remotes that the members' DESCRIPTIONs pin
-#'
-#' Workaround for a renv 1.2.4 bug in `renv_graph_install()`: a package with a
-#' `RemoteSubdir` (such as boostmtree, which ggBoostedTrees pins to a
-#' subdirectory of `boostmtree_src`) must be unpacked before it builds. When it
-#' becomes ready while every install slot is busy it is unpacked into staging,
-#' then prepared again on the next pass and fails "target file ... already
-#' exists". That needs a cold renv cache, which is every new study. Installing
-#' these packages in a first, separate `renv::install()` call means the main
-#' call finds them satisfied and never takes the unpack path. The pins are read
-#' from GitHub, not written here, because the tags move. Remove this, and the
-#' first install call in [install_expr()], once renv fixes the bug.
-#'
-#' A member whose DESCRIPTION cannot be read is named in a warning, not
-#' skipped silently: the main install may still succeed on a warm cache.
-#' @param registry The registry, as returned by [members()].
-#' @return A character vector of specs named by package, without duplicates.
-#' @noRd
-subdir_remotes <- function(registry = members()) {
-  found <- character(0)
-  for (i in seq_len(nrow(registry))) {
-    dcf <- fetch_description(registry$repo[i])
-    if (is.null(dcf)) {
-      cli::cli_warn(c(
-        "Could not read {.pkg {registry$package[i]}}'s DESCRIPTION.",
-        i = paste(
-          "Its subdirectory remotes cannot be installed ahead of the rest;",
-          "the install may fail on a cold {.pkg renv} cache."
-        )
-      ))
-      next
-    }
-    remotes <- if ("Remotes" %in% colnames(dcf)) dcf[1L, "Remotes"] else NA
-    found <- c(found, parse_subdir_remotes(remotes))
-  }
-  found[!duplicated(found)]
-}
-
 #' A GitHub token from the git credential store
 #' @return The token, or `NULL` when there is none.
 #' @noRd
@@ -253,11 +186,11 @@ gitcreds_token <- function() {
   )
 }
 
-#' Can renv reach GitHub with credentials?
+#' Does this session have a personal GitHub token?
 #'
-#' renv has no token of its own (pak's bundled one does not reach it), and
-#' GitHub's anonymous API limit stops an install of this size. The child
-#' inherits this session's environment, so a `GITHUB_PAT` is enough.
+#' Installs do not need one: pak ships a shared token. renv has none, so a
+#' restore of a GitHub-locked package may. The children inherit this session's
+#' environment, so a `GITHUB_PAT` serves both pak and renv.
 #' @return `TRUE` or `FALSE`.
 #' @noRd
 github_credentials_available <- function() {
@@ -350,27 +283,12 @@ unlink_expr <- function(lib_var) {
   )
 }
 
-#' The child process's install step
+#' Child run 1: restore the lockfile, report the library and locked versions
 #' @param root The study root.
-#' @param packages Declared package names.
-#' @param subdir Subdirectory remotes, as from [subdir_remotes()]; installed in
-#'   a separate first call (see there for why), when not in the lockfile.
 #' @return One string of R code.
 #' @noRd
-install_expr <- function(root, packages, subdir = character(0)) {
+restore_expr <- function(root) {
   p <- deparse1(normalizePath(root, winslash = "/"))
-  names_ <- deparse1(packages, width.cutoff = 500L)
-  specs <- deparse1(install_specs(packages), width.cutoff = 500L)
-  first <- ""
-  if (length(subdir)) {
-    first <- paste0(
-      "pre <- ", deparse1(unname(subdir), width.cutoff = 500L), "; ",
-      "pre <- pre[!", deparse1(names(subdir), width.cutoff = 500L),
-      " %in% locked]; ",
-      "if (length(pre)) renv::install(pre, project = ", p,
-      ", prompt = FALSE); "
-    )
-  }
   paste0(
     pak_off(),
     "renv::load(", p, "); ",
@@ -381,16 +299,120 @@ install_expr <- function(root, packages, subdir = character(0)) {
     "renv::isolate(project = ", p, "); ",
     "renv::settings$snapshot.type('explicit', project = ", p, "); ",
     "renv::restore(project = ", p, ", prompt = FALSE); ",
-    "before <- vapply(renv::lockfile_read(file.path(", p, ", 'renv.lock'))",
-    "$Packages, function(x) as.character(x$Version), ''); ",
-    "locked <- names(before); ",
-    first,
-    "add <- ", specs, "[!", names_, " %in% locked]; ",
-    "if (length(add)) renv::install(add, project = ", p, ", prompt = FALSE); ",
-    guard_expr(p),
-    "renv::snapshot(project = ", p, ", prompt = FALSE); ",
-    "cat('\\nHVTIR_LIB=', .libPaths()[1L], '\\n', sep = '')"
+    "locked <- renv::lockfile_read(file.path(", p, ", 'renv.lock'))$Packages; ",
+    "cat('\\nHVTIR_LIB=', lib, '\\n', sep = ''); ",
+    "cat('HVTIR_LOCKVER=', paste0(names(locked), ':', ",
+    "vapply(locked, function(x) as.character(x$Version), ''), ",
+    "collapse = ','), '\\n', sep = '')"
   )
+}
+
+#' The child's code to install the build-time dependencies pak skips
+#'
+#' pak installs hard dependencies but not `LinkingTo` packages, and the
+#' snapshot's validation then aborts. Those are CRAN packages, which renv
+#' installs from the configured repositories with no GitHub API. The install
+#' goes through `link_install()`, defined here unless the caller already has
+#' one, so a test can substitute it.
+#' @param lib_var Name of the child's variable holding the library path.
+#' @param p The study root, deparsed.
+#' @return One string of R code.
+#' @noRd
+linking_expr <- function(lib_var, p) {
+  p <- deparse1(p)
+  paste0(
+    "d <- file.path(", lib_var, ", list.files(", lib_var,
+    "), 'DESCRIPTION'); d <- d[file.exists(d)]; ",
+    "lt <- as.character(unlist(lapply(d, function(f) tryCatch(",
+    "read.dcf(f, fields = 'LinkingTo')[, 'LinkingTo'], ",
+    "error = function(e) NA_character_)))); ",
+    "lt <- trimws(sub('[(].*$', '', unlist(strsplit(lt[!is.na(lt)], ',')))); ",
+    "lt <- unique(lt[nzchar(lt) & lt != 'R']); ",
+    "need <- lt[!vapply(lt, function(n) length(find.package(n, lib.loc = c(",
+    lib_var, ", .Library), quiet = TRUE)) > 0L, NA)]; ",
+    "if (!exists('link_install')) link_install <- function(x) ",
+    "renv::install(x, project = ", p, ", prompt = FALSE); ",
+    "if (length(need)) link_install(need); "
+  )
+}
+
+#' Child run 2: guard the lock, fill LinkingTo gaps, snapshot
+#' @param root The study root.
+#' @param before Locked versions after restore, named by package.
+#' @return One string of R code.
+#' @noRd
+finish_expr <- function(root, before) {
+  root <- normalizePath(root, winslash = "/")
+  p <- deparse1(root)
+  paste0(
+    pak_off(),
+    "renv::load(", p, "); ",
+    "lib <- renv::paths$library(project = ", p, "); ",
+    "before <- ", deparse1(before, width.cutoff = 500L), "; ",
+    guard_expr(p),
+    linking_expr("lib", root),
+    "renv::snapshot(project = ", p, ", prompt = FALSE); ",
+    "cat('\\nHVTIR_LIB=', lib, '\\n', sep = '')"
+  )
+}
+
+#' Install specs with pak into a given library
+#' @param specs Install specs.
+#' @param lib The library, a study's project library.
+#' @noRd
+pak_install_lib <- function(specs, lib) {
+  if (!requireNamespace("pak", quietly = TRUE)) {
+    cli::cli_abort(c(
+      "The {.pkg pak} package is required to install hvtiR members.",
+      i = 'Install it with {.code install.packages("pak")}, then try again.'
+    ))
+  }
+  invisible(pak::pkg_install(
+    specs, lib = lib, upgrade = FALSE, ask = FALSE, dependencies = NA
+  ))
+}
+
+#' Abort for a child run that did not finish
+#' @param result A [run_in_study()] result.
+#' @param raw The child's raw output.
+#' @noRd
+abort_stage <- function(result, raw) {
+  lines <- strsplit(result$output, "\n")[[1L]]
+  moved <- grep("^HVTIR_CHANGED=", lines, value = TRUE)
+  if (length(moved)) {
+    moves <- strsplit(sub("^HVTIR_CHANGED=", "", moved[1L]), ",",
+                      fixed = TRUE)[[1L]]
+    moves <- gsub("\\}", "}}", gsub("\\{", "{{", moves))
+    names(moves) <- rep("x", length(moves))
+    cli::cli_abort(c(
+      "Installing the declared packages would have moved locked versions.",
+      moves,
+      i = paste(
+        "A newly declared package needs newer versions of packages the",
+        "lockfile pins. {.file renv.lock} was left unchanged and the locked",
+        "versions were restored."
+      ),
+      i = "{.fn update} is the deliberate way to move a study's versions."
+    ))
+  }
+  if (result$status != 0L) {
+    auth <- grepl("authentication credentials", result$output, fixed = TRUE)
+    cli::cli_abort(c(
+      "Installing the study's packages failed.",
+      if (auth) c("A GitHub token is needed.", github_credentials_hint()),
+      output_bullets(result$output),
+      i = "Full output: {.file {save_setup_log(raw)}}"
+    ))
+  }
+  invisible(NULL)
+}
+
+#' The single value of a `KEY=` line in a child's output
+#' @noRd
+child_value <- function(output, key) {
+  lines <- grep(paste0("^", key, "="), strsplit(output, "\n")[[1L]],
+                value = TRUE)
+  sub(paste0("^", key, "="), "", lines)
 }
 
 #' The study root, found without installing anything
@@ -468,7 +490,7 @@ guard_session <- function(root, study, study_tracker_id,
 #' runs `hvtiRutilities::study_setup()` with renv on, which cleans up template
 #' copies before renv when adopting; declares `hvtiR`, every member and the
 #' packages they need in the study's `DESCRIPTION`; installs them into the
-#' study's library in a fresh R process; snapshots; checks that every
+#' study's library with pak and renv; snapshots; checks that every
 #' package's dependencies resolve there; and restarts into the project.
 #'
 #' renv runs in explicit mode: the lockfile records what the study's
@@ -490,6 +512,14 @@ guard_session <- function(root, study, study_tracker_id,
 #' (`renv::isolate()`), and any link whose target the user cannot read is
 #' removed, as is pak's leftover `_cache` directory, and the package
 #' reinstalled. A shared library cannot depend on one user's home.
+#'
+#' No personal GitHub token is needed. The family is installed with pak, which
+#' carries a shared token, into the study's library, and renv keeps the
+#' environment: it restores the lockfile first, then snapshots, and installs
+#' from the configured repositories the build-time (`LinkingTo`) dependencies
+#' pak skips. Restoring a package the lockfile pins on GitHub goes through
+#' renv, which has no shared token; a `GITHUB_PAT` (or a token in the git
+#' credential store) covers that, and `setup()` warns when there is none.
 #'
 #' Safe to rerun: each step checks before it acts.
 #'
@@ -529,8 +559,11 @@ setup <- function(study, study_tracker_id, root = NULL, adopt = FALSE, ...) {
     root <- study_root_or_wd(utilities_fn("study_root"))
   }
   if (!github_credentials_available()) {
-    cli::cli_abort(c(
-      "{.pkg renv} needs a GitHub token to install the family.",
+    cli::cli_warn(c(
+      paste(
+        "No personal GitHub token found. Installs use {.pkg pak}'s shared",
+        "token; restoring a GitHub-locked package may need your own."
+      ),
       github_credentials_hint()
     ))
   }
@@ -592,52 +625,54 @@ setup <- function(study, study_tracker_id, root = NULL, adopt = FALSE, ...) {
   cli::cli_alert_info(
     "Installing the study's packages; this can take several minutes."
   )
-  result <- run_in_study(
-    install_expr(root, packages, subdir = subdir_remotes()), root
-  )
+  first <- run_in_study(restore_expr(root), root)
+  first_raw <- first$output
+  first$output <- iconv(first_raw, "UTF-8", "UTF-8", sub = "?")
+  abort_stage(first, first_raw)
+  project_lib <- child_value(first$output, "HVTIR_LIB")
+  lockver <- child_value(first$output, "HVTIR_LOCKVER")
+  if (length(project_lib) != 1L || !dir.exists(project_lib) ||
+        length(lockver) != 1L) {
+    cli::cli_abort(c(
+      "The restore did not report the study's library and locked versions.",
+      output_bullets(first$output),
+      i = "Full output: {.file {save_setup_log(first_raw)}}"
+    ))
+  }
+  unlinked <- child_value(first$output, "HVTIR_UNLINKED")
+  entries <- strsplit(lockver, ",", fixed = TRUE)[[1L]]
+  entries <- entries[nzchar(entries)]
+  before <- sub("^[^:]*:", "", entries)
+  names(before) <- sub(":.*$", "", entries)
+
+  add <- install_specs(setdiff(packages, names(before)))
+  if (length(add)) {
+    tryCatch(
+      pak_install_lib(add, project_lib),
+      error = function(e) {
+        msg <- conditionMessage(e)
+        auth <- grepl("authentication credentials", msg, fixed = TRUE)
+        cli::cli_abort(c(
+          "Installing the study's packages failed.",
+          if (auth) c("A GitHub token is needed.", github_credentials_hint()),
+          output_bullets(msg)
+        ))
+      }
+    )
+  }
+
+  result <- run_in_study(finish_expr(root, before), root)
   raw_output <- result$output
   result$output <- iconv(raw_output, "UTF-8", "UTF-8", sub = "?")
-  unlinked <- grep("^HVTIR_UNLINKED=", strsplit(result$output, "\n")[[1L]],
-                   value = TRUE)
-  moved <- grep("^HVTIR_CHANGED=", strsplit(result$output, "\n")[[1L]],
-                value = TRUE)
-  if (length(moved)) {
-    moves <- strsplit(sub("^HVTIR_CHANGED=", "", moved[1L]), ",",
-                      fixed = TRUE)[[1L]]
-    moves <- gsub("\\}", "}}", gsub("\\{", "{{", moves))
-    names(moves) <- rep("x", length(moves))
-    cli::cli_abort(c(
-      "Installing the declared packages would have moved locked versions.",
-      moves,
-      i = paste(
-        "A newly declared package needs newer versions of packages the",
-        "lockfile pins. {.file renv.lock} was left unchanged and the locked",
-        "versions were restored."
-      ),
-      i = "{.fn update} is the deliberate way to move a study's versions."
-    ))
-  }
-  if (result$status != 0L) {
-    auth <- grepl("authentication credentials", result$output, fixed = TRUE)
-    cli::cli_abort(c(
-      "Installing the study's packages failed.",
-      if (auth) c("renv has no GitHub token.", github_credentials_hint()),
-      output_bullets(result$output),
-      i = "Full output: {.file {save_setup_log(raw_output)}}"
-    ))
-  }
+  abort_stage(result, raw_output)
   if (length(unlinked)) {
-    gone <- strsplit(sub("^HVTIR_UNLINKED=", "", unlinked[1L]), ",",
-                     fixed = TRUE)[[1L]]
+    gone <- strsplit(unlinked[1L], ",", fixed = TRUE)[[1L]]
     cli::cli_alert_info(paste(
       "Removed {length(gone)} unreadable cache link{?s} from the study's",
       "library and reinstalled: {.pkg {gone}}."
     ))
   }
-  lib <- sub(
-    "^HVTIR_LIB=", "",
-    grep("^HVTIR_LIB=", strsplit(result$output, "\n")[[1L]], value = TRUE)
-  )
+  lib <- child_value(result$output, "HVTIR_LIB")
   if (length(lib) != 1L || !dir.exists(lib)) {
     cli::cli_abort(c(
       "The install did not report the study's library path.",

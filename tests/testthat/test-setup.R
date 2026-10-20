@@ -12,18 +12,21 @@ test_that("install_specs maps members to GitHub and leaves others alone", {
 
 local_setup <- function(run_status = 0L,
                         run_output = "installing\nHVTIR_LIB=@LIB@\n",
+                        restore_status = 0L, restore_output = NULL,
+                        pak_error = NULL,
                         renv_present = TRUE,
                         session_lib = "/nonexistent/session/lib",
                         gone = data.frame(
                           package = character(), missing = character()
                         ),
                         locked_r = NA_character_, locked = NULL,
-                        credentials = TRUE, subdir = character(0),
+                        credentials = TRUE,
                         root_error = "study_config(): no _study.yml found.",
                         env = parent.frame()) {
   log <- new.env()
   lib <- withr::local_tempdir(.local_envir = env)
   log$pak <- list()
+  log$pak_lib <- list()
   log$steps <- character(0)
   step <- function(x) log$steps <- c(log$steps, x)
   fns <- list(
@@ -50,10 +53,29 @@ local_setup <- function(run_status = 0L,
           output = paste0("HVTIR_LOCKED=", paste(locked, collapse = ","), "\n")
         ))
       }
+      if (grepl("HVTIR_LOCKVER", expr, fixed = TRUE)) {
+        log$expr1 <- expr
+        step("child1")
+        out <- restore_output
+        if (is.null(out)) {
+          out <- paste0(
+            "HVTIR_LIB=@LIB@\nHVTIR_LOCKVER=",
+            paste(sprintf("%s:1.0", locked), collapse = ","), "\n"
+          )
+        }
+        out <- gsub("@LIB@", lib, out, fixed = TRUE)
+        return(list(status = restore_status, output = out))
+      }
       log$expr <- expr
       step("run")
       out <- gsub("@LIB@", lib, run_output, fixed = TRUE)
       list(status = run_status, output = out)
+    },
+    pak_install_lib = function(specs, lib) {
+      log$pak_lib <- c(log$pak_lib, list(list(specs = specs, lib = lib)))
+      step("pak_lib")
+      if (!is.null(pak_error)) stop(pak_error)
+      invisible(NULL)
     },
     renv_available = function() renv_present,
     pak_install = function(specs) {
@@ -65,7 +87,6 @@ local_setup <- function(run_status = 0L,
     renv_state = function(...) "installed",
     cheap_study_root = function() getwd(),
     github_credentials_available = function() credentials,
-    subdir_remotes = function(...) subdir,
     unresolved_imports = function(...) gone,
     lockfile_r_version = function(...) locked_r,
     set_workspace_prefs = function() step("prefs"),
@@ -80,7 +101,8 @@ test_that("setup runs prefs, study_setup, declare, install, then hands over", {
   log <- local_setup()
   setup("A study", 7L, root = root)
   expect_identical(
-    log$steps, c("prefs", "study_setup", "declare", "run", "open")
+    log$steps,
+    c("prefs", "study_setup", "declare", "child1", "pak_lib", "run", "open")
   )
 })
 
@@ -100,15 +122,77 @@ test_that("setup passes cleanup through when given", {
   expect_false(log$setup_args$cleanup)
 })
 
-test_that("the install restores, adds what is missing, snapshots", {
+test_that("child 1 restores, child 2 fills LinkingTo gaps then snapshots", {
   root <- withr::local_tempdir()
   log <- local_setup()
   setup("A study", 7L, root = root)
-  at <- function(s) regexpr(s, log$expr, fixed = TRUE)
-  expect_true(at("snapshot.type('explicit'") < at("renv::restore("))
-  expect_true(at("renv::restore(") < at("renv::install("))
-  expect_true(at("renv::install(") < at("renv::snapshot("))
-  expect_match(log$expr, "ehrlinger/hvtiRutilities", fixed = TRUE)
+  at1 <- function(s) regexpr(s, log$expr1, fixed = TRUE)[[1L]]
+  expect_true(at1("snapshot.type('explicit'") < at1("renv::restore("))
+  expect_true(at1("renv::restore(") < at1("HVTIR_LOCKVER="))
+  expect_no_match(log$expr1, "renv::install(", fixed = TRUE)
+  expect_no_match(log$expr1, "renv::snapshot(", fixed = TRUE)
+  at <- function(s) regexpr(s, log$expr, fixed = TRUE)[[1L]]
+  expect_true(at("quit(status = 3L") < at("LinkingTo"))
+  expect_true(at("LinkingTo") < at("renv::snapshot("))
+  expect_no_match(log$expr, "renv::restore(prompt", fixed = TRUE)
+})
+
+test_that("order is child 1, then pak into the project library, then child 2", {
+  root <- withr::local_tempdir()
+  log <- local_setup()
+  setup("A study", 7L, root = root)
+  expect_identical(
+    log$steps[log$steps %in% c("child1", "pak_lib", "run")],
+    c("child1", "pak_lib", "run")
+  )
+  expect_length(log$pak_lib, 1L)
+  expect_true(dir.exists(log$pak_lib[[1L]]$lib))
+  expect_true("ehrlinger/hvtiRutilities" %in% log$pak_lib[[1L]]$specs)
+  expect_true("arrow" %in% log$pak_lib[[1L]]$specs)
+})
+
+test_that("pak gets only the declared packages the lockfile lacks", {
+  root <- withr::local_tempdir()
+  writeLines("{}", file.path(root, "renv.lock"))
+  log <- local_setup(locked = c("arrow", "hvtiRutilities", "survival"))
+  setup("A study", 7L, root = root)
+  specs <- log$pak_lib[[1L]]$specs
+  expect_false("arrow" %in% specs)
+  expect_false("ehrlinger/hvtiRutilities" %in% specs)
+  expect_false("survival" %in% specs)
+  expect_true(SELF_REPO %in% specs)
+})
+
+test_that("with everything locked pak is not called", {
+  root <- withr::local_tempdir()
+  writeLines("{}", file.path(root, "renv.lock"))
+  log <- local_setup(locked = c(declared_packages(), "survival"))
+  setup("A study", 7L, root = root)
+  expect_length(log$pak_lib, 0L)
+  expect_true("run" %in% log$steps)
+})
+
+test_that("child 2 receives the locked versions child 1 reported", {
+  root <- withr::local_tempdir()
+  writeLines("{}", file.path(root, "renv.lock"))
+  log <- local_setup(locked = "survival")
+  setup("A study", 7L, root = root)
+  expect_match(log$expr, "survival", fixed = TRUE)
+  expect_match(log$expr, '"1.0"', fixed = TRUE)
+})
+
+test_that("a pak failure stops with its message, before child 2", {
+  root <- withr::local_tempdir()
+  log <- local_setup(pak_error = "could not solve")
+  expect_error(setup("A study", 7L, root = root), "could not solve")
+  expect_false("run" %in% log$steps)
+})
+
+test_that("a failed restore stops before pak", {
+  root <- withr::local_tempdir()
+  log <- local_setup(restore_status = 1L, restore_output = "restore boom\n")
+  expect_error(setup("A study", 7L, root = root), "restore boom")
+  expect_length(log$pak_lib, 0L)
 })
 
 test_that("a failed install stops with the child's output", {
@@ -167,7 +251,9 @@ test_that("a missing renv is installed through pak before study_setup", {
   setup("A study", 7L, root = root)
   expect_identical(log$pak, list("renv"))
   expect_identical(
-    log$steps, c("pak", "prefs", "study_setup", "declare", "run", "open")
+    log$steps,
+    c("pak", "prefs", "study_setup", "declare", "child1", "pak_lib", "run",
+      "open")
   )
 })
 
@@ -235,10 +321,11 @@ test_that("a failed install reports the real error and keeps the log", {
   expect_true(grepl("Downloading 10%", saved, fixed = TRUE, useBytes = TRUE))
 })
 
-test_that("the child turns renv's pak back end off in code, not env", {
+test_that("both children turn renv's pak back end off in code, not env", {
   root <- withr::local_tempdir()
   log <- local_setup()
   setup("A study", 7L, root = root)
+  expect_match(log$expr1, "^options\\(renv.config.pak.enabled = FALSE\\); ")
   expect_match(log$expr, "^options\\(renv.config.pak.enabled = FALSE\\); ")
 })
 
@@ -272,85 +359,20 @@ test_that("a lockfile made under another R says the snapshot records this R", {
   expect_message(setup("A study", 7L, root = root), "snapshot will record")
 })
 
-remotes_field <- paste(
-  "boostmtree=ehrlinger/boostmtree_src/boostmtree@v2.0.7-ccf,",
-  "ehrlinger/hvtiRutilities,",
-  "gitlab::someone/proj/sub,",
-  "url::https://example.org/a/b/c"
-)
-
-test_that("only GitHub remotes with a subdirectory are kept", {
-  got <- parse_subdir_remotes(remotes_field)
-  expect_identical(
-    got,
-    c(boostmtree = "boostmtree=ehrlinger/boostmtree_src/boostmtree@v2.0.7-ccf")
-  )
-})
-
-test_that("a subdirectory remote with no name= is named by its subdirectory", {
-  got <- parse_subdir_remotes("github::o/r/pkgdir@main\no/plain")
-  expect_identical(names(got), "pkgdir")
-  expect_identical(unname(got), "github::o/r/pkgdir@main")
-})
-
-test_that("a missing Remotes field gives nothing", {
-  expect_identical(parse_subdir_remotes(NA), character(0))
-  expect_identical(parse_subdir_remotes(NULL), character(0))
-})
-
-test_that("subdir_remotes reads each member, dedupes, and warns on a failure", {
-  registry <- data.frame(
-    package = c("a", "b", "c"), repo = c("o/a", "o/b", "o/c")
-  )
-  local_mocked_bindings(
-    fetch_description = function(repo, ...) {
-      if (repo == "o/c") return(NULL)
-      cbind(Remotes = "boostmtree=o/src/boostmtree@v1")
-    }
-  )
-  expect_warning(got <- subdir_remotes(registry), "c")
-  expect_identical(unname(got), "boostmtree=o/src/boostmtree@v1")
-  expect_identical(names(got), "boostmtree")
-})
-
-test_that("subdirectory remotes install after restore and before the rest", {
-  expr <- install_expr(
-    "/tmp", c("hvtiR", "arrow"),
-    subdir = c(boostmtree = "boostmtree=o/src/boostmtree@v1")
-  )
-  at <- function(s) regexpr(s, expr, fixed = TRUE)[[1L]]
-  expect_true(at("renv::restore(") < at("boostmtree=o/src/boostmtree@v1"))
-  expect_true(at("boostmtree=o/src/boostmtree@v1") < at("add <- "))
-  expect_true(at("pre <- pre[!\"boostmtree\" %in% locked]") > 0)
-  expect_equal(lengths(regmatches(expr, gregexpr("renv::install(", expr,
-                                                 fixed = TRUE))), 2L)
-})
-
-test_that("with no subdirectory remotes the child makes one install call", {
-  expr <- install_expr("/tmp", c("hvtiR", "arrow"))
-  expect_equal(lengths(regmatches(expr, gregexpr("renv::install(", expr,
-                                                 fixed = TRUE))), 1L)
-})
-
-test_that("setup passes the subdirectory remotes to the child", {
-  root <- withr::local_tempdir()
-  log <- local_setup(subdir = c(boostmtree = "boostmtree=o/src/boostmtree@v1"))
-  setup("A study", 7L, root = root)
-  expect_match(log$expr, "boostmtree=o/src/boostmtree@v1", fixed = TRUE)
-})
-
-test_that("missing GitHub credentials abort before any write", {
+test_that("missing GitHub credentials warn and the install goes ahead", {
   root <- withr::local_tempdir()
   log <- local_setup(credentials = FALSE)
-  expect_error(setup("A study", 7L, root = root), "GITHUB_PAT")
-  expect_error(setup("A study", 7L, root = root), "create_github_token")
-  expect_identical(log$steps, character(0))
+  expect_warning(setup("A study", 7L, root = root), "pak")
+  expect_warning(setup("A study", 7L, root = root), "GITHUB_PAT")
+  expect_warning(setup("A study", 7L, root = root), "create_github_token")
+  suppressWarnings(setup("A study", 7L, root = root))
+  expect_true(all(c("child1", "pak_lib", "run") %in% log$steps))
 })
 
-test_that("with credentials there is no credentials error", {
+test_that("with credentials there is no credentials warning", {
   root <- withr::local_tempdir()
   local_setup(credentials = TRUE)
-  expect_no_error(setup("A study", 7L, root = root))
+  expect_no_warning(setup("A study", 7L, root = root))
 })
 
 test_that("a gitcreds token reaches the child as GITHUB_PAT, then goes", {
@@ -358,15 +380,22 @@ test_that("a gitcreds token reaches the child as GITHUB_PAT, then goes", {
   withr::local_envvar(GITHUB_PAT = NA)
   local_setup(credentials = TRUE)
   seen <- NULL
+  seen_pak <- NULL
   local_mocked_bindings(
     gitcreds_token = function() "tok",
+    pak_install_lib = function(specs, lib) {
+      seen_pak <<- Sys.getenv("GITHUB_PAT", NA)
+    },
     run_in_study = function(expr, root) {
       seen <<- Sys.getenv("GITHUB_PAT", NA)
-      list(status = 0L, output = paste0("HVTIR_LIB=", tempdir(), "\n"))
+      list(status = 0L, output = paste0(
+        "HVTIR_LIB=", tempdir(), "\nHVTIR_LOCKVER=\n"
+      ))
     }
   )
   try(suppressMessages(setup("A study", 7L, root = root)), silent = TRUE)
   expect_identical(seen, "tok")
+  expect_identical(seen_pak, "tok")
   expect_identical(Sys.getenv("GITHUB_PAT", NA), NA_character_)
 })
 
@@ -384,9 +413,15 @@ test_that("with no PAT and no gitcreds there are no credentials", {
 test_that("a failed install with an authentication error adds the hint", {
   root <- withr::local_tempdir()
   local_setup(
-    run_status = 1L,
-    run_output = "GitHub authentication credentials are not available\n"
+    restore_status = 1L,
+    restore_output = "GitHub authentication credentials are not available\n"
   )
+  expect_error(setup("A study", 7L, root = root), "create_github_token")
+})
+
+test_that("a pak failure with an authentication error adds the hint", {
+  root <- withr::local_tempdir()
+  local_setup(pak_error = "GitHub authentication credentials are not available")
   expect_error(setup("A study", 7L, root = root), "create_github_token")
 })
 
@@ -400,16 +435,55 @@ test_that("a failed install without that error carries no hint", {
   expect_no_match(err, "create_github_token")
 })
 
-test_that("the child records locked versions, then compares before snapshot", {
-  expr <- install_expr("/tmp", c("hvtiR", "arrow"))
+test_that("child 2 compares locked versions before it fills and snapshots", {
+  expr <- finish_expr("/tmp", c(pkgA = "1.0"))
   at <- function(s) regexpr(s, expr, fixed = TRUE)[[1L]]
   expect_true(at("before <- ") > 0)
-  expect_true(at("before <- ") < at("renv::install("))
-  expect_true(at("renv::install(") < at("changed <- "))
+  expect_true(at("before <- ") < at("changed <- "))
   expect_true(at("changed <- ") < at("packages = changed"))
   expect_true(at("packages = changed") < at("HVTIR_CHANGED="))
   expect_true(at("HVTIR_CHANGED=") < at("quit(status = 3L"))
-  expect_true(at("quit(status = 3L") < at("renv::snapshot("))
+  expect_true(at("quit(status = 3L") < at("LinkingTo"))
+  expect_true(at("LinkingTo") < at("renv::snapshot("))
+  expect_true(at("renv::snapshot(") < at("HVTIR_LIB="))
+  expect_match(expr, "pkgA", fixed = TRUE)
+})
+
+# The LinkingTo fill, run against a temporary library.
+
+run_fill <- function(lib) {
+  env <- new.env()
+  env$lib <- lib
+  env$installed <- NULL
+  env$link_install <- function(x) assign("installed", x, envir = env)
+  # Defined in setup.R; lintr cannot resolve it across source files.
+  # nolint next: object_usage_linter.
+  eval(parse(text = linking_expr("lib", "/tmp")), env)
+  env$installed
+}
+
+fake_pkg <- function(lib, name, ...) {
+  dir.create(file.path(lib, name))
+  writeLines(
+    c(paste("Package:", name), "Version: 1.0", "Title: x", ...),
+    file.path(lib, name, "DESCRIPTION")
+  )
+}
+
+test_that("the LinkingTo fill selects the missing build-time package", {
+  lib <- withr::local_tempdir()
+  fake_pkg(lib, "fakeUser", "LinkingTo: fakeLinkDep (>= 0.2.0), fakeHere")
+  fake_pkg(lib, "fakeHere")
+  expect_identical(run_fill(lib), "fakeLinkDep")
+})
+
+test_that("the LinkingTo fill installs nothing when all are present", {
+  lib <- withr::local_tempdir()
+  fake_pkg(lib, "fakeUser", "LinkingTo: fakeLinkDep")
+  fake_pkg(lib, "fakeLinkDep")
+  expect_null(run_fill(lib))
+  empty <- withr::local_tempdir()
+  expect_null(run_fill(empty))
 })
 
 test_that("a locked package moved by the install stops, lockfile unchanged", {
@@ -613,22 +687,24 @@ test_that("unlink_expr keeps a _cache package and never follows a link", {
   expect_identical(out, "")
 })
 
-test_that("the child cleans, drops the cache, isolates, then restores", {
-  expr <- install_expr("/tmp", c("hvtiR", "arrow"))
+test_that("child 1 cleans, drops the cache, isolates, then restores", {
+  expr <- restore_expr("/tmp")
   at <- function(s) regexpr(s, expr, fixed = TRUE)[[1L]]
   expect_true(at("renv::load(") < at("HVTIR_UNLINKED="))
   # The cleanup comes first: a leftover _cache makes renv's own scan fail.
   expect_true(at("HVTIR_UNLINKED=") < at("use.cache(FALSE"))
   expect_true(at("use.cache(FALSE") < at("renv::isolate("))
   expect_true(at("renv::isolate(") < at("renv::restore("))
-  expect_true(at("renv::restore(") < at("renv::install("))
   expect_match(expr, "options(renv.config.pak.enabled = FALSE)", fixed = TRUE)
   expect_match(expr, "snapshot.type('explicit'", fixed = TRUE)
 })
 
 test_that("setup does not claim a reinstall when the install failed", {
   root <- withr::local_tempdir()
-  local_setup(run_output = "HVTIR_UNLINKED=dplyr\n", run_status = 1L)
+  local_setup(
+    restore_output = "HVTIR_UNLINKED=dplyr\nHVTIR_LIB=@LIB@\nHVTIR_LOCKVER=\n",
+    run_status = 1L
+  )
   msgs <- character(0)
   tryCatch(
     withCallingHandlers(
@@ -645,7 +721,9 @@ test_that("setup does not claim a reinstall when the install failed", {
 
 test_that("setup reports the links the child removed", {
   root <- withr::local_tempdir()
-  local_setup(run_output = "HVTIR_UNLINKED=dplyr,_cache\nHVTIR_LIB=@LIB@\n")
+  local_setup(restore_output = paste0(
+    "HVTIR_UNLINKED=dplyr,_cache\nHVTIR_LIB=@LIB@\nHVTIR_LOCKVER=\n"
+  ))
   expect_message(setup("A study", 7L, root = root), "dplyr")
 })
 
