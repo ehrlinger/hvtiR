@@ -30,7 +30,7 @@ local_setup <- function(run_status = 0L,
                           package = character(), missing = character()
                         ),
                         locked_r = NA_character_, locked = NULL,
-                        credentials = TRUE,
+                        credentials = TRUE, lock_repos = NULL,
                         root_error = "study_config(): no _study.yml found.",
                         env = parent.frame()) {
   log <- new.env()
@@ -60,7 +60,12 @@ local_setup <- function(run_status = 0L,
         step("read_lock")
         return(list(
           status = 0L,
-          output = paste0("HVTIR_LOCKED=", paste(locked, collapse = ","), "\n")
+          output = paste0(
+            "HVTIR_LOCKED=", paste(locked, collapse = ","), "\n",
+            if (!is.null(lock_repos)) {
+              paste0("HVTIR_REPOS=", lock_repos, "\n")
+            }
+          )
         ))
       }
       if (grepl("HVTIR_LOCKVER", expr, fixed = TRUE)) {
@@ -593,12 +598,17 @@ test_that("a failed rollback restore is named and the guard still exits 3", {
   expect_match(res$out, "QUIT", fixed = TRUE)
 })
 
-test_that("child 1 reports RemoteSha, the library's packages and the repos", {
+test_that("child 1 reports RemoteSha and the library's packages", {
   expr <- restore_expr("/tmp")
   at <- anchor_at(expr)
   expect_match(expr, "RemoteSha", fixed = TRUE)
   expect_true(at("renv::restore(") < at("HVTIR_LIBPKGS="))
-  expect_true(at("renv::restore(") < at("HVTIR_REPOS="))
+})
+
+test_that("the lockfile read reports repos, else the session's", {
+  expr <- locked_expr("/tmp")
+  expect_match(expr, "HVTIR_REPOS=", fixed = TRUE)
+  expect_match(expr, "$R$Repositories", fixed = TRUE)
   expect_match(expr, "getOption('repos')", fixed = TRUE)
 })
 
@@ -612,11 +622,15 @@ test_that("child 2 is given the library's packages and the locked SHAs", {
 
 test_that("setup parses sha, library packages and repos from child 1", {
   root <- withr::local_tempdir()
-  log <- local_setup(restore_output = paste0(
-    "HVTIR_LIB=@LIB@\nHVTIR_LOCKVER=pkgA:1.0:abc,pkgB:2.0:\n",
-    "HVTIR_LIBPKGS=pkgA,pkgB\n",
-    "HVTIR_REPOS=CRAN=https://cran.example;P=https://p.example\n"
-  ))
+  writeLines("{}", file.path(root, "renv.lock"))
+  log <- local_setup(
+    locked = c("pkgA", "pkgB"),
+    lock_repos = "CRAN=https://cran.example;P=https://p.example",
+    restore_output = paste0(
+      "HVTIR_LIB=@LIB@\nHVTIR_LOCKVER=pkgA:1.0:abc,pkgB:2.0:\n",
+      "HVTIR_LIBPKGS=pkgA,pkgB\n"
+    )
+  )
   setup("A study", 7L, root = root)
   expect_identical(
     log$pak_lib[[1L]]$repos,
@@ -1035,4 +1049,90 @@ test_that("run_in_study runs code too long for an -e argument", {
   res <- run_in_study(expr, root)
   expect_identical(res$status, 0L)
   expect_match(res$output, "N=3000", fixed = TRUE)
+})
+
+src <- "https://ppm.example:4242/cran/latest"
+bin <- "https://ppm.example:4242/cran/__linux__/centos8/latest"
+
+test_that("binary_repos swaps a source URL for the session's binary form", {
+  expect_identical(binary_repos(c(CRAN = src), c(CRAN = bin)), c(CRAN = bin))
+  expect_identical(
+    binary_repos(c(CRAN = paste0(src, "/")), c(CRAN = bin)), c(CRAN = bin)
+  )
+})
+
+test_that("binary_repos keeps the study URL when the session's differs", {
+  other_host <- sub("ppm.example", "other.example", bin, fixed = TRUE)
+  other_port <- sub("4242", "4243", bin, fixed = TRUE)
+  other_path <- sub("/cran/", "/bioc/", bin, fixed = TRUE)
+  dated <- sub("latest", "2026-10-01", bin, fixed = TRUE)
+  for (session in c(other_host, other_port, other_path, dated, src)) {
+    expect_identical(binary_repos(c(CRAN = src), c(CRAN = session)),
+                     c(CRAN = src))
+  }
+  expect_identical(
+    binary_repos(c(CRAN = sub("latest", "2026-10-01", src)), c(CRAN = bin)),
+    c(CRAN = sub("latest", "2026-10-01", src))
+  )
+})
+
+test_that("binary_repos leaves a binary or non-PPM study URL alone", {
+  expect_identical(binary_repos(c(CRAN = bin), c(CRAN = bin)), c(CRAN = bin))
+  cran <- "https://cloud.r-project.org"
+  expect_identical(binary_repos(c(CRAN = cran), c(CRAN = bin)), c(CRAN = cran))
+  expect_identical(
+    binary_repos(c(CRAN = "https://cran.r-project.org/"), c(CRAN = bin)),
+    c(CRAN = "https://cran.r-project.org/")
+  )
+  expect_null(binary_repos(NULL, c(CRAN = bin)))
+})
+
+test_that("binary_repos handles several named repos independently", {
+  p <- "https://ppm.example:4242/bioc/latest"
+  got <- binary_repos(
+    c(CRAN = src, BIOC = p, X = "https://x.example/r"),
+    c(CRAN = bin,
+      other = "https://ppm.example:4242/bioc/__linux__/rhel9/latest")
+  )
+  expect_identical(
+    unname(got),
+    c(bin, "https://ppm.example:4242/bioc/__linux__/rhel9/latest",
+      "https://x.example/r")
+  )
+  expect_named(got, c("CRAN", "BIOC", "X"))
+})
+
+test_that("setup installs, restores and records the binary URL", {
+  root <- withr::local_tempdir()
+  writeLines("{}", file.path(root, "renv.lock"))
+  withr::local_options(repos = c(CRAN = bin))
+  log <- local_setup(
+    locked = "pkgA", lock_repos = paste0("CRAN=", src),
+    restore_output = "HVTIR_LIB=@LIB@\nHVTIR_LOCKVER=pkgA:1.0:\n"
+  )
+  msgs <- testthat::capture_messages(setup("A study", 7L, root = root))
+  expect_identical(log$pak_lib[[1L]]$repos, c(CRAN = bin))
+  expect_match(log$expr1, bin, fixed = TRUE)
+  expect_match(log$expr1, "repos = hvtir_repos", fixed = TRUE)
+  expect_match(log$expr, bin, fixed = TRUE)
+  expect_match(log$expr, "lockfile_write", fixed = TRUE)
+  expect_false(grepl(src, log$expr, fixed = TRUE))
+  expect_match(paste(msgs, collapse = ""), "recording it in renv.lock",
+               fixed = TRUE)
+})
+
+test_that("setup keeps the study URL when the session has no binary form", {
+  root <- withr::local_tempdir()
+  writeLines("{}", file.path(root, "renv.lock"))
+  withr::local_options(repos = c(CRAN = "https://elsewhere.example/cran"))
+  log <- local_setup(
+    locked = "pkgA", lock_repos = paste0("CRAN=", src),
+    restore_output = "HVTIR_LIB=@LIB@\nHVTIR_LOCKVER=pkgA:1.0:\n"
+  )
+  msgs <- testthat::capture_messages(setup("A study", 7L, root = root))
+  expect_identical(log$pak_lib[[1L]]$repos, c(CRAN = src))
+  expect_match(log$expr1, src, fixed = TRUE)
+  expect_match(log$expr, src, fixed = TRUE)
+  expect_false(grepl("lockfile_write", log$expr, fixed = TRUE))
+  expect_false(grepl("recording it", paste(msgs, collapse = ""), fixed = TRUE))
 })

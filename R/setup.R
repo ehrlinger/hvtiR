@@ -130,7 +130,13 @@ locked_expr <- function(root) {
   paste0(
     pak_off(),
     "cat('\\nHVTIR_LOCKED=', paste(names(renv::lockfile_read(", p,
-    ")$Packages), collapse = ','), '\\n', sep = '')"
+    ")$Packages), collapse = ','), '\\n', sep = ''); ",
+    "repos <- tryCatch(unlist(renv::lockfile_read(", p,
+    ")$R$Repositories), error = function(e) NULL); ",
+    "if (!length(repos)) repos <- getOption('repos'); ",
+    "repos <- repos[!is.na(repos) & nzchar(repos) & repos != '@CRAN@']; ",
+    "cat('HVTIR_REPOS=', if (length(repos)) paste0(names(repos), '=', repos, ",
+    "collapse = ';'), '\\n', sep = '')"
   )
 }
 
@@ -367,15 +373,81 @@ unlink_expr <- function(lib_var) {
   )
 }
 
+#' Rewrite study repositories to the session's binary form of the same ones
+#'
+#' Posit Package Manager serves one snapshot as source at `<base>/<snapshot>`
+#' and as binaries at `<base>/__linux__/<distro>/<snapshot>`. A study's
+#' lockfile often records the source form, and installing from it compiles
+#' every package, which some cannot do with a server's default compiler. A
+#' study repository is replaced only by a session repository that is exactly
+#' its `__linux__/<distro>/` form: same scheme, host, port, path and
+#' snapshot. The distro is never guessed and the snapshot never changed.
+#'
+#' Self-contained base R, because the children evaluate its deparsed source.
+#' @param study The study's repositories, a named character vector.
+#' @param session The session's repositories, e.g. `getOption("repos")`.
+#' @return `study`, with each repository swapped for its binary form when the
+#'   session has one.
+#' @noRd
+binary_repos <- function(study, session) {
+  session <- as.character(session)
+  for (i in seq_along(study)) {
+    parts <- regmatches(
+      study[[i]],
+      regexec("^(https?://[^/]+(?:/[^/]+)*)/([^/]+)/?$", study[[i]],
+              perl = TRUE)
+    )[[1L]]
+    if (length(parts) != 3L) next
+    pre <- paste0(parts[[2L]], "/__linux__/")
+    post <- paste0("/", parts[[3L]])
+    cand <- sub("/$", "", session)
+    mid <- substring(cand, nchar(pre) + 1L, nchar(cand) - nchar(post))
+    found <- startsWith(cand, pre) & endsWith(cand, post) &
+      nchar(cand) > nchar(pre) + nchar(post) &
+      nzchar(mid) & !grepl("/", mid, fixed = TRUE)
+    if (any(found)) study[[i]] <- session[found][[1L]]
+  }
+  study
+}
+
+#' Child code that sets the repositories for the run
+#'
+#' `renv::load()` resets `repos` from the lockfile, so this follows it.
+#' @param repos A named character vector, or `NULL` for nothing.
+#' @return One string of R code, defining `hvtir_repos`.
+#' @noRd
+repos_expr <- function(repos) {
+  if (!length(repos)) return("")
+  paste0(
+    "hvtir_repos <- ", deparse1(c(repos), width.cutoff = 500L), "; ",
+    "options(repos = hvtir_repos); "
+  )
+}
+
+#' Parse the `HVTIR_REPOS` line a child reports
+#' @param x The line's value, `name=url;name=url`, or empty.
+#' @return A named character vector, or `NULL`.
+#' @noRd
+parse_repos <- function(x) {
+  if (length(x) != 1L || !nzchar(x)) return(NULL)
+  pairs <- strsplit(strsplit(x, ";", fixed = TRUE)[[1L]], "=", fixed = TRUE)
+  stats::setNames(
+    vapply(pairs, function(p) paste(p[-1L], collapse = "="), ""),
+    vapply(pairs, `[`, "", 1L)
+  )
+}
+
 #' Child run 1: restore the lockfile, report the library and locked versions
 #' @param root The study root.
+#' @param repos The repositories to restore from, or `NULL` to leave renv's.
 #' @return One string of R code.
 #' @noRd
-restore_expr <- function(root) {
+restore_expr <- function(root, repos = NULL) {
   p <- deparse1(normalizePath(root, winslash = "/"))
   paste0(
     pak_off(),
     "renv::load(", p, "); ",
+    repos_expr(repos),
     "lib <- renv::paths$library(project = ", p, "); ",
     unreadable_expr("lib"),
     # Clear first: a leftover `_cache` makes renv's own library scan fail.
@@ -383,7 +455,8 @@ restore_expr <- function(root) {
     "renv::settings$use.cache(FALSE, project = ", p, "); ",
     "renv::isolate(project = ", p, "); ",
     "renv::settings$snapshot.type('explicit', project = ", p, "); ",
-    "renv::restore(project = ", p, ", prompt = FALSE); ",
+    "renv::restore(project = ", p, ", prompt = FALSE",
+    if (length(repos)) ", repos = hvtir_repos", "); ",
     "locked <- renv::lockfile_read(file.path(", p, ", 'renv.lock'))$Packages; ",
     "cat('\\nHVTIR_LIB=', lib, '\\n', sep = ''); ",
     # name:version:RemoteSha, the sha empty when the record has none.
@@ -394,13 +467,7 @@ restore_expr <- function(root) {
     # The library as the lockfile left it: what a guard trip must go back to.
     "ents <- list.files(lib); ",
     "cat('HVTIR_LIBPKGS=', paste(ents[file.exists(file.path(lib, ents, ",
-    "'DESCRIPTION'))], collapse = ','), '\\n', sep = ''); ",
-    "repos <- tryCatch(unlist(renv::lockfile_read(file.path(", p,
-    ", 'renv.lock'))$R$Repositories), error = function(e) NULL); ",
-    "if (!length(repos)) repos <- getOption('repos'); ",
-    "repos <- repos[!is.na(repos) & nzchar(repos) & repos != '@CRAN@']; ",
-    "cat('HVTIR_REPOS=', if (length(repos)) paste0(names(repos), '=', repos, ",
-    "collapse = ';'), '\\n', sep = '')"
+    "'DESCRIPTION'))], collapse = ','), '\\n', sep = '')"
   )
 }
 
@@ -413,9 +480,12 @@ restore_expr <- function(root) {
 #' @param project The study root.
 #' @param installer The function that installs, called as `installer(need,
 #'   project =, prompt =)`; a test passes the name of its own.
+#' @param repos The repositories to install from, or `NULL` for renv's; the
+#'   child must have set `hvtir_repos` (see [repos_expr()]).
 #' @return One string of R code.
 #' @noRd
-linking_expr <- function(lib_var, project, installer = "renv::install") {
+linking_expr <- function(lib_var, project, installer = "renv::install",
+                         repos = NULL) {
   p <- deparse1(project)
   paste0(
     "d <- file.path(", lib_var, ", list.files(", lib_var,
@@ -428,7 +498,7 @@ linking_expr <- function(lib_var, project, installer = "renv::install") {
     "need <- lt[!vapply(lt, function(n) length(find.package(n, lib.loc = c(",
     lib_var, ", .Library), quiet = TRUE)) > 0L, NA)]; ",
     "if (length(need)) ", installer, "(need, project = ", p,
-    ", prompt = FALSE); "
+    ", prompt = FALSE", if (length(repos)) ", repos = hvtir_repos", "); "
   )
 }
 
@@ -441,9 +511,14 @@ linking_expr <- function(lib_var, project, installer = "renv::install") {
 #' @param sha Locked `RemoteSha`s, named by package, `""` for none.
 #' @param libpkgs The library's package directories after the restore, or
 #'   `NULL` when unknown (nothing is then removed on a guard trip).
+#' @param repos The repositories to install from, or `NULL` to leave renv's.
+#' @param record Whether to write `repos` into the lockfile after the
+#'   snapshot. renv's snapshot keeps the repositories an existing lockfile
+#'   already records, so the rewrite has to follow it.
 #' @return One string of R code.
 #' @noRd
-finish_expr <- function(root, before, sha = NULL, libpkgs = NULL) {
+finish_expr <- function(root, before, sha = NULL, libpkgs = NULL,
+                        repos = NULL, record = FALSE) {
   root <- normalizePath(root, winslash = "/")
   p <- deparse1(root)
   if (is.null(sha)) {
@@ -452,13 +527,21 @@ finish_expr <- function(root, before, sha = NULL, libpkgs = NULL) {
   paste0(
     pak_off(),
     "renv::load(", p, "); ",
+    repos_expr(repos),
     "lib <- renv::paths$library(project = ", p, "); ",
     "before <- ", deparse1(before, width.cutoff = 500L), "; ",
     "sha <- ", deparse1(sha, width.cutoff = 500L), "; ",
     "libpkgs <- ", deparse1(libpkgs, width.cutoff = 500L), "; ",
-    linking_expr("lib", root),
+    linking_expr("lib", root, repos = repos),
     guard_expr(p),
     "renv::snapshot(project = ", p, ", prompt = FALSE); ",
+    if (record && length(repos)) {
+      paste0(
+        "lf <- renv::lockfile_read(file.path(", p, ", 'renv.lock')); ",
+        "lf$R$Repositories <- as.list(hvtir_repos); ",
+        "renv::lockfile_write(lf, file.path(", p, ", 'renv.lock')); "
+      )
+    },
     "cat('\\nHVTIR_LIB=', lib, '\\n', sep = '')"
   )
 }
@@ -756,6 +839,7 @@ setup <- function(study, study_tracker_id, root = NULL, adopt = FALSE, ...) {
 
   lock_path <- file.path(root, "renv.lock")
   locked <- character(0)
+  study_repos <- NULL
   if (file.exists(lock_path)) {
     read <- run_in_study(locked_expr(root), root)
     line <- grep("^HVTIR_LOCKED=", strsplit(read$output, "\n")[[1L]],
@@ -767,6 +851,21 @@ setup <- function(study, study_tracker_id, root = NULL, adopt = FALSE, ...) {
       ))
     }
     locked <- strsplit(sub("^HVTIR_LOCKED=", "", line), ",", fixed = TRUE)[[1L]]
+    study_repos <- parse_repos(child_value(read$output, "HVTIR_REPOS"))
+  }
+  # A study lives on one server, so its lockfile should name the binary URL its
+  # teammates' restores can use. A source URL makes every restore compile, and
+  # some packages (arrow needs a C++20 compiler) cannot compile with the
+  # server's default one. The session's repository is the same Package Manager
+  # served as binaries.
+  repos <- binary_repos(study_repos, getOption("repos"))
+  record <- !identical(unname(repos), unname(study_repos))
+  if (record) {
+    cli::cli_alert_info(paste(
+      "Using {.url {repos[repos != study_repos][[1L]]}} (the binary form of",
+      "the study's {.url {study_repos[repos != study_repos][[1L]]}}) for",
+      "installs, and recording it in renv.lock."
+    ))
   }
 
   status <- utilities_fn("study_setup")(
@@ -781,7 +880,7 @@ setup <- function(study, study_tracker_id, root = NULL, adopt = FALSE, ...) {
   cli::cli_alert_info(
     "Installing the study's packages; this can take several minutes."
   )
-  first <- run_in_study(restore_expr(root), root)
+  first <- run_in_study(restore_expr(root, repos), root)
   first_raw <- first$output
   first$output <- iconv(first_raw, "UTF-8", "UTF-8", sub = "?")
   abort_stage(first, first_raw)
@@ -809,18 +908,6 @@ setup <- function(study, study_tracker_id, root = NULL, adopt = FALSE, ...) {
   } else {
     libpkgs <- NULL
   }
-  repos <- child_value(first$output, "HVTIR_REPOS")
-  if (length(repos) == 1L && nzchar(repos)) {
-    pairs <- strsplit(strsplit(repos, ";", fixed = TRUE)[[1L]], "=",
-                      fixed = TRUE)
-    repos <- stats::setNames(
-      vapply(pairs, function(x) paste(x[-1L], collapse = "="), ""),
-      vapply(pairs, `[`, "", 1L)
-    )
-  } else {
-    repos <- NULL
-  }
-
   add <- install_specs(setdiff(packages, names(before)))
   if (length(add)) {
     tryCatch(
@@ -837,7 +924,9 @@ setup <- function(study, study_tracker_id, root = NULL, adopt = FALSE, ...) {
     )
   }
 
-  result <- run_in_study(finish_expr(root, before, sha, libpkgs), root)
+  result <- run_in_study(
+    finish_expr(root, before, sha, libpkgs, repos, record), root
+  )
   raw_output <- result$output
   result$output <- iconv(raw_output, "UTF-8", "UTF-8", sub = "?")
   abort_stage(result, raw_output)
