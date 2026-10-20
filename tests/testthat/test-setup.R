@@ -1,3 +1,13 @@
+# A position finder that fails when the anchor is absent: a comparison of two
+# regexpr() results passes when both are -1.
+anchor_at <- function(x) {
+  function(s) {
+    pos <- regexpr(s, x, fixed = TRUE)[[1L]]
+    testthat::expect_gt(pos, 0L)
+    pos
+  }
+}
+
 test_that("a study declares hvtiR, every member and the extras", {
   pkgs <- declared_packages()
   expect_identical(pkgs[1L], "hvtiR")
@@ -60,7 +70,7 @@ local_setup <- function(run_status = 0L,
         if (is.null(out)) {
           out <- paste0(
             "HVTIR_LIB=@LIB@\nHVTIR_LOCKVER=",
-            paste(sprintf("%s:1.0", locked), collapse = ","), "\n"
+            paste(sprintf("%s:1.0:", locked), collapse = ","), "\n"
           )
         }
         out <- gsub("@LIB@", lib, out, fixed = TRUE)
@@ -71,8 +81,10 @@ local_setup <- function(run_status = 0L,
       out <- gsub("@LIB@", lib, run_output, fixed = TRUE)
       list(status = run_status, output = out)
     },
-    pak_install_lib = function(specs, lib) {
-      log$pak_lib <- c(log$pak_lib, list(list(specs = specs, lib = lib)))
+    pak_install_lib = function(specs, lib, repos = NULL) {
+      log$pak_lib <- c(
+        log$pak_lib, list(list(specs = specs, lib = lib, repos = repos))
+      )
       step("pak_lib")
       if (!is.null(pak_error)) stop(pak_error)
       invisible(NULL)
@@ -126,14 +138,14 @@ test_that("child 1 restores, child 2 fills LinkingTo gaps then snapshots", {
   root <- withr::local_tempdir()
   log <- local_setup()
   setup("A study", 7L, root = root)
-  at1 <- function(s) regexpr(s, log$expr1, fixed = TRUE)[[1L]]
+  at1 <- anchor_at(log$expr1)
   expect_true(at1("snapshot.type('explicit'") < at1("renv::restore("))
   expect_true(at1("renv::restore(") < at1("HVTIR_LOCKVER="))
   expect_no_match(log$expr1, "renv::install(", fixed = TRUE)
   expect_no_match(log$expr1, "renv::snapshot(", fixed = TRUE)
-  at <- function(s) regexpr(s, log$expr, fixed = TRUE)[[1L]]
-  expect_true(at("quit(status = 3L") < at("LinkingTo"))
-  expect_true(at("LinkingTo") < at("renv::snapshot("))
+  at <- anchor_at(log$expr)
+  expect_true(at("LinkingTo") < at("quit(status = 3L"))
+  expect_true(at("quit(status = 3L") < at("renv::snapshot("))
   expect_no_match(log$expr, "renv::restore(prompt", fixed = TRUE)
 })
 
@@ -383,7 +395,7 @@ test_that("a gitcreds token reaches the child as GITHUB_PAT, then goes", {
   seen_pak <- NULL
   local_mocked_bindings(
     gitcreds_token = function() "tok",
-    pak_install_lib = function(specs, lib) {
+    pak_install_lib = function(specs, lib, repos = NULL) {
       seen_pak <<- Sys.getenv("GITHUB_PAT", NA)
     },
     run_in_study = function(expr, root) {
@@ -435,16 +447,17 @@ test_that("a failed install without that error carries no hint", {
   expect_no_match(err, "create_github_token")
 })
 
-test_that("child 2 compares locked versions before it fills and snapshots", {
+test_that("child 2 fills LinkingTo gaps, guards the lock, then snapshots", {
   expr <- finish_expr("/tmp", c(pkgA = "1.0"))
-  at <- function(s) regexpr(s, expr, fixed = TRUE)[[1L]]
-  expect_true(at("before <- ") > 0)
-  expect_true(at("before <- ") < at("changed <- "))
+  at <- anchor_at(expr)
+  expect_true(at("before <- ") < at("LinkingTo"))
+  # The fill installs through renv, which can move a locked package, so the
+  # guard follows it.
+  expect_true(at("LinkingTo") < at("changed <- "))
   expect_true(at("changed <- ") < at("packages = changed"))
   expect_true(at("packages = changed") < at("HVTIR_CHANGED="))
   expect_true(at("HVTIR_CHANGED=") < at("quit(status = 3L"))
-  expect_true(at("quit(status = 3L") < at("LinkingTo"))
-  expect_true(at("LinkingTo") < at("renv::snapshot("))
+  expect_true(at("quit(status = 3L") < at("renv::snapshot("))
   expect_true(at("renv::snapshot(") < at("HVTIR_LIB="))
   expect_match(expr, "pkgA", fixed = TRUE)
 })
@@ -455,10 +468,10 @@ run_fill <- function(lib) {
   env <- new.env()
   env$lib <- lib
   env$installed <- NULL
-  env$link_install <- function(x) assign("installed", x, envir = env)
+  env$fake_install <- function(x, ...) assign("installed", x, envir = env)
   # Defined in setup.R; lintr cannot resolve it across source files.
   # nolint next: object_usage_linter.
-  eval(parse(text = linking_expr("lib", "/tmp")), env)
+  eval(parse(text = linking_expr("lib", "/tmp", "fake_install")), env)
   env$installed
 }
 
@@ -499,6 +512,161 @@ test_that("a locked package moved by the install stops, lockfile unchanged", {
   expect_match(err, "pkgC", fixed = TRUE)
   expect_match(err, "unchanged", fixed = TRUE)
   expect_match(err, "update", fixed = TRUE)
+})
+
+test_that("the LinkingTo fill defaults to renv::install, with no test hook", {
+  code <- linking_expr("lib", "/tmp")
+  expect_match(code, "renv::install(need", fixed = TRUE)
+  expect_no_match(code, "link_install", fixed = TRUE)
+})
+
+# The guard and its cleanup, run against a temporary library.
+
+run_guard <- function(lib, before, sha, libpkgs, restore_error = NULL) {
+  env <- new.env()
+  env$lib <- lib
+  env$before <- before
+  env$sha <- sha
+  env$libpkgs <- libpkgs
+  env$restored <- NULL
+  env$fake_restore <- function(project, packages, prompt) {
+    if (!is.null(restore_error)) stop(restore_error)
+    assign("restored", packages, envir = env)
+  }
+  # Defined in setup.R; lintr cannot resolve it across source files.
+  # nolint next: object_usage_linter.
+  code <- guard_expr(deparse1("/tmp"))
+  code <- sub("renv::restore(", "fake_restore(", code, fixed = TRUE)
+  code <- sub("quit(status = 3L, save = 'no')", "cat('QUIT\\n')", code,
+              fixed = TRUE)
+  out <- paste(capture.output(eval(parse(text = code), env)), collapse = "\n")
+  list(out = out, restored = env$restored)
+}
+
+sha_pkg <- function(lib, name, sha) {
+  fake_pkg(lib, name, paste("RemoteSha:", sha))
+}
+
+test_that("the guard trips when RemoteSha moved and Version did not", {
+  lib <- withr::local_tempdir()
+  sha_pkg(lib, "pkgA", "bbb")
+  res <- run_guard(lib, c(pkgA = "1.0"), c(pkgA = "aaa"), "pkgA")
+  expect_match(res$out, "QUIT", fixed = TRUE)
+  expect_match(res$out, "HVTIR_CHANGED=pkgA", fixed = TRUE)
+  expect_identical(res$restored, "pkgA")
+})
+
+test_that("the guard passes when Version and RemoteSha both match", {
+  lib <- withr::local_tempdir()
+  sha_pkg(lib, "pkgA", "aaa")
+  fake_pkg(lib, "pkgB")
+  res <- run_guard(
+    lib, c(pkgA = "1.0", pkgB = "1.0"), c(pkgA = "aaa", pkgB = ""),
+    c("pkgA", "pkgB")
+  )
+  expect_identical(res$out, "")
+  expect_null(res$restored)
+})
+
+test_that("a guard trip removes what this run added and keeps the rest", {
+  lib <- withr::local_tempdir()
+  sha_pkg(lib, "pkgA", "bbb")
+  fake_pkg(lib, "kept")
+  fake_pkg(lib, "pakAdded")
+  res <- run_guard(lib, c(pkgA = "1.0"), c(pkgA = "aaa"), c("pkgA", "kept"))
+  expect_false(dir.exists(file.path(lib, "pakAdded")))
+  expect_true(dir.exists(file.path(lib, "kept")))
+  expect_true(dir.exists(file.path(lib, "pkgA")))
+  expect_identical(res$restored, "pkgA")
+  expect_no_match(res$out, "RESTOREFAIL", fixed = TRUE)
+})
+
+test_that("a failed rollback restore is named and the guard still exits 3", {
+  lib <- withr::local_tempdir()
+  sha_pkg(lib, "pkgA", "bbb")
+  res <- run_guard(
+    lib, c(pkgA = "1.0"), c(pkgA = "aaa"), "pkgA", restore_error = "no token"
+  )
+  expect_match(res$out, "HVTIR_RESTOREFAIL=pkgA", fixed = TRUE)
+  expect_match(res$out, "no token", fixed = TRUE)
+  expect_match(res$out, "HVTIR_CHANGED=pkgA", fixed = TRUE)
+  expect_match(res$out, "QUIT", fixed = TRUE)
+})
+
+test_that("child 1 reports RemoteSha, the library's packages and the repos", {
+  expr <- restore_expr("/tmp")
+  at <- anchor_at(expr)
+  expect_match(expr, "RemoteSha", fixed = TRUE)
+  expect_true(at("renv::restore(") < at("HVTIR_LIBPKGS="))
+  expect_true(at("renv::restore(") < at("HVTIR_REPOS="))
+  expect_match(expr, "getOption('repos')", fixed = TRUE)
+})
+
+test_that("child 2 is given the library's packages and the locked SHAs", {
+  expr <- finish_expr(
+    "/tmp", c(pkgA = "1.0"), c(pkgA = "abc"), libpkgs = c("pkgA", "kept")
+  )
+  expect_match(expr, "abc", fixed = TRUE)
+  expect_match(expr, "kept", fixed = TRUE)
+})
+
+test_that("setup parses sha, library packages and repos from child 1", {
+  root <- withr::local_tempdir()
+  log <- local_setup(restore_output = paste0(
+    "HVTIR_LIB=@LIB@\nHVTIR_LOCKVER=pkgA:1.0:abc,pkgB:2.0:\n",
+    "HVTIR_LIBPKGS=pkgA,pkgB\n",
+    "HVTIR_REPOS=CRAN=https://cran.example;P=https://p.example\n"
+  ))
+  setup("A study", 7L, root = root)
+  expect_identical(
+    log$pak_lib[[1L]]$repos,
+    c(CRAN = "https://cran.example", P = "https://p.example")
+  )
+  expect_match(log$expr, "pkgA", fixed = TRUE)
+  expect_match(log$expr, "abc", fixed = TRUE)
+  expect_match(log$expr, "pkgB", fixed = TRUE)
+})
+
+test_that("pak_install_lib sets the study's repos around the install", {
+  seen <- NULL
+  skip_if_not_installed("pak")
+  local_mocked_bindings(
+    pkg_install = function(...) {
+      seen <<- getOption("repos")
+      invisible(NULL)
+    },
+    .package = "pak"
+  )
+  before <- getOption("repos")
+  pak_install_lib("x", "/tmp", repos = c(CRAN = "https://cran.example"))
+  expect_identical(seen, c(CRAN = "https://cran.example"))
+  expect_identical(getOption("repos"), before)
+})
+
+test_that("a guard trip names the outcome: restored, or not restorable", {
+  root <- withr::local_tempdir()
+  local_setup(
+    run_status = 3L,
+    run_output = "HVTIR_CHANGED=pkgA:1.0->2.0\n"
+  )
+  err <- tryCatch(setup("A study", 7L, root = root), error = conditionMessage)
+  expect_match(err, "unchanged", fixed = TRUE)
+  expect_match(err, "added", fixed = TRUE)
+  expect_match(err, "removed", fixed = TRUE)
+  expect_match(err, "restored", fixed = TRUE)
+  local_setup(
+    run_status = 3L,
+    run_output = paste0(
+      "HVTIR_RESTOREFAIL=pkgA\nHVTIR_RESTOREERR=no token\n",
+      "HVTIR_CHANGED=pkgA:1.0->2.0\n"
+    )
+  )
+  err <- tryCatch(setup("A study", 7L, root = root), error = conditionMessage)
+  expect_match(err, "could not be restored", fixed = TRUE)
+  expect_match(err, "pkgA", fixed = TRUE)
+  expect_match(err, "token", fixed = TRUE)
+  expect_match(err, "create_github_token", fixed = TRUE)
+  expect_match(err, "unchanged", fixed = TRUE)
 })
 
 test_that("a malformed _study.yml is not mistaken for no study", {
@@ -754,7 +922,7 @@ test_that("a real package with an unreadable DESCRIPTION is kept and named", {
 
 test_that("child 1 stops on unreadable packages before changing anything", {
   expr <- restore_expr("/tmp")
-  at <- function(s) regexpr(s, expr, fixed = TRUE)[[1L]]
+  at <- anchor_at(expr)
   expect_true(at("HVTIR_UNREADABLE=") < at("HVTIR_UNLINKED="))
   expect_true(at("quit(status = 4L") < at("use.cache(FALSE"))
 })
@@ -775,7 +943,7 @@ test_that("setup names unreadable packages and says who fixes them", {
 
 test_that("child 1 cleans, drops the cache, isolates, then restores", {
   expr <- restore_expr("/tmp")
-  at <- function(s) regexpr(s, expr, fixed = TRUE)[[1L]]
+  at <- anchor_at(expr)
   expect_true(at("renv::load(") < at("HVTIR_UNLINKED="))
   # The cleanup comes first: a leftover _cache makes renv's own scan fail.
   expect_true(at("HVTIR_UNLINKED=") < at("use.cache(FALSE"))
@@ -840,7 +1008,7 @@ test_that("install_members warns about debris, repair steps in order", {
     }
   )
   expect_match(msg, "dplyr", fixed = TRUE)
-  at <- function(s) regexpr(s, msg, fixed = TRUE)[[1L]]
+  at <- anchor_at(msg)
   steps <- c("_cache", "file.remove", "use.cache(FALSE)", "isolate()",
              "renv::restore()")
   pos <- vapply(steps, at, 1L)

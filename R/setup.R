@@ -213,25 +213,66 @@ github_credentials_hint <- function() {
   )
 }
 
+#' The child's code to remove the packages this run added
+#'
+#' pak's additions are not in the locked state. After a guard trip they stay
+#' behind unless removed, and the library would no longer match the lockfile.
+#' Only directories with a `DESCRIPTION` that were not in `pkgs_var` go: they
+#' were created by this run. A link is removed itself, never its target. A
+#' `NULL` list (child 1 did not report one) removes nothing.
+#' @param lib_var Name of the child's variable holding the library path.
+#' @param pkgs_var Name of the variable holding the package directories the
+#'   library had after the restore.
+#' @return One string of R code.
+#' @noRd
+cleanup_expr <- function(lib_var, pkgs_var) {
+  paste0(
+    "if (!is.null(", pkgs_var, ")) { ",
+    "ents <- list.files(", lib_var, "); ",
+    "ents <- ents[file.exists(file.path(", lib_var,
+    ", ents, 'DESCRIPTION'))]; ",
+    "for (a in setdiff(ents, ", pkgs_var, ")) { x <- file.path(", lib_var,
+    ", a); if (nzchar(Sys.readlink(x))) file.remove(x) else ",
+    "unlink(x, recursive = TRUE) } }; "
+  )
+}
+
 #' The child's check that no locked package moved
 #'
 #' A locked dependency can be upgraded to satisfy a newly declared package, and
-#' the snapshot would then record it. Compares each locked version with the
-#' project library; on a difference restores those packages, reports them and
-#' exits 3 without snapshotting.
+#' the snapshot would then record it. Compares each locked package's `Version`
+#' and, where the lockfile records one, `RemoteSha` with the project library.
+#' On a difference it removes what this run added ([cleanup_expr()]), restores
+#' the moved packages, reports them and exits 3 without snapshotting. A restore
+#' that fails is reported as `HVTIR_RESTOREFAIL=`; the exit is still 3.
+#' Expects `lib`, `before` (locked versions), `sha` (locked `RemoteSha`s, `""`
+#' when none) and `libpkgs` in the child.
 #' @param p The study root, deparsed.
 #' @return One string of R code.
 #' @noRd
 guard_expr <- function(p) {
   paste0(
     "now <- vapply(names(before), function(n) tryCatch(",
-    "as.character(utils::packageVersion(n, lib.loc = .libPaths()[1L])), ",
+    "as.character(utils::packageVersion(n, lib.loc = lib)), ",
     "error = function(e) NA_character_), ''); ",
-    "changed <- names(before)[is.na(now) | now != before]; ",
+    "nowsha <- vapply(names(before), function(n) tryCatch({ ",
+    "s <- read.dcf(file.path(lib, n, 'DESCRIPTION'), fields = 'RemoteSha')",
+    "[1L, 1L]; if (is.na(s)) '' else s }, error = function(e) ''), ''); ",
+    "lsha <- sha[names(before)]; ",
+    "bysha <- !is.na(lsha) & nzchar(lsha) & nowsha != lsha; ",
+    "changed <- names(before)[is.na(now) | now != before | bysha]; ",
     "if (length(changed)) { ",
-    "renv::restore(project = ", p, ", packages = changed, prompt = FALSE); ",
+    cleanup_expr("lib", "libpkgs"),
+    "tryCatch(renv::restore(project = ", p, ", packages = changed, ",
+    "prompt = FALSE), error = function(e) { ",
+    "cat('\\nHVTIR_RESTOREFAIL=', paste(changed, collapse = ','), '\\n', ",
+    "sep = ''); ",
+    "cat('HVTIR_RESTOREERR=', gsub('[\\r\\n]+', ' ', conditionMessage(e)), ",
+    "'\\n', sep = '') }); ",
     "cat('\\nHVTIR_CHANGED=', paste0(changed, ':', before[changed], '->', ",
-    "now[changed], collapse = ','), '\\n', sep = ''); ",
+    "now[changed], ifelse(bysha[changed], paste0(' (RemoteSha ', ",
+    "substr(lsha[changed], 1L, 7L), '->', substr(nowsha[changed], 1L, 7L), ",
+    "')'), ''), collapse = ','), '\\n', sep = ''); ",
     "quit(status = 3L, save = 'no') }; "
   )
 }
@@ -338,9 +379,21 @@ restore_expr <- function(root) {
     "renv::restore(project = ", p, ", prompt = FALSE); ",
     "locked <- renv::lockfile_read(file.path(", p, ", 'renv.lock'))$Packages; ",
     "cat('\\nHVTIR_LIB=', lib, '\\n', sep = ''); ",
-    "cat('HVTIR_LOCKVER=', paste0(names(locked), ':', ",
-    "vapply(locked, function(x) as.character(x$Version), ''), ",
-    "collapse = ','), '\\n', sep = '')"
+    # name:version:RemoteSha, the sha empty when the record has none.
+    "cat('HVTIR_LOCKVER=', if (length(locked)) paste0(names(locked), ':', ",
+    "vapply(locked, function(x) as.character(x$Version), ''), ':', ",
+    "vapply(locked, function(x) if (is.null(x$RemoteSha)) '' else ",
+    "as.character(x$RemoteSha), ''), collapse = ','), '\\n', sep = ''); ",
+    # The library as the lockfile left it: what a guard trip must go back to.
+    "ents <- list.files(lib); ",
+    "cat('HVTIR_LIBPKGS=', paste(ents[file.exists(file.path(lib, ents, ",
+    "'DESCRIPTION'))], collapse = ','), '\\n', sep = ''); ",
+    "repos <- tryCatch(unlist(renv::lockfile_read(file.path(", p,
+    ", 'renv.lock'))$R$Repositories), error = function(e) NULL); ",
+    "if (!length(repos)) repos <- getOption('repos'); ",
+    "repos <- repos[!is.na(repos) & nzchar(repos) & repos != '@CRAN@']; ",
+    "cat('HVTIR_REPOS=', if (length(repos)) paste0(names(repos), '=', repos, ",
+    "collapse = ';'), '\\n', sep = '')"
   )
 }
 
@@ -348,15 +401,15 @@ restore_expr <- function(root) {
 #'
 #' pak installs hard dependencies but not `LinkingTo` packages, and the
 #' snapshot's validation then aborts. Those are CRAN packages, which renv
-#' installs from the configured repositories with no GitHub API. The install
-#' goes through `link_install()`, defined here unless the caller already has
-#' one, so a test can substitute it.
+#' installs from the configured repositories with no GitHub API.
 #' @param lib_var Name of the child's variable holding the library path.
-#' @param p The study root, deparsed.
+#' @param project The study root.
+#' @param installer The function that installs, called as `installer(need,
+#'   project =, prompt =)`; a test passes the name of its own.
 #' @return One string of R code.
 #' @noRd
-linking_expr <- function(lib_var, p) {
-  p <- deparse1(p)
+linking_expr <- function(lib_var, project, installer = "renv::install") {
+  p <- deparse1(project)
   paste0(
     "d <- file.path(", lib_var, ", list.files(", lib_var,
     "), 'DESCRIPTION'); d <- d[file.exists(d)]; ",
@@ -367,27 +420,37 @@ linking_expr <- function(lib_var, p) {
     "lt <- unique(lt[nzchar(lt) & lt != 'R']); ",
     "need <- lt[!vapply(lt, function(n) length(find.package(n, lib.loc = c(",
     lib_var, ", .Library), quiet = TRUE)) > 0L, NA)]; ",
-    "if (!exists('link_install')) link_install <- function(x) ",
-    "renv::install(x, project = ", p, ", prompt = FALSE); ",
-    "if (length(need)) link_install(need); "
+    "if (length(need)) ", installer, "(need, project = ", p,
+    ", prompt = FALSE); "
   )
 }
 
-#' Child run 2: guard the lock, fill LinkingTo gaps, snapshot
+#' Child run 2: fill LinkingTo gaps, guard the lock, snapshot
+#'
+#' The fill goes first because it installs through renv, which can move a
+#' locked package; the guard then sees that too.
 #' @param root The study root.
 #' @param before Locked versions after restore, named by package.
+#' @param sha Locked `RemoteSha`s, named by package, `""` for none.
+#' @param libpkgs The library's package directories after the restore, or
+#'   `NULL` when unknown (nothing is then removed on a guard trip).
 #' @return One string of R code.
 #' @noRd
-finish_expr <- function(root, before) {
+finish_expr <- function(root, before, sha = NULL, libpkgs = NULL) {
   root <- normalizePath(root, winslash = "/")
   p <- deparse1(root)
+  if (is.null(sha)) {
+    sha <- stats::setNames(rep("", length(before)), names(before))
+  }
   paste0(
     pak_off(),
     "renv::load(", p, "); ",
     "lib <- renv::paths$library(project = ", p, "); ",
     "before <- ", deparse1(before, width.cutoff = 500L), "; ",
-    guard_expr(p),
+    "sha <- ", deparse1(sha, width.cutoff = 500L), "; ",
+    "libpkgs <- ", deparse1(libpkgs, width.cutoff = 500L), "; ",
     linking_expr("lib", root),
+    guard_expr(p),
     "renv::snapshot(project = ", p, ", prompt = FALSE); ",
     "cat('\\nHVTIR_LIB=', lib, '\\n', sep = '')"
   )
@@ -396,13 +459,19 @@ finish_expr <- function(root, before) {
 #' Install specs with pak into a given library
 #' @param specs Install specs.
 #' @param lib The library, a study's project library.
+#' @param repos The study's repositories, a named character vector, or `NULL`
+#'   for this session's.
 #' @noRd
-pak_install_lib <- function(specs, lib) {
+pak_install_lib <- function(specs, lib, repos = NULL) {
   if (!requireNamespace("pak", quietly = TRUE)) {
     cli::cli_abort(c(
       "The {.pkg pak} package is required to install hvtiR members.",
       i = 'Install it with {.code install.packages("pak")}, then try again.'
     ))
+  }
+  if (length(repos)) {
+    old <- options(repos = repos)
+    on.exit(options(old), add = TRUE)
   }
   invisible(pak::pkg_install(
     specs, lib = lib, upgrade = FALSE, ask = FALSE, dependencies = NA
@@ -421,14 +490,38 @@ abort_stage <- function(result, raw) {
                       fixed = TRUE)[[1L]]
     moves <- gsub("\\}", "}}", gsub("\\{", "{{", moves))
     names(moves) <- rep("x", length(moves))
+    failed <- child_value(result$output, "HVTIR_RESTOREFAIL")
+    outcome <- if (length(failed)) {
+      err <- child_value(result$output, "HVTIR_RESTOREERR")[1L]
+      err <- gsub("\\}", "}}", gsub("\\{", "{{", err))
+      c(
+        i = paste(
+          "{.file renv.lock} was left unchanged and the packages this run",
+          "added were removed, but these locked packages could not be",
+          "restored: {failed[1L]}."
+        ),
+        if (!is.na(err)) c(x = err),
+        i = paste(
+          "Restoring a package the lockfile pins on GitHub needs a personal",
+          "token:"
+        ),
+        github_credentials_hint(),
+        i = "Then run {.fn setup} again."
+      )
+    } else {
+      c(i = paste(
+        "{.file renv.lock} was left unchanged, the packages this run added",
+        "were removed, and the locked versions were restored."
+      ))
+    }
     cli::cli_abort(c(
       "Installing the declared packages would have moved locked versions.",
       moves,
       i = paste(
         "A newly declared package needs newer versions of packages the",
-        "lockfile pins. {.file renv.lock} was left unchanged and the locked",
-        "versions were restored."
+        "lockfile pins."
       ),
+      outcome,
       i = "{.fn update} is the deliberate way to move a study's versions."
     ))
   }
@@ -698,13 +791,33 @@ setup <- function(study, study_tracker_id, root = NULL, adopt = FALSE, ...) {
   unlinked <- child_value(first$output, "HVTIR_UNLINKED")
   entries <- strsplit(lockver, ",", fixed = TRUE)[[1L]]
   entries <- entries[nzchar(entries)]
-  before <- sub("^[^:]*:", "", entries)
+  rest <- sub("^[^:]*:", "", entries)
+  before <- sub(":.*$", "", rest)
   names(before) <- sub(":.*$", "", entries)
+  sha <- sub("^[^:]*:?", "", rest)
+  names(sha) <- names(before)
+  libpkgs <- child_value(first$output, "HVTIR_LIBPKGS")
+  if (length(libpkgs) == 1L) {
+    libpkgs <- strsplit(libpkgs, ",", fixed = TRUE)[[1L]]
+  } else {
+    libpkgs <- NULL
+  }
+  repos <- child_value(first$output, "HVTIR_REPOS")
+  if (length(repos) == 1L && nzchar(repos)) {
+    pairs <- strsplit(strsplit(repos, ";", fixed = TRUE)[[1L]], "=",
+                      fixed = TRUE)
+    repos <- stats::setNames(
+      vapply(pairs, function(x) paste(x[-1L], collapse = "="), ""),
+      vapply(pairs, `[`, "", 1L)
+    )
+  } else {
+    repos <- NULL
+  }
 
   add <- install_specs(setdiff(packages, names(before)))
   if (length(add)) {
     tryCatch(
-      pak_install_lib(add, project_lib),
+      pak_install_lib(add, project_lib, repos),
       error = function(e) {
         msg <- conditionMessage(e)
         auth <- grepl("authentication credentials", msg, fixed = TRUE)
@@ -717,7 +830,7 @@ setup <- function(study, study_tracker_id, root = NULL, adopt = FALSE, ...) {
     )
   }
 
-  result <- run_in_study(finish_expr(root, before), root)
+  result <- run_in_study(finish_expr(root, before, sha, libpkgs), root)
   raw_output <- result$output
   result$output <- iconv(raw_output, "UTF-8", "UTF-8", sub = "?")
   abort_stage(result, raw_output)
