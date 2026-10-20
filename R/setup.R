@@ -515,10 +515,119 @@ linking_expr <- function(lib_var, project, installer = "renv::install",
   )
 }
 
-#' Child run 2: fill LinkingTo gaps, guard the lock, snapshot
+#' Unmet version requirements among a library's packages
 #'
-#' The fill goes first because it installs through renv, which can move a
-#' locked package; the guard then sees that too.
+#' Reads `Depends`, `Imports` and `LinkingTo` of every package in `lib`, finds
+#' each required package across `paths` and keeps the requirements the
+#' installed version does not meet (`>=`, `>`, `==`). A required package that
+#' is absent is unmet. R and the base packages are skipped. Versions compare as
+#' versions, so `1.2-5` is `1.2.5`. Base R only: [floors_expr()] ships it to
+#' the child.
+#' @param lib A library path.
+#' @param paths Libraries to look for the required packages in.
+#' @return A data frame of `by`, `dep`, `op`, `ver`, `has`; no rows when all
+#'   are met.
+#' @noRd
+unmet_requirements <- function(lib, paths = unique(c(lib, .libPaths()))) {
+  base_pkgs <- c(
+    "R", "base", "compiler", "datasets", "graphics", "grDevices", "grid",
+    "methods", "parallel", "splines", "stats", "stats4", "tcltk", "tools",
+    "utils"
+  )
+  desc <- file.path(lib, list.files(lib), "DESCRIPTION")
+  rows <- lapply(desc[file.exists(desc)], function(f) {
+    x <- tryCatch(
+      read.dcf(f, fields = c("Package", "Depends", "Imports", "LinkingTo")),
+      error = function(e) NULL
+    )
+    if (is.null(x)) return(NULL)
+    spec <- unlist(strsplit(paste(x[1L, 2:4][!is.na(x[1L, 2:4])],
+                                  collapse = ","), ","))
+    spec <- trimws(gsub("\\s+", " ", spec))
+    spec <- spec[nzchar(spec)]
+    if (!length(spec)) return(NULL)
+    has_ver <- grepl("(", spec, fixed = TRUE)
+    data.frame(
+      by = unname(x[1L, 1L]),
+      dep = trimws(sub("[(].*$", "", spec)),
+      op = ifelse(has_ver, sub("^[^(]*[(] ?([<>=!]+).*$", "\\1", spec), ""),
+      ver = ifelse(has_ver,
+                   sub("^[^(]*[(][^0-9]*([0-9][0-9.-]*).*$", "\\1", spec), ""),
+      stringsAsFactors = FALSE
+    )
+  })
+  req <- do.call(rbind, rows)
+  none <- data.frame(by = character(), dep = character(), op = character(),
+                     ver = character(), has = character(),
+                     stringsAsFactors = FALSE)
+  if (is.null(req)) return(none)
+  known <- req$op %in% c("", ">=", ">", "==")
+  req <- req[!req$dep %in% base_pkgs & known, ]
+  if (!nrow(req)) return(none)
+  req$has <- vapply(req$dep, function(n) {
+    d <- find.package(n, lib.loc = paths, quiet = TRUE)[1L]
+    if (is.na(d)) return(NA_character_)
+    tryCatch(read.dcf(file.path(d, "DESCRIPTION"), fields = "Version")[1L, 1L],
+             error = function(e) NA_character_)
+  }, "")
+  met <- vapply(seq_len(nrow(req)), function(i) {
+    if (is.na(req$has[i])) return(FALSE)
+    if (req$op[i] == "") return(TRUE)
+    isTRUE(tryCatch(
+      do.call(req$op[i], list(package_version(req$has[i]),
+                              package_version(req$ver[i]))),
+      error = function(e) TRUE
+    ))
+  }, NA)
+  req <- req[!met, ]
+  rownames(req) <- NULL
+  req
+}
+
+#' The child's step that resolves unmet version requirements
+#'
+#' renv's snapshot validates the library and aborts on any package whose
+#' installed version is below what another package requires; some of those
+#' pre-exist in a study library. With `upgrade` the unmet packages are
+#' installed through renv from the binary repositories, the library is checked
+#' once more, and `HVTIR_RAISED=` names what was installed. Whatever is still
+#' unmet, or all of it when not `upgrade`, is printed as `HVTIR_UNMET=` (entries
+#' separated by `;`, as an entry holds a comma) and the child exits 5 before
+#' the snapshot. The lock guard that follows sees the installs, so a locked
+#' package they moved is reported there. Expects `lib` and `upgrade` in the
+#' child.
+#' @param project The study root.
+#' @param installer The function that installs, called as `installer(need,
+#'   project =, prompt =)`; a test passes the name of its own.
+#' @param repos The repositories to install from, or `NULL` for renv's; the
+#'   child must have set `hvtir_repos` (see [repos_expr()]).
+#' @return One string of R code.
+#' @noRd
+floors_expr <- function(project, installer = "renv::install", repos = NULL) {
+  p <- deparse1(project)
+  paste0(
+    "unmet_requirements <- ",
+    paste(deparse(unmet_requirements), collapse = "\n"), "\n",
+    "unmet <- unmet_requirements(lib); ",
+    "if (nrow(unmet) && upgrade) { ",
+    installer, "(unique(unmet$dep), project = ", p, ", prompt = FALSE",
+    if (length(repos)) ", repos = hvtir_repos", "); ",
+    "cat('\\nHVTIR_RAISED=', paste(unique(unmet$dep), collapse = ','), ",
+    "'\\n', sep = ''); ",
+    "unmet <- unmet_requirements(lib) }; ",
+    "if (nrow(unmet)) { cat('\\nHVTIR_UNMET=', paste0(unmet$by, ' needs ', ",
+    "unmet$dep, ifelse(nzchar(unmet$op), paste0(' (', unmet$op, ' ', ",
+    "unmet$ver, ')'), ''), ', has ', ifelse(is.na(unmet$has), 'none', ",
+    "unmet$has), collapse = ';'), '\\n', sep = ''); ",
+    "quit(status = 5L, save = 'no') }; "
+  )
+}
+
+#' Child run 2: fill LinkingTo gaps, meet version floors, guard the lock,
+#' snapshot
+#'
+#' The fill and the floors step go first because they install through renv,
+#' which can move a locked package; the guard then sees that too.
 #' @param root The study root.
 #' @param before Locked versions after restore, named by package.
 #' @param sha Locked `RemoteSha`s, named by package, `""` for none.
@@ -549,6 +658,7 @@ finish_expr <- function(root, before, sha = NULL, libpkgs = NULL,
     "libpkgs <- ", deparse1(libpkgs, width.cutoff = 500L), "; ",
     "upgrade <- ", if (isFALSE(upgrade)) "FALSE" else "TRUE", "; ",
     linking_expr("lib", root, repos = repos),
+    floors_expr(root, repos = repos),
     guard_expr(p),
     "renv::snapshot(project = ", p, ", prompt = FALSE); ",
     if (record && length(repos)) {
@@ -587,16 +697,23 @@ pak_install_lib <- function(specs, lib, repos = NULL) {
 #' Moved packages as cli bullets, the family apart from its dependencies
 #' @param moves Entries like `pkg:old->new` with an optional RemoteSha note.
 #' @param mark The bullet name for an entry.
+#' @param raised Packages the floors step installed to meet a version
+#'   requirement. A move of one of these that is not a family package goes in
+#'   its own group. The step knows what it asked renv for, not why a package
+#'   moved, so a package renv pulled in as a dependency of those installs is
+#'   not attributed and stays under the dependencies the family needs.
 #' @return A named character vector, escaped for cli; empty groups omitted.
 #' @noRd
-grouped_moves <- function(moves, mark = "*") {
+grouped_moves <- function(moves, mark = "*", raised = character()) {
   pkg <- sub(":.*$", "", moves)
   line <- sub(":", " ", gsub("->", " -> ", moves, fixed = TRUE), fixed = TRUE)
   line <- gsub("\\}", "}}", gsub("\\{", "{{", line))
   fam <- pkg %in% c("hvtiR", members()$package)
   out <- character(0)
+  other <- !fam & pkg %in% raised
   for (g in list(list("Family packages", fam),
-                 list("Dependencies the family needs", !fam))) {
+                 list("Dependencies the family needs", !fam & !other),
+                 list("Other unmet requirements resolved", other))) {
     if (any(g[[2L]])) {
       out <- c(out, stats::setNames(g[[1L]], "i"),
                stats::setNames(line[g[[2L]]], rep(mark, sum(g[[2L]]))))
@@ -615,15 +732,22 @@ report_moves <- function(output) {
   }
   moves <- strsplit(moved[1L], ",", fixed = TRUE)[[1L]]
   cli::cli_alert_info("Moved {length(moves)} locked package{?s}:")
-  cli::cli_bullets(grouped_moves(moves))
+  raised <- child_value(output, "HVTIR_RAISED")
+  raised <- if (length(raised)) {
+    strsplit(raised[1L], ",", fixed = TRUE)[[1L]]
+  } else {
+    character()
+  }
+  cli::cli_bullets(grouped_moves(moves, raised = raised))
   invisible(NULL)
 }
 
 #' Abort for a child run that did not finish
 #' @param result A [run_in_study()] result.
 #' @param raw The child's raw output.
+#' @param upgrade Whether the run was allowed to install what was unmet.
 #' @noRd
-abort_stage <- function(result, raw) {
+abort_stage <- function(result, raw, upgrade = TRUE) {
   lines <- strsplit(result$output, "\n")[[1L]]
   moved <- grep("^HVTIR_CHANGED=", lines, value = TRUE)
   if (length(moved)) {
@@ -667,6 +791,28 @@ abort_stage <- function(result, raw) {
         "{.code upgrade = FALSE} keeps a study in revision on its locked",
         "versions."
       )
+    ))
+  }
+  unmet <- child_value(result$output, "HVTIR_UNMET")
+  if (length(unmet)) {
+    reqs <- strsplit(unmet[1L], ";", fixed = TRUE)[[1L]]
+    reqs <- gsub("\\}", "}}", gsub("\\{", "{{", reqs))
+    cli::cli_abort(c(
+      "Packages in the study's library do not meet their version requirements:",
+      stats::setNames(reqs, rep("x", length(reqs))),
+      i = "{.file renv.lock} is unchanged.",
+      if (upgrade) {
+        c(i = paste(
+          "{.fn setup} tried to install the required versions and some are",
+          "still unmet. Install them by hand, then run {.fn setup} again."
+        ))
+      } else {
+        c(i = paste(
+          "{.code upgrade = TRUE} (the default) resolves them by installing",
+          "the required versions; {.code upgrade = FALSE} leaves the study's",
+          "library as it is."
+        ))
+      }
     ))
   }
   bad <- child_value(result$output, "HVTIR_UNREADABLE")
@@ -992,7 +1138,7 @@ setup <- function(study, study_tracker_id, root = NULL, adopt = FALSE,
   )
   raw_output <- result$output
   result$output <- iconv(raw_output, "UTF-8", "UTF-8", sub = "?")
-  abort_stage(result, raw_output)
+  abort_stage(result, raw_output, upgrade)
   report_moves(result$output)
   if (length(unlinked)) {
     gone <- strsplit(unlinked[1L], ",", fixed = TRUE)[[1L]]

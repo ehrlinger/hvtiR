@@ -1242,3 +1242,168 @@ test_that("setup keeps the study URL when the session has no binary form", {
   expect_false(grepl("lockfile_write", log$expr, fixed = TRUE))
   expect_false(grepl("recording it", paste(msgs, collapse = ""), fixed = TRUE))
 })
+
+# The version-floor step, run against temporary libraries.
+
+dep_pkg <- function(lib, name, version, ...) {
+  dir.create(file.path(lib, name))
+  writeLines(
+    c(paste("Package:", name), paste("Version:", version), "Title: x", ...),
+    file.path(lib, name, "DESCRIPTION")
+  )
+}
+
+test_that("a dependency below its floor is selected; a met one is not", {
+  lib <- withr::local_tempdir()
+  dep_pkg(lib, "pkgA", "1.0", "Imports: pkgB (>= 2.0), stats")
+  dep_pkg(lib, "pkgB", "1.0")
+  # Defined in setup.R; lintr cannot resolve it across source files.
+  # nolint next: object_usage_linter.
+  got <- unmet_requirements(lib, lib)
+  expect_identical(got$dep, "pkgB")
+  expect_identical(got$has, "1.0")
+  dep_pkg(lib, "pkgC", "1.0", "Depends: R (>= 4.0), pkgB (> 1.0)",
+          "LinkingTo: pkgD (== 3.0)")
+  got <- unmet_requirements(lib, lib)
+  expect_setequal(got$dep, c("pkgB", "pkgD"))
+  expect_true(is.na(got$has[got$dep == "pkgD"]))
+  unlink(file.path(lib, "pkgB"), recursive = TRUE)
+  dep_pkg(lib, "pkgB", "2.0")
+  dep_pkg(lib, "pkgD", "3.0")
+  expect_identical(nrow(unmet_requirements(lib, lib)), 0L)
+})
+
+test_that("dash and dot versions are equal in the floor check", {
+  lib <- withr::local_tempdir()
+  dep_pkg(lib, "pkgA", "1.0", "Imports: pkgB (>= 1.2.5)")
+  dep_pkg(lib, "pkgB", "1.2-5")
+  expect_identical(nrow(unmet_requirements(lib, lib)), 0L)
+  dep_pkg(lib, "pkgE", "1.0", "Imports: pkgF (>= 1.2-5)")
+  dep_pkg(lib, "pkgF", "1.2.5")
+  expect_identical(nrow(unmet_requirements(lib, lib)), 0L)
+})
+
+test_that("a dependency found only in a second library path is installed", {
+  lib <- withr::local_tempdir()
+  sys <- withr::local_tempdir()
+  dep_pkg(lib, "pkgA", "1.0", "Imports: mgcv (>= 1.8)")
+  dep_pkg(sys, "mgcv", "1.9")
+  expect_identical(nrow(unmet_requirements(lib, c(lib, sys))), 0L)
+  expect_identical(unmet_requirements(lib, lib)$dep, "mgcv")
+})
+
+# Run the child step for real, with fakes for install and quit.
+run_floors <- function(lib, upgrade, fix = NULL, repos = NULL) {
+  env <- new.env()
+  env$lib <- lib
+  env$upgrade <- upgrade
+  env$hvtir_repos <- repos
+  env$installed <- NULL
+  env$fake_install <- function(x, ...) {
+    assign("installed", x, envir = env)
+    if (!is.null(fix)) fix()
+  }
+  code <- floors_expr("/tmp", "fake_install", repos)
+  code <- sub("quit(status = 5L, save = 'no')", "cat('QUIT5\\n')", code,
+              fixed = TRUE)
+  out <- paste(capture.output(eval(parse(text = code), env)), collapse = "\n")
+  list(out = out, installed = env$installed)
+}
+
+test_that("with upgrade the floor step installs, rechecks, and reports", {
+  lib <- withr::local_tempdir()
+  dep_pkg(lib, "pkgA", "1.0", "Imports: pkgB (>= 2.0)")
+  dep_pkg(lib, "pkgB", "1.0")
+  fix <- function() {
+    unlink(file.path(lib, "pkgB"), recursive = TRUE)
+    dep_pkg(lib, "pkgB", "2.1")
+  }
+  res <- run_floors(lib, TRUE, fix)
+  expect_identical(res$installed, "pkgB")
+  expect_match(res$out, "HVTIR_RAISED=pkgB", fixed = TRUE)
+  expect_no_match(res$out, "HVTIR_UNMET", fixed = TRUE)
+  expect_no_match(res$out, "QUIT5", fixed = TRUE)
+  res <- run_floors(lib, TRUE, repos = c(CRAN = "https://x"))
+  expect_null(res$installed)
+  expect_identical(res$out, "")
+})
+
+test_that("with upgrade, what stays unmet exits 5 before the snapshot", {
+  lib <- withr::local_tempdir()
+  dep_pkg(lib, "pkgA", "1.0", "Imports: pkgB (>= 2.0), pkgC (> 1.0)")
+  dep_pkg(lib, "pkgB", "1.0")
+  res <- run_floors(lib, TRUE)
+  expect_identical(res$installed, c("pkgB", "pkgC"))
+  expect_match(res$out, "HVTIR_UNMET=pkgA needs pkgB (>= 2.0), has 1.0;",
+               fixed = TRUE)
+  expect_match(res$out, "pkgA needs pkgC (> 1.0), has none", fixed = TRUE)
+  expect_match(res$out, "QUIT5", fixed = TRUE)
+})
+
+test_that("without upgrade the floor step installs nothing and exits 5", {
+  lib <- withr::local_tempdir()
+  dep_pkg(lib, "pkgA", "1.0", "Imports: pkgB (>= 2.0)")
+  dep_pkg(lib, "pkgB", "1.0")
+  res <- run_floors(lib, FALSE)
+  expect_null(res$installed)
+  expect_match(res$out, "HVTIR_UNMET=pkgA needs pkgB (>= 2.0), has 1.0",
+               fixed = TRUE)
+  expect_match(res$out, "QUIT5", fixed = TRUE)
+})
+
+test_that("child 2 meets floors after the LinkingTo fill, before the guard", {
+  at <- anchor_at(finish_expr("/tmp", c(pkgA = "1.0"), repos = c(CRAN = "u")))
+  expect_true(at("LinkingTo") < at("unmet <- unmet_requirements(lib)"))
+  expect_true(at("unmet <- unmet_requirements(lib)") < at("quit(status = 5L"))
+  expect_true(at("quit(status = 5L") < at("changed <- "))
+  expect_match(finish_expr("/tmp", c(pkgA = "1.0"), repos = c(CRAN = "u")),
+               "unique(unmet$dep), project = ", fixed = TRUE)
+  expect_match(finish_expr("/tmp", c(pkgA = "1.0"), repos = c(CRAN = "u")),
+               "prompt = FALSE, repos = hvtir_repos); cat('\\nHVTIR_RAISED",
+               fixed = TRUE)
+})
+
+test_that("setup() aborts on unmet requirements, lockfile unchanged", {
+  root <- withr::local_tempdir()
+  local_setup(
+    run_status = 5L,
+    run_output = paste0(
+      "HVTIR_UNMET=readxl needs cpp11 (>= 0.5.5), has 0.5.4;",
+      "devtools needs pak (>= 0.9.3), has 0.9.2\n"
+    )
+  )
+  err <- tryCatch(
+    setup("A study", 7L, root = root, upgrade = FALSE),
+    error = conditionMessage
+  )
+  expect_match(err, "readxl needs cpp11 (>= 0.5.5), has 0.5.4", fixed = TRUE)
+  expect_match(err, "devtools needs pak", fixed = TRUE)
+  expect_match(err, "renv.lock", fixed = TRUE)
+  expect_match(err, "unchanged", fixed = TRUE)
+  expect_match(err, "upgrade = TRUE", fixed = TRUE)
+  expect_match(err, "installing the required versions", fixed = TRUE)
+  err <- tryCatch(setup("A study", 7L, root = root), error = conditionMessage)
+  expect_match(err, "still unmet", fixed = TRUE)
+  expect_no_match(err, "(the default) resolves", fixed = TRUE)
+})
+
+test_that("raised packages that moved get their own group in the report", {
+  got <- grouped_moves(
+    c("hvtiR:1.0->1.1", "officer:0.7.4->0.7.7", "cpp11:0.5.4->0.5.5"),
+    raised = "cpp11"
+  )
+  expect_identical(
+    unname(got),
+    c("Family packages", "hvtiR 1.0 -> 1.1",
+      "Dependencies the family needs", "officer 0.7.4 -> 0.7.7",
+      "Other unmet requirements resolved", "cpp11 0.5.4 -> 0.5.5")
+  )
+  root <- withr::local_tempdir()
+  local_setup(
+    run_output = paste0(
+      "HVTIR_RAISED=cpp11\nHVTIR_MOVED=cpp11:0.5.4->0.5.5\nHVTIR_LIB=@LIB@\n"
+    )
+  )
+  expect_message(setup("A study", 7L, root = root),
+                 "Other unmet requirements resolved")
+})
