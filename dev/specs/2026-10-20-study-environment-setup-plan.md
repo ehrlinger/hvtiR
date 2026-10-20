@@ -6,7 +6,7 @@
 
 **Architecture:** Four repositories, in release order. Downstream test suites first make every `study_setup()` call explicit (Part A), so the `hvtiRutilities` default flip (Part B) breaks nothing on `main`. `hvtiRutilities` gains `study_declare()` (the study `DESCRIPTION`) and `study_need()` (install-or-stop), and runs renv in explicit mode. `hvtiRtemplates` makes `add_job()` call `study_need()` (Part C). `hvtiR` adds `setup()`, which orchestrates the rest in a child R process, and two `doctor()` checks (Part D).
 
-**Tech Stack:** R (>= 4.4.0), renv 1.2.4 (installed; verify in Task 1), pak, testthat 3e with `local_mocked_bindings()`, cli, rstudioapi (Suggests).
+**Tech Stack:** R (>= 4.4.0), renv 1.2.4 with its own installer in the study (spike checks 2 and 5: pak skips LinkingTo packages), pak only for `hvtiR::install()`, testthat 3e with `local_mocked_bindings()`, cli, rstudioapi (Suggests).
 
 **Spec:** [2026-10-20-study-environment-setup-design.md](2026-10-20-study-environment-setup-design.md).
 
@@ -1298,7 +1298,9 @@ utilities_fn <- function(name) {
 #' Run R code in a fresh R process in the study
 #'
 #' The study's library is the target only in a process that loads the
-#' project; this session's namespaces came from another library.
+#' project; this session's namespaces came from another library. renv's own
+#' installer, not its pak back end: pak skips LinkingTo packages and the
+#' snapshot's validation then aborts (spike check 5). Never force the snapshot.
 #' @param expr R code, one string.
 #' @param root The study root.
 #' @return A list: `status` (integer) and `output` (one string).
@@ -1308,7 +1310,7 @@ run_in_study <- function(expr, root) {
   on.exit(setwd(owd), add = TRUE)
   out <- suppressWarnings(system2(
     file.path(R.home("bin"), "Rscript"), c("--vanilla", "-e", shQuote(expr)),
-    stdout = TRUE, stderr = TRUE, env = "RENV_CONFIG_PAK_ENABLED=TRUE"
+    stdout = TRUE, stderr = TRUE, env = "RENV_CONFIG_PAK_ENABLED=FALSE"
   ))
   status <- attr(out, "status")
   list(status = if (is.null(status)) 0L else status, output = paste(out, collapse = "\n"))

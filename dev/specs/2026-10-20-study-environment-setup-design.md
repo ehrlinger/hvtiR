@@ -111,10 +111,13 @@ from a session that has `hvtiR` loaded, in the study project. Steps:
 4. **Install.** In a child R process in the study, so the project library is
    the target: with a valid lockfile, `renv::restore(prompt = FALSE)`, then
    install only the declared packages the lockfile lacks; without one, install
-   everything declared. GitHub members install as `owner/repo` with renv's pak
-   back end enabled (`RENV_CONFIG_PAK_ENABLED=TRUE`), so the solver is the one
-   `install()` already uses. A failed solve goes through
-   `explain_install_failure()`.
+   everything declared. GitHub members install as `owner/repo` through
+   **renv's own installer, not its pak back end**: the 2026-10-20 spike
+   (`artifacts/2026-10-20-renv-spike.md`, checks 2 and 5) found that pak skips
+   `LinkingTo` packages such as `cpp11`, after which `renv::snapshot()`'s
+   validation aborts; renv's installer installs them and snapshots cleanly.
+   The snapshot is never forced: its validation is the check that catches a
+   broken library.
 5. **Snapshot** in the child, then **verify:** every declared package resolves
    in the project library, and every member's Imports resolve beside it. The
    verification is what catches the `digest` case.
