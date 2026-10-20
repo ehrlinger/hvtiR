@@ -162,7 +162,9 @@ that differs from the lockfile's R.
 - **`add_job()`** reads the packages the template's `setup` chunk attaches and
   version-checks, and passes any missing ones to the same declare, install and
   snapshot path, so scaffolding a random-forest job brings its packages with
-  it. Templates already state their packages and floors in one chunk; this
+  it. It calls `study_need(..., only_in_renv = TRUE)`: outside the study's
+  active renv project, such as a test's temporary study, it does nothing, and
+  the job's setup chunk reports a missing package at render time. Templates already state their packages and floors in one chunk; this
   reads them rather than adding a second list.
 
 ## Error handling
