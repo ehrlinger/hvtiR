@@ -1,4 +1,4 @@
-test_that("setup cleans a legacy study before renv and locks only declared packages", {
+test_that("setup cleans a legacy study before renv, locks declared packages", {
   skip_if_not(identical(Sys.getenv("HVTIR_E2E"), "true"),
               "set HVTIR_E2E=true to run")
   skip_on_cran()

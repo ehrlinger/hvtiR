@@ -154,7 +154,7 @@ library. The returned empty character vector carries a `blocked` attribute
 with the loaded package names. Restart R and run the update before you attach
 anything.
 
-### Set up a study
+## Set up a study
 
 ```{r setup-study, eval = FALSE}
 install.packages("pak")
