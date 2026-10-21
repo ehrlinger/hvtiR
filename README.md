@@ -57,6 +57,13 @@ on first conversion, so none drop out. No personal GitHub token is needed: the p
 pak, which carries a shared token, and renv keeps the environment (lockfile,
 restore, snapshot). It is safe to rerun.
 
+Every study gets the family and a standard set of analysis packages, with no
+separate install step: `tidyverse`, `haven`, `gtsummary`, `flextable`,
+`survival`, `survminer`, `randomForestSRC`, `varPro` and `pacman`, plus
+`arrow` for registered data. `setup()` declares them in the study's
+`DESCRIPTION`, so the lockfile records them. Add anything else with
+`hvtiRutilities::study_need()`.
+
 ## Keeping current
 
 ```r

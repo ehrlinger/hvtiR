@@ -1,13 +1,28 @@
 #' Packages a study needs beyond the members
 #'
+#' Two groups, kept here beside [members()] so one place owns the list. First,
 #' Suggested packages that members' study-facing functions use: `arrow` reads
-#' and writes registered data. Kept here, beside [members()], so one place owns
-#' the list.
+#' and writes registered data. Second, the standard analysis set the team
+#' Quick Start used to install by hand, approved for every study on 2026-10-21.
+#' renv runs in explicit mode, so a package reaches the lockfile only when the
+#' study declares it or something declared needs it.
+#'
+#' Several of the standard set already arrive as member dependencies
+#' (`gtsummary` and `flextable` through hvtiRtables, `randomForestSRC` and
+#' `varPro` through ggRandomForests, `haven` and `survival` through several).
+#' They are declared anyway: study code calls them directly, and a member
+#' dropping one must not drop it from every study's lockfile. All are CRAN
+#' packages, so [install_specs()] passes them through to the configured
+#' repositories.
 #'
 #' @return A character vector of package names.
 #' @noRd
 environment_extras <- function() {
-  c("arrow")
+  c(
+    "arrow",
+    "tidyverse", "haven", "gtsummary", "flextable", "survival", "survminer",
+    "randomForestSRC", "varPro", "pacman"
+  )
 }
 
 #' Every package a study declares
@@ -927,8 +942,9 @@ guard_session <- function(root, study, study_tracker_id,
 #' The one command a study needs before analysis. In order: checks R, installs
 #' renv if it is missing, and turns off RStudio's `.RData` restore and save;
 #' runs `hvtiRutilities::study_setup()` with renv on, which cleans up template
-#' copies before renv when adopting; declares `hvtiR`, every member and the
-#' packages they need in the study's `DESCRIPTION`; installs them into the
+#' copies before renv when adopting; declares `hvtiR`, every member, the
+#' packages they need and the team's standard analysis packages in the
+#' study's `DESCRIPTION`; installs them into the
 #' study's library with pak and renv; snapshots; checks that every
 #' package's dependencies resolve there; and restarts into the project.
 #'
@@ -940,6 +956,12 @@ guard_session <- function(root, study, study_tracker_id,
 #' By default (`upgrade = TRUE`) it moves locked versions the declared family
 #' needs and says which; `upgrade = FALSE` keeps a study in revision on its
 #' locked versions.
+#'
+#' The standard analysis packages are `tidyverse`, `haven`, `gtsummary`,
+#' `flextable`, `survival`, `survminer`, `randomForestSRC`, `varPro` and
+#' `pacman`, all from the configured repositories. A study needs no separate
+#' step to have them; anything beyond them is added with
+#' `hvtiRutilities::study_need()`.
 #'
 #' `setup()` replaces packages in the study's library, so run it from a
 #' session started outside the study project, passing `root`. From inside
