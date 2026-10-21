@@ -15,6 +15,22 @@ test_that("a study declares hvtiR, every member and the extras", {
   expect_true("arrow" %in% pkgs)
 })
 
+test_that("a study declares the team's standard analysis packages", {
+  standard <- c(
+    "tidyverse", "haven", "gtsummary", "flextable", "survival", "survminer",
+    "randomForestSRC", "varPro", "pacman"
+  )
+  expect_true(all(standard %in% environment_extras()))
+  expect_true(all(standard %in% declared_packages()))
+  expect_false(anyDuplicated(declared_packages()) > 0L)
+  expect_false(any(environment_extras() %in% members()$package))
+})
+
+test_that("install_specs passes the standard set through by name", {
+  extras <- environment_extras()
+  expect_identical(install_specs(extras), extras)
+})
+
 test_that("install_specs maps members to GitHub and leaves others alone", {
   specs <- install_specs(c("hvtiR", "hvtiRutilities", "arrow"))
   expect_identical(specs, c(SELF_REPO, "ehrlinger/hvtiRutilities", "arrow"))

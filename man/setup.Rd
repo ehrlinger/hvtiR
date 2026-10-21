@@ -37,8 +37,9 @@ The study status from \code{hvtiRutilities::study_setup()}, invisibly.
 The one command a study needs before analysis. In order: checks R, installs
 renv if it is missing, and turns off RStudio's \code{.RData} restore and save;
 runs \code{hvtiRutilities::study_setup()} with renv on, which cleans up template
-copies before renv when adopting; declares \code{hvtiR}, every member and the
-packages they need in the study's \code{DESCRIPTION}; installs them into the
+copies before renv when adopting; declares \code{hvtiR}, every member, the
+packages they need and the team's standard analysis packages in the
+study's \code{DESCRIPTION}; installs them into the
 study's library with pak and renv; snapshots; checks that every
 package's dependencies resolve there; and restarts into the project.
 }
@@ -51,6 +52,12 @@ out. They are restored, and only packages the lockfile lacks are installed.
 By default (\code{upgrade = TRUE}) it moves locked versions the declared family
 needs and says which; \code{upgrade = FALSE} keeps a study in revision on its
 locked versions.
+
+The standard analysis packages are \code{tidyverse}, \code{haven}, \code{gtsummary},
+\code{flextable}, \code{survival}, \code{survminer}, \code{randomForestSRC}, \code{varPro} and
+\code{pacman}, all from the configured repositories. A study needs no separate
+step to have them; anything beyond them is added with
+\code{hvtiRutilities::study_need()}.
 
 \code{setup()} replaces packages in the study's library, so run it from a
 session started outside the study project, passing \code{root}. From inside
