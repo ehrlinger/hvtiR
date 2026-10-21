@@ -5,10 +5,10 @@ installs renv if it is missing, and turns off RStudio's `.RData` restore
 and save; runs
 [`hvtiRutilities::study_setup()`](https://ehrlinger.github.io/hvtiRutilities/reference/study_setup.html)
 with renv on, which cleans up template copies before renv when adopting;
-declares `hvtiR`, every member and the packages they need in the study's
-`DESCRIPTION`; installs them into the study's library with pak and renv;
-snapshots; checks that every package's dependencies resolve there; and
-restarts into the project.
+declares `hvtiR`, every member, the packages they need and the team's
+standard analysis packages in the study's `DESCRIPTION`; installs them
+into the study's library with pak and renv; snapshots; checks that every
+package's dependencies resolve there; and restarts into the project.
 
 ## Usage
 
@@ -71,6 +71,12 @@ none drop out. They are restored, and only packages the lockfile lacks
 are installed. By default (`upgrade = TRUE`) it moves locked versions
 the declared family needs and says which; `upgrade = FALSE` keeps a
 study in revision on its locked versions.
+
+The standard analysis packages are `tidyverse`, `haven`, `gtsummary`,
+`flextable`, `survival`, `survminer`, `randomForestSRC`, `varPro` and
+`pacman`, all from the configured repositories. A study needs no
+separate step to have them; anything beyond them is added with
+`hvtiRutilities::study_need()`.
 
 `setup()` replaces packages in the study's library, so run it from a
 session started outside the study project, passing `root`. From inside
