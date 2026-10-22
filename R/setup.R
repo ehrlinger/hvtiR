@@ -2,7 +2,10 @@
 #'
 #' Two groups, kept here beside [members()] so one place owns the list. First,
 #' Suggested packages that members' study-facing functions use: `arrow` reads
-#' and writes registered data. Second, the standard analysis set the team
+#' and writes registered data, and `quarto` renders a job, so
+#' `hvtiRtemplates::render_job()` and `submit_job()` stop without it. No member
+#' imports `quarto`, so a study that installed it by hand still left it out of
+#' its lockfile. Second, the standard analysis set the team
 #' Quick Start used to install by hand, approved for every study on 2026-10-21.
 #' renv runs in explicit mode, so a package reaches the lockfile only when the
 #' study declares it or something declared needs it.
@@ -19,7 +22,7 @@
 #' @noRd
 environment_extras <- function() {
   c(
-    "arrow",
+    "arrow", "quarto",
     "tidyverse", "haven", "gtsummary", "flextable", "survival", "survminer",
     "randomForestSRC", "varPro", "pacman"
   )

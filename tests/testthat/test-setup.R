@@ -312,6 +312,15 @@ test_that("an existing lockfile's packages are declared with the family", {
   expect_true(match("read_lock", log$steps) < match("study_setup", log$steps))
 })
 
+test_that("setup declares quarto, which job rendering needs", {
+  # No member imports quarto, so only the declaration puts it in an
+  # explicit-mode lockfile; render_job() and submit_job() stop without it.
+  root <- withr::local_tempdir()
+  log <- local_setup()
+  setup("A study", 7L, root = root)
+  expect_true("quarto" %in% log$declared)
+})
+
 test_that("with no lockfile no extra child run happens", {
   root <- withr::local_tempdir()
   log <- local_setup()
