@@ -60,8 +60,8 @@ restore, snapshot). It is safe to rerun.
 Every study gets the family and a standard set of analysis packages, with no
 separate install step: `tidyverse`, `haven`, `gtsummary`, `flextable`,
 `survival`, `survminer`, `randomForestSRC`, `varPro` and `pacman`, plus
-`arrow` for registered data and `quarto` for rendering jobs. `setup()`
-declares them in the study's `DESCRIPTION`, so the lockfile records them. Add anything else with
+`arrow` for registered data, `quarto` for rendering jobs and `ggiraph` for
+interactive figures. `setup()` declares them in the study's `DESCRIPTION`, so the lockfile records them. Add anything else with
 `hvtiRutilities::study_need()`.
 
 ## Keeping current
