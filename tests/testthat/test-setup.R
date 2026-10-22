@@ -312,6 +312,16 @@ test_that("an existing lockfile's packages are declared with the family", {
   expect_true(match("read_lock", log$steps) < match("study_setup", log$steps))
 })
 
+test_that("setup declares quarto and ggiraph, which job rendering uses", {
+  # No member imports quarto, so only the declaration puts it in an
+  # explicit-mode lockfile; render_job() and submit_job() stop without it.
+  # ggiraph is optional in dc-eda, so nothing else pulls it in either.
+  root <- withr::local_tempdir()
+  log <- local_setup()
+  setup("A study", 7L, root = root)
+  expect_true(all(c("quarto", "ggiraph") %in% log$declared))
+})
+
 test_that("with no lockfile no extra child run happens", {
   root <- withr::local_tempdir()
   log <- local_setup()
