@@ -1,5 +1,38 @@
 # Changelog
 
+## hvtiR 1.3.2
+
+- [`setup()`](https://ehrlinger.github.io/hvtiR/reference/setup.md)
+  declares a standard set of analysis packages in every study, alongside
+  the family: `tidyverse`, `haven`, `gtsummary`, `flextable`,
+  `survival`, `survminer`, `randomForestSRC`, `varPro` and `pacman`.
+  They are the packages the team Quick Start used to install by hand.
+  renv runs in explicit mode, so declaring them is what puts them in the
+  lockfile; a study no longer needs a separate install step for them.
+
+- [`setup()`](https://ehrlinger.github.io/hvtiR/reference/setup.md)
+  declares the `quarto` R package in every study. `hvtiRtemplates`
+  renders jobs through it, and `render_job()` and `submit_job()` stop
+  without it, but no member imports it, so a study that installed it by
+  hand still left it out of `renv.lock` and a fresh `renv::restore()`
+  could not render a job. It also declares `ggiraph`, which gives the
+  `dc-eda` template its hover figures; without it the template quietly
+  falls back to static ones. Rerun
+  [`setup()`](https://ehrlinger.github.io/hvtiR/reference/setup.md) in
+  an existing study to record both.
+
+- Catalog versions refreshed from CRAN and `main`: `ggBoostedTrees` dev
+  0.9.3 to 0.10.0; `hvtiPlotR` dev 2.8.14 to 2.8.16; `hvtiRtables` dev
+  1.0.8 to 1.0.10; `hvtiRtemplates` dev 1.4.1 to 1.4.2; `hvtiRutilities`
+  dev 1.5.8 to 1.5.9. The catalog ships in the package and is published
+  as `members.json`, so its recorded versions are content rather than
+  bookkeeping.
+
+- Family floors refreshed from `main`: `hvtiRtemplates` Suggests
+  `hvtiRtables` (\>= 1.0.8) to (\>= 1.0.9). `family-floors.csv` ships in
+  the package and records the version floors members declare on one
+  another.
+
 ## hvtiR 1.3.1
 
 - Catalog versions refreshed from CRAN and `main`: `hvtiRutilities` dev
