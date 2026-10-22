@@ -62,7 +62,8 @@ rerun.
 Every study gets the family and a standard set of analysis packages,
 with no separate install step: `tidyverse`, `haven`, `gtsummary`,
 `flextable`, `survival`, `survminer`, `randomForestSRC`, `varPro` and
-`pacman`, plus `arrow` for registered data.
+`pacman`, plus `arrow` for registered data, `quarto` for rendering jobs
+and `ggiraph` for interactive figures.
 [`setup()`](https://ehrlinger.github.io/hvtiR/reference/setup.md)
 declares them in the study’s `DESCRIPTION`, so the lockfile records
 them. Add anything else with `hvtiRutilities::study_need()`.
