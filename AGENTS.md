@@ -152,6 +152,11 @@ Do not read a green PR as broader assurance than it gives.
   no force-push, pull-request-only, Copilot review, one approving review,
   `require_extra_approval_for_unattributed_changes` on, `require_code_owner_review` off,
   and the repository admin role as the bypass actor.
+  **Except Copilot review in `hvtiGraphics`**, removed on 2026-10-25 together with
+  `house-style`, `hazard` and `boostmtree_src` (outside the fourteen): low-risk repos,
+  pulled to save the Copilot credits that every automatic review draws from the
+  maintainer's CCF-Developers Business seat. A Copilot review that fails on exhausted
+  credits does not block a merge.
   **All fourteen also enforce `required_status_checks`**, since the ruleset updates of
   2026-09-04 (`hvtiRimputation` on 2026-09-08). Here that is seven contexts: `ubuntu-latest (release)`,
   the one `R-CMD-check` leg a pull request runs (since 2026-10-12; macOS runs on a push to
