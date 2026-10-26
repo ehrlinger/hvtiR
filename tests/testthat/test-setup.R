@@ -877,6 +877,26 @@ test_that("an explicit root is named in the message when renv is active", {
   expect_match(err, "adopt = TRUE", fixed = TRUE)
 })
 
+test_that("a session in another project names that project, not loaded ones", {
+  local_mocked_bindings(
+    renv_state = function(...) "active",
+    utilities_fn = function(name) stop("must not be reached")
+  )
+  withr::local_envvar(RENV_PROJECT = "/studies/demo")
+  err <- tryCatch(
+    setup("A study", 7L, root = "/studies/other"), error = conditionMessage
+  )
+  expect_match(err, "another project", fixed = TRUE)
+  expect_match(err, "/studies/demo", fixed = TRUE)
+  expect_no_match(err, "this session has loaded", fixed = TRUE)
+  # The study's own project keeps the original reason.
+  err <- tryCatch(
+    setup("A study", 7L, root = "/studies/demo"), error = conditionMessage
+  )
+  expect_match(err, "this session has loaded", fixed = TRUE)
+  expect_no_match(err, "another project", fixed = TRUE)
+})
+
 test_that("an old hvtiRutilities and root NULL install nothing first", {
   installed <- FALSE
   root <- withr::local_tempdir()

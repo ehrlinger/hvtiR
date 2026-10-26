@@ -929,11 +929,23 @@ guard_session <- function(root, study, study_tracker_id,
     ", study_tracker_id = ", deparse1(study_tracker_id),
     if (isTRUE(adopt)) ", adopt = TRUE", ")"
   )
-  cli::cli_abort(c(
+  project <- Sys.getenv("RENV_PROJECT", "")
+  # A restart in RStudio reopens the last project, so the session can sit in
+  # a different study's renv; nothing loaded then belongs to the target.
+  other <- active && nzchar(project) && !path_within(project, target)
+  reason <- if (other) {
+    paste(
+      "This session is inside another project, {.file {project}}, so",
+      "{.fn setup} would install into that project's library."
+    )
+  } else {
     paste(
       "{.fn setup} replaces packages this session has loaded, and would",
       "install into the study's library through this session."
-    ),
+    )
+  }
+  cli::cli_abort(c(
+    reason,
     i = "Run it from a session started outside any project: {.code {cmd}}",
     i = paste(
       "In RStudio, File > Close Project; check that",
