@@ -5,4 +5,8 @@
   pak's staging directory, left by a failed install, which pak works around
   and renv's library scan fails on. A leftover `_cache` alone now gets its
   one removal step; links into a cache the user cannot read still get the
-  full repair. The numbered steps are indented under the warning.
+  full repair, which now says the renv steps fail until `_cache` is gone and
+  ends by restoring only the removed packages: the bare `renv::restore()` it
+  used to end with reverted every package to the lockfile, undoing the
+  install or update that raised the warning. The numbered steps are
+  indented under the warning.

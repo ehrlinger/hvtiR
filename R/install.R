@@ -309,7 +309,8 @@ report_self <- function(self) {
 #' pak's staging directory left by a failed install, which pak works around
 #' but renv's library scan fails on. The repair follows [setup()]'s: remove
 #' the debris, then, only when links went, stop using the per-user cache,
-#' copy the remaining links in and restore what was removed.
+#' copy the remaining links in and restore only what was removed. A bare
+#' `renv::restore()` would also revert what `install()` or `update()` puts in.
 #' @noRd
 warn_shared_cache <- function() {
   if (renv_state() != "active") return(invisible(NULL))
@@ -327,6 +328,7 @@ warn_shared_cache <- function() {
     ", recursive = TRUE)"
   )
   rm_links <- paste0("file.remove(", deparse1(file.path(lib, links)), ")")
+  restore <- paste0("renv::restore(packages = ", deparse1(links), ")")
   rerun <- paste0(
     "hvtiR::setup(root = ", deparse1(Sys.getenv("RENV_PROJECT")),
     ", adopt = TRUE)"
@@ -345,11 +347,20 @@ warn_shared_cache <- function() {
     return(invisible(NULL))
   }
   steps <- c(
-    if ("_cache" %in% debris) "Remove {.file _cache}: {.code {rm_cache}}",
+    if ("_cache" %in% debris) {
+      paste(
+        "Remove {.file _cache}; the renv steps below fail until it is gone:",
+        "{.code {rm_cache}}"
+      )
+    },
     "Remove the links, never their targets: {.code {rm_links}}",
     "Then {.code renv::settings$use.cache(FALSE)}.",
     "Then {.code renv::isolate()}.",
-    "Then {.code renv::restore()}."
+    paste(
+      "Then reinstall only the removed packages: {.code {restore}}. A bare",
+      "{.code renv::restore()} would put back the lockfile's version of",
+      "everything, undoing this install."
+    )
   )
   steps <- paste0(seq_along(steps), ". ", steps)
   names(steps) <- rep(" ", length(steps))

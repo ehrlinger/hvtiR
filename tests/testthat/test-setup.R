@@ -1181,9 +1181,15 @@ test_that("install_members warns about debris, repair steps in order", {
   expect_match(flat, "root = \"/study\"", fixed = TRUE)
   # Only the links are what pak cannot replace.
   expect_no_match(msg, "cannot replace: \"_cache\"", fixed = TRUE)
+  # renv's own commands fail on a leftover _cache, so it goes first.
+  expect_match(flat, "fail until", fixed = TRUE)
+  # A bare restore() undoes what install() and update() just installed.
+  restore <- "renv::restore(packages = c(\"dplyr\", \"ggplot2\"))"
+  expect_match(flat, restore, fixed = TRUE)
+  expect_match(flat, "`renv::restore()` would", fixed = TRUE)
   at <- anchor_at(flat)
   steps <- c("unlink(", "file.remove", "use.cache(FALSE)", "isolate()",
-             "renv::restore()")
+             restore)
   pos <- vapply(steps, at, 1L)
   expect_identical(order(pos), seq_along(steps))
   # Numbered steps are indented bullets, not flush-left text.
