@@ -400,7 +400,7 @@ unlink_expr <- function(lib_var) {
     "gone <- library_debris(", lib_var, "); ",
     "for (g in gone) { x <- file.path(", lib_var, ", g); ",
     "if (nzchar(Sys.readlink(x))) file.remove(x) else ",
-    "unlink(x, recursive = TRUE) }; ",
+    "unlink(x, recursive = TRUE, expand = FALSE) }; ",
     "if (length(gone)) cat('\\nHVTIR_UNLINKED=', ",
     "paste(gone, collapse = ','), '\\n', sep = ''); "
   )

@@ -1022,6 +1022,18 @@ test_that("unlink_expr removes pak's staging _cache directory", {
   expect_match(out, "HVTIR_UNLINKED=_cache", fixed = TRUE)
 })
 
+test_that("unlink_expr takes a library path literally, never as a glob", {
+  skip_on_os("windows")
+  base <- withr::local_tempdir()
+  for (study in c("study[12]", "study1", "study2")) {
+    dir.create(file.path(base, study, "lib", "_cache"), recursive = TRUE)
+  }
+  run_unlink(file.path(base, "study[12]", "lib"))
+  expect_false(dir.exists(file.path(base, "study[12]", "lib", "_cache")))
+  expect_true(dir.exists(file.path(base, "study1", "lib", "_cache")))
+  expect_true(dir.exists(file.path(base, "study2", "lib", "_cache")))
+})
+
 test_that("unlink_expr keeps a _cache package and never follows a link", {
   skip_on_os("windows")
   lib <- withr::local_tempdir()
