@@ -1176,6 +1176,34 @@ test_that("setup reports the links the child removed", {
   expect_message(setup("A study", 7L, root = root), "dplyr")
 })
 
+test_that("setup reports a removed _cache apart from the links", {
+  setup_messages <- function(unlinked) {
+    root <- withr::local_tempdir()
+    local_setup(restore_output = paste0(
+      "HVTIR_UNLINKED=", unlinked, "\nHVTIR_LIB=@LIB@\nHVTIR_LOCKVER=\n"
+    ))
+    msgs <- character(0)
+    withCallingHandlers(
+      setup("A study", 7L, root = root),
+      message = function(m) {
+        msgs <<- c(msgs, conditionMessage(m))
+        invokeRestart("muffleMessage")
+      }
+    )
+    msgs
+  }
+  msgs <- setup_messages("dplyr,_cache")
+  link <- grep("link", msgs, value = TRUE)
+  expect_length(link, 1L)
+  expect_match(link, "1 unreadable cache link ", fixed = TRUE)
+  expect_no_match(link, "_cache", fixed = TRUE)
+  expect_true(any(grepl("_cache.*staging", msgs)))
+
+  msgs <- setup_messages("_cache")
+  expect_false(any(grepl("link|reinstalled", msgs)))
+  expect_true(any(grepl("_cache.*staging", msgs)))
+})
+
 # install() and update() warn about a shared library full of dead links.
 
 test_that("library_debris finds unreadable links and a leftover _cache", {

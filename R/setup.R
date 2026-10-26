@@ -1187,10 +1187,20 @@ setup <- function(study, study_tracker_id, root = NULL, adopt = FALSE,
   report_moves(result$output)
   if (length(unlinked)) {
     gone <- strsplit(unlinked[1L], ",", fixed = TRUE)[[1L]]
-    cli::cli_alert_info(paste(
-      "Removed {length(gone)} unreadable cache link{?s} from the study's",
-      "library and reinstalled: {.pkg {gone}}."
-    ))
+    # pak's staging folder is not a link, and nothing reinstalls it.
+    links <- setdiff(gone, "_cache")
+    if ("_cache" %in% gone) {
+      cli::cli_alert_info(paste(
+        "Removed {.file _cache} from the study's library: pak's staging",
+        "folder, left by a failed install."
+      ))
+    }
+    if (length(links)) {
+      cli::cli_alert_info(paste(
+        "Removed {length(links)} unreadable cache link{?s} from the study's",
+        "library and reinstalled: {.pkg {links}}."
+      ))
+    }
   }
   lib <- child_value(result$output, "HVTIR_LIB")
   if (length(lib) != 1L || !dir.exists(lib)) {
