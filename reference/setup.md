@@ -68,9 +68,10 @@ renv runs in explicit mode: the lockfile records what the study's
 study that already has a `renv.lock` keeps its locked versions, and on
 first conversion every package that lockfile recorded is declared, so
 none drop out. They are restored, and only packages the lockfile lacks
-are installed. By default (`upgrade = TRUE`) it moves locked versions
-the declared family needs and says which; `upgrade = FALSE` keeps a
-study in revision on its locked versions.
+are installed; one the library already holds is kept as it is, unless it
+is a member. By default (`upgrade = TRUE`) it moves locked versions the
+declared family needs and says which; `upgrade = FALSE` keeps a study in
+revision on its locked versions.
 
 The standard analysis packages are `tidyverse`, `haven`, `gtsummary`,
 `flextable`, `survival`, `survminer`, `randomForestSRC`, `varPro` and
