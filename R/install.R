@@ -302,40 +302,67 @@ report_self <- function(self) {
   invisible(NULL)
 }
 
-#' Warn when the active study's library holds links this user cannot read
+#' Warn when the active study's library holds debris
 #'
-#' A library shared by the team but linked into one user's renv cache leaves
-#' pak unable to replace those packages ([library_debris()]).
+#' Two kinds ([library_debris()]): links into a renv cache this user cannot
+#' read, which pak sees as not installed and cannot replace; and `_cache`,
+#' pak's staging directory left by a failed install, which pak works around
+#' but renv's library scan fails on. The repair follows [setup()]'s: remove
+#' the debris, then, only when links went, stop using the per-user cache,
+#' copy the remaining links in and restore what was removed.
 #' @noRd
 warn_shared_cache <- function() {
   if (renv_state() != "active") return(invisible(NULL))
+  lib <- session_library()
   # Defined in setup.R; lintr cannot resolve it across source files.
   # nolint next: object_usage_linter.
-  debris <- library_debris(session_library())
+  debris <- library_debris(lib)
   if (length(debris) == 0L) return(invisible(NULL))
+  # Read by cli's glue below, which lintr cannot see.
+  # nolint start: object_usage_linter.
+  links <- setdiff(debris, "_cache")
+  cache <- deparse1(file.path(lib, "_cache"))
+  rm_cache <- paste0(
+    "if (!nzchar(Sys.readlink(", cache, "))) unlink(", cache,
+    ", recursive = TRUE)"
+  )
+  rm_links <- paste0("file.remove(", deparse1(file.path(lib, links)), ")")
+  rerun <- paste0(
+    "hvtiR::setup(root = ", deparse1(Sys.getenv("RENV_PROJECT")),
+    ", adopt = TRUE)"
+  )
+  # nolint end
+  stale <- paste(
+    "{.file _cache} is pak's staging directory, left by a failed install;",
+    "pak works around it, but renv fails when it scans the library."
+  )
+  if (length(links) == 0L) {
+    cli::cli_warn(c(
+      "This study's library holds a leftover {.file _cache}.",
+      i = paste(stale, "Remove it, in the study:"),
+      " " = "{.code {rm_cache}}"
+    ))
+    return(invisible(NULL))
+  }
+  steps <- c(
+    if ("_cache" %in% debris) "Remove {.file _cache}: {.code {rm_cache}}",
+    "Remove the links, never their targets: {.code {rm_links}}",
+    "Then {.code renv::settings$use.cache(FALSE)}.",
+    "Then {.code renv::isolate()}.",
+    "Then {.code renv::restore()}."
+  )
+  steps <- paste0(seq_along(steps), ". ", steps)
+  names(steps) <- rep(" ", length(steps))
   cli::cli_warn(c(
-    paste(
-      "This study's library holds entries pak cannot replace:",
-      "{.val {debris}}."
-    ),
+    "This study's library holds links pak cannot replace: {.val {links}}.",
+    i = "They point into a renv cache this user cannot read.",
+    i = if ("_cache" %in% debris) stale,
     i = paste(
-      "They link into a cache this user cannot read, or are left over from",
-      "a failed install. Repair in this order, in the study, or run",
-      "{.code hvtiR::setup(root = \"<study>\")} from a session started",
+      "Repair in this order, in the study, or run {.code {rerun}}, adding",
+      "{.arg study} and {.arg study_tracker_id}, from a session started",
       "outside the project:"
     ),
-    paste(
-      "1. Remove {.file <library>/_cache} if present: a real folder, so",
-      "{.code unlink(<path>, recursive = TRUE)}, only once",
-      "{.code Sys.readlink(<path>)} is empty."
-    ),
-    paste(
-      "2. Remove each broken LINK with {.code file.remove(<link>)}, never",
-      "its target."
-    ),
-    "3. Then {.code renv::settings$use.cache(FALSE)}.",
-    "4. Then {.code renv::isolate()}.",
-    "5. Then {.code renv::restore()}."
+    steps
   ))
 }
 
