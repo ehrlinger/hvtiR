@@ -309,8 +309,10 @@ report_self <- function(self) {
 #' pak's staging directory left by a failed install, which pak works around
 #' but renv's library scan fails on. The repair follows [setup()]'s: remove
 #' the debris, then, only when links went, stop using the per-user cache,
-#' copy the remaining links in and restore only what was removed. A bare
-#' `renv::restore()` would also revert what `install()` or `update()` puts in.
+#' copy the remaining links in and restore only what was removed, leaving
+#' every installed package alone. A bare `renv::restore()` would revert what
+#' `install()` or `update()` puts in, and `restore(packages =)` alone would
+#' still revert their installed dependencies.
 #' @noRd
 warn_shared_cache <- function() {
   if (renv_state() != "active") return(invisible(NULL))
@@ -325,10 +327,16 @@ warn_shared_cache <- function() {
   cache <- deparse1(file.path(lib, "_cache"))
   rm_cache <- paste0(
     "if (!nzchar(Sys.readlink(", cache, "))) unlink(", cache,
-    ", recursive = TRUE)"
+    ", recursive = TRUE, expand = FALSE)"
   )
   rm_links <- paste0("file.remove(", deparse1(file.path(lib, links)), ")")
-  restore <- paste0("renv::restore(packages = ", deparse1(links), ")")
+  # restore(packages =) also restores their dependencies, so exclude what
+  # is installed: it may be what this install just updated.
+  restore <- paste0(
+    "renv::restore(packages = ", deparse1(links), ", exclude = setdiff(",
+    "rownames(installed.packages(", deparse1(lib), ", noCache = TRUE)), ",
+    deparse1(links), "))"
+  )
   rerun <- paste0(
     "hvtiR::setup(root = ", deparse1(Sys.getenv("RENV_PROJECT")),
     ", adopt = TRUE)"
@@ -357,9 +365,9 @@ warn_shared_cache <- function() {
     "Then {.code renv::settings$use.cache(FALSE)}.",
     "Then {.code renv::isolate()}.",
     paste(
-      "Then reinstall only the removed packages: {.code {restore}}. A bare",
-      "{.code renv::restore()} would put back the lockfile's version of",
-      "everything, undoing this install."
+      "Then reinstall only the removed packages, leaving installed ones as",
+      "they are: {.code {restore}}. A bare {.code renv::restore()} would put",
+      "back the lockfile's version of everything, undoing this install."
     )
   )
   steps <- paste0(seq_along(steps), ". ", steps)
