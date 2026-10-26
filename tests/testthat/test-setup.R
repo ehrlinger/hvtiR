@@ -1158,13 +1158,16 @@ test_that("library_debris finds unreadable links and a leftover _cache", {
   )
 })
 
-test_that("install_members warns about debris, repair steps in order", {
-  local_mocked_bindings(
+# The warning install_members() raises for the given debris, from the study.
+debris_warning <- function(debris, lib = "/study/renv/library") {
+  testthat::local_mocked_bindings(
     pak_install = function(specs) invisible(specs),
     renv_state = function(...) "active",
-    session_library = function() "/study/renv/library",
-    library_debris = function(lib) c("dplyr", "_cache")
+    session_library = function() lib,
+    library_debris = function(lib) debris,
+    .env = parent.frame()
   )
+  withr::local_envvar(RENV_PROJECT = "/study")
   msg <- NULL
   withCallingHandlers(
     install_members("hvtiPlotR"),
@@ -1173,14 +1176,85 @@ test_that("install_members warns about debris, repair steps in order", {
       invokeRestart("muffleWarning")
     }
   )
+  msg
+}
+
+test_that("install_members warns about debris, repair steps in order", {
+  msg <- debris_warning(c("_cache", "dplyr", "ggplot2"))
   expect_match(msg, "dplyr", fixed = TRUE)
-  at <- anchor_at(msg)
-  steps <- c("_cache", "file.remove", "use.cache(FALSE)", "isolate()",
-             "renv::restore()")
+  # The commands carry the real paths, so they paste as they are.
+  expect_no_match(msg, "<(library|path|link|study)>")
+  flat <- gsub("\\s+", " ", msg)
+  cache <- "\"/study/renv/library/_cache\""
+  expect_match(flat, paste0("Sys.readlink(", cache, ")"), fixed = TRUE)
+  expect_match(
+    flat, paste0("unlink(", cache, ", recursive = TRUE, expand = FALSE)"),
+    fixed = TRUE
+  )
+  expect_match(
+    flat,
+    paste0(
+      "file.remove(c(\"/study/renv/library/dplyr\", ",
+      "\"/study/renv/library/ggplot2\"))"
+    ),
+    fixed = TRUE
+  )
+  expect_match(flat, "root = \"/study\"", fixed = TRUE)
+  # Only the links are what pak cannot replace.
+  expect_no_match(msg, "cannot replace: \"_cache\"", fixed = TRUE)
+  # renv's own commands fail on a leftover _cache, so it goes first.
+  expect_match(flat, "fail until", fixed = TRUE)
+  # A bare restore() undoes what install() and update() just installed, and
+  # restore(packages =) still downgrades their installed dependencies, so
+  # everything already installed is excluded.
+  restore <- paste0(
+    "renv::restore(packages = c(\"dplyr\", \"ggplot2\"), exclude = ",
+    "setdiff(rownames(installed.packages(\"/study/renv/library\", ",
+    "noCache = TRUE)), c(\"dplyr\", \"ggplot2\")))"
+  )
+  expect_match(flat, restore, fixed = TRUE)
+  expect_match(flat, "`renv::restore()` would", fixed = TRUE)
+  at <- anchor_at(flat)
+  steps <- c("unlink(", "file.remove", "use.cache(FALSE)", "isolate()",
+             restore)
   pos <- vapply(steps, at, 1L)
-  expect_true(all(pos > 0L))
   expect_identical(order(pos), seq_along(steps))
-  expect_true(at("Sys.readlink") < at("file.remove"))
+  # Numbered steps are indented bullets, not flush-left text.
+  expect_match(msg, "\n +1\\. ")
+  expect_match(msg, "\n +5\\. ")
+})
+
+test_that("the printed _cache removal deletes only that _cache", {
+  # unlink() expands globs by default: "study[12]" would match "study1".
+  root <- withr::local_tempdir()
+  lib <- file.path(root, "study[12]", "lib")
+  sibling <- file.path(root, "study1", "lib", "_cache")
+  dir.create(file.path(lib, "_cache"), recursive = TRUE)
+  dir.create(sibling, recursive = TRUE)
+  for (debris in list("_cache", c("_cache", "dplyr"))) {
+    dir.create(file.path(lib, "_cache"), showWarnings = FALSE)
+    flat <- gsub("\\s+", " ", debris_warning(debris, lib))
+    cmd <- regmatches(flat, regexpr("if \\(!nzchar[^`]*", flat))
+    eval(parse(text = cmd))
+    expect_false(dir.exists(file.path(lib, "_cache")))
+    expect_true(dir.exists(sibling))
+  }
+})
+
+test_that("a leftover _cache alone needs only its removal", {
+  msg <- debris_warning("_cache")
+  expect_no_match(msg, "<(library|path|link|study)>")
+  expect_no_match(msg, "cannot replace", fixed = TRUE)
+  expect_match(msg, "staging", fixed = TRUE)
+  expect_match(msg, "renv", fixed = TRUE)
+  expect_match(
+    gsub("\\s+", " ", msg),
+    "unlink(\"/study/renv/library/_cache\", recursive = TRUE, expand = FALSE)",
+    fixed = TRUE
+  )
+  for (step in c("file.remove", "use.cache", "isolate", "restore")) {
+    expect_no_match(msg, step, fixed = TRUE)
+  }
 })
 
 test_that("install_members is quiet about debris without an active project", {
