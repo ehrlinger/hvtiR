@@ -133,7 +133,12 @@ def bullet(moved: list[str]) -> str:
     hyphen: inside a code span such as `family-floors.csv`, that break
     renders as two words."""
     body = "; ".join(moved)
-    text = (f"* {MARKER} from CRAN and `main`: {body}. The catalog ships in "
+    # Name only the oracle that moved. Most members never go to CRAN, so a
+    # fixed "from CRAN and `main`" put CRAN beside packages it has never held.
+    sources = [name for name, kind in (("CRAN", "` CRAN "), ("`main`", "` dev "))
+               if any(kind in phrase for phrase in moved)]
+    text = (f"* {MARKER} from {' and '.join(sources)}: {body}. "
+            f"The catalog ships in "
             f"the package and is published as `members.json`, so its recorded "
             f"versions are content rather than bookkeeping.")
     return textwrap.fill(text, width=76, subsequent_indent="  ",

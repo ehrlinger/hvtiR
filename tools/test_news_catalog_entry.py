@@ -152,6 +152,23 @@ class BulletTests(unittest.TestCase):
         self.assertIn("`a` dev 1 to 2; `b` CRAN 3 to 4", flat)
         self.assertTrue(line.startswith("* "))
 
+    # The source named is the one that moved. Most members are never published
+    # to CRAN, so "from CRAN and `main`" beside a dev-only move told readers an
+    # internal package had come from CRAN.
+    def test_dev_moves_alone_name_main(self):
+        flat = " ".join(nce.bullet(["`hvtiRtables` dev 1.0.9 to 1.0.10"]).split())
+        self.assertIn("refreshed from `main`:", flat)
+        self.assertNotIn("CRAN", flat.replace("`hvtiRtables`", ""))
+
+    def test_cran_moves_alone_name_cran(self):
+        flat = " ".join(nce.bullet(["`ggRandomForests` CRAN 3.5.3 to 3.5.4"]).split())
+        self.assertIn("refreshed from CRAN:", flat)
+        self.assertNotIn("`main`:", flat)
+
+    def test_both_kinds_of_move_name_both(self):
+        flat = " ".join(nce.bullet(["`a` dev 1 to 2", "`b` CRAN 3 to 4"]).split())
+        self.assertIn("refreshed from CRAN and `main`:", flat)
+
     def test_the_bullet_wraps_like_every_other_entry(self):
         line = nce.bullet([f"`pkg{i}` dev 1.0.0 to 1.0.1" for i in range(6)])
         self.assertTrue(len(line.splitlines()) > 1)

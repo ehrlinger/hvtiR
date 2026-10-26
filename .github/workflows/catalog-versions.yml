@@ -43,7 +43,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Refresh version columns from CRAN and main
+      - name: Refresh version columns from their oracles
         id: refresh
         # Exit 2 means some oracle was unreadable and the recorded value was
         # kept. That is a warning, not a failure -- the file is still correct,
@@ -139,7 +139,7 @@ jobs:
           branch: chore/catalog-version-refresh
           base: main
           title: "chore: refresh catalog versions"
-          commit-message: "chore: refresh catalog versions from CRAN and main"
+          commit-message: "chore: refresh catalog versions"
           delete-branch: true
           add-paths: |
             inst/extdata/catalog.csv
