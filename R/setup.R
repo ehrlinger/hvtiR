@@ -969,7 +969,8 @@ guard_session <- function(root, study, study_tracker_id,
 #' `DESCRIPTION` declares, not whatever the code happens to mention. A study
 #' that already has a `renv.lock` keeps its locked versions, and on first
 #' conversion every package that lockfile recorded is declared, so none drop
-#' out. They are restored, and only packages the lockfile lacks are installed.
+#' out. They are restored, and only packages the lockfile lacks are installed;
+#' one the library already holds is kept as it is, unless it is a member.
 #' By default (`upgrade = TRUE`) it moves locked versions the declared family
 #' needs and says which; `upgrade = FALSE` keeps a study in revision on its
 #' locked versions.
@@ -1156,7 +1157,12 @@ setup <- function(study, study_tracker_id, root = NULL, adopt = FALSE,
   } else {
     libpkgs <- NULL
   }
-  add <- install_specs(setdiff(packages, names(before)))
+  # pak installs the newest release of any package it is named, so an extra
+  # already in the library is left for the snapshot to record; members move.
+  wanted <- setdiff(packages, names(before))
+  family <- c("hvtiR", members()$package)
+  wanted <- wanted[wanted %in% family | !wanted %in% libpkgs]
+  add <- install_specs(wanted)
   if (length(add)) {
     tryCatch(
       pak_install_lib(add, project_lib, repos),

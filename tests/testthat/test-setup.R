@@ -773,6 +773,23 @@ test_that("setup parses sha, library packages and repos from child 1", {
   expect_match(log$expr, "pkgB", fixed = TRUE)
 })
 
+test_that("setup names an installed extra to pak only when it is missing", {
+  # pak upgrades any package it is named, so an unlocked arrow already in the
+  # library went to the newest release, which this server could not build.
+  root <- withr::local_tempdir()
+  log <- local_setup(
+    restore_output = paste0(
+      "HVTIR_LIB=@LIB@\nHVTIR_LOCKVER=\n",
+      "HVTIR_LIBPKGS=arrow,hvtiPlotR\n"
+    )
+  )
+  setup("A study", 7L, root = root)
+  specs <- log$pak_lib[[1L]]$specs
+  expect_false("arrow" %in% specs)
+  expect_true("quarto" %in% specs)
+  expect_true(install_specs("hvtiPlotR") %in% specs)
+})
+
 test_that("pak_install_lib sets the study's repos around the install", {
   seen <- NULL
   skip_if_not_installed("pak")

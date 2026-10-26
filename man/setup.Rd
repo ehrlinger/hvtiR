@@ -48,7 +48,8 @@ renv runs in explicit mode: the lockfile records what the study's
 \code{DESCRIPTION} declares, not whatever the code happens to mention. A study
 that already has a \code{renv.lock} keeps its locked versions, and on first
 conversion every package that lockfile recorded is declared, so none drop
-out. They are restored, and only packages the lockfile lacks are installed.
+out. They are restored, and only packages the lockfile lacks are installed;
+one the library already holds is kept as it is, unless it is a member.
 By default (\code{upgrade = TRUE}) it moves locked versions the declared family
 needs and says which; \code{upgrade = FALSE} keeps a study in revision on its
 locked versions.
