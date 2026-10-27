@@ -135,7 +135,10 @@ test_that("setup runs prefs, study_setup, declare, install, then hands over", {
   setup("A study", 7L, root = root)
   expect_identical(
     log$steps,
-    c("prefs", "study_setup", "declare", "child1", "pak_lib", "run", "open")
+    c(
+      "prefs", "study_setup", "declare", "child1", "pak_lib", "pak_lib", "run",
+      "open"
+    )
   )
 })
 
@@ -176,12 +179,65 @@ test_that("order is child 1, then pak into the project library, then child 2", {
   setup("A study", 7L, root = root)
   expect_identical(
     log$steps[log$steps %in% c("child1", "pak_lib", "run")],
-    c("child1", "pak_lib", "run")
+    c("child1", "pak_lib", "pak_lib", "run")
   )
-  expect_length(log$pak_lib, 1L)
+  expect_length(log$pak_lib, 2L)
   expect_true(dir.exists(log$pak_lib[[1L]]$lib))
   expect_true("ehrlinger/hvtiRutilities" %in% log$pak_lib[[1L]]$specs)
-  expect_true("arrow" %in% log$pak_lib[[1L]]$specs)
+  expect_false("arrow" %in% log$pak_lib[[1L]]$specs)
+  expect_identical(log$pak_lib[[2L]]$specs, "arrow")
+})
+
+test_that("an optional extra that fails to install warns, and setup goes on", {
+  root <- withr::local_tempdir()
+  log <- local_setup()
+  local_mocked_bindings(
+    pak_install_lib = function(specs, lib, repos = NULL) {
+      log$pak_lib <- c(log$pak_lib, list(list(specs = specs, lib = lib)))
+      if ("arrow" %in% specs) {
+        dir.create(file.path(lib, "_cache"))
+        stop("a C++20 compiler is required")
+      }
+      invisible(NULL)
+    }
+  )
+  expect_warning(
+    suppressMessages(setup("A study", 7L, root = root)),
+    "arrow"
+  )
+  expect_true("run" %in% log$steps)
+  expect_true("open" %in% log$steps)
+  # pak's staging folder from the failed install would trip renv's snapshot.
+  expect_false(dir.exists(file.path(log$pak_lib[[2L]]$lib, "_cache")))
+})
+
+test_that("the optional-extra warning carries pak's message", {
+  root <- withr::local_tempdir()
+  local_setup()
+  local_mocked_bindings(
+    pak_install_lib = function(specs, lib, repos = NULL) {
+      if ("arrow" %in% specs) stop("a C++20 compiler is required")
+      invisible(NULL)
+    }
+  )
+  expect_warning(
+    suppressMessages(setup("A study", 7L, root = root)),
+    "C++20 compiler",
+    fixed = TRUE
+  )
+})
+
+test_that("a failure installing the other packages still stops setup", {
+  root <- withr::local_tempdir()
+  log <- local_setup()
+  local_mocked_bindings(
+    pak_install_lib = function(specs, lib, repos = NULL) {
+      if (!"arrow" %in% specs) stop("could not solve")
+      invisible(NULL)
+    }
+  )
+  expect_error(setup("A study", 7L, root = root), "could not solve")
+  expect_false("run" %in% log$steps)
 })
 
 test_that("pak gets only the declared packages the lockfile lacks", {
@@ -285,8 +341,8 @@ test_that("a missing renv is installed through pak before study_setup", {
   expect_identical(log$pak, list("renv"))
   expect_identical(
     log$steps,
-    c("pak", "prefs", "study_setup", "declare", "child1", "pak_lib", "run",
-      "open")
+    c("pak", "prefs", "study_setup", "declare", "child1", "pak_lib",
+      "pak_lib", "run", "open")
   )
 })
 
