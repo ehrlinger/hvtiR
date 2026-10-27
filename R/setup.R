@@ -30,6 +30,19 @@ environment_extras <- function() {
   )
 }
 
+#' Extras a study can be set up without
+#'
+#' A failure installing one of these warns rather than stopping setup, so they
+#' are installed last, on their own. arrow is one because some servers cannot
+#' build it: arrow 23 and later need C++20 and, for the prebuilt library,
+#' OpenSSL 3, and earlier releases do not compile on R 4.6. A study without it
+#' loses Parquet reading until it installs.
+#'
+#' @return A character vector of package names, a subset of
+#'   [environment_extras()].
+#' @noRd
+optional_extras <- function() "arrow"
+
 #' Every package a study declares
 #'
 #' @param registry The registry, as returned by [members()].
@@ -1162,7 +1175,8 @@ setup <- function(study, study_tracker_id, root = NULL, adopt = FALSE,
   wanted <- setdiff(packages, names(before))
   family <- c("hvtiR", members()$package)
   wanted <- wanted[wanted %in% family | !wanted %in% libpkgs]
-  add <- install_specs(wanted)
+  optional <- intersect(wanted, optional_extras())
+  add <- install_specs(setdiff(wanted, optional))
   if (length(add)) {
     tryCatch(
       pak_install_lib(add, project_lib, repos),
@@ -1173,6 +1187,29 @@ setup <- function(study, study_tracker_id, root = NULL, adopt = FALSE,
           "Installing the study's packages failed.",
           if (auth) c("A GitHub token is needed.", github_credentials_hint()),
           output_bullets(msg)
+        ))
+      }
+    )
+  }
+  for (pkg in optional) {
+    tryCatch(
+      pak_install_lib(install_specs(pkg), project_lib, repos),
+      error = function(e) {
+        msg <- conditionMessage(e)
+        # pak's staging folder, left by the failed install, trips the snapshot.
+        staging <- intersect(library_debris(project_lib), "_cache")
+        unlink(file.path(project_lib, staging), recursive = TRUE)
+        cli::cli_warn(c(
+          paste(
+            "{.pkg {pkg}} could not be installed; the study is set up",
+            "without it."
+          ),
+          output_bullets(msg, n = 10L),
+          i = "Full output: {.file {save_setup_log(msg)}}",
+          i = paste(
+            "Install it in the study once the server can build it, then run",
+            "{.code renv::snapshot()}."
+          )
         ))
       }
     )
