@@ -1,5 +1,83 @@
 # Changelog
 
+## hvtiR 1.3.4
+
+- Catalog versions refreshed from CRAN and `main`: `ggRandomForests`
+  CRAN 3.5.4 to 3.5.5; `hvtiPlotR` dev 2.8.16 to 2.8.18;
+  `hvtiRdatabuild` dev 0.3.2 to 0.3.3; `hvtiRtemplates` dev 1.5.0 to
+  1.5.1; `hvtiRutilities` dev 1.5.11 to 1.5.13. The catalog ships in the
+  package and is published as `members.json`, so its recorded versions
+  are content rather than bookkeeping.
+
+- Family floors refreshed from `main`: `hvtiRdatabuild` Imports
+  `hvtiRutilities` (\>= 1.5.2) to (\>= 1.5.3); `hvtiRtemplates` Imports
+  `hvtiRutilities` (\>= 1.5.11) to (\>= 1.5.13); `hvtiRtemplates`
+  Suggests `hvtiPlotR` (\>= 2.8.9) to (\>= 2.8.18). `family-floors.csv`
+  ships in the package and records the version floors members declare on
+  one another.
+
+- [`setup()`](https://ehrlinger.github.io/hvtiR/reference/setup.md) run
+  from a session inside a different study’s renv project now says so and
+  names that project. It used to say the session had loaded packages
+  [`setup()`](https://ehrlinger.github.io/hvtiR/reference/setup.md)
+  would replace, which was not the reason. RStudio reopens the last
+  project on restart, so this is the usual way to hit it.
+
+- The warning
+  [`install()`](https://ehrlinger.github.io/hvtiR/reference/install.md)
+  and
+  [`update()`](https://ehrlinger.github.io/hvtiR/reference/update.md)
+  raise for debris in a study’s library now prints the study’s real
+  paths, so each repair command can be pasted as it is, where it used to
+  print placeholders such as `<library>/_cache`. It no longer says pak
+  cannot replace `_cache`: that is pak’s staging directory, left by a
+  failed install, which pak works around and renv’s library scan fails
+  on. A leftover `_cache` alone now gets its one removal step; links
+  into a cache the user cannot read still get the full repair, which now
+  says the renv steps fail until `_cache` is gone and ends by restoring
+  only the removed packages: the bare `renv::restore()` it used to end
+  with reverted every package to the lockfile, undoing the install or
+  update that raised the warning. The numbered steps are indented under
+  the warning.
+
+- [`setup()`](https://ehrlinger.github.io/hvtiR/reference/setup.md)
+  removes pak’s leftover `_cache` from a study library by its exact
+  path. It used to pass the path to
+  [`unlink()`](https://rdrr.io/r/base/unlink.html) as a pattern, so a
+  study path containing `[`, `*` or `?` could delete a sibling study’s
+  `_cache` and leave its own.
+
+- [`setup()`](https://ehrlinger.github.io/hvtiR/reference/setup.md) no
+  longer upgrades a standard analysis package, such as `arrow`, that is
+  already in the study’s library but missing from its `renv.lock`. It
+  named every unlocked package to pak, which installs the newest release
+  of a package it is named; on a server that could not build that
+  release, setup stopped. A family member missing from `renv.lock` is
+  still named, so it moves to `main` even when already installed.
+
+- [`setup()`](https://ehrlinger.github.io/hvtiR/reference/setup.md)
+  reports a removed `_cache` as what it is, pak’s staging folder left by
+  a failed install, rather than counting it among the unreadable cache
+  links it removed and reinstalled.
+
+- [`setup()`](https://ehrlinger.github.io/hvtiR/reference/setup.md) no
+  longer stops when `arrow` cannot be installed. It installs `arrow`
+  last, on its own, and on a failure warns, names pak’s message and the
+  saved log, and sets the study up without it. Some servers cannot build
+  current `arrow` (C++20, and OpenSSL 3 for its prebuilt library), and
+  no older release compiles on R 4.6. A failure installing any other
+  package still stops setup.
+
+- Catalog versions refreshed from `main`: `hvtiRtemplates` dev 1.5.1 to
+  1.5.2; `hvtiRutilities` dev 1.5.13 to 1.5.15. The catalog ships in the
+  package and is published as `members.json`, so its recorded versions
+  are content rather than bookkeeping.
+
+- Family floors refreshed from `main`: `hvtiRtemplates` Imports
+  `hvtiRutilities` (\>= 1.5.13) to (\>= 1.5.15). `family-floors.csv`
+  ships in the package and records the version floors members declare on
+  one another.
+
 ## hvtiR 1.3.3
 
 - Catalog versions refreshed from CRAN and `main`: `hvtiRtables` dev
