@@ -140,7 +140,7 @@ flag figures whose commit is not the job's latest.
 
 John's review of `7585258` confirmed both Copilot findings (now in section 1)
 and found four gaps, each reproduced in a disposable example. Each resolution
-below is **(proposed)** until John accepts it; none is implemented.
+below was **accepted by John on 2026-10-29**.
 
 ### R1. The committed bytes must be the bytes executed (P1)
 
