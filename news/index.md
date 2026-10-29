@@ -612,9 +612,8 @@
   `dev/specs/2026-09-16-standardized-difference-design.md`.
 
 - **The catalog marks `dc-general` shipped**, over
-  [`hvtiRutilities::proc_contents()`](https://ehrlinger.github.io/hvtiRutilities/reference/proc_contents.html)
-  and `proc_means()`, with base R for the contingency tables, cumulative
-  distributions and correlations.
+  `hvtiRutilities::proc_contents()` and `proc_means()`, with base R for
+  the contingency tables, cumulative distributions and correlations.
 
 - Catalog versions refreshed from CRAN and `main`: `hvtiRdatabuild` dev
   0.2.1 to 0.2.2. The catalog ships in the package and is published as
@@ -634,8 +633,7 @@
 
 - **The catalog marks `dc-tables`, `dc-gfup` and `dp-postage` shipped.**
   `dc-tables` now names the correlation table and matrix engines, and
-  `dp-postage` is thin over
-  [`hvtiPlotR::hv_eda()`](https://ehrlinger.github.io/hvtiPlotR/reference/hv_eda.html).
+  `dp-postage` is thin over `hvtiPlotR::hv_eda()`.
 
 - Catalog versions refreshed from CRAN and `main`: `ggRandomForests`
   CRAN 3.5.2 to 3.5.3; `TemporalHazard` dev 1.2.9 to 1.2.11;
@@ -727,9 +725,8 @@
 
 - **`dp-trends` is `shipped`**, the first of the EDA templates from the
   2026-09-10 batch. `hvtiRtemplates` gains `40_graphs/dp-trends.qmd`, a
-  thin template over
-  [`hvtiPlotR::hv_trends()`](https://ehrlinger.github.io/hvtiPlotR/reference/hv_trends.html).
-  Its design is `dev/specs/2026-09-10-dp-trends-template-design.md` in
+  thin template over `hvtiPlotR::hv_trends()`. Its design is
+  `dev/specs/2026-09-10-dp-trends-template-design.md` in
   `hvtiRtemplates`, the value the row’s `spec` now holds. A `spec` with
   no repository prefix is a path in `hvtiRtemplates`, as 16 of the
   catalog’s 18 are; `si` and `mi` name `hvtiRdatabuild/` explicitly
@@ -897,9 +894,7 @@
   latter two shapes was read in the corpus; both run base procedures
   only, with no table-building macro. `hvtiRutilities` ports two of
   those procedures, so all three stay `thin` with `replaced_by` naming
-  [`hvtiRutilities::proc_contents`](https://ehrlinger.github.io/hvtiRutilities/reference/proc_contents.html)
-  and/or
-  [`hvtiRutilities::proc_means`](https://ehrlinger.github.io/hvtiRutilities/reference/proc_means.html);
+  `hvtiRutilities::proc_contents` and/or `hvtiRutilities::proc_means`;
   the remainder is tracked as `hvtiRutilities#102` and does not block
   the `thin` marking. `dc-stddiff` becomes a `build` row targeting
   `hvtiRutilities` rather than `hvtiRtables`: the decomposition design
@@ -914,15 +909,12 @@
 
 - Corrected `inst/extdata/jobs.json` disposition for the
   `(dp, variable)` job row from `scaffold` to `thin`, with `replaced_by`
-  naming
-  [`hvtiPlotR::hv_trends`](https://ehrlinger.github.io/hvtiPlotR/reference/hv_trends.html)
-  and
-  [`hvtiPlotR::hv_ordinal`](https://ehrlinger.github.io/hvtiPlotR/reference/hv_ordinal.html).
-  A coverage consistency check had flagged this row as the one
-  `scaffold` disposition in a group of otherwise `thin` rows. Reading
-  real jobs across several studies confirmed the shape is a descriptive
-  time-trend plot of one variable with no covariates, already served by
-  those two `hvtiPlotR` exports, so no new template is needed.
+  naming `hvtiPlotR::hv_trends` and `hvtiPlotR::hv_ordinal`. A coverage
+  consistency check had flagged this row as the one `scaffold`
+  disposition in a group of otherwise `thin` rows. Reading real jobs
+  across several studies confirmed the shape is a descriptive time-trend
+  plot of one variable with no covariates, already served by those two
+  `hvtiPlotR` exports, so no new template is needed.
 
 - The scheduled catalog refresh no longer reports success when its
   script crashed. The workflow tested the exit code against `-gt 2`, but

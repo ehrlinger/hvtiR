@@ -2,13 +2,12 @@
 
 The one command a study needs before analysis. In order: checks R,
 installs renv if it is missing, and turns off RStudio's `.RData` restore
-and save; runs
-[`hvtiRutilities::study_setup()`](https://ehrlinger.github.io/hvtiRutilities/reference/study_setup.html)
-with renv on, which cleans up template copies before renv when adopting;
-declares `hvtiR`, every member, the packages they need and the team's
-standard analysis packages in the study's `DESCRIPTION`; installs them
-into the study's library with pak and renv; snapshots; checks that every
-package's dependencies resolve there; and restarts into the project.
+and save; runs `hvtiRutilities::study_setup()` with renv on, which
+cleans up template copies before renv when adopting; declares `hvtiR`,
+every member, the packages they need and the team's standard analysis
+packages in the study's `DESCRIPTION`; installs them into the study's
+library with pak and renv; snapshots; checks that every package's
+dependencies resolve there; and restarts into the project.
 
 ## Usage
 
@@ -48,18 +47,14 @@ setup(study, study_tracker_id, root = NULL, adopt = FALSE, upgrade = TRUE, ...)
 
 - ...:
 
-  Passed to
-  [`hvtiRutilities::study_setup()`](https://ehrlinger.github.io/hvtiRutilities/reference/study_setup.html),
-  such as `cleanup`, `template_dir` or `owner`. `renv` is not accepted:
-  `setup()` always uses renv, so use
-  [`hvtiRutilities::study_setup()`](https://ehrlinger.github.io/hvtiRutilities/reference/study_setup.html)
-  directly for a study without it.
+  Passed to `hvtiRutilities::study_setup()`, such as `cleanup`,
+  `template_dir` or `owner`. `renv` is not accepted: `setup()` always
+  uses renv, so use `hvtiRutilities::study_setup()` directly for a study
+  without it.
 
 ## Value
 
-The study status from
-[`hvtiRutilities::study_setup()`](https://ehrlinger.github.io/hvtiRutilities/reference/study_setup.html),
-invisibly.
+The study status from `hvtiRutilities::study_setup()`, invisibly.
 
 ## Details
 

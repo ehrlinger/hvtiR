@@ -48,11 +48,11 @@
 <div class="section level2">
 <h2 id="definition-of-done">Definition of done<a class="anchor" aria-label="anchor" href="#definition-of-done"></a></h2>
 <ul><li>
-<code><a href="https://devtools.r-lib.org/reference/test.html" class="external-link">devtools::test()</a></code> passes.</li>
+<code>devtools::test()</code> passes.</li>
 <li>
-<code><a href="https://devtools.r-lib.org/reference/check.html" class="external-link">devtools::check()</a></code> is <strong>0 errors, 0 warnings, 0 notes</strong>. Verified 2026-08-20 at 1.0.0 (21s with <code>--no-manual</code> and vignettes skipped; the manual has its own gate).</li>
+<code>devtools::check()</code> is <strong>0 errors, 0 warnings, 0 notes</strong>. Verified 2026-08-20 at 1.0.0 (21s with <code>--no-manual</code> and vignettes skipped; the manual has its own gate).</li>
 <li>
-<code><a href="https://devtools.r-lib.org/reference/document.html" class="external-link">devtools::document()</a></code> has been run and <code>man/</code> and <code>NAMESPACE</code> are committed with the source change.</li>
+<code>devtools::document()</code> has been run and <code>man/</code> and <code>NAMESPACE</code> are committed with the source change.</li>
 <li>A change touching installation is tested through the mocked seam, not by installing.</li>
 </ul></div>
 <div class="section level2">
@@ -79,7 +79,7 @@
 <td>a PR whose <code>Version:</code> went backwards, or stood still with no <code>news/</code> fragment added while shipping something (it ships nothing only when R’s built-in build exclusions or the base’s <code>.Rbuildignore</code> cover every file it touches, <code>.Rbuildignore</code> itself among them); or a <code>DESCRIPTION</code>/<code>NEWS.md</code> version disagreement</td>
 </tr><tr><td><code>lint.yaml</code></td>
 <td>
-<code><a href="https://lintr.r-lib.org/reference/lint.html" class="external-link">lintr::lint_package()</a></code>, <strong>and</strong> a <code>docs-current</code> job that reruns <code>roxygenise()</code> and fails on any diff in <code>man/</code>, <code>NAMESPACE</code> or <code>DESCRIPTION</code>
+<code>lintr::lint_package()</code>, <strong>and</strong> a <code>docs-current</code> job that reruns <code>roxygenise()</code> and fails on any diff in <code>man/</code>, <code>NAMESPACE</code> or <code>DESCRIPTION</code>
 </td>
 </tr><tr><td><code>test-coverage.yaml</code></td>
 <td>test failures under coverage; the codecov upload does not fail CI when no token is configured</td>

@@ -58,7 +58,7 @@ package's dependencies resolve there; and restarts into the project."></head><bo
     <div class="ref-description section level2">
     <p>The one command a study needs before analysis. In order: checks R, installs
 renv if it is missing, and turns off RStudio's <code>.RData</code> restore and save;
-runs <code><a href="https://ehrlinger.github.io/hvtiRutilities/reference/study_setup.html">hvtiRutilities::study_setup()</a></code> with renv on, which cleans up template
+runs <code>hvtiRutilities::study_setup()</code> with renv on, which cleans up template
 copies before renv when adopting; declares <code>hvtiR</code>, every member, the
 packages they need and the team's standard analysis packages in the
 study's <code>DESCRIPTION</code>; installs them into the
@@ -104,15 +104,15 @@ left unchanged.</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
-<dd><p>Passed to <code><a href="https://ehrlinger.github.io/hvtiRutilities/reference/study_setup.html">hvtiRutilities::study_setup()</a></code>, such as <code>cleanup</code>,
+<dd><p>Passed to <code>hvtiRutilities::study_setup()</code>, such as <code>cleanup</code>,
 <code>template_dir</code> or <code>owner</code>. <code>renv</code> is not accepted: <code>setup()</code> always uses
-renv, so use <code><a href="https://ehrlinger.github.io/hvtiRutilities/reference/study_setup.html">hvtiRutilities::study_setup()</a></code> directly for a study without
+renv, so use <code>hvtiRutilities::study_setup()</code> directly for a study without
 it.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>The study status from <code><a href="https://ehrlinger.github.io/hvtiRutilities/reference/study_setup.html">hvtiRutilities::study_setup()</a></code>, invisibly.</p>
+    <p>The study status from <code>hvtiRutilities::study_setup()</code>, invisibly.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>

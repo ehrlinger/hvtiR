@@ -63,18 +63,18 @@ scripting.
 status(remote = FALSE)
 #> hvtiR 1.3.4 - 12 members
 #> 
-#>   - hvtiRutilities   1.2.1      -          ok-local
+#>   x hvtiRutilities   -          -          missing
 #>   x hvtiRdatabuild   -          -          missing
-#>   - hvtiRtables      1.0.2      -          ok-local
+#>   x hvtiRtables      -          -          missing
 #>   x hvtiRtemplates   -          -          missing
-#>   - hvtiPlotR        2.7.15     -          ok-local
+#>   x hvtiPlotR        -          -          missing
 #>   x hvtiRlifetables  -          -          missing
 #>   x hvtiRbootstrap   -          -          missing
-#>   - hvtiRpropensity  0.1.5      -          ok-local
+#>   x hvtiRpropensity  -          -          missing
 #>   x hvtiRimputation  -          -          missing
 #>   x ggBoostedTrees   -          -          missing
-#>   - TemporalHazard   1.2.11     -          ok-local
-#>   - ggRandomForests  4.0.0      -          ok-local
+#>   x TemporalHazard   -          -          missing
+#>   x ggRandomForests  -          -          missing
 #> 
-#> ℹ 6 members need updating. Run `hvtiR::update()`.
+#> ℹ 12 members need updating. Run `hvtiR::update()`.
 ```

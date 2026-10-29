@@ -23,15 +23,12 @@ affordances live in `CLAUDE.md`, which imports this file.
 
 ## Definition of done
 
-- [`devtools::test()`](https://devtools.r-lib.org/reference/test.html)
-  passes.
-- [`devtools::check()`](https://devtools.r-lib.org/reference/check.html)
-  is **0 errors, 0 warnings, 0 notes**. Verified 2026-08-20 at 1.0.0
-  (21s with `--no-manual` and vignettes skipped; the manual has its own
-  gate).
-- [`devtools::document()`](https://devtools.r-lib.org/reference/document.html)
-  has been run and `man/` and `NAMESPACE` are committed with the source
-  change.
+- `devtools::test()` passes.
+- `devtools::check()` is **0 errors, 0 warnings, 0 notes**. Verified
+  2026-08-20 at 1.0.0 (21s with `--no-manual` and vignettes skipped; the
+  manual has its own gate).
+- `devtools::document()` has been run and `man/` and `NAMESPACE` are
+  committed with the source change.
 - A change touching installation is tested through the mocked seam, not
   by installing.
 
@@ -64,7 +61,7 @@ green PR as broader assurance than it gives.
 | `pkgdown.yaml` | the site build |
 | `house-style.yaml` | drift between the composed `.claude/house-style.md` and the upstream standard |
 | `version-check.yml` | a PR whose `Version:` went backwards, or stood still with no `news/` fragment added while shipping something (it ships nothing only when R’s built-in build exclusions or the base’s `.Rbuildignore` cover every file it touches, `.Rbuildignore` itself among them); or a `DESCRIPTION`/`NEWS.md` version disagreement |
-| `lint.yaml` | [`lintr::lint_package()`](https://lintr.r-lib.org/reference/lint.html), **and** a `docs-current` job that reruns `roxygenise()` and fails on any diff in `man/`, `NAMESPACE` or `DESCRIPTION` |
+| `lint.yaml` | `lintr::lint_package()`, **and** a `docs-current` job that reruns `roxygenise()` and fails on any diff in `man/`, `NAMESPACE` or `DESCRIPTION` |
 | `test-coverage.yaml` | test failures under coverage; the codecov upload does not fail CI when no token is configured |
 
 ## Rules for this repo
