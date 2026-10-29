@@ -778,9 +778,10 @@ report_moves <- function(output) {
 #' Abort for a child run that did not finish
 #' @param result A [run_in_study()] result.
 #' @param raw The child's raw output.
+#' @param root The study's root, named in the recovery hint.
 #' @param upgrade Whether the run was allowed to install what was unmet.
 #' @noRd
-abort_stage <- function(result, raw, upgrade = TRUE) {
+abort_stage <- function(result, raw, root, upgrade = TRUE) {
   lines <- strsplit(result$output, "\n")[[1L]]
   moved <- grep("^HVTIR_CHANGED=", lines, value = TRUE)
   if (length(moved)) {
@@ -862,15 +863,96 @@ abort_stage <- function(result, raw, upgrade = TRUE) {
     ))
   }
   if (result$status != 0L) {
-    auth <- grepl("authentication credentials", result$output, fixed = TRUE)
+    # A failed compile explains the failure on its own; an authentication
+    # message elsewhere in the output is then noise, not the cause.
+    compiled <- compile_failures(result$output)
+    cmd <- if (length(compiled)) record_command(compiled[1L], root) else NA
+    auth <- !length(compiled) &&
+      grepl("authentication credentials", result$output, fixed = TRUE)
     cli::cli_abort(c(
       "Installing the study's packages failed.",
+      if (length(compiled)) {
+        c(
+          x = "These packages failed to compile: {.pkg {compiled}}.",
+          i = "A locked version may not build under this R.",
+          if (!upgrade) {
+            c(i = paste(
+              "{.code upgrade = FALSE} keeps this revision's locked versions:",
+              "restore it under the R its {.file renv.lock} was made with, or",
+              "decide deliberately to move the pin."
+            ))
+          } else if (!is.na(cmd)) {
+            c(i = paste(
+              "Record a newer one with {.code {cmd}}, then run {.fn setup}",
+              "again."
+            ))
+          } else {
+            c(i = paste(
+              "Record a newer one from the source {.file renv.lock} names for",
+              "{.pkg {compiled[1L]}}, then run {.fn setup} again."
+            ))
+          }
+        )
+      },
       if (auth) c("A GitHub token is needed.", github_credentials_hint()),
       output_bullets(result$output),
       i = "Full output: {.file {save_setup_log(raw)}}"
     ))
   }
   invisible(NULL)
+}
+
+#' Packages whose build stopped at the compiler in a child's output
+#'
+#' Only valid package names are taken: the output is untrusted text.
+#' @noRd
+compile_failures <- function(output) {
+  pattern <- paste0(
+    "compilation failed for package [\u2018']",
+    "([A-Za-z][A-Za-z0-9.]*[A-Za-z0-9])[\u2019']"
+  )
+  hits <- regmatches(output, gregexpr(pattern, output))[[1L]]
+  unique(sub(pattern, "\\1", hits))
+}
+
+#' The `renv::record()` call that keeps a locked package's source
+#'
+#' Read with patterns, as [lockfile_r_version()] is. A repository record keeps
+#' the bare name; a GitHub record keeps `user/repo`, so a family member is never
+#' moved to CRAN. Any other source has no safe one-line call.
+#' @param pkg A valid package name.
+#' @param root The study root.
+#' @return One string of R code, or `NA_character_`.
+#' @noRd
+record_command <- function(pkg, root) {
+  path <- file.path(root, "renv.lock")
+  if (!file.exists(path)) {
+    return(NA_character_)
+  }
+  text <- paste(readLines(path, warn = FALSE), collapse = "\n")
+  key <- gsub(".", "\\.", pkg, fixed = TRUE)
+  block <- regmatches(
+    text, regexpr(paste0('"', key, '"\\s*:\\s*\\{[^}]*\\}'), text)
+  )
+  field <- function(name) {
+    hit <- regmatches(
+      block, regexec(paste0('"', name, '"\\s*:\\s*"([^"]*)"'), block)
+    )
+    if (length(hit) && length(hit[[1L]]) == 2L) hit[[1L]][2L] else NA
+  }
+  source <- field("Source")
+  spec <- if (identical(source, "Repository")) {
+    pkg
+  } else if (identical(source, "GitHub") &&
+               !is.na(field("RemoteUsername")) && !is.na(field("RemoteRepo"))) {
+    paste0(field("RemoteUsername"), "/", field("RemoteRepo"))
+  } else {
+    NA_character_
+  }
+  if (is.na(spec)) {
+    return(NA_character_)
+  }
+  paste0("renv::record(", deparse1(spec), ", project = ", deparse1(root), ")")
 }
 
 #' The single value of a `KEY=` line in a child's output
@@ -1145,7 +1227,7 @@ setup <- function(study, study_tracker_id, root = NULL, adopt = FALSE,
   first <- run_in_study(restore_expr(root, repos), root)
   first_raw <- first$output
   first$output <- iconv(first_raw, "UTF-8", "UTF-8", sub = "?")
-  abort_stage(first, first_raw)
+  abort_stage(first, first_raw, root, upgrade)
   project_lib <- child_value(first$output, "HVTIR_LIB")
   lockver <- child_value(first$output, "HVTIR_LOCKVER")
   if (length(project_lib) != 1L || !dir.exists(project_lib) ||
@@ -1220,7 +1302,7 @@ setup <- function(study, study_tracker_id, root = NULL, adopt = FALSE,
   )
   raw_output <- result$output
   result$output <- iconv(raw_output, "UTF-8", "UTF-8", sub = "?")
-  abort_stage(result, raw_output, upgrade)
+  abort_stage(result, raw_output, root, upgrade)
   report_moves(result$output)
   if (length(unlinked)) {
     gone <- strsplit(unlinked[1L], ",", fixed = TRUE)[[1L]]

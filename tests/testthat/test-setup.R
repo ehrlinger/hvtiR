@@ -524,6 +524,117 @@ test_that("a pak failure with an authentication error adds the hint", {
   expect_error(setup("A study", 7L, root = root), "create_github_token")
 })
 
+test_that("a compile failure is named ahead of an authentication error", {
+  root <- withr::local_tempdir()
+  local_setup(
+    restore_status = 1L,
+    restore_output = paste(
+      "GitHub authentication credentials are not available",
+      "ERROR: compilation failed for package ‘vctrs’",
+      "ERROR: compilation failed for package 'xts'",
+      sep = "\n"
+    )
+  )
+  err <- tryCatch(setup("A study", 7L, root = root), error = conditionMessage)
+  expect_match(err, "failed to compile: vctrs and xts")
+  expect_no_match(err, "create_github_token")
+})
+
+test_that("a first-stage compile failure under upgrade = FALSE moves no pin", {
+  root <- withr::local_tempdir()
+  local_setup(
+    restore_status = 1L,
+    restore_output = "ERROR: compilation failed for package 'vctrs'\n"
+  )
+  err <- tryCatch(
+    setup("A study", 7L, root = root, upgrade = FALSE),
+    error = conditionMessage
+  )
+  expect_match(err, "keeps this revision's locked versions", fixed = TRUE)
+  expect_no_match(err, "renv::record", fixed = TRUE)
+})
+
+test_that("compile_failures() takes valid names only, once each", {
+  out <- paste(
+    "ERROR: compilation failed for package ‘vctrs’",
+    "ERROR: compilation failed for package 'vctrs'",
+    "ERROR: compilation failed for package ‘data.table’",
+    "ERROR: compilation failed for package 'foo{1+1}bar'",
+    "ERROR: compilation failed for package '1bad'",
+    "ERROR: lazy loading failed for package ‘foo’",
+    sep = "\n"
+  )
+  expect_identical(compile_failures(out), c("vctrs", "data.table"))
+  expect_identical(compile_failures("boom\n"), character())
+})
+
+test_that("compiler output is never evaluated as cli markup", {
+  withr::defer(rm(list = "hvtir_pwned", envir = globalenv()))
+  out <- paste0(
+    "ERROR: compilation failed for package ",
+    "'x{assign(\"hvtir_pwned\", TRUE, envir = globalenv())}y'\n",
+    "ERROR: compilation failed for package 'vctrs'\n"
+  )
+  root <- withr::local_tempdir()
+  err <- tryCatch(
+    abort_stage(list(status = 1L, output = out), out, root),
+    error = conditionMessage
+  )
+  expect_match(err, "failed to compile: vctrs")
+  expect_false(exists("hvtir_pwned", envir = globalenv()))
+})
+
+write_lock <- function(root, record) {
+  writeLines(
+    c("{", '  "R": {"Version": "4.5.1"},', '  "Packages": {', record, "  }",
+      "}"),
+    file.path(root, "renv.lock")
+  )
+}
+
+test_that("record_command() keeps a repository record's bare name", {
+  root <- withr::local_tempdir()
+  write_lock(root, paste0(
+    '    "vctrs": {"Package": "vctrs", "Version": "0.7.2", ',
+    '"Source": "Repository", "Requirements": ["cli", "rlang"]}'
+  ))
+  cmd <- record_command("vctrs", root)
+  expect_identical(cmd, paste0(
+    "renv::record(\"vctrs\", project = ", deparse1(root), ")"
+  ))
+})
+
+test_that("record_command() keeps a GitHub record on GitHub", {
+  root <- withr::local_tempdir()
+  write_lock(root, paste0(
+    '    "ggRandomForests": {"Package": "ggRandomForests", ',
+    '"Source": "GitHub", "RemoteType": "github", ',
+    '"RemoteUsername": "ehrlinger", "RemoteRepo": "ggRandomForests"}'
+  ))
+  expect_match(
+    record_command("ggRandomForests", root),
+    "renv::record(\"ehrlinger/ggRandomForests\"", fixed = TRUE
+  )
+})
+
+test_that("record_command() offers nothing for another source or no record", {
+  root <- withr::local_tempdir()
+  expect_identical(record_command("vctrs", root), NA_character_)
+  write_lock(root, '    "mine": {"Package": "mine", "Source": "Local"}')
+  expect_identical(record_command("mine", root), NA_character_)
+  expect_identical(record_command("vctrs", root), NA_character_)
+})
+
+test_that("record_command() quotes a path with quotes and backslashes", {
+  base <- withr::local_tempdir()
+  root <- file.path(base, "study\"quoted\\dir")
+  dir.create(root)
+  write_lock(root, '    "vctrs": {"Package": "vctrs", "Source": "Repository"}')
+  call <- str2lang(record_command("vctrs", root))
+  expect_identical(call$project, root)
+  expect_identical(call[[2L]], "vctrs")
+})
+
 test_that("a failed install without that error carries no hint", {
   root <- withr::local_tempdir()
   local_setup(run_status = 1L, run_output = "boom\n")
