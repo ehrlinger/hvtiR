@@ -106,7 +106,7 @@ which loses provenance silently.
 including `draft_file`. The line reads:
 
 ```
-<job path> · <commit, 7 chars> · R 4.5.1 · hvtiPlotR 2.8.19 · hvtiRtemplates 1.5.3 · 2026-10-29 14:40
+<commit, 7 chars> · <job path> · R 4.5.1 · hvtiPlotR 2.8.19 · hvtiRtemplates 1.5.3 · 2026-10-29 14:40
 ```
 
 - Only R, hvtiPlotR and hvtiRtemplates versions, so it stays one line at 6 in
@@ -135,6 +135,104 @@ Given a figure in the study folder: read the commit from its footnote, then
 Given only the file: its sha256 finds the render in the report provenance,
 which names the commit. A later checkpoint verification (separate work) can
 flag figures whose commit is not the job's latest.
+
+## Review of 2026-10-29: four gaps and proposed resolutions
+
+John's review of `7585258` confirmed both Copilot findings (now in section 1)
+and found four gaps, each reproduced in a disposable example. Each resolution
+below is **(proposed)** until John accepts it; none is implemented.
+
+### R1. The committed bytes must be the bytes executed (P1)
+
+A pre-render commit precedes Quarto's read of the job, and the checkpoint
+lock does not stop an editor or another process changing the source: a hook
+that committed `VERSION_BEFORE` rendered `VERSION_AFTER`. Checking the commit
+against the pre-render hash does not close that window.
+
+Proposal: **a fail-closed render transaction.**
+
+- **Executed code is compared, not assumed.** A knitr hook records the code
+  of every chunk as executed. Post-render, the chunks are parsed from the
+  committed job blob and must match exactly; files the job sources are
+  hashed when sourced, through a template helper, and must match their blobs
+  in the commit.
+- **The tree is compared at both ends.** Post-render re-selects the study and
+  its tree must equal the render commit's tree. An edit made and undone
+  during the render is caught by the chunk comparison, which sees what ran.
+- **Figures are staged, then published.** `.save_figure()` writes into
+  `_render-staging/<render_id>/`; post-render moves the files into place only
+  when both comparisons pass. On a mismatch nothing is published, the staging
+  directory is removed, and the render fails naming the changed files.
+
+Tests: an edit between the commit and the knit; an edit during the render;
+an edit undone during the render; a sourced helper changed mid-render.
+
+### R2. A durable figure-hash history (P2)
+
+One provenance sidecar per report, replaced on each render, loses the hash
+of a figure copied into a manuscript the moment the job renders again, and
+the checkpoint allow-list keeps neither reports nor sidecars.
+
+Proposal: **render records are commits on the render ref.**
+
+- After a render passes R1, a second commit, a child of the render commit,
+  adds `renders/<render_id>.json`: the commit the figures print, the job, the
+  provenance payload and the path and sha256 of every published output. It
+  is append-only by construction and travels wherever the render ref does.
+- `study_trace(file)` hashes the file and searches these records across the
+  ref's history; a footnote commit leads to the same record through its
+  child.
+- A failed render writes no record and publishes nothing (R1), so no figure
+  exists without one. Retention is the ref's: nothing is pruned.
+
+Tests: two renders with different figure bytes, then a lookup of the first,
+copied figure; a render that fails after figures were drawn leaves neither
+files nor a record.
+
+### R3. Checkpoints stay on main (P2)
+
+`.cp_repo_init()` does not check the branch and `.cp_snapshot()` commits and
+tags `HEAD`, so a repository left on another branch puts a milestone tag
+there while `main` stays behind.
+
+Proposal: **render commits never touch HEAD, the index or the working
+tree,** and the checkpoint enforces its own invariant.
+
+- Render commits are built with plumbing only (a private `GIT_INDEX_FILE`,
+  `commit-tree`, `update-ref` with the expected old value), and live under
+  `refs/renders/<workspace_id>`, outside `refs/heads/`, so no command can
+  check them out. The local branch `feat/render-commit` already builds them
+  this way, but on `refs/heads/renders`; it moves to the new ref.
+- `.cp_snapshot()` asserts that `HEAD` is the symbolic ref `refs/heads/main`
+  (allowing an unborn main) and stops otherwise, naming the repair, before it
+  writes anything.
+- Interruption leaves at most unreferenced objects: the ref moves last, in
+  one compare-and-swap. Concurrency is the existing lock plus that swap.
+
+Tests: a milestone after a render commit; a milestone after a render commit
+interrupted before its `update-ref`; a milestone on an unborn main with
+render commits present; a repository whose HEAD was moved by hand.
+
+### R4. The footnote fits, or keeps its identity (P2)
+
+The proposed line measured 6.75 in against 5.84 in between the margins of a
+6 in PDF, and the clipped text lost the start of the job path.
+
+Proposal: **measure, shrink to a floor, then wrap; never clip.**
+
+- `save_manuscript()` reserves a strip below the plot for the note, so it
+  never overlaps the figure, and the saved height is the figure plus the
+  strip, reported in the return value.
+- The text is measured with the output device's metrics. It shrinks to a
+  floor of 6 pt; past the floor it wraps, first between fields, then inside
+  the path at `/` and `.`, never inside the commit ID. The strip grows to
+  the lines it needs.
+- The commit ID is printed whole and first, so the shortest surviving line
+  still finds the render record (R2), which names the job.
+
+Tests: long valid paths in PDF, PNG and TIFF; the note's bounding box below
+the plot panel's; a path too long for one line at 6 pt wraps and is read
+back whole from the PDF text.
 
 ## Release order
 
