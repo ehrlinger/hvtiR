@@ -60,6 +60,13 @@ pre-render hook before the job executes:
 
 - Takes the checkpoint lock, commits the same allow-listed snapshot a
   checkpoint commits, and returns the commit ID.
+- **The job must be in the commit it returns.** The allow-list drops
+  symlinks, anything under the data and estimate folders and files over
+  50 MB, so a commit can succeed without the job in it. The job's path must
+  be in the committed tree with a blob hash matching the file on disk;
+  otherwise no ID is returned and the failure policy (section 2) applies, so
+  no figure prints an ID from which `git show <commit>:<job>` cannot recover
+  the job.
 - **Commits go to a branch of their own, `renders`, not `main`.** Closure state
   reads `main`'s first-parent history and delivery replays `main`; render
   commits there would interleave with milestones and renumber nothing useful.
@@ -68,6 +75,14 @@ pre-render hook before the job executes:
   so re-rendering an unchanged job adds no history.
 - **No tag, no push.** A render is not a milestone. `study_checkpoint_push()`
   pushes `renders` along with `main`. **(open)**
+- **A render commit is never rewritten.** Its ID is printed in figures, so
+  synchronisation must keep it reachable under the same ID. Checkpoint
+  delivery's replay (`.cp_replay()`) rewrites commits and must never touch
+  render commits. Two copies of a study that render independently diverge, so
+  each copy pushes its renders to a ref of its own,
+  `refs/renders/<workspace_id>`, which never needs a force push or a rewrite.
+  The same constraint argues against putting render commits on `main`, which
+  delivery replays. **(open: per-workspace refs versus merging histories)**
 - Runs on the server's local filesystem, as checkpoints do, never over SMB.
 
 ### 2. Failure policy **(open)**
