@@ -895,10 +895,10 @@ abort_stage <- function(result, raw, upgrade = TRUE) {
 compile_failures <- function(output) {
   hits <- regmatches(
     output,
-    gregexpr("compilation failed for package [‘'][^’']+[’']",
+    gregexpr("compilation failed for package [\u2018'][^\u2019']+[\u2019']",
              output)
   )[[1L]]
-  unique(sub("^[^‘']*[‘'](.*)[’']$", "\\1", hits))
+  unique(sub("^[^\u2018']*[\u2018'](.*)[\u2019']$", "\\1", hits))
 }
 
 #' The single value of a `KEY=` line in a child's output
