@@ -778,9 +778,10 @@ report_moves <- function(output) {
 #' Abort for a child run that did not finish
 #' @param result A [run_in_study()] result.
 #' @param raw The child's raw output.
+#' @param root The study's root, named in the recovery hint.
 #' @param upgrade Whether the run was allowed to install what was unmet.
 #' @noRd
-abort_stage <- function(result, raw, upgrade = TRUE) {
+abort_stage <- function(result, raw, root, upgrade = TRUE) {
   lines <- strsplit(result$output, "\n")[[1L]]
   moved <- grep("^HVTIR_CHANGED=", lines, value = TRUE)
   if (length(moved)) {
@@ -877,8 +878,9 @@ abort_stage <- function(result, raw, upgrade = TRUE) {
           ),
           i = paste(
             "A locked version may not build under this R. Record a newer one,",
-            "for example {.code renv::record(\"{compiled[1L]}\")}, then run",
-            "{.fn setup} again."
+            "for example",
+            "{.code renv::record(\"{compiled[1L]}\", project = \"{root}\")},",
+            "then run {.fn setup} again."
           )
         )
       },
@@ -1173,7 +1175,7 @@ setup <- function(study, study_tracker_id, root = NULL, adopt = FALSE,
   first <- run_in_study(restore_expr(root, repos), root)
   first_raw <- first$output
   first$output <- iconv(first_raw, "UTF-8", "UTF-8", sub = "?")
-  abort_stage(first, first_raw)
+  abort_stage(first, first_raw, root)
   project_lib <- child_value(first$output, "HVTIR_LIB")
   lockver <- child_value(first$output, "HVTIR_LOCKVER")
   if (length(project_lib) != 1L || !dir.exists(project_lib) ||
@@ -1248,7 +1250,7 @@ setup <- function(study, study_tracker_id, root = NULL, adopt = FALSE,
   )
   raw_output <- result$output
   result$output <- iconv(raw_output, "UTF-8", "UTF-8", sub = "?")
-  abort_stage(result, raw_output, upgrade)
+  abort_stage(result, raw_output, root, upgrade)
   report_moves(result$output)
   if (length(unlinked)) {
     gone <- strsplit(unlinked[1L], ",", fixed = TRUE)[[1L]]

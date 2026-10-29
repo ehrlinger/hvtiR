@@ -537,7 +537,7 @@ test_that("a compile failure is named ahead of an authentication error", {
   )
   err <- tryCatch(setup("A study", 7L, root = root), error = conditionMessage)
   expect_match(err, "failed to compile: vctrs, xts")
-  expect_match(err, "renv::record", fixed = TRUE)
+  expect_match(err, "renv::record(\"vctrs\", project = ", fixed = TRUE)
   expect_no_match(err, "create_github_token")
 })
 
