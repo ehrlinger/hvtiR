@@ -524,6 +524,35 @@ test_that("a pak failure with an authentication error adds the hint", {
   expect_error(setup("A study", 7L, root = root), "create_github_token")
 })
 
+test_that("a compile failure is named ahead of an authentication error", {
+  root <- withr::local_tempdir()
+  local_setup(
+    restore_status = 1L,
+    restore_output = paste(
+      "GitHub authentication credentials are not available",
+      "ERROR: compilation failed for package ‘vctrs’",
+      "ERROR: compilation failed for package 'xts'",
+      sep = "\n"
+    )
+  )
+  err <- tryCatch(setup("A study", 7L, root = root), error = conditionMessage)
+  expect_match(err, "failed to compile: vctrs, xts")
+  expect_match(err, "renv::record", fixed = TRUE)
+  expect_no_match(err, "create_github_token")
+})
+
+test_that("compile_failures() reads both quote styles once each", {
+  out <- paste(
+    "ERROR: compilation failed for package ‘vctrs’",
+    "ERROR: compilation failed for package 'vctrs'",
+    "ERROR: compilation failed for package ‘xts’",
+    "ERROR: lazy loading failed for package ‘foo’",
+    sep = "\n"
+  )
+  expect_identical(compile_failures(out), c("vctrs", "xts"))
+  expect_identical(compile_failures("boom\n"), character())
+})
+
 test_that("a failed install without that error carries no hint", {
   root <- withr::local_tempdir()
   local_setup(run_status = 1L, run_output = "boom\n")

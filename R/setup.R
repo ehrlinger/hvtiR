@@ -862,15 +862,43 @@ abort_stage <- function(result, raw, upgrade = TRUE) {
     ))
   }
   if (result$status != 0L) {
-    auth <- grepl("authentication credentials", result$output, fixed = TRUE)
+    # A failed compile explains the failure on its own; an authentication
+    # message elsewhere in the output is then noise, not the cause.
+    compiled <- compile_failures(result$output)
+    auth <- !length(compiled) &&
+      grepl("authentication credentials", result$output, fixed = TRUE)
     cli::cli_abort(c(
       "Installing the study's packages failed.",
+      if (length(compiled)) {
+        c(
+          x = paste0(
+            "These packages failed to compile: ",
+            paste(compiled, collapse = ", "), "."
+          ),
+          i = paste(
+            "A locked version may not build under this R. Record a newer one,",
+            "for example {.code renv::record(\"{compiled[1L]}\")}, then run",
+            "{.fn setup} again."
+          )
+        )
+      },
       if (auth) c("A GitHub token is needed.", github_credentials_hint()),
       output_bullets(result$output),
       i = "Full output: {.file {save_setup_log(raw)}}"
     ))
   }
   invisible(NULL)
+}
+
+#' Packages whose build stopped at the compiler in a child's output
+#' @noRd
+compile_failures <- function(output) {
+  hits <- regmatches(
+    output,
+    gregexpr("compilation failed for package [‘'][^’']+[’']",
+             output)
+  )[[1L]]
+  unique(sub("^[^‘']*[‘'](.*)[’']$", "\\1", hits))
 }
 
 #' The single value of a `KEY=` line in a child's output
