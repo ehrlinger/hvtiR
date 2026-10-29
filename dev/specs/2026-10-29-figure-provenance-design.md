@@ -42,10 +42,14 @@ completion. Render commits are one consumer of that pipeline, so:
 - **Build against one seam.** `study_render_commit()` asks hvtiRutilities for
   "the study's repository"; today that is `.checkpoint/repo/`, later the study
   folder. Callers (the hook, the footnote) never name the path.
-- **Decide first whether the pipeline is designed before this ships.** **(open)**
-  Shipping render commits on the checkpoint repository now gives traceable
-  figures immediately; designing the pipeline first avoids a branch layout
-  that the study repository then has to migrate.
+- **Ship on the checkpoint repository now.** **(decided 2026-10-29)** Figures
+  become traceable immediately; when the study folder becomes the repository,
+  the seam moves and the `renders` branch migrates with it.
+
+Decisions 2 to 4 below (the `renders` branch, the failure policy and the
+footnote on publication figures) are taken as recommended, since John chose
+to build without objecting to them. Revisit before the hvtiRtemplates step
+if any is wrong.
 
 ## Design
 
