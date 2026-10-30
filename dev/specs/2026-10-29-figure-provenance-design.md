@@ -101,12 +101,12 @@ which loses provenance silently.
 
 ### 3. The footnote (hvtiPlotR)
 
-`save_manuscript()` gains `footnote = NULL`. Given a string, it draws it with
-`make_footnote()` on the device before closing it, in every format it writes,
-including `draft_file`. The line reads:
+`save_manuscript()` gains `footnote = NULL`. Given fields, it prints them in a
+strip reserved below the plot, in every format it writes, including
+`draft_file`, as R4 settled. The line reads:
 
 ```
-<commit, 7 chars> · <job path> · R 4.5.1 · hvtiPlotR 2.8.19 · hvtiRtemplates 1.5.3 · 2026-10-29 14:40
+<commit, as given> · <job path> · R 4.5.1 · hvtiPlotR 2.8.19 · hvtiRtemplates 1.5.3 · 2026-10-29 14:40
 ```
 
 - Only R, hvtiPlotR and hvtiRtemplates versions, so it stays one line at 6 in
