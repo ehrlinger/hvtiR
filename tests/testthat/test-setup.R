@@ -592,47 +592,75 @@ write_lock <- function(root, record) {
   )
 }
 
-test_that("record_command() keeps a repository record's bare name", {
-  root <- withr::local_tempdir()
-  write_lock(root, paste0(
-    '    "vctrs": {"Package": "vctrs", "Version": "0.7.2", ',
-    '"Source": "Repository", "Requirements": ["cli", "rlang"]}'
-  ))
-  cmd <- record_command("vctrs", root)
-  expect_identical(cmd, paste0(
-    "renv::record(\"vctrs\", project = ", deparse1(root), ")"
-  ))
-})
+repo_record <- function(pkg) {
+  paste0('    "', pkg, '": {"Package": "', pkg, '", "Version": "0.1.0", ',
+         '"Source": "Repository", "Requirements": ["cli", "rlang"]}')
+}
 
-test_that("record_command() keeps a GitHub record on GitHub", {
+github_record <- paste0(
+  '    "ggRandomForests": {"Package": "ggRandomForests", ',
+  '"Source": "GitHub", "RemoteType": "github", ',
+  '"RemoteUsername": "ehrlinger", "RemoteRepo": "ggRandomForests"}'
+)
+
+test_that("record_specs() keeps each locked package's source", {
   root <- withr::local_tempdir()
-  write_lock(root, paste0(
-    '    "ggRandomForests": {"Package": "ggRandomForests", ',
-    '"Source": "GitHub", "RemoteType": "github", ',
-    '"RemoteUsername": "ehrlinger", "RemoteRepo": "ggRandomForests"}'
+  write_lock(root, paste(
+    repo_record("vctrs"), github_record,
+    '    "mine": {"Package": "mine", "Source": "Local"}',
+    sep = ",\n"
   ))
-  expect_match(
-    record_command("ggRandomForests", root),
-    "renv::record(\"ehrlinger/ggRandomForests\"", fixed = TRUE
+  expect_identical(
+    record_specs(c("vctrs", "ggRandomForests", "mine", "absent"), root),
+    c(vctrs = "vctrs", ggRandomForests = "ehrlinger/ggRandomForests",
+      mine = NA, absent = NA)
   )
 })
 
-test_that("record_command() offers nothing for another source or no record", {
+test_that("record_specs() offers nothing without a lockfile", {
   root <- withr::local_tempdir()
-  expect_identical(record_command("vctrs", root), NA_character_)
-  write_lock(root, '    "mine": {"Package": "mine", "Source": "Local"}')
-  expect_identical(record_command("mine", root), NA_character_)
-  expect_identical(record_command("vctrs", root), NA_character_)
+  expect_identical(record_specs("vctrs", root), c(vctrs = NA_character_))
+})
+
+test_that("record_command() records every spec in one call", {
+  root <- withr::local_tempdir()
+  call <- str2lang(record_command(
+    c(vctrs = "vctrs", ggRandomForests = "ehrlinger/ggRandomForests"), root
+  ))
+  expect_identical(eval(call[[2L]]), c("vctrs", "ehrlinger/ggRandomForests"))
+  expect_identical(call$project, root)
+  expect_identical(record_command(character(), root), NA_character_)
 })
 
 test_that("record_command() quotes a path with quotes and backslashes", {
   base <- withr::local_tempdir()
   root <- file.path(base, "study\"quoted\\dir")
   dir.create(root)
-  write_lock(root, '    "vctrs": {"Package": "vctrs", "Source": "Repository"}')
-  call <- str2lang(record_command("vctrs", root))
+  call <- str2lang(record_command(c(vctrs = "vctrs"), root))
   expect_identical(call$project, root)
   expect_identical(call[[2L]], "vctrs")
+})
+
+test_that("the hint records every failed package and names the rest", {
+  root <- withr::local_tempdir()
+  write_lock(root, paste(
+    repo_record("backports"), repo_record("S7"),
+    '    "mine": {"Package": "mine", "Source": "Local"}',
+    sep = ",\n"
+  ))
+  out <- paste(
+    "ERROR: compilation failed for package ‘backports’",
+    "ERROR: compilation failed for package ‘S7’",
+    "ERROR: compilation failed for package ‘mine’",
+    sep = "\n"
+  )
+  err <- tryCatch(
+    abort_stage(list(status = 1L, output = out), out, root),
+    error = function(e) cli::ansi_strip(conditionMessage(e))
+  )
+  flat <- gsub("\\s+", " ", err)
+  expect_match(flat, "renv::record(c(\"backports\", \"S7\")", fixed = TRUE)
+  expect_match(flat, "names for mine.", fixed = TRUE)
 })
 
 test_that("a failed install without that error carries no hint", {

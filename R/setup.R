@@ -866,7 +866,9 @@ abort_stage <- function(result, raw, root, upgrade = TRUE) {
     # A failed compile explains the failure on its own; an authentication
     # message elsewhere in the output is then noise, not the cause.
     compiled <- compile_failures(result$output)
-    cmd <- if (length(compiled)) record_command(compiled[1L], root) else NA
+    specs <- record_specs(compiled, root)
+    cmd <- record_command(specs[!is.na(specs)], root)
+    unsafe <- names(specs)[is.na(specs)]
     auth <- !length(compiled) &&
       grepl("authentication credentials", result$output, fixed = TRUE)
     cli::cli_abort(c(
@@ -881,16 +883,19 @@ abort_stage <- function(result, raw, root, upgrade = TRUE) {
               "restore it under the R its {.file renv.lock} was made with, or",
               "decide deliberately to move the pin."
             ))
-          } else if (!is.na(cmd)) {
-            c(i = paste(
-              "Record a newer one with {.code {cmd}}, then run {.fn setup}",
-              "again."
-            ))
           } else {
-            c(i = paste(
-              "Record a newer one from the source {.file renv.lock} names for",
-              "{.pkg {compiled[1L]}}, then run {.fn setup} again."
-            ))
+            c(
+              if (!is.na(cmd)) {
+                c(i = "Record newer versions with {.code {cmd}}.")
+              },
+              if (length(unsafe)) {
+                c(i = paste(
+                  "Record a newer version from the source {.file renv.lock}",
+                  "names for {.pkg {unsafe}}."
+                ))
+              },
+              i = "Then run {.fn setup} again."
+            )
           }
         )
       },
@@ -915,44 +920,60 @@ compile_failures <- function(output) {
   unique(sub(pattern, "\\1", hits))
 }
 
-#' The `renv::record()` call that keeps a locked package's source
+#' The `renv::record()` spec that keeps each locked package's source
 #'
 #' Read with patterns, as [lockfile_r_version()] is. A repository record keeps
 #' the bare name; a GitHub record keeps `user/repo`, so a family member is never
-#' moved to CRAN. Any other source has no safe one-line call.
-#' @param pkg A valid package name.
+#' moved to CRAN. Any other source, or no record, has no safe spec.
+#' @param pkgs Valid package names.
 #' @param root The study root.
-#' @return One string of R code, or `NA_character_`.
+#' @return A character vector named by `pkgs`, `NA` where there is no spec.
 #' @noRd
-record_command <- function(pkg, root) {
+record_specs <- function(pkgs, root) {
   path <- file.path(root, "renv.lock")
-  if (!file.exists(path)) {
-    return(NA_character_)
-  }
-  text <- paste(readLines(path, warn = FALSE), collapse = "\n")
-  key <- gsub(".", "\\.", pkg, fixed = TRUE)
-  block <- regmatches(
-    text, regexpr(paste0('"', key, '"\\s*:\\s*\\{[^}]*\\}'), text)
-  )
-  field <- function(name) {
-    hit <- regmatches(
-      block, regexec(paste0('"', name, '"\\s*:\\s*"([^"]*)"'), block)
-    )
-    if (length(hit) && length(hit[[1L]]) == 2L) hit[[1L]][2L] else NA
-  }
-  source <- field("Source")
-  spec <- if (identical(source, "Repository")) {
-    pkg
-  } else if (identical(source, "GitHub") &&
-               !is.na(field("RemoteUsername")) && !is.na(field("RemoteRepo"))) {
-    paste0(field("RemoteUsername"), "/", field("RemoteRepo"))
+  text <- if (file.exists(path)) {
+    paste(readLines(path, warn = FALSE), collapse = "\n")
   } else {
-    NA_character_
+    ""
   }
-  if (is.na(spec)) {
+  spec <- function(pkg) {
+    key <- gsub(".", "\\.", pkg, fixed = TRUE)
+    block <- regmatches(
+      text, regexpr(paste0('"', key, '"\\s*:\\s*\\{[^}]*\\}'), text)
+    )
+    field <- function(name) {
+      hit <- regmatches(
+        block, regexec(paste0('"', name, '"\\s*:\\s*"([^"]*)"'), block)
+      )
+      if (length(hit) && length(hit[[1L]]) == 2L) hit[[1L]][2L] else NA
+    }
+    source <- field("Source")
+    user <- field("RemoteUsername")
+    repo <- field("RemoteRepo")
+    if (identical(source, "Repository")) {
+      pkg
+    } else if (identical(source, "GitHub") && !is.na(user) && !is.na(repo)) {
+      paste0(user, "/", repo)
+    } else {
+      NA_character_
+    }
+  }
+  vapply(stats::setNames(pkgs, pkgs), spec, character(1L))
+}
+
+#' One `renv::record()` call for every spec
+#' @param specs Specs from [record_specs()], none `NA`.
+#' @param root The study root.
+#' @return One string of R code, or `NA_character_` when `specs` is empty.
+#' @noRd
+record_command <- function(specs, root) {
+  if (!length(specs)) {
     return(NA_character_)
   }
-  paste0("renv::record(", deparse1(spec), ", project = ", deparse1(root), ")")
+  paste0(
+    "renv::record(", deparse1(unname(specs)), ", project = ", deparse1(root),
+    ")"
+  )
 }
 
 #' The single value of a `KEY=` line in a child's output
