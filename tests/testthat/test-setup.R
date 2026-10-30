@@ -663,6 +663,59 @@ test_that("the hint records every failed package and names the rest", {
   expect_match(flat, "names for mine.", fixed = TRUE)
 })
 
+test_that("restore_failures() reads renv's failed list in both quote styles", {
+  out <- paste(
+    "noise",
+    "Error: failed to install \"Matrix\", \"rpart\"",
+    "Error: failed to install “forecast”, “car”",
+    sep = "\n"
+  )
+  expect_identical(
+    restore_failures(out), list(pkgs = c("forecast", "car"), complete = TRUE)
+  )
+  cut <- "Error: failed to install \"Matrix\", \"rvg\","
+  expect_false(restore_failures(cut)$complete)
+  expect_null(restore_failures("boom\n"))
+})
+
+auth_out <- function(failed) {
+  paste(
+    "- GitHub authentication credentials are not available.",
+    paste0("Error: failed to install ", failed),
+    sep = "\n"
+  )
+}
+
+auth_err <- function(out, root) {
+  tryCatch(
+    abort_stage(list(status = 1L, output = out), out, root),
+    error = function(e) cli::ansi_strip(conditionMessage(e))
+  )
+}
+
+test_that("no token hint when every failed package is from a repository", {
+  root <- withr::local_tempdir()
+  write_lock(root, paste(repo_record("forecast"), repo_record("car"),
+                         sep = ",\n"))
+  err <- auth_err(auth_out("\"forecast\", \"car\""), root)
+  expect_no_match(err, "create_github_token")
+})
+
+test_that("the token hint names a failed GitHub-locked package", {
+  root <- withr::local_tempdir()
+  write_lock(root, paste(repo_record("car"), github_record, sep = ",\n"))
+  err <- auth_err(auth_out("\"car\", \"ggRandomForests\""), root)
+  expect_match(err, "create_github_token")
+  expect_match(gsub("\\s+", " ", err), "to restore ggRandomForests")
+})
+
+test_that("a truncated failed list keeps the token hint", {
+  root <- withr::local_tempdir()
+  write_lock(root, repo_record("car"))
+  err <- auth_err(auth_out("\"car\","), root)
+  expect_match(err, "create_github_token")
+})
+
 test_that("a failed install without that error carries no hint", {
   root <- withr::local_tempdir()
   local_setup(run_status = 1L, run_output = "boom\n")

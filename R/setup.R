@@ -869,8 +869,17 @@ abort_stage <- function(result, raw, root, upgrade = TRUE) {
     specs <- record_specs(compiled, root)
     cmd <- record_command(specs[!is.na(specs)], root)
     unsafe <- names(specs)[is.na(specs)]
+    # renv prints its authentication note even when a retry then succeeds, so
+    # a complete failed list with no GitHub-locked package rules it out.
+    failed <- restore_failures(result$output)
+    github <- if (is.null(failed)) {
+      character()
+    } else {
+      failed$pkgs[grepl("/", record_specs(failed$pkgs, root), fixed = TRUE)]
+    }
     auth <- !length(compiled) &&
-      grepl("authentication credentials", result$output, fixed = TRUE)
+      grepl("authentication credentials", result$output, fixed = TRUE) &&
+      (is.null(failed) || !failed$complete || length(github) > 0L)
     cli::cli_abort(c(
       "Installing the study's packages failed.",
       if (length(compiled)) {
@@ -899,7 +908,16 @@ abort_stage <- function(result, raw, root, upgrade = TRUE) {
           }
         )
       },
-      if (auth) c("A GitHub token is needed.", github_credentials_hint()),
+      if (auth) {
+        c(
+          if (length(github)) {
+            "A GitHub token is needed to restore {.pkg {github}}."
+          } else {
+            "A GitHub token is needed."
+          },
+          github_credentials_hint()
+        )
+      },
       output_bullets(result$output),
       i = "Full output: {.file {save_setup_log(raw)}}"
     ))
@@ -918,6 +936,25 @@ compile_failures <- function(output) {
   )
   hits <- regmatches(output, gregexpr(pattern, output))[[1L]]
   unique(sub(pattern, "\\1", hits))
+}
+
+#' The packages renv's restore reports it failed to install
+#'
+#' R cuts a long error message short, so a list that ends on a comma is
+#' marked incomplete.
+#' @param output A child's output.
+#' @return `list(pkgs, complete)` from the last such line, or `NULL`.
+#' @noRd
+restore_failures <- function(output) {
+  lines <- grep("failed to install ", strsplit(output, "\n")[[1L]],
+                fixed = TRUE, value = TRUE)
+  if (!length(lines)) {
+    return(NULL)
+  }
+  line <- trimws(lines[length(lines)])
+  pattern <- "[\"\u201c]([A-Za-z][A-Za-z0-9.]*[A-Za-z0-9])[\"\u201d]"
+  hits <- regmatches(line, gregexpr(pattern, line))[[1L]]
+  list(pkgs = sub(pattern, "\\1", hits), complete = !endsWith(line, ","))
 }
 
 #' The `renv::record()` spec that keeps each locked package's source
