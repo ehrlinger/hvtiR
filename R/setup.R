@@ -1033,13 +1033,30 @@ child_value <- function(output, key) {
 cheap_study_root <- function() {
   project <- Sys.getenv("RENV_PROJECT", "")
   if (nzchar(project)) return(project)
+  study <- enclosing_study()
+  if (is.null(study)) getwd() else study
+}
+
+#' The nearest directory at or above the working directory with a `_study.yml`
+#' @return A path, or `NULL` when there is none.
+#' @noRd
+enclosing_study <- function() {
   dir <- normalizePath(getwd(), winslash = "/")
   repeat {
     if (file.exists(file.path(dir, "_study.yml"))) return(dir)
     parent <- dirname(dir)
-    if (identical(parent, dir)) return(getwd())
+    if (identical(parent, dir)) return(NULL)
     dir <- parent
   }
+}
+
+#' Stop because `setup()` has no study to write to
+#' @noRd
+abort_no_study <- function() {
+  cli::cli_abort(c(
+    "No study encloses {.path {getwd()}}, so {.fn setup} has no target.",
+    i = "Pass {.arg root}, the directory to set the study up in."
+  ), call = NULL)
 }
 
 #' Call `study_root`, stopping outside a study rather than guessing a target
@@ -1051,10 +1068,7 @@ study_root_or_abort <- function(study_root) {
     if (!grepl("no _study.yml found", conditionMessage(e), fixed = TRUE)) {
       stop(e)
     }
-    cli::cli_abort(c(
-      "No study encloses {.path {getwd()}}, so {.fn setup} has no target.",
-      i = "Pass {.arg root}, the directory to set the study up in."
-    ), call = NULL)
+    abort_no_study()
   })
 }
 
@@ -1215,6 +1229,8 @@ setup <- function(study, study_tracker_id, root = NULL, adopt = FALSE,
   }
   guard_session(root, study, study_tracker_id, adopt, workspace_prefs)
   if (is.null(root)) {
+    # Before utilities_fn(), which can install into this session's library.
+    if (is.null(enclosing_study())) abort_no_study()
     root <- study_root_or_abort(utilities_fn("study_root"))
   }
   if (!github_credentials_available()) {

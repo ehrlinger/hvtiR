@@ -449,6 +449,8 @@ test_that("a failure installing hvtiRutilities propagates", {
   local_mocked_bindings(
     utilities_fn = function(name) stop("install blew up")
   )
+  withr::local_dir(withr::local_tempdir())
+  writeLines("study: demo", "_study.yml")
   expect_error(setup("A study", 7L), "install blew up")
 })
 
@@ -1082,6 +1084,8 @@ test_that("a guard trip names the outcome: restored, or not restorable", {
 
 test_that("a malformed _study.yml is not mistaken for no study", {
   local_setup(root_error = "malformed YAML in _study.yml")
+  withr::local_dir(withr::local_tempdir())
+  writeLines("study: [", "_study.yml")
   expect_error(setup("A study", 7L), "malformed YAML")
 })
 
@@ -1091,6 +1095,17 @@ test_that("no _study.yml stops and asks for root, writing nothing", {
   expect_error(setup("A study", 7L), "root")
   expect_identical(log$steps, character(0))
   expect_length(list.files(getwd(), all.files = TRUE, no.. = TRUE), 0L)
+})
+
+test_that("no _study.yml stops before hvtiRutilities can be installed", {
+  local_mocked_bindings(
+    installed_version = function(...) NA_character_,
+    install_members = function(...) stop("must not be reached"),
+    session_library = function() "/nonexistent/session/lib",
+    renv_state = function(...) "installed"
+  )
+  withr::local_dir(withr::local_tempdir())
+  expect_error(setup("A study", 7L), "Pass .*root")
 })
 
 test_that("workspace_prefs = FALSE leaves RStudio's preferences alone", {
