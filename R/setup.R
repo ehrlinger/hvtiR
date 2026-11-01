@@ -1042,16 +1042,19 @@ cheap_study_root <- function() {
   }
 }
 
-#' Call `study_root`, falling back to the working directory outside a study
+#' Call `study_root`, stopping outside a study rather than guessing a target
 #' @param study_root The function.
 #' @noRd
-study_root_or_wd <- function(study_root) {
+study_root_or_abort <- function(study_root) {
   tryCatch(study_root(), error = function(e) {
     # hvtiRutilities' exact wording; any other error is real.
     if (!grepl("no _study.yml found", conditionMessage(e), fixed = TRUE)) {
       stop(e)
     }
-    getwd()
+    cli::cli_abort(c(
+      "No study encloses {.path {getwd()}}, so {.fn setup} has no target.",
+      i = "Pass {.arg root}, the directory to set the study up in."
+    ), call = NULL)
   })
 }
 
@@ -1060,11 +1063,11 @@ study_root_or_wd <- function(study_root) {
 #' `setup()` replaces packages this session has loaded and would install into
 #' the study library through this session.
 #' @param root The study root, or `NULL`.
-#' @param study,study_tracker_id,adopt As passed to [setup()], quoted back in
-#'   the command the message offers.
+#' @param study,study_tracker_id,adopt,workspace_prefs As passed to [setup()],
+#'   quoted back in the command the message offers.
 #' @noRd
 guard_session <- function(root, study, study_tracker_id,
-                          adopt = FALSE) {
+                          adopt = FALSE, workspace_prefs = TRUE) {
   active <- renv_state() == "active"
   guess <- if (is.null(root)) cheap_study_root() else root
   if (!active && !path_within(session_library(), guess)) return(invisible())
@@ -1080,7 +1083,8 @@ guard_session <- function(root, study, study_tracker_id,
   cmd <- paste0(
     "hvtiR::setup(root = ", deparse1(target), ", study = ", deparse1(study),
     ", study_tracker_id = ", deparse1(study_tracker_id),
-    if (isTRUE(adopt)) ", adopt = TRUE", ")"
+    if (isTRUE(adopt)) ", adopt = TRUE",
+    if (isFALSE(workspace_prefs)) ", workspace_prefs = FALSE", ")"
   )
   project <- Sys.getenv("RENV_PROJECT", "")
   # A restart in RStudio reopens the last project, so the session can sit in
@@ -1110,7 +1114,8 @@ guard_session <- function(root, study, study_tracker_id,
 #' Set up a study's environment
 #'
 #' The one command a study needs before analysis. In order: checks R, installs
-#' renv if it is missing, and turns off RStudio's `.RData` restore and save;
+#' renv if it is missing, and turns off RStudio's `.RData` restore and save
+#' (a preference for the user, not the study; see `workspace_prefs`);
 #' runs `hvtiRutilities::study_setup()` with renv on, which cleans up template
 #' copies before renv when adopting; declares `hvtiR`, every member, the
 #' packages they need and the team's standard analysis packages in the
@@ -1154,12 +1159,19 @@ guard_session <- function(root, study, study_tracker_id,
 #' renv, which has no shared token; a `GITHUB_PAT` (or a token in the git
 #' credential store) covers that, and `setup()` warns when there is none.
 #'
+#' Two packages can land in this session's library rather than the study's:
+#' `renv`, and `hvtiRutilities` with the packages it needs, are installed with
+#' pak into the first library in [base::.libPaths()] when they are missing, and
+#' `hvtiRutilities` also when it is older than 1.5.6. `setup()` runs them from
+#' this session, so they must be there before the study's library exists.
+#'
 #' Safe to rerun: each step checks before it acts.
 #'
 #' @param study The Study Tracker title.
 #' @param study_tracker_id The Study Tracker ID, an integer.
-#' @param root The study root. By default the study enclosing the working
-#'   directory, or the working directory.
+#' @param root The study root, where `setup()` writes. By default the study
+#'   enclosing the working directory; outside a study `setup()` stops and asks
+#'   for it, so a new study always names its directory.
 #' @param adopt Set up an existing study, adding only what is missing.
 #'   Adopting cleans up template copies unless `cleanup = FALSE` is passed.
 #' @param upgrade Whether the install may move versions the lockfile pins.
@@ -1169,6 +1181,9 @@ guard_session <- function(root, study, study_tracker_id,
 #'   `FALSE` for a study in revision, whose versions must not move: a locked
 #'   package the install would move then stops the run and `renv.lock` is
 #'   left unchanged.
+#' @param workspace_prefs Whether to rewrite the user's RStudio preferences so
+#'   that `.RData` is neither restored nor saved. The default, `TRUE`, applies
+#'   to every project that user opens. `FALSE` leaves them as they are.
 #' @param ... Passed to `hvtiRutilities::study_setup()`, such as `cleanup`,
 #'   `template_dir` or `owner`. `renv` is not accepted: `setup()` always uses
 #'   renv, so use `hvtiRutilities::study_setup()` directly for a study without
@@ -1183,7 +1198,7 @@ guard_session <- function(root, study, study_tracker_id,
 #' )
 #' }
 setup <- function(study, study_tracker_id, root = NULL, adopt = FALSE,
-                  upgrade = TRUE, ...) {
+                  upgrade = TRUE, workspace_prefs = TRUE, ...) {
   if (getRversion() < MIN_R_VERSION) {
     cli::cli_abort(
       "R {getRversion()} is below the {MIN_R_VERSION} the family requires."
@@ -1195,9 +1210,12 @@ setup <- function(study, study_tracker_id, root = NULL, adopt = FALSE,
       i = "Use {.fn hvtiRutilities::study_setup} for a study without renv."
     ))
   }
-  guard_session(root, study, study_tracker_id, adopt)
+  if (!isTRUE(workspace_prefs) && !isFALSE(workspace_prefs)) {
+    cli::cli_abort("{.arg workspace_prefs} must be `TRUE` or `FALSE`.")
+  }
+  guard_session(root, study, study_tracker_id, adopt, workspace_prefs)
   if (is.null(root)) {
-    root <- study_root_or_wd(utilities_fn("study_root"))
+    root <- study_root_or_abort(utilities_fn("study_root"))
   }
   if (!github_credentials_available()) {
     cli::cli_warn(c(
@@ -1237,7 +1255,7 @@ setup <- function(study, study_tracker_id, root = NULL, adopt = FALSE,
       ))
     }
   }
-  set_workspace_prefs()
+  if (workspace_prefs) set_workspace_prefs()
 
   lock_path <- file.path(root, "renv.lock")
   locked <- character(0)

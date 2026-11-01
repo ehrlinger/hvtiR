@@ -311,6 +311,15 @@ print.hvtiR_status <- function(x, ...) {
 # nolint next: object_name_linter.
 MIN_R_VERSION <- "4.4.0"
 
+# Written out because hvtiR runs on R 4.1.0, and tools::standard_package_names()
+# is newer than that. test-status.R compares it with the installed set.
+# Package constant; see MIN_R_VERSION above.
+# nolint next: object_name_linter.
+BASE_PACKAGES <- c(
+  "base", "compiler", "datasets", "graphics", "grDevices", "grid", "methods",
+  "parallel", "splines", "stats", "stats4", "tcltk", "tools", "utils"
+)
+
 #' Is pak available for installation commands?
 #'
 #' @return A length-1 logical value.
@@ -384,9 +393,6 @@ renv_state <- function(installed = renv_available(),
 #' @return A data frame with character columns `package` and `missing`.
 #' @noRd
 unresolved_imports <- function(packages, lib_loc = .libPaths()) {
-  base <- rownames(
-    utils::installed.packages(lib.loc = .Library, priority = "base")
-  )
   found <- function(p) {
     length(find.package(p, lib.loc = lib_loc, quiet = TRUE)) > 0L
   }
@@ -399,7 +405,7 @@ unresolved_imports <- function(packages, lib_loc = .libPaths()) {
     dcf <- read.dcf(file.path(path[1L], "DESCRIPTION"), fields = fields)
     deps <- unlist(strsplit(dcf[!is.na(dcf)], ",", fixed = TRUE))
     deps <- trimws(sub("\\(.*$", "", deps))
-    deps <- setdiff(deps[nzchar(deps)], c("R", base))
+    deps <- setdiff(deps[nzchar(deps)], c("R", BASE_PACKAGES))
     gone <- deps[!vapply(deps, found, logical(1))]
     if (length(gone)) {
       data.frame(package = p, missing = gone, stringsAsFactors = FALSE)
@@ -541,10 +547,7 @@ member_unmet_floors <- function(repos = getOption("repos"),
   }
 
   registry <- members()
-  exclude <- c(
-    registry$package,
-    rownames(utils::installed.packages(priority = "base"))
-  )
+  exclude <- c(registry$package, BASE_PACKAGES)
   examined <- which(registry$package %in% packages)
   needs <- do.call(rbind, lapply(examined, function(i) {
     dcf <- fetch_description(registry$repo[i])

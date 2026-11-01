@@ -1085,13 +1085,42 @@ test_that("a malformed _study.yml is not mistaken for no study", {
   expect_error(setup("A study", 7L), "malformed YAML")
 })
 
-test_that("no _study.yml falls back to the working directory", {
+test_that("no _study.yml stops and asks for root, writing nothing", {
   log <- local_setup()
   withr::local_dir(withr::local_tempdir())
-  setup("A study", 7L)
-  expect_identical(
-    normalizePath(log$setup_args$root), normalizePath(getwd())
+  expect_error(setup("A study", 7L), "root")
+  expect_identical(log$steps, character(0))
+  expect_length(list.files(getwd(), all.files = TRUE, no.. = TRUE), 0L)
+})
+
+test_that("workspace_prefs = FALSE leaves RStudio's preferences alone", {
+  root <- withr::local_tempdir()
+  log <- local_setup()
+  setup("A study", 7L, root = root, workspace_prefs = FALSE)
+  expect_false("prefs" %in% log$steps)
+  expect_true("study_setup" %in% log$steps)
+})
+
+test_that("a workspace_prefs that is not a flag stops before any step", {
+  root <- withr::local_tempdir()
+  log <- local_setup()
+  for (bad in list(NA, "no", c(TRUE, FALSE), NULL)) {
+    expect_error(
+      setup("A study", 7L, root = root, workspace_prefs = bad),
+      "workspace_prefs"
+    )
+  }
+  expect_identical(log$steps, character(0))
+})
+
+test_that("the guard's offered command keeps workspace_prefs = FALSE", {
+  local_mocked_bindings(renv_state = function(...) "active")
+  withr::local_envvar(RENV_PROJECT = "/studies/demo")
+  err <- tryCatch(
+    setup("A study", 7L, workspace_prefs = FALSE),
+    error = conditionMessage
   )
+  expect_match(err, "workspace_prefs = FALSE", fixed = TRUE)
 })
 # setup() from inside the study: the guard comes before anything installs.
 

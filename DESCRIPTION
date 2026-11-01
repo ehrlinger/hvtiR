@@ -5,12 +5,14 @@ Version: 1.3.5
 Date: 2026-10-30
 Authors@R: person("John", "Ehrlinger", email = "john.ehrlinger@gmail.com",
     role = c("aut", "cre"))
-Description: Installs, updates and reports on the Cleveland Clinic Heart and
-    Vascular Institute CORR group's family of R packages in a single step.
+Description: Installs, updates and reports, in a single step, on the family
+    of R packages from the Cardiovascular Outcomes, Registries and Research
+    (CORR) group of the Heart, Vascular and Thoracic Institute (HVTI) at
+    Cleveland Clinic.
     Members are resolved from public GitHub repositories with 'pak', keeping
     installations aligned with the source where family releases land first.
     Provides a status table comparing installed versions and source commits
-    against GitHub 'main', and a diagnostic report for environment problems.
+    against the main branch on GitHub, and a diagnostic report for environment problems.
 License: GPL-3
 Encoding: UTF-8
 Depends:
@@ -23,7 +25,9 @@ Suggests:
     gitcreds,
     knitr,
     pak,
+    praise,
     quarto,
+    renv,
     rstudioapi,
     testthat (>= 3.2.0),
     withr
