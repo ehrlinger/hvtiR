@@ -449,6 +449,8 @@ test_that("a failure installing hvtiRutilities propagates", {
   local_mocked_bindings(
     utilities_fn = function(name) stop("install blew up")
   )
+  withr::local_dir(withr::local_tempdir())
+  writeLines("study: demo", "_study.yml")
   expect_error(setup("A study", 7L), "install blew up")
 })
 
@@ -1082,16 +1084,58 @@ test_that("a guard trip names the outcome: restored, or not restorable", {
 
 test_that("a malformed _study.yml is not mistaken for no study", {
   local_setup(root_error = "malformed YAML in _study.yml")
+  withr::local_dir(withr::local_tempdir())
+  writeLines("study: [", "_study.yml")
   expect_error(setup("A study", 7L), "malformed YAML")
 })
 
-test_that("no _study.yml falls back to the working directory", {
+test_that("no _study.yml stops and asks for root, writing nothing", {
   log <- local_setup()
   withr::local_dir(withr::local_tempdir())
-  setup("A study", 7L)
-  expect_identical(
-    normalizePath(log$setup_args$root), normalizePath(getwd())
+  expect_error(setup("A study", 7L), "root")
+  expect_identical(log$steps, character(0))
+  expect_length(list.files(getwd(), all.files = TRUE, no.. = TRUE), 0L)
+})
+
+test_that("no _study.yml stops before hvtiRutilities can be installed", {
+  local_mocked_bindings(
+    installed_version = function(...) NA_character_,
+    install_members = function(...) stop("must not be reached"),
+    session_library = function() "/nonexistent/session/lib",
+    renv_state = function(...) "installed"
   )
+  withr::local_dir(withr::local_tempdir())
+  expect_error(setup("A study", 7L), "Pass .*root")
+})
+
+test_that("workspace_prefs = FALSE leaves RStudio's preferences alone", {
+  root <- withr::local_tempdir()
+  log <- local_setup()
+  setup("A study", 7L, root = root, workspace_prefs = FALSE)
+  expect_false("prefs" %in% log$steps)
+  expect_true("study_setup" %in% log$steps)
+})
+
+test_that("a workspace_prefs that is not a flag stops before any step", {
+  root <- withr::local_tempdir()
+  log <- local_setup()
+  for (bad in list(NA, "no", c(TRUE, FALSE), NULL)) {
+    expect_error(
+      setup("A study", 7L, root = root, workspace_prefs = bad),
+      "workspace_prefs"
+    )
+  }
+  expect_identical(log$steps, character(0))
+})
+
+test_that("the guard's offered command keeps workspace_prefs = FALSE", {
+  local_mocked_bindings(renv_state = function(...) "active")
+  withr::local_envvar(RENV_PROJECT = "/studies/demo")
+  err <- tryCatch(
+    setup("A study", 7L, workspace_prefs = FALSE),
+    error = conditionMessage
+  )
+  expect_match(err, "workspace_prefs = FALSE", fixed = TRUE)
 })
 # setup() from inside the study: the guard comes before anything installs.
 

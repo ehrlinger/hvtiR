@@ -4,15 +4,24 @@
 \alias{setup}
 \title{Set up a study's environment}
 \usage{
-setup(study, study_tracker_id, root = NULL, adopt = FALSE, upgrade = TRUE, ...)
+setup(
+  study,
+  study_tracker_id,
+  root = NULL,
+  adopt = FALSE,
+  upgrade = TRUE,
+  workspace_prefs = TRUE,
+  ...
+)
 }
 \arguments{
 \item{study}{The Study Tracker title.}
 
 \item{study_tracker_id}{The Study Tracker ID, an integer.}
 
-\item{root}{The study root. By default the study enclosing the working
-directory, or the working directory.}
+\item{root}{The study root, where \code{setup()} writes. By default the study
+enclosing the working directory; outside a study \code{setup()} stops and asks
+for it, so a new study always names its directory.}
 
 \item{adopt}{Set up an existing study, adding only what is missing.
 Adopting cleans up template copies unless \code{cleanup = FALSE} is passed.}
@@ -25,6 +34,10 @@ ones: the guard lists each move (package, old and new version,
 package the install would move then stops the run and \code{renv.lock} is
 left unchanged.}
 
+\item{workspace_prefs}{Whether to rewrite the user's RStudio preferences so
+that \code{.RData} is neither restored nor saved. The default, \code{TRUE}, applies
+to every project that user opens. \code{FALSE} leaves them as they are.}
+
 \item{...}{Passed to \code{hvtiRutilities::study_setup()}, such as \code{cleanup},
 \code{template_dir} or \code{owner}. \code{renv} is not accepted: \code{setup()} always uses
 renv, so use \code{hvtiRutilities::study_setup()} directly for a study without
@@ -35,7 +48,8 @@ The study status from \code{hvtiRutilities::study_setup()}, invisibly.
 }
 \description{
 The one command a study needs before analysis. In order: checks R, installs
-renv if it is missing, and turns off RStudio's \code{.RData} restore and save;
+renv if it is missing, and turns off RStudio's \code{.RData} restore and save
+(a preference for the user, not the study; see \code{workspace_prefs});
 runs \code{hvtiRutilities::study_setup()} with renv on, which cleans up template
 copies before renv when adopting; declares \code{hvtiR}, every member, the
 packages they need and the team's standard analysis packages in the
@@ -79,6 +93,12 @@ from the configured repositories the build-time (\code{LinkingTo}) dependencies
 pak skips. Restoring a package the lockfile pins on GitHub goes through
 renv, which has no shared token; a \code{GITHUB_PAT} (or a token in the git
 credential store) covers that, and \code{setup()} warns when there is none.
+
+Two packages can land in this session's library rather than the study's:
+\code{renv}, and \code{hvtiRutilities} with the packages it needs, are installed with
+pak into the first library in \code{\link[base:.libPaths]{base::.libPaths()}} when they are missing, and
+\code{hvtiRutilities} also when it is older than 1.5.6. \code{setup()} runs them from
+this session, so they must be there before the study's library exists.
 
 Safe to rerun: each step checks before it acts.
 }

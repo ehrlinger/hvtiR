@@ -125,3 +125,8 @@ test_that("installed_version rejects a malformed GitHub RemoteSha", {
 
   expect_null(attr(installed, "remote_sha"))
 })
+
+test_that("BASE_PACKAGES names every base package this R has", {
+  installed <- rownames(utils::installed.packages(priority = "base"))
+  expect_setequal(setdiff(installed, BASE_PACKAGES), character(0))
+})

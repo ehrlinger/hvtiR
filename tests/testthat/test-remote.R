@@ -244,9 +244,9 @@ test_that("a malformed attempts count is rejected with a message naming it", {
 # repo_versions() ------------------------------------------------------------
 
 # A local source repository, so the real available.packages() runs without
-# the network. It lives in the session temp directory, which R removes on exit.
-local_source_repo <- function(packages) {
-  root <- tempfile("repo")
+# the network. It is removed when the test that made it finishes.
+local_source_repo <- function(packages, env = parent.frame()) {
+  root <- withr::local_tempdir("repo", .local_envir = env)
   contrib <- file.path(root, "src", "contrib")
   dir.create(contrib, recursive = TRUE)
   if (length(packages) > 0L) {
