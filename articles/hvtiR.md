@@ -212,9 +212,9 @@ renv::snapshot()  # records every package, and each member's commit
 ```
 
 `renv.lock` then names the exact commit behind each member, and
-`renv::restore()` rebuilds that library on another machine. This works
-because pak records the commit it installed from, which is the field
-renv reads.
+[`renv::restore()`](https://rstudio.github.io/renv/reference/restore.html)
+rebuilds that library on another machine. This works because pak records
+the commit it installed from, which is the field renv reads.
 
 A member installed from a local working copy rather than from GitHub
 carries no such commit, so renv has none to record for it.

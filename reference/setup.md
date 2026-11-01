@@ -2,17 +2,26 @@
 
 The one command a study needs before analysis. In order: checks R,
 installs renv if it is missing, and turns off RStudio's `.RData` restore
-and save; runs `hvtiRutilities::study_setup()` with renv on, which
-cleans up template copies before renv when adopting; declares `hvtiR`,
-every member, the packages they need and the team's standard analysis
-packages in the study's `DESCRIPTION`; installs them into the study's
-library with pak and renv; snapshots; checks that every package's
-dependencies resolve there; and restarts into the project.
+and save (a preference for the user, not the study; see
+`workspace_prefs`); runs `hvtiRutilities::study_setup()` with renv on,
+which cleans up template copies before renv when adopting; declares
+`hvtiR`, every member, the packages they need and the team's standard
+analysis packages in the study's `DESCRIPTION`; installs them into the
+study's library with pak and renv; snapshots; checks that every
+package's dependencies resolve there; and restarts into the project.
 
 ## Usage
 
 ``` r
-setup(study, study_tracker_id, root = NULL, adopt = FALSE, upgrade = TRUE, ...)
+setup(
+  study,
+  study_tracker_id,
+  root = NULL,
+  adopt = FALSE,
+  upgrade = TRUE,
+  workspace_prefs = TRUE,
+  ...
+)
 ```
 
 ## Arguments
@@ -27,8 +36,9 @@ setup(study, study_tracker_id, root = NULL, adopt = FALSE, upgrade = TRUE, ...)
 
 - root:
 
-  The study root. By default the study enclosing the working directory,
-  or the working directory.
+  The study root, where `setup()` writes. By default the study enclosing
+  the working directory; outside a study `setup()` stops and asks for
+  it, so a new study always names its directory.
 
 - adopt:
 
@@ -44,6 +54,12 @@ setup(study, study_tracker_id, root = NULL, adopt = FALSE, upgrade = TRUE, ...)
   study in revision, whose versions must not move: a locked package the
   install would move then stops the run and `renv.lock` is left
   unchanged.
+
+- workspace_prefs:
+
+  Whether to rewrite the user's RStudio preferences so that `.RData` is
+  neither restored nor saved. The default, `TRUE`, applies to every
+  project that user opens. `FALSE` leaves them as they are.
 
 - ...:
 
@@ -82,9 +98,10 @@ to run.
 In the install, the study stops using renv's per-user cache
 (`renv::settings$use.cache(FALSE)`, kept in `renv/settings.json`, so it
 applies to everyone), links already in the library are copied in
-(`renv::isolate()`), and any link whose target the user cannot read is
-removed, as is pak's leftover `_cache` directory, and the package
-reinstalled. A shared library cannot depend on one user's home.
+([`renv::isolate()`](https://rstudio.github.io/renv/reference/isolate.html)),
+and any link whose target the user cannot read is removed, as is pak's
+leftover `_cache` directory, and the package reinstalled. A shared
+library cannot depend on one user's home.
 
 No personal GitHub token is needed. The family is installed with pak,
 which carries a shared token, into the study's library, and renv keeps
@@ -94,6 +111,14 @@ dependencies pak skips. Restoring a package the lockfile pins on GitHub
 goes through renv, which has no shared token; a `GITHUB_PAT` (or a token
 in the git credential store) covers that, and `setup()` warns when there
 is none.
+
+Two packages can land in this session's library rather than the study's:
+`renv`, and `hvtiRutilities` with the packages it needs, are installed
+with pak into the first library in
+[`base::.libPaths()`](https://rdrr.io/r/base/libPaths.html) when they
+are missing, and `hvtiRutilities` also when it is older than 1.5.6.
+`setup()` runs them from this session, so they must be there before the
+study's library exists.
 
 Safe to rerun: each step checks before it acts.
 

@@ -222,11 +222,11 @@ i Pass `force = TRUE` to install anyway (unsafe on Windows).</code></pre>
 <p><code><a href="../reference/install.html">hvtiR::install()</a></code> resolves every member from GitHub <code>main</code>, so it gives you the newest code rather than a fixed one. Two people running it a week apart can end up on different commits under the same version number. When an analysis has to be reproducible, pin the versions with <a href="https://rstudio.github.io/renv/" class="external-link">renv</a>:</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb13"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">renv</span><span class="fu">::</span><span class="fu">init</span><span class="op">(</span><span class="op">)</span>      <span class="co"># once per project</span></span>
+<code class="sourceCode R"><span><span class="fu">renv</span><span class="fu">::</span><span class="fu"><a href="https://rstudio.github.io/renv/reference/init.html" class="external-link">init</a></span><span class="op">(</span><span class="op">)</span>      <span class="co"># once per project</span></span>
 <span><span class="fu">hvtiR</span><span class="fu">::</span><span class="fu"><a href="../reference/install.html">install</a></span><span class="op">(</span><span class="op">)</span>  <span class="co"># installs into the project library</span></span>
-<span><span class="fu">renv</span><span class="fu">::</span><span class="fu">snapshot</span><span class="op">(</span><span class="op">)</span>  <span class="co"># records every package, and each member's commit</span></span></code></pre></div>
+<span><span class="fu">renv</span><span class="fu">::</span><span class="fu"><a href="https://rstudio.github.io/renv/reference/snapshot.html" class="external-link">snapshot</a></span><span class="op">(</span><span class="op">)</span>  <span class="co"># records every package, and each member's commit</span></span></code></pre></div>
 </div>
-<p><code>renv.lock</code> then names the exact commit behind each member, and <code>renv::restore()</code> rebuilds that library on another machine. This works because pak records the commit it installed from, which is the field renv reads.</p>
+<p><code>renv.lock</code> then names the exact commit behind each member, and <code><a href="https://rstudio.github.io/renv/reference/restore.html" class="external-link">renv::restore()</a></code> rebuilds that library on another machine. This works because pak records the commit it installed from, which is the field renv reads.</p>
 <p>A member installed from a local working copy rather than from GitHub carries no such commit, so renv has none to record for it.</p>
 </section><section class="level2"><h2 id="when-something-will-not-install">When something will not install<a class="anchor" aria-label="anchor" href="#when-something-will-not-install"></a>
 </h2>

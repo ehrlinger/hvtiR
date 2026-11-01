@@ -49,7 +49,7 @@ doctor(remote = FALSE)
 #> ✔ pak is installed
 #> ℹ Repository RSPM: <https://packagemanager.posit.co/cran/__linux__/noble/latest>
 #> ℹ Repository CRAN: <https://cran.rstudio.com>
-#> ℹ renv is not installed
+#> ℹ renv is installed, but this is not an renv project
 #> ℹ Member versions are not pinned - installs resolve from GitHub "main".
 #> 
 #> ── Members ──

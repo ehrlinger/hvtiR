@@ -5,21 +5,23 @@
 - When restoring a study’s lockfile fails because a package does not
   compile,
   [`setup()`](https://ehrlinger.github.io/hvtiR/reference/setup.md) now
-  names the packages that failed and gives the `renv::record()` call
-  that moves the pin while keeping its locked source: a GitHub record
-  stays on GitHub. Under `upgrade = FALSE` it gives no such call, since
-  that mode keeps a revision’s locked versions. It used to lead with “A
-  GitHub token is needed” whenever an authentication message appeared
-  anywhere in the output, which sent users after a token when the real
-  cause was a locked version (`vctrs` 0.7.2) that no longer builds under
-  R 4.6.
+  names the packages that failed and gives the
+  [`renv::record()`](https://rstudio.github.io/renv/reference/record.html)
+  call that moves the pin while keeping its locked source: a GitHub
+  record stays on GitHub. Under `upgrade = FALSE` it gives no such call,
+  since that mode keeps a revision’s locked versions. It used to lead
+  with “A GitHub token is needed” whenever an authentication message
+  appeared anywhere in the output, which sent users after a token when
+  the real cause was a locked version (`vctrs` 0.7.2) that no longer
+  builds under R 4.6.
 
 - After a compile failure,
   [`setup()`](https://ehrlinger.github.io/hvtiR/reference/setup.md)’s
-  `renv::record()` hint now covers every package that failed, in one
-  call, each keeping its locked source. A package whose source has no
-  safe one-line spec is named apart. Previously the call named only the
-  first, so each further package cost another run.
+  [`renv::record()`](https://rstudio.github.io/renv/reference/record.html)
+  hint now covers every package that failed, in one call, each keeping
+  its locked source. A package whose source has no safe one-line spec is
+  named apart. Previously the call named only the first, so each further
+  package cost another run.
 
 - [`setup()`](https://ehrlinger.github.io/hvtiR/reference/setup.md) no
   longer says “A GitHub token is needed” when renv’s restore fails only
@@ -79,10 +81,11 @@
   on. A leftover `_cache` alone now gets its one removal step; links
   into a cache the user cannot read still get the full repair, which now
   says the renv steps fail until `_cache` is gone and ends by restoring
-  only the removed packages: the bare `renv::restore()` it used to end
-  with reverted every package to the lockfile, undoing the install or
-  update that raised the warning. The numbered steps are indented under
-  the warning.
+  only the removed packages: the bare
+  [`renv::restore()`](https://rstudio.github.io/renv/reference/restore.html)
+  it used to end with reverted every package to the lockfile, undoing
+  the install or update that raised the warning. The numbered steps are
+  indented under the warning.
 
 - [`setup()`](https://ehrlinger.github.io/hvtiR/reference/setup.md)
   removes pak’s leftover `_cache` from a study library by its exact
@@ -150,7 +153,8 @@
   declares the `quarto` R package in every study. `hvtiRtemplates`
   renders jobs through it, and `render_job()` and `submit_job()` stop
   without it, but no member imports it, so a study that installed it by
-  hand still left it out of `renv.lock` and a fresh `renv::restore()`
+  hand still left it out of `renv.lock` and a fresh
+  [`renv::restore()`](https://rstudio.github.io/renv/reference/restore.html)
   could not render a job. It also declares `ggiraph`, which gives the
   `dc-eda` template its hover figures; without it the template quietly
   falls back to static ones. Rerun
@@ -197,9 +201,10 @@
 - [`setup()`](https://ehrlinger.github.io/hvtiR/reference/setup.md)
   stops the study using renv’s per-user cache
   (`renv::settings$use.cache(FALSE)`, stored in `renv/settings.json` so
-  it applies to the whole team) and runs `renv::isolate()` before
-  restoring. It removes, and so reinstalls, any library link whose
-  target the user cannot read, and pak’s leftover `_cache` staging
+  it applies to the whole team) and runs
+  [`renv::isolate()`](https://rstudio.github.io/renv/reference/isolate.html)
+  before restoring. It removes, and so reinstalls, any library link
+  whose target the user cannot read, and pak’s leftover `_cache` staging
   directory, and reports what it removed. This fixes “Unable to move
   package” failures in a library shared by several users.
 
@@ -255,8 +260,10 @@
   [`update()`](https://ehrlinger.github.io/hvtiR/reference/update.md)
   warning now gives the manual repair in the order that works: remove
   `_cache`, remove each broken link, then
-  `renv::settings$use.cache(FALSE)`, `renv::isolate()` and
-  `renv::restore()`.
+  `renv::settings$use.cache(FALSE)`,
+  [`renv::isolate()`](https://rstudio.github.io/renv/reference/isolate.html)
+  and
+  [`renv::restore()`](https://rstudio.github.io/renv/reference/restore.html).
 
 - The check that no locked package moved now runs after the `LinkingTo`
   fill, immediately before the snapshot, because the fill installs
@@ -348,8 +355,9 @@
 
 - [`setup()`](https://ehrlinger.github.io/hvtiR/reference/setup.md)
   installs the subdirectory remotes that members pin (read from their
-  DESCRIPTIONs, such as `boostmtree`) in a first `renv::install()` call,
-  which works around a renv 1.2.4 failure (“target file … already
+  DESCRIPTIONs, such as `boostmtree`) in a first
+  [`renv::install()`](https://rstudio.github.io/renv/reference/install.html)
+  call, which works around a renv 1.2.4 failure (“target file … already
   exists”) on a cold cache.
 
 - [`setup()`](https://ehrlinger.github.io/hvtiR/reference/setup.md)
@@ -1157,12 +1165,16 @@
   different commits under the same version number. Informational, not a
   failure: `renv` is optional and its absence blocks nothing.
 
-- The README gains a “Reproducible installs” section: `renv::init()`,
+- The README gains a “Reproducible installs” section:
+  [`renv::init()`](https://rstudio.github.io/renv/reference/init.html),
   [`hvtiR::install()`](https://ehrlinger.github.io/hvtiR/reference/install.md),
-  `renv::snapshot()`, and `renv::restore()` on the other machine. It
-  works because pak records the commit it installed from, which is the
-  field `renv` reads – and it notes the limit, that a member installed
-  from a local working copy carries no commit for `renv` to record.
+  [`renv::snapshot()`](https://rstudio.github.io/renv/reference/snapshot.html),
+  and
+  [`renv::restore()`](https://rstudio.github.io/renv/reference/restore.html)
+  on the other machine. It works because pak records the commit it
+  installed from, which is the field `renv` reads – and it notes the
+  limit, that a member installed from a local working copy carries no
+  commit for `renv` to record.
 
 - `dev/specs/` gains a rejected design record for a
   `snapshot()`/`restore()` pair that would have pinned members by commit
