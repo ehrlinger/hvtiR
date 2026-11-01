@@ -1,5 +1,42 @@
 Package: hvtiR
-Version: 1.3.4
+Version: 1.3.5
+
+# hvtiR 1.3.5
+
+* When restoring a study's lockfile fails because a package does not compile,
+  `setup()` now names the packages that failed and gives the `renv::record()`
+  call that moves the pin while keeping its locked source: a GitHub record
+  stays on GitHub. Under `upgrade = FALSE` it gives no such call, since that
+  mode keeps a revision's locked versions. It used to lead with "A GitHub
+  token is needed" whenever an authentication message appeared anywhere in
+  the output, which sent users after a token when the real cause was a locked
+  version (`vctrs` 0.7.2) that no longer builds under R 4.6.
+
+* After a compile failure, `setup()`'s `renv::record()` hint now covers every
+  package that failed, in one call, each keeping its locked source. A package
+  whose source has no safe one-line spec is named apart. Previously the call
+  named only the first, so each further package cost another run.
+
+* `setup()` no longer says "A GitHub token is needed" when renv's restore
+  fails only on packages locked from a repository. renv prints its
+  authentication note even when a retried GitHub download then succeeds, so
+  the hint now needs a GitHub-locked package in renv's failed list (or a list
+  too long to read in full), and names that package.
+
+* Catalog versions refreshed from `main`: `TemporalHazard` dev 1.2.16 to
+  1.2.17; `hvtiPlotR` dev 2.8.18 to 2.8.21; `hvtiRbootstrap` dev 0.9.6 to
+  0.9.7; `hvtiRlifetables` dev 0.1.5 to 0.1.6; `hvtiRpropensity` dev 0.2.1
+  to 0.2.2; `hvtiRtables` dev 1.0.11 to 1.0.12; `hvtiRtemplates` dev 1.5.2
+  to 1.5.4; `hvtiRutilities` dev 1.5.15 to 1.5.18. The catalog ships in the
+  package and is published as `members.json`, so its recorded versions are
+  content rather than bookkeeping.
+
+* Family floors refreshed from `main`: `hvtiRtemplates` Imports
+  `hvtiRutilities` (>= 1.5.15) to (>= 1.5.17); `hvtiRtemplates` Suggests
+  `TemporalHazard` (>= 1.2.12) to (>= 1.2.17); `hvtiRtemplates` Suggests
+  `hvtiPlotR` (>= 2.8.18) to (>= 2.8.20); `hvtiRtemplates` Suggests
+  `hvtiRdatabuild` (>= 0.3.0) to (>= 0.3.3). `family-floors.csv` ships in
+  the package and records the version floors members declare on one another.
 
 # hvtiR 1.3.4
 
