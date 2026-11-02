@@ -43,7 +43,8 @@ pak::pak("ehrlinger/hvtiR")
 hvtiR::setup(
   study = "EDIT: the Study Tracker title",
   study_tracker_id = 0L,  # EDIT: the Study Tracker ID
-  root = "EDIT: the study directory"
+  root = "EDIT: the study directory",
+  identity_source = "manual"  # you typed the identity; the default records it as verified
 )
 ```
 
@@ -55,7 +56,8 @@ per-user cache, so the shared library holds real copies a teammate can read,
 and reinstalls any package that was only a link into someone's home. It cleans
 up template copies first and only then locks the packages, so the lockfile records what the study declares and not what the templates
 happened to mention. For an existing (legacy) study pass `adopt = TRUE`, which
-is what cleans up its template copies. A study that already has a `renv.lock`
+is what cleans up its template copies. **That deletes every `tp.*` file by name, even
+an edited one, with no backup**, so rescue your own first or add `cleanup = FALSE`. A study that already has a `renv.lock`
 keeps its locked versions unless the declared family needs newer ones, in which case
 `setup()` moves them, lists each move and records them (`upgrade = TRUE`, the default; pass
 `upgrade = FALSE` for a study in revision, whose versions must not move), and every package that lockfile recorded is declared
