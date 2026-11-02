@@ -26,7 +26,7 @@ package, updating one, answering a revision, and fixing what goes wrong.
 | File | What it is |
 |---|---|
 | `renv.lock` | The record: every package's version, and each family member's commit |
-| `DESCRIPTION` | The packages the study declares. A shared file, written by `setup()` and `study_need()` |
+| `DESCRIPTION` | The packages the study declares. A shared file, written by `setup()`, `study_need()` and `study_declare()` |
 | `.Rprofile` | Starts renv when the project opens |
 | `renv/settings.json` | The study's renv settings, the shared cache setting among them |
 | `renv/library/` | The installed packages |
@@ -44,7 +44,7 @@ into your home directory.
 ## Adding a package
 
 For a package from the configured repositories, run this in the open project. It
-installs the package, declares it and records it:
+asks first, then installs the package, declares it and records it:
 
 ```r
 hvtiRutilities::study_need("cmprsk")
@@ -78,6 +78,10 @@ member:
 hvtiR::update()
 renv::snapshot()
 ```
+
+If the snapshot aborts over a missing dependency, pak has skipped a build-time
+(`LinkingTo`) package. Rerun `setup()` for the study from outside the project; it
+installs those.
 
 To see whether the library and the lockfile agree, use `renv::status()`.
 
@@ -139,6 +143,6 @@ steps of your own.
 | "Could not solve package dependencies" | Run `hvtiR::doctor()`. It lists the repositories R uses, warns on a dated snapshot and names any version floor they cannot meet |
 | `renv::restore()` fails on a package that is not on CRAN | Look for `RemoteRepo` in `renv.lock`. A package pinned on GitHub may need your own `GITHUB_PAT` |
 | An install fails reading a package in someone's home directory | The library holds links into a per-user cache. Rerun `setup()` for the study: it turns the cache off and replaces the links with real copies |
-| A package is installed but not in `renv.lock` | It is not declared. `hvtiRutilities::study_need("name")` declares and records it |
+| A package is installed but not in `renv.lock` | It is not declared. Run `hvtiRutilities::study_declare("name")`, then `renv::snapshot()` |
 | `renv.lock` is behind the library | `renv::status()` shows the drift, and `renv::snapshot()` records it once you have checked that it is what you meant |
 | A teammate's session errors just after setup | They had the project open while the library changed. Restart the session |
