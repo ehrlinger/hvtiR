@@ -27,8 +27,10 @@ stops on anything older.
 
 Look in the study's directory. If it holds both `_study.yml` and `renv.lock`,
 someone has probably set it up: open its `.Rproj`, then go to
-[Check the study](#check-the-study). `study_status()` there tells you what is
-still missing.
+[Check the study](#check-the-study). Those two files can also come from an older
+`renv::init()`, which brings neither the family nor the standard packages. If
+`hvtiR::status()` there shows members missing, run `setup()` below with
+`adopt = TRUE`.
 
 A new study may have been set up when its directory was made, because the
 `study-setup` command in `qhsprograms` runs `hvtiR::setup()` for you. Otherwise,
@@ -52,14 +54,16 @@ hvtiR::setup(
   study = "EDIT: the Study Tracker title",
   study_tracker_id = 0L,  # EDIT: the Study Tracker ID
   root = "EDIT: the study directory",
-  adopt = TRUE  # EDIT: an existing study; leave out for a new, empty directory
+  adopt = TRUE  # EDIT: leave out only when the directory does not exist yet
 )
 ```
 
-`adopt` is the choice you have to get right. A directory that already holds files
-needs `adopt = TRUE`, or `setup()` stops. An adopted study keeps the folder names
-it has, and it loses the template copies it was given. A new, empty directory
-gets the numbered folders (`00_datasets`, `10_descriptive` and so on).
+`adopt` is the choice you have to get right. A directory that already exists needs
+`adopt = TRUE`, even an empty one, or `setup()` stops. An adopted study keeps the
+folder names it has, and its template copies are cleaned up: the `tp.*` files,
+`binder.summaries.doc` and files identical to one in the template corpus. An empty
+or new directory gets the numbered folders (`00_datasets`, `10_descriptive` and so
+on).
 
 A study in revision needs one more argument, `upgrade = FALSE`. By default,
 `setup()` moves a version the lockfile pins when the family needs a newer one,
@@ -79,7 +83,8 @@ In order, `setup()`:
   the study's `DESCRIPTION`;
 - installs them into the study's own library and records them in `renv.lock`;
 - checks that every package's dependencies resolve there;
-- restarts RStudio inside the project.
+- restarts RStudio inside the project (outside RStudio, it tells you to restart
+  R there).
 
 It needs no data, so you can run it at kick-off. It needs no personal GitHub
 token to install, either, since pak carries a shared one. It warns when you have

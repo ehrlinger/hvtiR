@@ -38,6 +38,13 @@ navbar:
     intro:
       text: Get started
       href: articles/start-here.html
+    articles:
+      text: Articles
+      menu:
+      - text: Start here
+        href: articles/start-here.html
+      - text: Install, update and check the family
+        href: articles/hvtiR.html
     my_linkedin:
       icon: fa-linkedin
       href: https://www.linkedin.com/in/ehrlinger/
