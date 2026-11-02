@@ -130,6 +130,8 @@ hvtiRutilities::study_need("cmprsk")
 ```
 
 That installs it, declares it and records it in `renv.lock`.
+[A study's package environment](study-environment.html) covers updates, revisions
+and what to do when the environment misbehaves.
 
 ## Check the study {#check-the-study}
 

@@ -165,8 +165,9 @@ its identity. `hvtiR::setup()` does all of that once per study, and
 
 `hvtiR::install()` resolves every member from GitHub `main`, so it gives you
 the newest code rather than a fixed one. Two people running it a week apart can
-end up on different commits under the same version number. When an analysis has
-to be reproducible, pin the versions with
+end up on different commits under the same version number. A study pins them
+through `setup()`, as [A study's package environment](study-environment.html)
+explains. For any other project, pin the versions with
 [renv](https://rstudio.github.io/renv/):
 
 ```{r renv, eval = FALSE}
