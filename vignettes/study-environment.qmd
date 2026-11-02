@@ -50,6 +50,9 @@ asks first, then installs the package, declares it and records it:
 hvtiRutilities::study_need("cmprsk")
 ```
 
+A package that is already installed is only declared, not recorded, so follow
+`study_need()` with `renv::snapshot()` in that case.
+
 A package from GitHub takes three steps:
 
 ```r
@@ -79,9 +82,10 @@ hvtiR::update()
 renv::snapshot()
 ```
 
-If the snapshot aborts over a missing dependency, pak has skipped a build-time
-(`LinkingTo`) package. Rerun `setup()` for the study from outside the project; it
-installs those.
+If the snapshot aborts over a missing dependency, pak has probably skipped a
+build-time (`LinkingTo`) package. Install the one it names with `renv::install()` and
+run the snapshot again. Do not rerun `setup()` for this: it restores the old lockfile
+first, so it can undo the update you have not yet recorded.
 
 To see whether the library and the lockfile agree, use `renv::status()`.
 
@@ -95,6 +99,9 @@ those sessions first.
 
 A lockfile the study already has is kept. `setup()` restores the locked versions,
 declares every package the lockfile recorded and installs only what is missing.
+The exception is a locked version the family needs newer: by default `setup()` moves
+it, lists the move and records it. If the owner needs those pins held, pass
+`upgrade = FALSE`, and the run stops rather than moves them.
 Do not run `renv::init()` on such a study, which starts its library over.
 
 ## Answering a revision
