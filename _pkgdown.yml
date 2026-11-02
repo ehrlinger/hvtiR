@@ -25,6 +25,8 @@ home:
           ![R package version](https://img.shields.io/github/r-package/v/ehrlinger/hvtiR)<br>
           ![pkgdown build status](https://img.shields.io/github/actions/workflow/status/ehrlinger/hvtiR/pkgdown.yaml)<br>
 
+# hvtiR.qmd would otherwise take "Get started", by its name. The first page a
+# reader needs is the one that sets up a study, so the link goes there.
 navbar:
   structure:
     right:
@@ -33,6 +35,9 @@ navbar:
     - my_linkedin
     - lightswitch
   components:
+    intro:
+      text: Get started
+      href: articles/start-here.html
     my_linkedin:
       icon: fa-linkedin
       href: https://www.linkedin.com/in/ehrlinger/
@@ -60,3 +65,10 @@ reference:
   desc: Which packages are members, and where they come from
   contents:
   - members
+
+articles:
+- title: Getting started
+  navbar: ~
+  contents:
+  - start-here
+  - hvtiR
