@@ -23,6 +23,11 @@ from Study Tracker. On Posit Workbench, start a new RStudio Pro session and pick
 the latest R version listed. The family requires R 4.4.0 or newer, and `setup()`
 stops on anything older.
 
+A study that already has a `renv.lock` is the exception: pick the R version its
+`R` `Version` entry records. `setup()` only warns about a different one, and its
+snapshot then records the R you are running. `upgrade = FALSE` keeps package
+versions from moving, not R.
+
 ## Has the study been set up already?
 
 Look in the study's directory. If it holds both `_study.yml` and `renv.lock`,
@@ -126,7 +131,13 @@ next step, and it belongs to the tutorials.
 From here the work moves to
 [`hvtiRtemplates`](https://ehrlinger.github.io/hvtiRtemplates/). `setup()` has
 already done the opening sections of the first two tutorials, so the links below
-start you at the section after them.
+start you at the section after them. Those sections call the packages' functions
+by name alone, so attach the two packages first:
+
+```r
+library(hvtiRutilities)
+library(hvtiRtemplates)
+```
 
 1. **Register the data.** For a new study,
    [Start a new study](https://ehrlinger.github.io/hvtiRtemplates/articles/new-study.html#register-the-dataset).
