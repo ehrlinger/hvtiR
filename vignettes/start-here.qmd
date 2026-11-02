@@ -129,20 +129,12 @@ next step, and it belongs to the tutorials.
 ## Go on to the tutorials
 
 From here the work moves to
-[`hvtiRtemplates`](https://ehrlinger.github.io/hvtiRtemplates/). `setup()` has
-already done the opening sections of the first two tutorials, so the links below
-start you at the section after them. Those sections call the packages' functions
-by name alone, so attach the two packages first:
-
-```r
-library(hvtiRutilities)
-library(hvtiRtemplates)
-```
+[`hvtiRtemplates`](https://ehrlinger.github.io/hvtiRtemplates/).
 
 1. **Register the data.** For a new study,
-   [Start a new study](https://ehrlinger.github.io/hvtiRtemplates/articles/new-study.html#register-the-dataset).
+   [Start a new study](https://ehrlinger.github.io/hvtiRtemplates/articles/new-study.html).
    For an existing one,
-   [Adopt an existing study](https://ehrlinger.github.io/hvtiRtemplates/articles/study-setup.html#register-the-existing-dataset).
+   [Adopt an existing study](https://ehrlinger.github.io/hvtiRtemplates/articles/study-setup.html).
 2. **Work a job.**
    [Work a job, from template to final report](https://ehrlinger.github.io/hvtiRtemplates/articles/work-a-job.html)
    is the daily loop: pick a template, add it, fill in its `EDIT:` lines, render,
