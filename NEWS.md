@@ -1,5 +1,31 @@
 Package: hvtiR
-Version: 1.3.5
+Version: 1.3.6
+
+# hvtiR 1.3.6
+
+* `setup()` gains `workspace_prefs`: `FALSE` leaves the user's RStudio
+  preferences alone. The default, `TRUE`, still turns off `.RData` restore and
+  save.
+* `setup()` without `root` now stops outside a study and asks for it, instead
+  of writing the study into the working directory.
+* `setup()`'s help now says that `renv` and `hvtiRutilities` can be installed
+  into the session's library.
+* The dependency checks no longer call `installed.packages()` to name the base
+  packages.
+
+* A new article, "Start here", is the place to begin: it covers `setup()` and
+  sends the reader on to the `hvtiRtemplates` tutorials. The site's "Get started"
+  link now goes there, and the old vignette is retitled "Install, update and
+  check the family".
+
+* "Start here" now links to the top of the `hvtiRtemplates` tutorials, which open on `setup()`, rather than past their opening sections.
+* "Start here" and the README now warn, before the `setup()` call, that adopting deletes every `tp.*` file by name, edited or not, with no backup, and offer `cleanup = FALSE`. Their calls pass `identity_source = "manual"`, because a typed identity left at the default is recorded as verified.
+
+* The command `setup()` prints when it refuses to run inside a project now carries `upgrade = FALSE` and the arguments passed through `...`. It dropped them, so copying it lost `cleanup = FALSE`, and adopting then deleted every `tp.*` file; lost `identity_source = "manual"`, recording a typed identity as verified; and lost `upgrade = FALSE`, moving a study in revision off its locked versions.
+
+* A new article, "A study's package environment", covers adding and updating a
+  study's packages, answering a revision and common problems. It says plainly
+  that `status()` compares with GitHub `main`, not with the lockfile.
 
 # hvtiR 1.3.5
 
