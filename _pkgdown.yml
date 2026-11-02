@@ -43,6 +43,8 @@ navbar:
       menu:
       - text: Start here
         href: articles/start-here.html
+      - text: A study's package environment
+        href: articles/study-environment.html
       - text: Install, update and check the family
         href: articles/hvtiR.html
     my_linkedin:
@@ -78,4 +80,5 @@ articles:
   navbar: ~
   contents:
   - start-here
+  - study-environment
   - hvtiR
