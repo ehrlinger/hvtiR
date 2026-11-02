@@ -1149,6 +1149,30 @@ test_that("the guard's offered command keeps upgrade = FALSE", {
   expect_match(gsub("\\s+", " ", err), "7L, upgrade = FALSE)", fixed = TRUE)
 })
 
+test_that("the guard's offered command binds ... as setup() bound it", {
+  local_mocked_bindings(renv_state = function(...) "active")
+  withr::local_envvar(RENV_PROJECT = "/studies/demo")
+  offered <- function(...) {
+    err <- gsub("\\s+", " ", tryCatch(setup(...), error = conditionMessage))
+    cmd <- regmatches(err, regexpr("hvtiR::setup\\([^`]*\\)", err))
+    as.list(match.call(setup, parse(text = cmd)[[1L]]))
+  }
+  # Left off the command, these formals would take the argument instead: an
+  # unnamed one by position, and `a` by partial matching.
+  unnamed <- offered(
+    "A study", 7L, root = "/studies/demo",
+    adopt = FALSE, upgrade = TRUE, workspace_prefs = TRUE, "kept"
+  )
+  expect_false(unnamed$adopt)
+  expect_true(unnamed$upgrade)
+  expect_true(unnamed$workspace_prefs)
+  expect_identical(unname(unnamed[names(unnamed) == ""][-1L]), list("kept"))
+
+  partial <- offered("A study", 7L, adopt = FALSE, a = "kept")
+  expect_false(partial$adopt)
+  expect_identical(partial$a, "kept")
+})
+
 test_that("the guard's offered command keeps what ... carries", {
   local_mocked_bindings(renv_state = function(...) "active")
   withr::local_envvar(RENV_PROJECT = "/studies/demo")
@@ -1160,7 +1184,7 @@ test_that("the guard's offered command keeps what ... carries", {
   # deletes every tp.* file, so they must sit inside the call itself.
   expect_match(
     gsub("\\s+", " ", err),
-    'study_tracker_id = 7L, cleanup = FALSE, identity_source = "manual")',
+    'upgrade = TRUE, cleanup = FALSE, identity_source = "manual")',
     fixed = TRUE
   )
 })

@@ -1077,12 +1077,14 @@ study_root_or_abort <- function(study_root) {
 #' `setup()` replaces packages this session has loaded and would install into
 #' the study library through this session.
 #' @param root The study root, or `NULL`.
-#' @param study,study_tracker_id,adopt,workspace_prefs,upgrade,... As passed
-#'   to [setup()], quoted back in the command the message offers.
+#' @param study,study_tracker_id,adopt,workspace_prefs,upgrade As passed to
+#'   [setup()], quoted back in the command the message offers.
+#' @param dots `list(...)` from [setup()], quoted back likewise. A list, because
+#'   forwarded as `...` a short name would partially match a formal here.
 #' @noRd
 guard_session <- function(root, study, study_tracker_id,
                           adopt = FALSE, workspace_prefs = TRUE,
-                          upgrade = TRUE, ...) {
+                          upgrade = TRUE, dots = list()) {
   active <- renv_state() == "active"
   guess <- if (is.null(root)) cheap_study_root() else root
   if (!active && !path_within(session_library(), guess)) return(invisible())
@@ -1093,15 +1095,20 @@ guard_session <- function(root, study, study_tracker_id,
   } else {
     guess
   }
+  # Name every formal when `...` carries anything: one left off would take an
+  # unnamed argument by position, or a short name by partial matching.
+  all_formals <- length(dots) > 0L
   # Read by cli's glue below, which lintr cannot see.
   # nolint next: object_usage_linter.
   cmd <- deparse1(as.call(c(
     list(quote(hvtiR::setup)),
     list(root = target, study = study, study_tracker_id = study_tracker_id),
-    if (isTRUE(adopt)) list(adopt = TRUE),
-    if (isFALSE(workspace_prefs)) list(workspace_prefs = FALSE),
-    if (isFALSE(upgrade)) list(upgrade = FALSE),
-    list(...)
+    if (all_formals || isTRUE(adopt)) list(adopt = adopt),
+    if (all_formals || isFALSE(workspace_prefs)) {
+      list(workspace_prefs = workspace_prefs)
+    },
+    if (all_formals || isFALSE(upgrade)) list(upgrade = upgrade),
+    dots
   )))
   project <- Sys.getenv("RENV_PROJECT", "")
   # A restart in RStudio reopens the last project, so the session can sit in
@@ -1231,7 +1238,7 @@ setup <- function(study, study_tracker_id, root = NULL, adopt = FALSE,
     cli::cli_abort("{.arg workspace_prefs} must be `TRUE` or `FALSE`.")
   }
   guard_session(
-    root, study, study_tracker_id, adopt, workspace_prefs, upgrade, ...
+    root, study, study_tracker_id, adopt, workspace_prefs, upgrade, list(...)
   )
   if (is.null(root)) {
     # Before utilities_fn(), which can install into this session's library.
