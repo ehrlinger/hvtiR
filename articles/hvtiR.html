@@ -5,7 +5,7 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<title>Getting Started with hvtiR • hvtiR</title>
+<title>Install, update and check the family • hvtiR</title>
 <script src="../lightswitch.js"></script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/Outfit-0.4.10/font.css" rel="stylesheet">
@@ -15,7 +15,7 @@
 <script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><script src="hvtiR_files/libs/quarto-html/popper.min.js"></script><script src="hvtiR_files/libs/quarto-html/tippy.umd.min.js"></script><link href="hvtiR_files/libs/quarto-html/tippy.css" rel="stylesheet">
 <link href="hvtiR_files/libs/quarto-html/light-border.css" rel="stylesheet">
 <!-- pkgdown --><script src="../pkgdown.js"></script><link href="../extra.css" rel="stylesheet">
-<meta property="og:title" content="Getting Started with hvtiR">
+<meta property="og:title" content="Install, update and check the family">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -34,8 +34,15 @@
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto">
-<li class="active nav-item"><a class="nav-link" href="../articles/hvtiR.html">Get started</a></li>
+<li class="nav-item"><a class="nav-link" href="../articles/start-here.html">Get started</a></li>
 <li class="nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
+<li class="active nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
+<li><a class="dropdown-item" href="../articles/start-here.html">Start here</a></li>
+    <li><a class="dropdown-item" href="../articles/hvtiR.html">Install, update and check the family</a></li>
+  </ul>
+</li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul>
 <ul class="navbar-nav">
@@ -61,10 +68,10 @@
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
 
-      <h1>Getting Started with hvtiR</h1>
+      <h1>Install, update and check the family</h1>
 
       <p class="author">John Ehrlinger</p>
-      <p class="date">2026-11-01</p>
+      <p class="date">2026-11-02</p>
 
       <small class="dont-index">Source: <a href="https://github.com/ehrlinger/hvtiR/blob/main/vignettes/hvtiR.qmd" class="external-link"><code>vignettes/hvtiR.qmd</code></a></small>
       <div class="d-none name"><code></code></div>
@@ -78,7 +85,7 @@
     <section class="level2"><h2 id="the-problem">The problem<a class="anchor" aria-label="anchor" href="#the-problem"></a>
 </h2>
 <p>The HVTI R package family is twelve packages spread across twelve GitHub repositories. Setting up a machine used to mean twelve <code><a href="https://pak.r-lib.org/reference/pak.html" class="external-link">pak::pak()</a></code> calls, in an order you had to know, against repository names that have not always matched the package names: <code>hvtiRpropensity</code> lived in <code>ehrlinger/hvtiPropensityScores</code> and <code>TemporalHazard</code> in <code>ehrlinger/temporal_hazard</code> until the 2026-08 renames.</p>
-<p><code>hvtiR</code> reduces that to one call, and adds a way to ask whether you are current.</p>
+<p><code>hvtiR</code> reduces that to one call, and adds a way to ask whether you are current. If you are beginning work on a study, read <a href="start-here.html">Start here</a> first; this page is about the family on your machine.</p>
 </section><section class="level2"><h2 id="the-members">The members<a class="anchor" aria-label="anchor" href="#the-members"></a>
 </h2>
 <p>The registry is the package’s only piece of data. It maps each package to the repository it installs from:</p>
@@ -206,22 +213,12 @@ i Pass `force = TRUE` to install anyway (unsafe on Windows).</code></pre>
 <p>This is not fussiness. A package whose namespace is loaded cannot be safely overwritten — on Windows the write fails outright and leaves a half-installed library. The returned empty character vector carries a <code>blocked</code> attribute with the loaded package names. Restart R and run the update before you attach anything.</p>
 </section></section><section class="level2"><h2 id="set-up-a-study">Set up a study<a class="anchor" aria-label="anchor" href="#set-up-a-study"></a>
 </h2>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb12"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"pak"</span><span class="op">)</span></span>
-<span><span class="fu">pak</span><span class="fu">::</span><span class="fu"><a href="https://pak.r-lib.org/reference/pak.html" class="external-link">pak</a></span><span class="op">(</span><span class="st">"ehrlinger/hvtiR"</span><span class="op">)</span></span>
-<span><span class="fu">hvtiR</span><span class="fu">::</span><span class="fu"><a href="../reference/setup.html">setup</a></span><span class="op">(</span></span>
-<span>  study <span class="op">=</span> <span class="st">"EDIT: the Study Tracker title"</span>,</span>
-<span>  study_tracker_id <span class="op">=</span> <span class="fl">0L</span>,  <span class="co"># EDIT: the Study Tracker ID</span></span>
-<span>  root <span class="op">=</span> <span class="st">"EDIT: the study directory"</span></span>
-<span><span class="op">)</span></span></code></pre></div>
-</div>
-<p>Run this once per study, before anything else, from an R session started outside any project, passing <code>root =</code>. From inside the study’s RStudio project it stops before installing anything and names the command to run: it replaces packages that session has loaded. It also stops the study using renv’s per-user cache, so the shared library holds real copies a teammate can read, and reinstalls any package that was only a link into someone’s home. It cleans up template copies first and only then locks the packages, so the lockfile records what the study declares and not what the templates happened to mention. For an existing (legacy) study pass <code>adopt = TRUE</code>, which is what cleans up its template copies. A study that already has a <code>renv.lock</code> keeps its locked versions unless the declared family needs newer ones, in which case <code><a href="../reference/setup.html">setup()</a></code> moves them, lists each move and records them (<code>upgrade = TRUE</code>, the default; pass <code>upgrade = FALSE</code> for a study in revision, whose versions must not move), and every package that lockfile recorded is declared on first conversion, so none drop out. No personal GitHub token is needed: the packages are installed with pak, which carries a shared token, and renv keeps the environment (lockfile, restore, snapshot). It is safe to rerun.</p>
+<p>A study needs more than an installed family: its own library, a lockfile and its identity. <code><a href="../reference/setup.html">hvtiR::setup()</a></code> does all of that once per study, and <a href="start-here.html">Start here</a> walks through it.</p>
 </section><section class="level2"><h2 id="reproducible-installs">Reproducible installs<a class="anchor" aria-label="anchor" href="#reproducible-installs"></a>
 </h2>
 <p><code><a href="../reference/install.html">hvtiR::install()</a></code> resolves every member from GitHub <code>main</code>, so it gives you the newest code rather than a fixed one. Two people running it a week apart can end up on different commits under the same version number. When an analysis has to be reproducible, pin the versions with <a href="https://rstudio.github.io/renv/" class="external-link">renv</a>:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">renv</span><span class="fu">::</span><span class="fu"><a href="https://rstudio.github.io/renv/reference/init.html" class="external-link">init</a></span><span class="op">(</span><span class="op">)</span>      <span class="co"># once per project</span></span>
 <span><span class="fu">hvtiR</span><span class="fu">::</span><span class="fu"><a href="../reference/install.html">install</a></span><span class="op">(</span><span class="op">)</span>  <span class="co"># installs into the project library</span></span>
 <span><span class="fu">renv</span><span class="fu">::</span><span class="fu"><a href="https://rstudio.github.io/renv/reference/snapshot.html" class="external-link">snapshot</a></span><span class="op">(</span><span class="op">)</span>  <span class="co"># records every package, and each member's commit</span></span></code></pre></div>
@@ -231,7 +228,7 @@ i Pass `force = TRUE` to install anyway (unsafe on Windows).</code></pre>
 </section><section class="level2"><h2 id="when-something-will-not-install">When something will not install<a class="anchor" aria-label="anchor" href="#when-something-will-not-install"></a>
 </h2>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">hvtiR</span><span class="fu">::</span><span class="fu"><a href="../reference/doctor.html">doctor</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 </div>
 <p>The doctor reports on your environment ahead of the status table: the installed <code>hvtiR</code> version, your R version against the family’s strictest requirement, your platform, whether <code>pak</code> is installed to install members with, the package repositories R is configured to use, and whether an <code>renv</code> project is active.</p>
@@ -252,7 +249,8 @@ i Pass `force = TRUE` to install anyway (unsafe on Windows).</code></pre>
           return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
       }
       // Inspect non-navigation links and adorn them if external
-     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      window.quartoDecorateExternalLinks = function (root) {
+     var links = (root || window.document).querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
       for (var i=0; i<links.length; i++) {
         const link = links[i];
         if (!isInternal(link.href)) {
@@ -261,8 +259,69 @@ i Pass `force = TRUE` to install anyway (unsafe on Windows).</code></pre>
           if (link.dataset.originalHref !== undefined) {
             link.href = link.dataset.originalHref;
           }
+          if (!link.classList.contains('no-external-icon')) {
+          }
         }
       }
+      };
+      window.quartoDecorateExternalLinks(window.document);
+    // Esc closes the popup (WCAG 1.4.13) and focus leaving both trigger and
+    // popup closes it (WCAG 2.4.11); tippy handles neither for interactive popups.
+    const hideOnEscAndFocusOut = {
+      name: 'hideOnEscAndFocusOut',
+      defaultValue: true,
+      fn(instance) {
+        const dismiss = () => {
+          // A show scheduled by the trigger delay would otherwise reopen it
+          instance.clearDelayTimeouts();
+          instance.hide();
+        };
+        const onKeyDown = (event) => {
+          if (event.key !== 'Escape') {
+            return;
+          }
+          // Keep Esc from also reaching page handlers (e.g. reveal.js overview),
+          // except an open reveal.js slide menu, which Esc should close too.
+          // The menu handles keys only when its keyboard option is on.
+          const menuHandlesEsc = window.Reveal?.getPlugin?.('menu')?.isOpen() &&
+            window.Reveal.getConfig().menu?.keyboard !== false;
+          if (!menuHandlesEsc) {
+            event.stopPropagation();
+          }
+          if (instance.popper.contains(window.document.activeElement)) {
+            // Disabled while refocusing so the focus trigger does not reopen it
+            instance.disable();
+            instance.reference.focus();
+            instance.enable();
+          }
+          dismiss();
+        };
+        const onFocusOut = (event) => {
+          const target = event.relatedTarget;
+          if (target && !instance.reference.contains(target) &&
+              !instance.popper.contains(target)) {
+            dismiss();
+          }
+        };
+        // On the trigger too: a click trigger (code-annotations: select) has no
+        // blur handling. Attached for the instance's lifetime so leaving the
+        // trigger also cancels a show still pending on the trigger delay.
+        instance.reference.addEventListener('focusout', onFocusOut);
+        return {
+          onShow() {
+            window.document.addEventListener('keydown', onKeyDown, true);
+            instance.popper.addEventListener('focusout', onFocusOut);
+          },
+          onHide() {
+            window.document.removeEventListener('keydown', onKeyDown, true);
+            instance.popper.removeEventListener('focusout', onFocusOut);
+          },
+          onDestroy() {
+            instance.reference.removeEventListener('focusout', onFocusOut);
+          },
+        };
+      },
+    };
     function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
       const config = {
         allowHTML: true,
@@ -276,6 +335,7 @@ i Pass `force = TRUE` to install anyway (unsafe on Windows).</code></pre>
         interactiveBorder: 10,
         theme: 'light-border',
         placement: 'bottom-start',
+        plugins: [hideOnEscAndFocusOut],
       };
       if (contentFn) {
         config.content = contentFn;

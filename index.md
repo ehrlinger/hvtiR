@@ -10,6 +10,11 @@ whether you are current.
 
 **Documentation:** <https://ehrlinger.github.io/hvtiR/>
 
+**New to the family, or to a study?** [Start
+here](https://ehrlinger.github.io/hvtiR/articles/start-here.html). It
+sets the study up and sends you on to the [`hvtiRtemplates`
+tutorials](https://ehrlinger.github.io/hvtiRtemplates/), in that order.
+
 ## Installation
 
 ``` r
@@ -180,9 +185,12 @@ are not R packages and are not members.
 
 - [Reference](https://ehrlinger.github.io/hvtiR/reference/) - every
   function, with examples.
-- [Getting
-  started](https://ehrlinger.github.io/hvtiR/articles/hvtiR.html) - the
-  vignette, including what to do when a member will not install.
+- [Start
+  here](https://ehrlinger.github.io/hvtiR/articles/start-here.html) -
+  set up a study, then on to the `hvtiRtemplates` tutorials.
+- [Install, update and check the
+  family](https://ehrlinger.github.io/hvtiR/articles/hvtiR.html) -
+  including what to do when a member will not install.
 - [Changelog](https://ehrlinger.github.io/hvtiR/news/) - what changed in
   each release.
 - [Design records](https://ehrlinger.github.io/hvtiR/dev/specs/) - the

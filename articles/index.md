@@ -1,6 +1,8 @@
 # Articles
 
-### All vignettes
+### Getting started
 
-- [Getting Started with
-  hvtiR](https://ehrlinger.github.io/hvtiR/articles/hvtiR.md):
+- [Start
+  here](https://ehrlinger.github.io/hvtiR/articles/start-here.md):
+- [Install, update and check the
+  family](https://ehrlinger.github.io/hvtiR/articles/hvtiR.md):

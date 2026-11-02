@@ -1,4 +1,4 @@
-# Getting Started with hvtiR
+# Install, update and check the family
 
 ## The problem
 
@@ -11,7 +11,9 @@ matched the package names: `hvtiRpropensity` lived in
 `ehrlinger/temporal_hazard` until the 2026-08 renames.
 
 `hvtiR` reduces that to one call, and adds a way to ask whether you are
-current.
+current. If you are beginning work on a study, read [Start
+here](https://ehrlinger.github.io/hvtiR/articles/start-here.md) first;
+this page is about the family on your machine.
 
 ## The members
 
@@ -163,37 +165,12 @@ update before you attach anything.
 
 ## Set up a study
 
-``` r
-
-install.packages("pak")
-pak::pak("ehrlinger/hvtiR")
-hvtiR::setup(
-  study = "EDIT: the Study Tracker title",
-  study_tracker_id = 0L,  # EDIT: the Study Tracker ID
-  root = "EDIT: the study directory"
-)
-```
-
-Run this once per study, before anything else, from an R session started
-outside any project, passing `root =`. From inside the study’s RStudio
-project it stops before installing anything and names the command to
-run: it replaces packages that session has loaded. It also stops the
-study using renv’s per-user cache, so the shared library holds real
-copies a teammate can read, and reinstalls any package that was only a
-link into someone’s home. It cleans up template copies first and only
-then locks the packages, so the lockfile records what the study declares
-and not what the templates happened to mention. For an existing (legacy)
-study pass `adopt = TRUE`, which is what cleans up its template copies.
-A study that already has a `renv.lock` keeps its locked versions unless
-the declared family needs newer ones, in which case
-[`setup()`](https://ehrlinger.github.io/hvtiR/reference/setup.md) moves
-them, lists each move and records them (`upgrade = TRUE`, the default;
-pass `upgrade = FALSE` for a study in revision, whose versions must not
-move), and every package that lockfile recorded is declared on first
-conversion, so none drop out. No personal GitHub token is needed: the
-packages are installed with pak, which carries a shared token, and renv
-keeps the environment (lockfile, restore, snapshot). It is safe to
-rerun.
+A study needs more than an installed family: its own library, a lockfile
+and its identity.
+[`hvtiR::setup()`](https://ehrlinger.github.io/hvtiR/reference/setup.md)
+does all of that once per study, and [Start
+here](https://ehrlinger.github.io/hvtiR/articles/start-here.md) walks
+through it.
 
 ## Reproducible installs
 
