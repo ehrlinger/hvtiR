@@ -94,6 +94,17 @@
 </section><section class="level2"><h2 id="set-up-the-study">Set up the study<a class="anchor" aria-label="anchor" href="#set-up-the-study"></a>
 </h2>
 <p>Close any open project first (<strong>File &gt; Close Project</strong>), so that R starts outside the study. <code><a href="../reference/setup.html">setup()</a></code> replaces packages in the study’s library, and a session inside the project has those packages loaded. Run from there it stops before installing anything and names the command to run instead. That is why the call names the directory with <code>root</code>.</p>
+<section class="level3"><h3 id="what-adopting-deletes">What adopting deletes<a class="anchor" aria-label="anchor" href="#what-adopting-deletes"></a>
+</h3>
+<p>Adopting deletes three kinds of file anywhere in the study, and makes no backup:</p>
+<ul>
+<li>every file whose name starts with <code>tp.</code>, <strong>matched by name alone</strong>, so an edited or study-specific <code>tp.*</code> file goes too;</li>
+<li>every <code>binder.summaries.doc</code>;</li>
+<li>every other file whose name and exact content match one in the template corpus.</li>
+</ul>
+<p>Before you adopt, look through the study for <code>tp.*</code> files that hold work of your own, and rename or copy any you need. To adopt without deleting anything, add <code>cleanup = FALSE</code> to the call below.</p>
+</section><section class="level3"><h3 id="run-it">Run it<a class="anchor" aria-label="anchor" href="#run-it"></a>
+</h3>
 <p>Install the installer, then set the study up:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"pak"</span><span class="op">)</span>  <span class="co"># once per machine</span></span>
@@ -103,16 +114,18 @@
 <span>  study <span class="op">=</span> <span class="st">"EDIT: the Study Tracker title"</span>,</span>
 <span>  study_tracker_id <span class="op">=</span> <span class="fl">0L</span>,  <span class="co"># EDIT: the Study Tracker ID</span></span>
 <span>  root <span class="op">=</span> <span class="st">"EDIT: the study directory"</span>,</span>
-<span>  adopt <span class="op">=</span> <span class="cn">TRUE</span>  <span class="co"># EDIT: leave out only when the directory does not exist yet</span></span>
+<span>  adopt <span class="op">=</span> <span class="cn">TRUE</span>,  <span class="co"># EDIT: leave out only when the directory does not exist yet</span></span>
+<span>  identity_source <span class="op">=</span> <span class="st">"manual"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p><code>adopt</code> is the choice you have to get right. A directory that already exists needs <code>adopt = TRUE</code>, even an empty one, or <code><a href="../reference/setup.html">setup()</a></code> stops. An adopted study keeps the folder names it has, and its template copies are cleaned up: the <code>tp.*</code> files, <code>binder.summaries.doc</code> and files identical to one in the template corpus. An empty or new directory gets the numbered folders (<code>00_datasets</code>, <code>10_descriptive</code> and so on).</p>
+<p><code>adopt</code> is the choice you have to get right. A directory that already exists needs <code>adopt = TRUE</code>, even an empty one, or <code><a href="../reference/setup.html">setup()</a></code> stops. An adopted study keeps the folder names it has and loses the files listed above. An empty or new directory gets the numbered folders (<code>00_datasets</code>, <code>10_descriptive</code> and so on).</p>
+<p><code>identity_source = "manual"</code> is there because you typed the title and ID. The default says they came from a Study Tracker record, and a new <code>_study.yml</code> would then record them as verified. A <code>_study.yml</code> the study already has is not rewritten.</p>
 <p>A study in revision needs one more argument, <code>upgrade = FALSE</code>. By default, <code><a href="../reference/setup.html">setup()</a></code> moves a version the lockfile pins when the family needs a newer one, and lists each move. In revision those versions must not move, so with <code>upgrade = FALSE</code> a package the install would move stops the run instead, and <code>renv.lock</code> stays as it was.</p>
-<section class="level3"><h3 id="what-it-does">What it does<a class="anchor" aria-label="anchor" href="#what-it-does"></a>
+</section><section class="level3"><h3 id="what-it-does">What it does<a class="anchor" aria-label="anchor" href="#what-it-does"></a>
 </h3>
 <p>In order, <code><a href="../reference/setup.html">setup()</a></code>:</p>
 <ul>
 <li>turns off RStudio’s <code>.RData</code> restore and save, for you rather than for the study (<code>workspace_prefs = FALSE</code> leaves them alone);</li>
-<li>writes the study’s identity to <code>_study.yml</code>, adding a project file when there is none, and cleans up the template copies if you are adopting;</li>
+<li>writes the study’s identity to <code>_study.yml</code>, adding a project file when there is none, and deletes the files listed above if you are adopting;</li>
 <li>declares <code>hvtiR</code>, every family member and the standard analysis packages in the study’s <code>DESCRIPTION</code>;</li>
 <li>installs them into the study’s own library and records them in <code>renv.lock</code>;</li>
 <li>checks that every package’s dependencies resolve there;</li>
@@ -135,13 +148,10 @@
 <p>Expect <code>study_status()</code> to report that no dataset is registered yet. That is the next step, and it belongs to the tutorials.</p>
 </section><section class="level2"><h2 id="go-on-to-the-tutorials">Go on to the tutorials<a class="anchor" aria-label="anchor" href="#go-on-to-the-tutorials"></a>
 </h2>
-<p>From here the work moves to <a href="https://ehrlinger.github.io/hvtiRtemplates/"><code>hvtiRtemplates</code></a>. <code><a href="../reference/setup.html">setup()</a></code> has already done the opening sections of the first two tutorials, so the links below start you at the section after them. Those sections call the packages’ functions by name alone, so attach the two packages first:</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">hvtiRutilities</span><span class="op">)</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">hvtiRtemplates</span><span class="op">)</span></span></code></pre></div>
+<p>From here the work moves to <a href="https://ehrlinger.github.io/hvtiRtemplates/"><code>hvtiRtemplates</code></a>.</p>
 <ol type="1">
 <li>
-<strong>Register the data.</strong> For a new study, <a href="https://ehrlinger.github.io/hvtiRtemplates/articles/new-study.html#register-the-dataset">Start a new study</a>. For an existing one, <a href="https://ehrlinger.github.io/hvtiRtemplates/articles/study-setup.html#register-the-existing-dataset">Adopt an existing study</a>.</li>
+<strong>Register the data.</strong> For a new study, <a href="https://ehrlinger.github.io/hvtiRtemplates/articles/new-study.html">Start a new study</a>. For an existing one, <a href="https://ehrlinger.github.io/hvtiRtemplates/articles/study-setup.html">Adopt an existing study</a>.</li>
 <li>
 <strong>Work a job.</strong> <a href="https://ehrlinger.github.io/hvtiRtemplates/articles/work-a-job.html">Work a job, from template to final report</a> is the daily loop: pick a template, add it, fill in its <code>EDIT:</code> lines, render, and read the report.</li>
 <li>
@@ -151,7 +161,7 @@
 </section><section class="level2"><h2 id="when-something-goes-wrong">When something goes wrong<a class="anchor" aria-label="anchor" href="#when-something-goes-wrong"></a>
 </h2>
 <p>Start with the doctor:</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">hvtiR</span><span class="fu">::</span><span class="fu"><a href="../reference/doctor.html">doctor</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <p>It reports your R version, your platform, whether pak is available, the repositories R is configured to use and whether an renv project is active, and <a href="hvtiR.html#when-something-will-not-install">Install, update and check the family</a> explains the failures we see most. If that does not settle it, tell the team. Send the code you ran, what you expected, what happened instead, and the doctor’s output. A failure you hit is usually a gap in the tools or in this page, so report it early.</p>
 <p>Never send patient data. Column names and <code><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim()</a></code> are fine; rows are not.</p>
