@@ -1,0 +1,2 @@
+* "Start here" now links to the top of the `hvtiRtemplates` tutorials, which open on `setup()`, rather than past their opening sections.
+* "Start here" and the README now warn, before the `setup()` call, that adopting deletes every `tp.*` file by name, edited or not, with no backup, and offer `cleanup = FALSE`. Their calls pass `identity_source = "manual"`, because a typed identity left at the default is recorded as verified.
