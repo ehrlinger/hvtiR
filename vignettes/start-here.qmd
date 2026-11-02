@@ -1,0 +1,174 @@
+---
+title: "Start here"
+author: "John Ehrlinger"
+vignette: >
+  %\VignetteIndexEntry{Start here}
+  %\VignetteEngine{quarto::html}
+  %\VignetteEncoding{UTF-8}
+format:
+  html:
+    toc: true
+    embed-resources: true
+---
+
+If you are new to the HVTI R family, or new to a study, read this page first.
+The work comes in two parts, and the order matters. `hvtiR` gets the study
+ready, once. The `hvtiRtemplates` tutorials then take you through the analysis,
+every day after that.
+
+## What you need
+
+You need a session on the server, the study's directory, and its title and ID
+from Study Tracker. On Posit Workbench, start a new RStudio Pro session and pick
+the latest R version listed. The family requires R 4.4.0 or newer, and `setup()`
+stops on anything older.
+
+A study that already has a `renv.lock` is the exception: pick the R version its
+`R` `Version` entry records. `setup()` only warns about a different one, and its
+snapshot then records the R you are running. `upgrade = FALSE` keeps package
+versions from moving, not R.
+
+## Has the study been set up already?
+
+Look in the study's directory. If it holds both `_study.yml` and `renv.lock`,
+someone has probably set it up: open its `.Rproj`, then go to
+[Check the study](#check-the-study). Those two files can also come from an older
+`renv::init()`, which brings neither the family nor the standard packages. If
+`hvtiR::status()` there shows members missing, run `setup()` below with
+`adopt = TRUE`.
+
+A new study may have been set up when its directory was made, because the
+`study-setup` command in `qhsprograms` runs `hvtiR::setup()` for you. Otherwise,
+carry on here.
+
+## Set up the study
+
+Close any open project first (**File > Close Project**), so that R starts
+outside the study. `setup()` replaces packages in the study's library, and a
+session inside the project has those packages loaded. Run from there it stops
+before installing anything and names the command to run instead. That is why
+the call names the directory with `root`.
+
+Install the installer, then set the study up:
+
+```r
+install.packages("pak")  # once per machine
+pak::pak("ehrlinger/hvtiR")
+
+hvtiR::setup(
+  study = "EDIT: the Study Tracker title",
+  study_tracker_id = 0L,  # EDIT: the Study Tracker ID
+  root = "EDIT: the study directory",
+  adopt = TRUE  # EDIT: leave out only when the directory does not exist yet
+)
+```
+
+`adopt` is the choice you have to get right. A directory that already exists needs
+`adopt = TRUE`, even an empty one, or `setup()` stops. An adopted study keeps the
+folder names it has, and its template copies are cleaned up: the `tp.*` files,
+`binder.summaries.doc` and files identical to one in the template corpus. An empty
+or new directory gets the numbered folders (`00_datasets`, `10_descriptive` and so
+on).
+
+A study in revision needs one more argument, `upgrade = FALSE`. By default,
+`setup()` moves a version the lockfile pins when the family needs a newer one,
+and lists each move. In revision those versions must not move, so with
+`upgrade = FALSE` a package the install would move stops the run instead, and
+`renv.lock` stays as it was.
+
+### What it does
+
+In order, `setup()`:
+
+- turns off RStudio's `.RData` restore and save, for you rather than for the
+  study (`workspace_prefs = FALSE` leaves them alone);
+- writes the study's identity to `_study.yml`, adding a project file when there
+  is none, and cleans up the template copies if you are adopting;
+- declares `hvtiR`, every family member and the standard analysis packages in
+  the study's `DESCRIPTION`;
+- installs them into the study's own library and records them in `renv.lock`;
+- checks that every package's dependencies resolve there;
+- restarts RStudio inside the project (outside RStudio, it tells you to restart
+  R there).
+
+It needs no data, so you can run it at kick-off. It needs no personal GitHub
+token to install, either, since pak carries a shared one. It warns when you have
+none, because restoring a package a lockfile already pins on GitHub may need your
+own `GITHUB_PAT`.
+
+If it stops partway, fix what it names and run the same command again. Each step
+checks before it acts, so a rerun is safe.
+
+### What not to run
+
+Do not run `renv::init()` on the study: `setup()` has already made the
+environment, and `renv::init()` starts the library over. Do not run
+`organize_templates.sh`: `setup(adopt = TRUE)` replaces it. When a study needs
+a package the family and the standard set do not bring, add it from inside the
+project:
+
+```r
+hvtiRutilities::study_need("cmprsk")
+```
+
+That installs it, declares it and records it in `renv.lock`.
+
+## Check the study {#check-the-study}
+
+Now you are inside the project. Ask the study what it still needs, and the
+family whether you are current:
+
+```r
+hvtiRutilities::study_status()
+hvtiR::status()
+```
+
+Expect `study_status()` to report that no dataset is registered yet. That is the
+next step, and it belongs to the tutorials.
+
+## Go on to the tutorials
+
+From here the work moves to
+[`hvtiRtemplates`](https://ehrlinger.github.io/hvtiRtemplates/). `setup()` has
+already done the opening sections of the first two tutorials, so the links below
+start you at the section after them. Those sections call the packages' functions
+by name alone, so attach the two packages first:
+
+```r
+library(hvtiRutilities)
+library(hvtiRtemplates)
+```
+
+1. **Register the data.** For a new study,
+   [Start a new study](https://ehrlinger.github.io/hvtiRtemplates/articles/new-study.html#register-the-dataset).
+   For an existing one,
+   [Adopt an existing study](https://ehrlinger.github.io/hvtiRtemplates/articles/study-setup.html#register-the-existing-dataset).
+2. **Work a job.**
+   [Work a job, from template to final report](https://ehrlinger.github.io/hvtiRtemplates/articles/work-a-job.html)
+   is the daily loop: pick a template, add it, fill in its `EDIT:` lines, render,
+   and read the report.
+3. **Choose the next template.** The
+   [template gallery](https://ehrlinger.github.io/hvtiRtemplates/gallery/) shows
+   what each one produces on a synthetic study.
+
+If you are coming from SAS,
+[From SAS descriptive jobs to R](https://ehrlinger.github.io/hvtiRtemplates/articles/sas-to-r-descriptive.html)
+sets the descriptive templates beside the `tp.dc.*` jobs they replace.
+
+## When something goes wrong
+
+Start with the doctor:
+
+```r
+hvtiR::doctor()
+```
+
+It reports your R version, your platform, whether pak is available, the
+repositories R is configured to use and whether an renv project is active, and
+[Install, update and check the family](hvtiR.html#when-something-will-not-install)
+explains the failures we see most. If that does not settle it, tell the team.
+Send the code you ran, what you expected, what happened instead, and the
+doctor's output. A failure you hit is usually a gap in the tools or in this page,
+so report it early.
+
+Never send patient data. Column names and `dim()` are fine; rows are not.
