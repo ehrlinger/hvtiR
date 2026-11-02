@@ -145,7 +145,13 @@ project:
 hvtiRutilities::study_need("cmprsk")
 ```
 
-That installs it, declares it and records it in `renv.lock`.
+That installs it, declares it and records it in `renv.lock`. A package
+already installed is only declared, so run
+[`renv::snapshot()`](https://rstudio.github.io/renv/reference/snapshot.html)
+after it. [A study’s package
+environment](https://ehrlinger.github.io/hvtiR/articles/study-environment.md)
+covers updates, revisions and what to do when the environment
+misbehaves.
 
 ## Check the study
 

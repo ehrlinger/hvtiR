@@ -177,8 +177,12 @@ through it.
 [`hvtiR::install()`](https://ehrlinger.github.io/hvtiR/reference/install.md)
 resolves every member from GitHub `main`, so it gives you the newest
 code rather than a fixed one. Two people running it a week apart can end
-up on different commits under the same version number. When an analysis
-has to be reproducible, pin the versions with
+up on different commits under the same version number. A study pins them
+through
+[`setup()`](https://ehrlinger.github.io/hvtiR/reference/setup.md), as [A
+study’s package
+environment](https://ehrlinger.github.io/hvtiR/articles/study-environment.md)
+explains. For any other project, pin the versions with
 [renv](https://rstudio.github.io/renv/):
 
 ``` r

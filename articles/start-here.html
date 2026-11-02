@@ -40,6 +40,7 @@
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><a class="dropdown-item" href="../articles/start-here.html">Start here</a></li>
+    <li><a class="dropdown-item" href="../articles/study-environment.html">A study's package environment</a></li>
     <li><a class="dropdown-item" href="../articles/hvtiR.html">Install, update and check the family</a></li>
   </ul>
 </li>
@@ -138,7 +139,7 @@
 <p>Do not run <code><a href="https://rstudio.github.io/renv/reference/init.html" class="external-link">renv::init()</a></code> on the study: <code><a href="../reference/setup.html">setup()</a></code> has already made the environment, and <code><a href="https://rstudio.github.io/renv/reference/init.html" class="external-link">renv::init()</a></code> starts the library over. Do not run <code>organize_templates.sh</code>: <code>setup(adopt = TRUE)</code> replaces it. When a study needs a package the family and the standard set do not bring, add it from inside the project:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">hvtiRutilities</span><span class="fu">::</span><span class="fu">study_need</span><span class="op">(</span><span class="st">"cmprsk"</span><span class="op">)</span></span></code></pre></div>
-<p>That installs it, declares it and records it in <code>renv.lock</code>.</p>
+<p>That installs it, declares it and records it in <code>renv.lock</code>. A package already installed is only declared, so run <code><a href="https://rstudio.github.io/renv/reference/snapshot.html" class="external-link">renv::snapshot()</a></code> after it. <a href="study-environment.html">A study’s package environment</a> covers updates, revisions and what to do when the environment misbehaves.</p>
 </section></section><section class="level2"><h2 id="check-the-study">Check the study<a class="anchor" aria-label="anchor" href="#check-the-study"></a>
 </h2>
 <p>Now you are inside the project. Ask the study what it still needs, and the family whether you are current:</p>
