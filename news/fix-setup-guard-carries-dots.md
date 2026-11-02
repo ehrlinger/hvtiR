@@ -1,0 +1,1 @@
+* The command `setup()` prints when it refuses to run inside a project now carries the arguments passed through `...`. It dropped them, so copying it lost `cleanup = FALSE`, and adopting then deleted every `tp.*` file, and lost `identity_source = "manual"`, recording a typed identity as verified.

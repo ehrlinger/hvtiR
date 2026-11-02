@@ -1137,6 +1137,22 @@ test_that("the guard's offered command keeps workspace_prefs = FALSE", {
   )
   expect_match(err, "workspace_prefs = FALSE", fixed = TRUE)
 })
+
+test_that("the guard's offered command keeps what ... carries", {
+  local_mocked_bindings(renv_state = function(...) "active")
+  withr::local_envvar(RENV_PROJECT = "/studies/demo")
+  err <- tryCatch(
+    setup("A study", 7L, cleanup = FALSE, identity_source = "manual"),
+    error = conditionMessage
+  )
+  # Copied without these, a typed identity reads as verified and adopting
+  # deletes every tp.* file, so they must sit inside the call itself.
+  expect_match(
+    gsub("\\s+", " ", err),
+    'study_tracker_id = 7L, cleanup = FALSE, identity_source = "manual")',
+    fixed = TRUE
+  )
+})
 # setup() from inside the study: the guard comes before anything installs.
 
 test_that("setup aborts with renv active, before anything can install", {
