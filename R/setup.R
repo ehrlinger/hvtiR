@@ -1077,11 +1077,12 @@ study_root_or_abort <- function(study_root) {
 #' `setup()` replaces packages this session has loaded and would install into
 #' the study library through this session.
 #' @param root The study root, or `NULL`.
-#' @param study,study_tracker_id,adopt,workspace_prefs,... As passed to
-#'   [setup()], quoted back in the command the message offers.
+#' @param study,study_tracker_id,adopt,workspace_prefs,upgrade,... As passed
+#'   to [setup()], quoted back in the command the message offers.
 #' @noRd
 guard_session <- function(root, study, study_tracker_id,
-                          adopt = FALSE, workspace_prefs = TRUE, ...) {
+                          adopt = FALSE, workspace_prefs = TRUE,
+                          upgrade = TRUE, ...) {
   active <- renv_state() == "active"
   guess <- if (is.null(root)) cheap_study_root() else root
   if (!active && !path_within(session_library(), guess)) return(invisible())
@@ -1099,6 +1100,7 @@ guard_session <- function(root, study, study_tracker_id,
     list(root = target, study = study, study_tracker_id = study_tracker_id),
     if (isTRUE(adopt)) list(adopt = TRUE),
     if (isFALSE(workspace_prefs)) list(workspace_prefs = FALSE),
+    if (isFALSE(upgrade)) list(upgrade = FALSE),
     list(...)
   )))
   project <- Sys.getenv("RENV_PROJECT", "")
@@ -1228,7 +1230,9 @@ setup <- function(study, study_tracker_id, root = NULL, adopt = FALSE,
   if (!isTRUE(workspace_prefs) && !isFALSE(workspace_prefs)) {
     cli::cli_abort("{.arg workspace_prefs} must be `TRUE` or `FALSE`.")
   }
-  guard_session(root, study, study_tracker_id, adopt, workspace_prefs, ...)
+  guard_session(
+    root, study, study_tracker_id, adopt, workspace_prefs, upgrade, ...
+  )
   if (is.null(root)) {
     # Before utilities_fn(), which can install into this session's library.
     if (is.null(enclosing_study())) abort_no_study()

@@ -1138,6 +1138,17 @@ test_that("the guard's offered command keeps workspace_prefs = FALSE", {
   expect_match(err, "workspace_prefs = FALSE", fixed = TRUE)
 })
 
+test_that("the guard's offered command keeps upgrade = FALSE", {
+  local_mocked_bindings(renv_state = function(...) "active")
+  withr::local_envvar(RENV_PROJECT = "/studies/demo")
+  err <- tryCatch(
+    setup("A study", 7L, upgrade = FALSE),
+    error = conditionMessage
+  )
+  # Copied without it, a study in revision moves its locked versions.
+  expect_match(gsub("\\s+", " ", err), "7L, upgrade = FALSE)", fixed = TRUE)
+})
+
 test_that("the guard's offered command keeps what ... carries", {
   local_mocked_bindings(renv_state = function(...) "active")
   withr::local_envvar(RENV_PROJECT = "/studies/demo")
