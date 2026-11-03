@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">hvtiR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.3.5</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.3.6</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -46,6 +46,19 @@
       <small>Source: <a href="https://github.com/ehrlinger/hvtiR/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.3.6" id="hvtir-136">hvtiR 1.3.6<a class="anchor" aria-label="anchor" href="#hvtir-136"></a></h2>
+<ul><li><p><code><a href="../reference/setup.html">setup()</a></code> gains <code>workspace_prefs</code>: <code>FALSE</code> leaves the user’s RStudio preferences alone. The default, <code>TRUE</code>, still turns off <code>.RData</code> restore and save.</p></li>
+<li><p><code><a href="../reference/setup.html">setup()</a></code> without <code>root</code> now stops outside a study and asks for it, instead of writing the study into the working directory.</p></li>
+<li><p><code><a href="../reference/setup.html">setup()</a></code>’s help now says that <code>renv</code> and <code>hvtiRutilities</code> can be installed into the session’s library.</p></li>
+<li><p>The dependency checks no longer call <code><a href="https://rdrr.io/r/utils/installed.packages.html" class="external-link">installed.packages()</a></code> to name the base packages.</p></li>
+<li><p>A new article, “Start here”, is the place to begin: it covers <code><a href="../reference/setup.html">setup()</a></code> and sends the reader on to the <code>hvtiRtemplates</code> tutorials. The site’s “Get started” link now goes there, and the old vignette is retitled “Install, update and check the family”.</p></li>
+<li><p>“Start here” now links to the top of the <code>hvtiRtemplates</code> tutorials, which open on <code><a href="../reference/setup.html">setup()</a></code>, rather than past their opening sections.</p></li>
+<li><p>“Start here” and the README now warn, before the <code><a href="../reference/setup.html">setup()</a></code> call, that adopting deletes every <code>tp.*</code> file by name, edited or not, with no backup, and offer <code>cleanup = FALSE</code>. Their calls pass <code>identity_source = "manual"</code>, because a typed identity left at the default is recorded as verified.</p></li>
+<li><p>The command <code><a href="../reference/setup.html">setup()</a></code> prints when it refuses to run inside a project now carries <code>upgrade = FALSE</code> and the arguments passed through <code>...</code>. It dropped them, so copying it lost <code>cleanup = FALSE</code>, and adopting then deleted every <code>tp.*</code> file; lost <code>identity_source = "manual"</code>, recording a typed identity as verified; and lost <code>upgrade = FALSE</code>, moving a study in revision off its locked versions.</p></li>
+<li><p>A new article, “A study’s package environment”, covers adding and updating a study’s packages, answering a revision and common problems. It says plainly that <code><a href="../reference/status.html">status()</a></code> compares with GitHub <code>main</code>, not with the lockfile.</p></li>
+<li><p>Catalog versions refreshed from <code>main</code>: <code>TemporalHazard</code> dev 1.2.17 to 1.2.18; <code>hvtiRtemplates</code> dev 1.5.4 to 1.5.5; <code>hvtiRutilities</code> dev 1.5.18 to 1.5.19. The catalog ships in the package and is published as <code>members.json</code>, so its recorded versions are content rather than bookkeeping.</p></li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.3.5" id="hvtir-135">hvtiR 1.3.5<a class="anchor" aria-label="anchor" href="#hvtir-135"></a></h2>
 <ul><li><p>When restoring a study’s lockfile fails because a package does not compile, <code><a href="../reference/setup.html">setup()</a></code> now names the packages that failed and gives the <code><a href="https://rstudio.github.io/renv/reference/record.html" class="external-link">renv::record()</a></code> call that moves the pin while keeping its locked source: a GitHub record stays on GitHub. Under <code>upgrade = FALSE</code> it gives no such call, since that mode keeps a revision’s locked versions. It used to lead with “A GitHub token is needed” whenever an authentication message appeared anywhere in the output, which sent users after a token when the real cause was a locked version (<code>vctrs</code> 0.7.2) that no longer builds under R 4.6.</p></li>
