@@ -27,6 +27,12 @@ Version: 1.3.6
   study's packages, answering a revision and common problems. It says plainly
   that `status()` compares with GitHub `main`, not with the lockfile.
 
+* Catalog versions refreshed from `main`: `TemporalHazard` dev 1.2.17 to
+  1.2.18; `hvtiRtemplates` dev 1.5.4 to 1.5.5; `hvtiRutilities` dev 1.5.18
+  to 1.5.19. The catalog ships in the package and is published as
+  `members.json`, so its recorded versions are content rather than
+  bookkeeping.
+
 # hvtiR 1.3.5
 
 * When restoring a study's lockfile fails because a package does not compile,
