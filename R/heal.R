@@ -240,7 +240,7 @@ heal_restore <- function(root, repos, upgrade, essential, max_rounds = 10L) {
       cli::cli_abort(c(
         "Healing the study's packages failed while {what}.",
         output_bullets(out$output),
-        i = "Full output: {.file {save_setup_log(out$output)}}"
+        i = "Full output: {.file {save_setup_log(out$output, root)}}"
       ))
     }
     out
@@ -291,7 +291,7 @@ heal_restore <- function(root, repos, upgrade, essential, max_rounds = 10L) {
       child(install_expr(root, specs, repos), "installing dependencies first")
     }
     if (nrow(decision$drop)) {
-      log <- save_setup_log(raw$output)
+      log <- save_setup_log(raw$output, root)
       child(drop_expr(root, decision$drop$package), "leaving packages out")
       for (i in seq_len(nrow(decision$drop))) {
         missing[nrow(missing) + 1L, ] <- list(
@@ -301,4 +301,75 @@ heal_restore <- function(root, repos, upgrade, essential, max_rounds = 10L) {
       }
     }
   }
+}
+
+#' Write `renv/hvtiR-setup.dcf`, the study's record of its last setup
+#'
+#' DCF, read with [read.dcf()], because hvtiR imports nothing to read JSON.
+#' One record per line of fact, each with a `Type`.
+#' @param root The study root.
+#' @param healed,missing From [heal_restore()], plus any packages the install
+#'   and check stages left out.
+#' @param backup The lock backup's relative path, or `NA`.
+#' @param cleanup `attr(, "cleanup")` from `study_setup()`, of either shape,
+#'   or `NULL` when cleanup was off.
+#' @return The record's path, invisibly.
+#' @noRd
+write_setup_record <- function(root, healed, missing, backup, cleanup) {
+  field <- function(name, value) {
+    if (is.null(value) || !length(value) || is.na(value[1L])) return(NULL)
+    paste0(name, ": ", gsub("\n", " ", paste(value, collapse = ", ")))
+  }
+  block <- function(...) c(..., "")
+  run <- block(
+    "Type: run", field("At", format(Sys.time(), "%Y-%m-%dT%H:%M:%S%z")),
+    field("User", Sys.info()[["user"]]),
+    field("R", as.character(getRversion())),
+    field("hvtiR", hvtir_version()),
+    field("LockBackup", backup)
+  )
+  rows <- function(df, type, cols) {
+    unlist(lapply(seq_len(NROW(df)), function(i) {
+      block(paste0("Type: ", type), unlist(lapply(names(cols), function(k) {
+        field(k, df[[cols[[k]]]][i])
+      })))
+    }))
+  }
+  status <- if (is.null(cleanup)) "off" else if (is.null(cleanup$status)) {
+    "done"
+  } else {
+    cleanup$status
+  }
+  lines <- c(
+    run,
+    rows(healed, "healed",
+         c(Package = "package", From = "from", To = "to", Round = "round")),
+    rows(missing, "missing",
+         c(Package = "package", Reason = "reason", Because = "because",
+           Log = "log")),
+    block("Type: cleanup", field("Status", status),
+          field("Reason", cleanup$reason), field("Left", cleanup$left))
+  )
+  path <- file.path(root, "renv", "hvtiR-setup.dcf")
+  dir.create(dirname(path), showWarnings = FALSE)
+  writeLines(lines, path)
+  invisible(path)
+}
+
+#' Read `renv/hvtiR-setup.dcf`
+#' @param root The study root.
+#' @return `list(run, healed, missing, cleanup)` of data.frames, or `NULL`.
+#' @noRd
+read_setup_record <- function(root) {
+  path <- file.path(root, "renv", "hvtiR-setup.dcf")
+  if (!file.exists(path)) return(NULL)
+  all <- as.data.frame(read.dcf(path), stringsAsFactors = FALSE)
+  pick <- function(type) {
+    out <- all[all$Type == type, , drop = FALSE]
+    out <- out[, colSums(!is.na(out)) > 0L, drop = FALSE]
+    rownames(out) <- NULL
+    out
+  }
+  list(run = pick("run"), healed = pick("healed"), missing = pick("missing"),
+       cleanup = pick("cleanup"))
 }

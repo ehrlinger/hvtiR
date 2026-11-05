@@ -376,3 +376,46 @@ test_that("a clean first restore heals nothing and backs nothing up", {
   expect_identical(log$calls, "restore")
   expect_true(is.na(h$backup))
 })
+
+test_that("save_setup_log keeps logs in the study when given its root", {
+  root <- local_lock()
+  rel <- save_setup_log("line one", root)
+  expect_match(rel, "^renv/logs/setup-.*\\.log$")
+  expect_identical(readLines(file.path(root, rel), warn = FALSE), "line one")
+  expect_true(startsWith(save_setup_log("x"), tempdir()))
+})
+
+test_that("the setup record round-trips healed, missing and cleanup", {
+  root <- local_lock()
+  healed <- data.frame(package = "vctrs", from = "0.7.2", to = "0.7.3",
+                       round = 1L, stringsAsFactors = FALSE)
+  missing <- data.frame(package = "forecast", reason = "needs tseries",
+                        because = "tseries", log = "renv/logs/x.log",
+                        stringsAsFactors = FALSE)
+  write_setup_record(root, healed, missing, "renv/renv.lock.before-setup-1",
+                     list(status = "done", left = "a/tp.x"))
+  rec <- read_setup_record(root)
+  expect_identical(rec$run$LockBackup, "renv/renv.lock.before-setup-1")
+  expect_identical(rec$healed$Package, "vctrs")
+  expect_identical(rec$healed$To, "0.7.3")
+  expect_identical(rec$missing$Package, "forecast")
+  expect_identical(rec$missing$Because, "tseries")
+  expect_identical(rec$cleanup$Status, "done")
+})
+
+test_that("no record reads as NULL, and an empty run writes only the run", {
+  root <- local_lock()
+  expect_null(read_setup_record(root))
+  empty <- data.frame()
+  write_setup_record(root, empty, empty, NA_character_, NULL)
+  rec <- read_setup_record(root)
+  expect_identical(nrow(rec$missing), 0L)
+  expect_identical(rec$cleanup$Status, "off")
+})
+
+test_that("an older hvtiRutilities cleanup shape still records", {
+  root <- local_lock()
+  write_setup_record(root, data.frame(), data.frame(), NA_character_,
+                     list(deleted = "a", removed_dirs = character()))
+  expect_identical(read_setup_record(root)$cleanup$Status, "done")
+})

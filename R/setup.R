@@ -203,14 +203,22 @@ output_bullets <- function(output, n = 40L) {
 }
 
 #' Save a child's full raw output where the abort can name it
+#' @param output The child's output.
+#' @param root The study root. With it the log goes under `renv/logs/` and
+#'   the path returned is relative to `root`; without it, to `tempdir()`.
 #' @noRd
-save_setup_log <- function(output) {
-  path <- file.path(
-    tempdir(), paste0("hvtiR-setup-", format(Sys.time(), "%Y%m%d-%H%M%S"),
-                      ".log")
-  )
+save_setup_log <- function(output, root = NULL) {
+  name <- paste0("setup-", format(Sys.time(), "%Y%m%d-%H%M%S"), ".log")
+  if (is.null(root)) {
+    path <- file.path(tempdir(), paste0("hvtiR-", name))
+  } else {
+    dir.create(file.path(root, "renv", "logs"), recursive = TRUE,
+               showWarnings = FALSE)
+    rel <- file.path("renv", "logs", name)
+    path <- file.path(root, rel)
+  }
   writeBin(charToRaw(enc2native(paste0(output, collapse = "\n"))), path)
-  path
+  if (is.null(root)) path else rel
 }
 
 #' Is `path` inside `dir`?
@@ -919,7 +927,7 @@ abort_stage <- function(result, raw, root, upgrade = TRUE) {
         )
       },
       output_bullets(result$output),
-      i = "Full output: {.file {save_setup_log(raw)}}"
+      i = "Full output: {.file {save_setup_log(raw, root)}}"
     ))
   }
   invisible(NULL)

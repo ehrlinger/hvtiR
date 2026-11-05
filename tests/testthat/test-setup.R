@@ -411,10 +411,10 @@ test_that("a failed install reports the real error and keeps the log", {
   msg <- conditionMessage(err)
   expect_match(msg, "boom", fixed = TRUE)
   expect_match(msg, "curly", fixed = TRUE)
-  expect_match(msg, "hvtiR-setup-", fixed = TRUE)
+  expect_match(msg, "renv/logs/setup-", fixed = TRUE)
   expect_false(grepl("ansi_strwrap", msg, fixed = TRUE))
-  pat <- "[^ '\n]*hvtiR-setup-[^ '\n]*\\.log"
-  log_file <- regmatches(msg, regexpr(pat, msg))
+  pat <- "renv/logs/setup-[^ '\n]*\\.log"
+  log_file <- file.path(root, regmatches(msg, regexpr(pat, msg)))
   expect_true(file.exists(log_file))
   saved <- rawToChar(readBin(log_file, "raw", file.size(log_file)))
   expect_true(grepl("Downloading 10%", saved, fixed = TRUE, useBytes = TRUE))
