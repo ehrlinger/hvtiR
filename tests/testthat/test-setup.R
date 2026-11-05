@@ -1961,6 +1961,12 @@ test_that("a study subfolder is refused, numbered or bare", {
   }
 })
 
+test_that("a study subfolder is refused whatever its case", {
+  dir <- file.path(withr::local_tempdir(), "30_Analyses")
+  dir.create(dir)
+  expect_error(refuse_candidate(dir), class = "hvtiR_adopt_refused")
+})
+
 test_that("a package DESCRIPTION is refused, a study's is not", {
   dir <- withr::local_tempdir()
   desc <- file.path(dir, "DESCRIPTION")

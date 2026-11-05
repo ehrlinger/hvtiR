@@ -1098,7 +1098,8 @@ project_candidate <- function(dir = getwd()) {
 #' @noRd
 refuse_candidate <- function(candidate) {
   name <- basename(candidate)
-  if (name %in% c(names(STUDY_FOLDERS), STUDY_FOLDERS)) {
+  folders <- c(names(STUDY_FOLDERS), STUDY_FOLDERS)
+  if (tolower(name) %in% tolower(folders)) {
     cli::cli_abort(c(
       "{.path {candidate}} is a study's {.file {name}} folder, not a study.",
       i = paste(
