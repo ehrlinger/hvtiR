@@ -2112,6 +2112,23 @@ test_that("a refused folder stops before the prompt", {
   expect_error(setup("A study", 7L), class = "hvtiR_adopt_refused")
 })
 
+test_that("a Yes in a session inside the study still meets the guard", {
+  withr::local_options(cli.width = Inf)
+  dir <- local_project()
+  lib <- file.path(dir, "renv", "library")
+  dir.create(lib, recursive = TRUE)
+  log <- local_setup(session_lib = lib)
+  local_mocked_bindings(
+    is_interactive = function() TRUE,
+    ask_adopt_project = function(question) TRUE
+  )
+  err <- expect_error(setup("A study", 7L))
+  msg <- conditionMessage(err)
+  expect_true(grepl(dir, msg, fixed = TRUE))
+  expect_true(grepl("adopt = TRUE", msg, fixed = TRUE))
+  expect_identical(log$steps, character(0))
+})
+
 test_that("an enclosing study wins over a project inside it", {
   parent <- withr::local_tempdir()
   file.create(file.path(parent, "_study.yml"))
