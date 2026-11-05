@@ -343,13 +343,23 @@ heal_restore <- function(root, repos, upgrade, essential, max_rounds = 10L) {
 #'   and check stages left out.
 #' @param backup The lock backup's relative path, or `NA`.
 #' @param cleanup `attr(, "cleanup")` from `study_setup()`, of either shape,
-#'   or `NULL` when cleanup was off.
+#'   or `NULL` when cleanup was off. Its `Left` is a display list joined by
+#'   `"; "`, not a parseable vector.
 #' @return The record's path, invisibly.
 #' @noRd
 write_setup_record <- function(root, healed, missing, backup, cleanup) {
   field <- function(name, value) {
-    if (is.null(value) || !length(value) || is.na(value[1L])) return(NULL)
-    paste0(name, ": ", gsub("\n", " ", paste(value, collapse = ", ")))
+    if (is.null(value) || !length(value)) return(NULL)
+    if (length(value) > 1L) {
+      value <- value[!is.na(value) & nzchar(value)]
+      if (!length(value)) return(NULL)
+      value <- paste(value, collapse = "; ")
+    }
+    if (is.na(value[1L])) return(NULL)
+    # A control character, `\r` included, would let read.dcf() see a new
+    # record, and a leading blank would make the value a continuation line.
+    value <- sub("^\\s+", "", gsub("[[:cntrl:]]+", " ", value[1L]))
+    paste0(name, ": ", value)
   }
   block <- function(...) c(..., "")
   run <- block(
@@ -382,7 +392,7 @@ write_setup_record <- function(root, healed, missing, backup, cleanup) {
           field("Reason", cleanup$reason), field("Left", cleanup$left))
   )
   path <- file.path(root, "renv", "hvtiR-setup.dcf")
-  dir.create(dirname(path), showWarnings = FALSE)
+  dir.create(dirname(path), recursive = TRUE, showWarnings = FALSE)
   writeLines(lines, path)
   invisible(path)
 }

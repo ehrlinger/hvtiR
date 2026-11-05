@@ -208,14 +208,15 @@ output_bullets <- function(output, n = 40L) {
 #'   the path returned is relative to `root`; without it, to `tempdir()`.
 #' @noRd
 save_setup_log <- function(output, root = NULL) {
-  name <- paste0("setup-", format(Sys.time(), "%Y%m%d-%H%M%S"), ".log")
+  stamp <- format(Sys.time(), "%Y%m%d-%H%M%S")
+  pattern <- paste0("setup-", stamp, "-")
   if (is.null(root)) {
-    path <- file.path(tempdir(), paste0("hvtiR-", name))
+    path <- tempfile(pattern = paste0("hvtiR-", pattern), fileext = ".log")
   } else {
-    dir.create(file.path(root, "renv", "logs"), recursive = TRUE,
-               showWarnings = FALSE)
-    rel <- file.path("renv", "logs", name)
-    path <- file.path(root, rel)
+    dir <- file.path(root, "renv", "logs")
+    dir.create(dir, recursive = TRUE, showWarnings = FALSE)
+    path <- tempfile(pattern = pattern, tmpdir = dir, fileext = ".log")
+    rel <- file.path("renv", "logs", basename(path))
   }
   writeBin(charToRaw(enc2native(paste0(output, collapse = "\n"))), path)
   if (is.null(root)) path else rel

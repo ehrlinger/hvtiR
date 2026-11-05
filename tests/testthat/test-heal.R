@@ -475,7 +475,7 @@ test_that("a clean first restore heals nothing and backs nothing up", {
 test_that("save_setup_log keeps logs in the study when given its root", {
   root <- local_lock()
   rel <- save_setup_log("line one", root)
-  expect_match(rel, "^renv/logs/setup-.*\\.log$")
+  expect_match(rel, "^renv/logs/setup-[0-9]{8}-[0-9]{6}-.*\\.log$")
   expect_identical(readLines(file.path(root, rel), warn = FALSE), "line one")
   expect_true(startsWith(save_setup_log("x"), tempdir()))
 })
@@ -513,4 +513,37 @@ test_that("an older hvtiRutilities cleanup shape still records", {
   write_setup_record(root, data.frame(), data.frame(), NA_character_,
                      list(deleted = "a", removed_dirs = character()))
   expect_identical(read_setup_record(root)$cleanup$Status, "done")
+})
+
+test_that("two logs written in the same second do not overwrite each other", {
+  root <- local_lock()
+  a <- save_setup_log("one", root)
+  b <- save_setup_log("two", root)
+  expect_false(identical(a, b))
+  expect_identical(readLines(file.path(root, a), warn = FALSE), "one")
+  expect_false(identical(save_setup_log("x"), save_setup_log("x")))
+  expect_match(basename(save_setup_log("x")), "^hvtiR-setup-")
+})
+
+test_that("a failure reason cannot forge or split a record", {
+  root <- local_lock()
+  for (reason in c("x\rType: run\r\rType: run", "a\nb")) {
+    missing <- data.frame(package = "p", reason = reason, because = "q",
+                          log = "l", stringsAsFactors = FALSE)
+    write_setup_record(root, data.frame(), missing, NA_character_, NULL)
+    rec <- read_setup_record(root)
+    expect_identical(nrow(rec$run), 1L)
+    expect_identical(nrow(rec$missing), 1L)
+    expect_identical(rec$missing$Package, "p")
+  }
+})
+
+test_that("a vector value is written as a display list", {
+  root <- local_lock()
+  write_setup_record(root, data.frame(), data.frame(), NA_character_,
+                     list(status = "done", left = c("a", NA, "", "b")))
+  expect_identical(read_setup_record(root)$cleanup$Left, "a; b")
+  write_setup_record(root, data.frame(), data.frame(), NA_character_,
+                     list(status = "done", left = c(NA, "")))
+  expect_null(read_setup_record(root)$cleanup$Left)
 })
