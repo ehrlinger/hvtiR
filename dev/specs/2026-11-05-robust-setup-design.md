@@ -55,6 +55,10 @@ usable study.
   family member (`members()$package`) and their hard dependencies (`Depends`,
   `Imports`, `LinkingTo`, resolved recursively). Without them `add_job()`,
   rendering and data reads do not work, so "set up" would be false.
+  *Amended by the plan:* the code names only the family. A member whose hard
+  dependency cannot install fails with "dependency 'x' is not available", and
+  the member is essential, so the run still stops, with no dependency
+  resolution needed.
 - **Optional: a failure degrades.** This is everything else: the standard
   analysis set (`environment_extras()`), `optional_extras()`, and packages
   carried over from an existing `renv.lock`. Every case in the table above is
@@ -109,8 +113,13 @@ history, and healing rewrites it.
 
 ## 3. The record, the degraded finish, and recovery
 
-**The record:** `renv/hvtiR-setup.json`. It lives in the study so the team sees
+**The record:** `renv/hvtiR-setup.dcf`. It lives in the study so the team sees
 it, not only the person who ran `setup()`, and every run rewrites it.
+
+*Amended by the plan:* DCF, read with base `read.dcf()`, not JSON. hvtiR is the
+bootstrap package and imports only `cli` and `utils`; JSON would add
+`jsonlite`. Each fact is one record with a `Type` (`run`, `healed`, `missing`,
+`cleanup`). The JSON below shows the content; the fields are the same.
 
 ```json
 {
@@ -180,7 +189,7 @@ hvtiR copies `attr(, "cleanup")` into the record's `cleanup` field.
 8. Degrading removes the record from a real temporary `renv.lock`, and a
    dependent is degraded with `because`.
 9. The lock backup exists before round 1 and equals the original.
-10. A degraded run writes `renv/hvtiR-setup.json`, warns rather than aborts,
+10. A degraded run writes `renv/hvtiR-setup.dcf`, warns rather than aborts,
     and calls `open_project()`. A rerun where the package now installs drops it
     from `missing`.
 11. `doctor()` lists `missing` from the record, and says nothing new without
