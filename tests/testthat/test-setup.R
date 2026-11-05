@@ -1105,7 +1105,7 @@ test_that("no _study.yml stops before hvtiRutilities can be installed", {
     renv_state = function(...) "installed"
   )
   withr::local_dir(withr::local_tempdir())
-  expect_error(setup("A study", 7L), "Pass .*root")
+  expect_error(setup("A study", 7L), "[Pp]ass .*root")
 })
 
 test_that("workspace_prefs = FALSE leaves RStudio's preferences alone", {
@@ -1926,4 +1926,226 @@ test_that("raised packages that moved get their own group in the report", {
   )
   expect_message(setup("A study", 7L, root = root),
                  "Other unmet requirements resolved")
+})
+
+test_that("a folder holding a .Rproj is a project candidate", {
+  dir <- withr::local_tempdir()
+  file.create(file.path(dir, "study.Rproj"))
+  expect_identical(
+    project_candidate(dir), normalizePath(dir, winslash = "/")
+  )
+})
+
+test_that("RStudio's active project is a candidate without a .Rproj", {
+  dir <- withr::local_tempdir()
+  local_mocked_bindings(active_project = function() dir)
+  expect_identical(
+    project_candidate(dir), normalizePath(dir, winslash = "/")
+  )
+})
+
+test_that("a plain folder, or one below the project, is no candidate", {
+  dir <- withr::local_tempdir()
+  sub <- file.path(dir, "sub")
+  dir.create(sub)
+  file.create(file.path(dir, "study.Rproj"))
+  local_mocked_bindings(active_project = function() dir)
+  expect_null(project_candidate(sub))
+})
+
+test_that("a study subfolder is refused, numbered or bare", {
+  for (name in c("30_analyses", "analyses")) {
+    dir <- file.path(withr::local_tempdir(), name)
+    dir.create(dir)
+    expect_error(refuse_candidate(dir), class = "hvtiR_adopt_refused")
+  }
+})
+
+test_that("a study subfolder is refused whatever its case", {
+  dir <- file.path(withr::local_tempdir(), "30_Analyses")
+  dir.create(dir)
+  expect_error(refuse_candidate(dir), class = "hvtiR_adopt_refused")
+})
+
+test_that("a package DESCRIPTION is refused, a study's is not", {
+  dir <- withr::local_tempdir()
+  desc <- file.path(dir, "DESCRIPTION")
+  writeLines(c("Package: x", "Version: 1.0.0"), desc)
+  expect_error(refuse_candidate(dir), class = "hvtiR_adopt_refused")
+  writeLines(c("Type: Project", "Depends: hvtiR"), desc)
+  expect_identical(refuse_candidate(dir), dir)
+})
+
+test_that("the study folder list matches hvtiRutilities", {
+  skip_if_not_installed("hvtiRutilities")
+  # An hvtiRutilities older than the numbered layout has no list to compare.
+  skip_if_not(
+    exists(
+      ".study_folders",
+      envir = asNamespace("hvtiRutilities"), inherits = FALSE
+    ),
+    "the installed hvtiRutilities predates .study_folders()"
+  )
+  expect_identical(
+    STUDY_FOLDERS,
+    getFromNamespace(".study_folders", "hvtiRutilities")()
+  )
+})
+
+test_that("setup_command names every formal once dots carry anything", {
+  expect_identical(
+    setup_command("/s", "A", 7L),
+    'hvtiR::setup(root = "/s", study = "A", study_tracker_id = 7L)'
+  )
+  expect_identical(
+    setup_command("/s", "A", 7L, adopt = TRUE),
+    paste0('hvtiR::setup(root = "/s", study = "A", study_tracker_id = 7L, ',
+           "adopt = TRUE)")
+  )
+  expect_match(
+    setup_command("/s", "A", 7L, dots = list(cleanup = FALSE)),
+    "adopt = FALSE, workspace_prefs = TRUE, upgrade = TRUE, cleanup = FALSE",
+    fixed = TRUE
+  )
+})
+
+local_project <- function(env = parent.frame()) {
+  dir <- withr::local_tempdir(.local_envir = env)
+  file.create(file.path(dir, "study.Rproj"))
+  withr::local_dir(dir, .local_envir = env)
+  normalizePath(dir, winslash = "/")
+}
+
+test_that("in a project with no study, Yes adopts the project folder", {
+  dir <- local_project()
+  log <- local_setup()
+  asked <- NULL
+  local_mocked_bindings(
+    is_interactive = function() TRUE,
+    ask_adopt_project = function(question) {
+      asked <<- question
+      TRUE
+    }
+  )
+  setup("A study", 7L)
+  expect_identical(
+    normalizePath(log$setup_args$root, winslash = "/"), dir
+  )
+  expect_true(log$setup_args$adopt)
+  expect_match(asked, "tp.*", fixed = TRUE)
+  expect_match(asked, "Study Tracker 7", fixed = TRUE)
+})
+
+test_that("No leaves everything as it was, RStudio preferences too", {
+  local_project()
+  log <- local_setup()
+  local_mocked_bindings(
+    is_interactive = function() TRUE,
+    ask_adopt_project = function(question) FALSE
+  )
+  expect_error(setup("A study", 7L), class = "hvtiR_adopt_declined")
+  expect_identical(log$steps, character(0))
+})
+
+test_that("a cancelled prompt counts as No", {
+  local_project()
+  log <- local_setup()
+  local_mocked_bindings(
+    is_interactive = function() TRUE,
+    ask_adopt_project = function(question) NA
+  )
+  expect_error(setup("A study", 7L), class = "hvtiR_adopt_declined")
+})
+
+test_that("cleanup = FALSE drops the deletion warning from the prompt", {
+  local_project()
+  local_setup()
+  asked <- NULL
+  local_mocked_bindings(
+    is_interactive = function() TRUE,
+    ask_adopt_project = function(question) {
+      asked <<- question
+      TRUE
+    }
+  )
+  setup("A study", 7L, cleanup = FALSE)
+  expect_no_match(asked, "tp.*", fixed = TRUE)
+})
+
+test_that("adopt = TRUE adopts the project folder without asking", {
+  dir <- local_project()
+  log <- local_setup()
+  local_mocked_bindings(
+    is_interactive = function() TRUE,
+    ask_adopt_project = function(question) stop("asked")
+  )
+  expect_message(setup("A study", 7L, adopt = TRUE), "adopting")
+  expect_identical(
+    normalizePath(log$setup_args$root, winslash = "/"), dir
+  )
+})
+
+test_that("non-interactive, it stops and quotes the adopt call", {
+  dir <- local_project()
+  log <- local_setup()
+  local_mocked_bindings(is_interactive = function() FALSE)
+  err <- expect_error(
+    setup("A study", 7L), class = "hvtiR_adopt_unconfirmed"
+  )
+  expect_identical(
+    err$command,
+    setup_command(dir, "A study", 7L, adopt = TRUE)
+  )
+  expect_identical(log$steps, character(0))
+})
+
+test_that("a refused folder stops before the prompt", {
+  dir <- file.path(withr::local_tempdir(), "30_analyses")
+  dir.create(dir)
+  file.create(file.path(dir, "study.Rproj"))
+  withr::local_dir(dir)
+  local_setup()
+  local_mocked_bindings(
+    is_interactive = function() TRUE,
+    ask_adopt_project = function(question) stop("asked")
+  )
+  expect_error(setup("A study", 7L), class = "hvtiR_adopt_refused")
+})
+
+test_that("a Yes in a session inside the study still meets the guard", {
+  withr::local_options(cli.width = Inf)
+  dir <- local_project()
+  lib <- file.path(dir, "renv", "library")
+  dir.create(lib, recursive = TRUE)
+  log <- local_setup(session_lib = lib)
+  local_mocked_bindings(
+    is_interactive = function() TRUE,
+    ask_adopt_project = function(question) TRUE
+  )
+  err <- expect_error(setup("A study", 7L))
+  msg <- conditionMessage(err)
+  expect_true(grepl(dir, msg, fixed = TRUE))
+  expect_true(grepl("adopt = TRUE", msg, fixed = TRUE))
+  expect_identical(log$steps, character(0))
+})
+
+test_that("an enclosing study wins over a project inside it", {
+  parent <- withr::local_tempdir()
+  file.create(file.path(parent, "_study.yml"))
+  child <- file.path(parent, "inner")
+  dir.create(child)
+  file.create(file.path(child, "inner.Rproj"))
+  withr::local_dir(child)
+  local_setup(root_error = "took the study branch")
+  local_mocked_bindings(
+    is_interactive = function() TRUE,
+    ask_adopt_project = function(question) stop("asked")
+  )
+  expect_error(setup("A study", 7L), "took the study branch")
+})
+
+test_that("no project and no study still stops with no target", {
+  withr::local_dir(withr::local_tempdir())
+  local_setup()
+  expect_error(setup("A study", 7L), "New Project")
 })

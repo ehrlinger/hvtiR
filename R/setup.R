@@ -1050,12 +1050,153 @@ enclosing_study <- function() {
   }
 }
 
+#' A study's folders, numbered and bare
+#'
+#' A copy of the internal `hvtiRutilities:::.study_folders()`; a test fails
+#' when the two differ.
+#' @noRd
+# Package constant, spelled like MIN_R_VERSION.
+# nolint next: object_name_linter.
+STUDY_FOLDERS <- c(
+  datasets = "00_datasets", descriptive = "10_descriptive",
+  distributions = "20_distributions", analyses = "30_analyses",
+  graphs = "40_graphs", documents = "50_documents",
+  estimates = "90_estimates"
+)
+
+#' The RStudio project open in this session
+#' @return A path, or `NULL` outside RStudio or with no project open.
+#' @noRd
+active_project <- function() {
+  if (!rstudio_available()) return(NULL)
+  tryCatch(rstudioapi::getActiveProject(), error = function(e) NULL)
+}
+
+#' The working directory, when it is a project root `setup()` may adopt
+#'
+#' Only `dir` itself is looked at: a project above it is not this
+#' session's project.
+#' @param dir The folder to test.
+#' @return `dir`, normalized, or `NULL`.
+#' @noRd
+project_candidate <- function(dir = getwd()) {
+  dir <- normalizePath(dir, winslash = "/", mustWork = TRUE)
+  rproj <- list.files(dir, pattern = "[.]Rproj$", all.files = TRUE)
+  if (length(rproj)) return(dir)
+  active <- active_project()
+  if (!is.null(active) &&
+        identical(normalizePath(active, winslash = "/", mustWork = FALSE),
+                  dir)) {
+    return(dir)
+  }
+  NULL
+}
+
+#' Stop when a candidate folder cannot be a study root
+#' @param candidate The folder `project_candidate()` returned.
+#' @return `candidate`, invisibly.
+#' @noRd
+refuse_candidate <- function(candidate) {
+  name <- basename(candidate)
+  folders <- c(names(STUDY_FOLDERS), STUDY_FOLDERS)
+  if (tolower(name) %in% tolower(folders)) {
+    cli::cli_abort(c(
+      "{.path {candidate}} is a study's {.file {name}} folder, not a study.",
+      i = paste(
+        "Open {.path {dirname(candidate)}} as the project instead, then",
+        "run {.fn setup} again."
+      )
+    ), class = "hvtiR_adopt_refused", call = NULL)
+  }
+  desc <- file.path(candidate, "DESCRIPTION")
+  if (file.exists(desc)) {
+    type <- tryCatch(
+      unname(read.dcf(desc, fields = "Type")[1L, 1L]),
+      error = function(e) NA_character_
+    )
+    if (!identical(type, "Project")) {
+      cli::cli_abort(c(
+        "{.path {candidate}} holds a package {.file DESCRIPTION}, not a study.",
+        i = "Pass {.arg root} to name the study folder."
+      ), class = "hvtiR_adopt_refused", call = NULL)
+    }
+  }
+  invisible(candidate)
+}
+
+#' `interactive()`, as a seam the tests replace
+#' @noRd
+is_interactive <- function() interactive()
+
+#' Ask whether to adopt the project folder, defaulting to No
+#' @param question The prompt.
+#' @return `TRUE`, `FALSE` or `NA` (cancelled).
+#' @noRd
+ask_adopt_project <- function(question) {
+  utils::askYesNo(question, default = FALSE)
+}
+
+#' Confirm adopting the project folder as the study
+#'
+#' `adopt = TRUE` is the caller's confirmation; otherwise an interactive
+#' session is asked and a non-interactive one stops, quoting the call.
+#' @param candidate The folder `project_candidate()` returned.
+#' @param study,study_tracker_id,adopt,workspace_prefs,upgrade As passed to
+#'   [setup()].
+#' @param dots `list(...)` from [setup()].
+#' @return `candidate`.
+#' @noRd
+adopt_project <- function(candidate, study, study_tracker_id, adopt,
+                          workspace_prefs, upgrade, dots) {
+  refuse_candidate(candidate)
+  if (isTRUE(adopt)) {
+    cli::cli_alert_info(paste(
+      "No {.file _study.yml} here; adopting the project folder",
+      "{.path {candidate}}."
+    ))
+    return(candidate)
+  }
+  if (!is_interactive()) {
+    cmd <- setup_command(
+      candidate, study, study_tracker_id, TRUE, workspace_prefs, upgrade, dots
+    )
+    cli::cli_abort(c(
+      paste(
+        "{.path {candidate}} has no {.file _study.yml}, and {.fn setup}",
+        "adopts a folder only when asked."
+      ),
+      i = "To adopt it, run: {.code {cmd}}"
+    ), class = "hvtiR_adopt_unconfirmed", command = cmd, call = NULL)
+  }
+  question <- paste0(
+    candidate, " has no _study.yml. Adopt it as study \"", study,
+    "\" (Study Tracker ", study_tracker_id, ")?",
+    if (!isFALSE(dots[["cleanup"]])) {
+      paste(
+        " Adopting deletes the tp.* files, binder.summaries.doc and exact",
+        "template copies it holds; pass cleanup = FALSE to keep them."
+      )
+    }
+  )
+  if (!isTRUE(ask_adopt_project(question))) {
+    cli::cli_abort(
+      "Not adopted. Nothing was changed.",
+      class = "hvtiR_adopt_declined", call = NULL
+    )
+  }
+  candidate
+}
+
 #' Stop because `setup()` has no study to write to
 #' @noRd
 abort_no_study <- function() {
   cli::cli_abort(c(
     "No study encloses {.path {getwd()}}, so {.fn setup} has no target.",
-    i = "Pass {.arg root}, the directory to set the study up in."
+    i = paste(
+      "Open the study's folder as an RStudio project (File > New Project >",
+      "Existing Directory) and run {.fn setup} there."
+    ),
+    i = "Or pass {.arg root}, the directory to set the study up in."
   ), call = NULL)
 }
 
@@ -1070,6 +1211,31 @@ study_root_or_abort <- function(study_root) {
     }
     abort_no_study()
   })
+}
+
+#' The `setup()` call to quote back in a stop
+#'
+#' Every formal is named once `dots` carries anything: one left off would
+#' take an unnamed argument by position, or a short name by partial matching.
+#' @param root,study,study_tracker_id,adopt,workspace_prefs,upgrade As for
+#'   [setup()].
+#' @param dots `list(...)` from [setup()].
+#' @return The call, deparsed.
+#' @noRd
+setup_command <- function(root, study, study_tracker_id, adopt = FALSE,
+                          workspace_prefs = TRUE, upgrade = TRUE,
+                          dots = list()) {
+  all_formals <- length(dots) > 0L
+  deparse1(as.call(c(
+    list(quote(hvtiR::setup)),
+    list(root = root, study = study, study_tracker_id = study_tracker_id),
+    if (all_formals || isTRUE(adopt)) list(adopt = adopt),
+    if (all_formals || isFALSE(workspace_prefs)) {
+      list(workspace_prefs = workspace_prefs)
+    },
+    if (all_formals || isFALSE(upgrade)) list(upgrade = upgrade),
+    dots
+  )))
 }
 
 #' Refuse to run from inside the study
@@ -1095,21 +1261,11 @@ guard_session <- function(root, study, study_tracker_id,
   } else {
     guess
   }
-  # Name every formal when `...` carries anything: one left off would take an
-  # unnamed argument by position, or a short name by partial matching.
-  all_formals <- length(dots) > 0L
   # Read by cli's glue below, which lintr cannot see.
   # nolint next: object_usage_linter.
-  cmd <- deparse1(as.call(c(
-    list(quote(hvtiR::setup)),
-    list(root = target, study = study, study_tracker_id = study_tracker_id),
-    if (all_formals || isTRUE(adopt)) list(adopt = adopt),
-    if (all_formals || isFALSE(workspace_prefs)) {
-      list(workspace_prefs = workspace_prefs)
-    },
-    if (all_formals || isFALSE(upgrade)) list(upgrade = upgrade),
-    dots
-  )))
+  cmd <- setup_command(
+    target, study, study_tracker_id, adopt, workspace_prefs, upgrade, dots
+  )
   project <- Sys.getenv("RENV_PROJECT", "")
   # A restart in RStudio reopens the last project, so the session can sit in
   # a different study's renv; nothing loaded then belongs to the target.
@@ -1147,6 +1303,17 @@ guard_session <- function(root, study, study_tracker_id,
 #' study's library with pak and renv; snapshots; checks that every
 #' package's dependencies resolve there; and restarts into the project.
 #'
+#' The usual start is a legacy study opened as its own RStudio project
+#' (File > New Project > Existing Directory): run
+#' `setup(study, study_tracker_id)` in that project's console. With no
+#' `_study.yml` there, `setup()` asks whether to adopt the project folder
+#' (the default answer is No), and adopting cleans up template copies unless
+#' `cleanup = FALSE` is passed. It refuses a project opened at one of a
+#' study's folders, such as `30_analyses`, or at a package. A
+#' non-interactive session never adopts unasked: it stops and prints the
+#' `setup(root = ..., adopt = TRUE)` call to run. The step-by-step flow,
+#' with where to type each command, is in `vignette("start-here")`.
+#'
 #' renv runs in explicit mode: the lockfile records what the study's
 #' `DESCRIPTION` declares, not whatever the code happens to mention. A study
 #' that already has a `renv.lock` keeps its locked versions, and on first
@@ -1163,10 +1330,10 @@ guard_session <- function(root, study, study_tracker_id,
 #' step to have them; anything beyond them is added with
 #' `hvtiRutilities::study_need()`.
 #'
-#' `setup()` replaces packages in the study's library, so run it from a
-#' session started outside the study project, passing `root`. From inside
-#' the project it stops before installing anything, and names the command to
-#' run.
+#' Once the study's renv is active in a session, `setup()` replaces packages
+#' that session has loaded, so rerun it from a session started outside the
+#' project, passing `root`. From inside an active project it stops before
+#' installing anything, and names the command to run.
 #'
 #' In the install, the study stops using renv's per-user cache
 #' (`renv::settings$use.cache(FALSE)`, kept in `renv/settings.json`, so it
@@ -1194,8 +1361,10 @@ guard_session <- function(root, study, study_tracker_id,
 #' @param study The Study Tracker title.
 #' @param study_tracker_id The Study Tracker ID, an integer.
 #' @param root The study root, where `setup()` writes. By default the study
-#'   enclosing the working directory; outside a study `setup()` stops and asks
-#'   for it, so a new study always names its directory.
+#'   enclosing the working directory; with none, the RStudio project folder
+#'   the session is in, once its adoption is confirmed. Outside both,
+#'   `setup()` stops and asks for it, so a new study always names its
+#'   directory.
 #' @param adopt Set up an existing study, adding only what is missing.
 #'   Adopting cleans up template copies unless `cleanup = FALSE` is passed.
 #' @param upgrade Whether the install may move versions the lockfile pins.
@@ -1236,6 +1405,18 @@ setup <- function(study, study_tracker_id, root = NULL, adopt = FALSE,
   }
   if (!isTRUE(workspace_prefs) && !isFALSE(workspace_prefs)) {
     cli::cli_abort("{.arg workspace_prefs} must be `TRUE` or `FALSE`.")
+  }
+  # The default path: a legacy study opened as its own RStudio project.
+  # Resolved before the guard, so the guard and its quoted call name it.
+  if (is.null(root) && is.null(enclosing_study())) {
+    candidate <- project_candidate()
+    if (!is.null(candidate)) {
+      root <- adopt_project(
+        candidate, study, study_tracker_id, adopt, workspace_prefs, upgrade,
+        list(...)
+      )
+      adopt <- TRUE
+    }
   }
   guard_session(
     root, study, study_tracker_id, adopt, workspace_prefs, upgrade, list(...)
