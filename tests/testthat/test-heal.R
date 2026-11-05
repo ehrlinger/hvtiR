@@ -248,7 +248,7 @@ local_children <- function(restores, recorded = "vctrs:0.7.3",
   log$calls <- character()
   log$exprs <- character()
   queue <- restores
-  local_mocked_bindings(
+  testthat::local_mocked_bindings(
     run_in_study = function(expr, root) {
       if (grepl("renv::restore(", expr, fixed = TRUE)) {
         log$calls <- c(log$calls, "restore")
