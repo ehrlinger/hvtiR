@@ -213,7 +213,8 @@ backup_lock <- function(root, stamp = format(Sys.time(), "%Y%m%d-%H%M%S")) {
 #'
 #' Each round restores; on failure, [plan_round()] decides what to move,
 #' install first, leave out or stop on. A round that fails on the same set
-#' as the last, or the last round allowed, moves and installs nothing more.
+#' as the last, or any round from `max_rounds` on, moves and installs nothing
+#' more and must leave out a new package or abort.
 #' A pin counts as healed only when its recorded version changed.
 #' @param root The study root.
 #' @param repos The study's repositories, or `NULL`.
@@ -234,18 +235,43 @@ heal_restore <- function(root, repos, upgrade, essential, max_rounds = 10L) {
   moved <- character()
   backup <- NA_character_
   previous <- NULL
+  # Once the lock has changed, every abort names the backup.
+  backup_note <- function() {
+    if (is.na(backup)) return(NULL)
+    c(i = paste0("Healing changed renv.lock; the original is {.file ",
+                 backup, "}."))
+  }
+  abort_after <- function(result, raw) {
+    if (is.na(backup)) abort_stage(result, raw, root, upgrade)
+    tryCatch(
+      abort_stage(result, raw, root, upgrade),
+      error = function(e) {
+        cli::cli_abort(c("Healing the study's packages failed.",
+                         backup_note()), parent = e)
+      }
+    )
+  }
+  child_failed <- function(what, output) {
+    cli::cli_abort(c(
+      paste0("Healing the study's packages failed while ", what, "."),
+      output_bullets(output),
+      backup_note(),
+      i = "Full output: {.file {save_setup_log(output, root)}}"
+    ))
+  }
   child <- function(expr, what) {
     out <- run_in_study(expr, root)
-    if (out$status != 0L) {
-      cli::cli_abort(c(
-        "Healing the study's packages failed while {what}.",
-        output_bullets(out$output),
-        i = "Full output: {.file {save_setup_log(out$output, root)}}"
-      ))
-    }
+    if (out$status != 0L) child_failed(what, out$output)
     out
   }
-  for (round in seq_len(max_rounds + 1L)) {
+  # Termination: up to max_rounds ordinary rounds, then every round is
+  # stuck, so plan_round() only drops or stops. A stuck round must leave out
+  # at least one package not already in `missing`, else it aborts. The lock
+  # holds finitely many records and each such round removes one, so the loop
+  # ends. A package already in `missing` that fails again adds nothing.
+  round <- 0L
+  repeat {
+    round <- round + 1L
     raw <- run_in_study(restore_expr(root, repos), root)
     result <- raw
     result$output <- iconv(raw$output, "UTF-8", "UTF-8", sub = "?")
@@ -254,33 +280,39 @@ heal_restore <- function(root, repos, upgrade, essential, max_rounds = 10L) {
                   missing = missing, backup = backup))
     }
     failures <- classify_failures(result$output)
-    if (!nrow(failures) || round > max_rounds) {
-      abort_stage(result, raw$output, root, upgrade)
-    }
+    if (!nrow(failures)) abort_after(result, raw$output)
     set <- sort(failures$package)
-    stuck <- identical(set, previous) || round == max_rounds
+    stuck <- identical(set, previous) || round >= max_rounds
     previous <- set
     decision <- plan_round(
       failures, record_specs(failures$package, root), moved,
       missing$package, essential, upgrade, stuck
     )
-    if (length(decision$stop)) {
-      abort_stage(result, raw$output, root, upgrade)
-    }
+    if (length(decision$stop)) abort_after(result, raw$output)
+    fresh <- decision$drop[!decision$drop$package %in% missing$package, ,
+                           drop = FALSE]
+    fresh <- fresh[!duplicated(fresh$package), , drop = FALSE]
+    if (stuck && !nrow(fresh)) abort_after(result, raw$output)
     if (is.na(backup)) backup <- backup_lock(root)
     if (length(decision$move)) {
       from <- locked_versions(names(decision$move), root)
       out <- child(record_expr(root, decision$move, repos), "moving pins")
-      got <- strsplit(child_value(out$output, "HVTIR_RECORDED"), ",",
-                      fixed = TRUE)[[1L]]
+      value <- child_value(out$output, "HVTIR_RECORDED")
+      if (!length(value) || is.na(value[1L]) || !nzchar(value[1L])) {
+        child_failed(
+          "moving pins; the child did not report the recorded versions",
+          out$output
+        )
+      }
+      got <- strsplit(value[1L], ",", fixed = TRUE)[[1L]]
       to <- stats::setNames(sub("^[^:]*:", "", got), sub(":.*$", "", got))
       for (pkg in names(decision$move)) {
         moved <- union(moved, pkg)
         new <- unname(to[pkg])
-        if (!is.na(new) && nzchar(new) && !identical(new, unname(from[pkg]))) {
-          healed[nrow(healed) + 1L, ] <- list(
-            pkg, unname(from[pkg]), new, round
-          )
+        old <- unname(from[pkg])
+        if (!is.na(new) && nzchar(new) && !is.na(old) &&
+              !identical(new, old)) {
+          healed[nrow(healed) + 1L, ] <- list(pkg, old, new, round)
         }
       }
     }
@@ -290,13 +322,12 @@ heal_restore <- function(root, repos, upgrade, essential, max_rounds = 10L) {
                       paste0(decision$install, "@", version))
       child(install_expr(root, specs, repos), "installing dependencies first")
     }
-    if (nrow(decision$drop)) {
+    if (nrow(fresh)) {
       log <- save_setup_log(raw$output, root)
-      child(drop_expr(root, decision$drop$package), "leaving packages out")
-      for (i in seq_len(nrow(decision$drop))) {
+      child(drop_expr(root, fresh$package), "leaving packages out")
+      for (i in seq_len(nrow(fresh))) {
         missing[nrow(missing) + 1L, ] <- list(
-          decision$drop$package[i], decision$drop$reason[i],
-          decision$drop$because[i], log
+          fresh$package[i], fresh$reason[i], fresh$because[i], log
         )
       }
     }

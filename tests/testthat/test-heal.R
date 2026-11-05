@@ -243,7 +243,7 @@ test_that("a dependency row with no needs is an ordinary failure", {
 })
 
 local_children <- function(restores, recorded = "vctrs:0.7.3",
-                           env = parent.frame()) {
+                           fail = character(), env = parent.frame()) {
   log <- new.env()
   log$calls <- character()
   log$exprs <- character()
@@ -267,7 +267,14 @@ local_children <- function(restores, recorded = "vctrs:0.7.3",
       }
       log$calls <- c(log$calls, kind)
       log$exprs <- c(log$exprs, expr)
-      list(status = 0L, output = paste0("HVTIR_RECORDED=", recorded, "\n"))
+      if (kind %in% fail) {
+        return(list(status = 1L, output = "Error: child failed"))
+      }
+      list(status = 0L, output = if (is.null(recorded)) {
+        "nothing\n"
+      } else {
+        paste0("HVTIR_RECORDED=", recorded, "\n")
+      })
     },
     save_setup_log = function(output, root = NULL) "renv/logs/x.log",
     .env = env
@@ -360,6 +367,94 @@ test_that("the round cap leaves out whatever still fails", {
                     max_rounds = 3L)
   expect_identical(sum(log$calls == "restore"), 4L)
   expect_true("p3" %in% h$missing$package)
+})
+
+test_that("past the cap, the last failing optional package is left out", {
+  root <- local_lock()
+  # p1 fails twice: moved once, then stuck by repetition. p2, p3 and p4
+  # each differ, so only the cap (max_rounds = 3) makes round 3 stuck.
+  outs <- list(compile_out("vctrs"), compile_out("p2"), compile_out("p3"),
+               compile_out("p4"), "ok")
+  log <- local_children(outs)
+  h <- heal_restore(root, NULL, TRUE, essential = "hvtiRutilities",
+                    max_rounds = 3L)
+  expect_identical(sum(log$calls == "restore"), 5L)
+  expect_identical(sum(log$calls == "record"), 1L)
+  expect_true("p4" %in% h$missing$package)
+  expect_true("p3" %in% h$missing$package)
+})
+
+test_that("past the cap, a drop exposing a dependent leaves it out too", {
+  root <- local_lock()
+  outs <- list(compile_out("pa"), dep_out("pa", "pb"), "ok")
+  log <- local_children(outs)
+  h <- heal_restore(root, NULL, TRUE, essential = "hvtiRutilities",
+                    max_rounds = 1L)
+  expect_identical(h$missing$package, c("pa", "pb"))
+  expect_identical(h$missing$because, c(NA, "pa"))
+  expect_identical(sum(log$calls == "drop"), 2L)
+})
+
+test_that("past the cap, a round that drops nothing new aborts", {
+  root <- local_lock()
+  outs <- list(compile_out("pa"), compile_out("pa"), compile_out("pa"))
+  local_children(outs)
+  expect_error(
+    heal_restore(root, NULL, TRUE, essential = "hvtiRutilities",
+                 max_rounds = 1L),
+    "compilation failed"
+  )
+})
+
+test_that("a first round that only drops has a backup equal to the lock", {
+  root <- local_lock()
+  original <- readLines(file.path(root, "renv.lock"))
+  local_children(list(compile_out("vctrs"), "ok"))
+  h <- heal_restore(root, NULL, FALSE, essential = "hvtiRutilities")
+  expect_true(file.exists(file.path(root, h$backup)))
+  expect_identical(readLines(file.path(root, h$backup)), original)
+})
+
+test_that("an install child failing after a record round names the backup", {
+  root <- local_lock()
+  local_children(list(compile_out("vctrs"), dep_out("tseries", "forecast"),
+                      "ok"), fail = "install")
+  expect_error(
+    heal_restore(root, NULL, TRUE, essential = "hvtiRutilities"),
+    "Healing changed renv.lock"
+  )
+})
+
+test_that("an abort after a lock change keeps the original message", {
+  root <- local_lock()
+  local_children(list(compile_out("vctrs"), compile_out("hvtiRutilities"),
+                      compile_out("hvtiRutilities")))
+  err <- expect_error(
+    heal_restore(root, NULL, TRUE, essential = "hvtiRutilities"),
+    "failed to compile"
+  )
+  expect_match(conditionMessage(err), "Healing changed renv.lock")
+})
+
+test_that("a missing recorded marker aborts, not a subscript error", {
+  root <- local_lock()
+  local_children(list(compile_out("vctrs"), "ok"), recorded = NULL)
+  err <- expect_error(
+    heal_restore(root, NULL, TRUE, essential = "hvtiRutilities"),
+    "did not report the recorded versions"
+  )
+  expect_no_match(conditionMessage(err), "subscript out of bounds")
+  expect_match(conditionMessage(err), "Healing changed renv.lock")
+})
+
+test_that("a pin with no prior version is moved but not counted as healed", {
+  root <- local_lock()
+  local_children(list(compile_out("newpkg"), "ok"), recorded = "newpkg:1.0")
+  testthat::local_mocked_bindings(
+    record_specs = function(pkgs, root) stats::setNames("newpkg", "newpkg")
+  )
+  h <- heal_restore(root, NULL, TRUE, essential = "hvtiRutilities")
+  expect_identical(nrow(h$healed), 0L)
 })
 
 test_that("an unrecognised failure stops with today's diagnosis", {
