@@ -88,7 +88,17 @@
 </h2>
 <p>You need a session on the server, the study’s directory, and its title and ID from Study Tracker. On Posit Workbench, start a new RStudio Pro session and pick the latest R version listed. The family requires R 4.4.0 or newer, and <code><a href="../reference/setup.html">setup()</a></code> stops on anything older.</p>
 <p>A study that already has a <code>renv.lock</code> is the exception: pick the R version its <code>R</code> <code>Version</code> entry records. <code><a href="../reference/setup.html">setup()</a></code> only warns about a different one, and its snapshot then records the R you are running. <code>upgrade = FALSE</code> keeps package versions from moving, not R.</p>
-</section><section class="level2"><h2 id="has-the-study-been-set-up-already">Has the study been set up already?<a class="anchor" aria-label="anchor" href="#has-the-study-been-set-up-already"></a>
+</section><section class="level2"><h2 id="where-to-type">Where to type<a class="anchor" aria-label="anchor" href="#where-to-type"></a>
+</h2>
+<p>Every R command on this page goes in RStudio’s <strong>Console</strong> pane, at the <code>&gt;</code> prompt, one command at a time. Press Enter to run it. The <strong>Terminal</strong> tab beside the Console is a shell, not R, and an R command typed there fails. The page has one shell command, <code>study-setup --verify</code>, and it says so where it comes.</p>
+<ul>
+<li>Text after a <code>#</code> is a comment. R ignores it, so you can paste it or leave it out.</li>
+<li>
+<code>EDIT:</code> marks a value that is yours to fill in. Replace the words, and keep the quotation marks around them.</li>
+<li>A command can run over several lines. Paste it whole: R waits, showing <code>+</code> instead of <code>&gt;</code>, until the closing parenthesis arrives.</li>
+<li>
+<code><a href="../reference/setup.html">hvtiR::setup()</a></code> means “the <code><a href="../reference/setup.html">setup()</a></code> function from the <code>hvtiR</code> package”. The page writes every call that way so that it works in a fresh session. <a href="#common-errors">Common errors</a> explains why.</li>
+</ul></section><section class="level2"><h2 id="has-the-study-been-set-up-already">Has the study been set up already?<a class="anchor" aria-label="anchor" href="#has-the-study-been-set-up-already"></a>
 </h2>
 <p>Look in the study’s directory. If it holds both <code>_study.yml</code> and <code>renv.lock</code>, someone has probably set it up: open its <code>.Rproj</code>, then go to <a href="#check-the-study">Check the study</a>. Those two files can also come from an older <code><a href="https://rstudio.github.io/renv/reference/init.html" class="external-link">renv::init()</a></code>, which brings neither the family nor the standard packages. If <code><a href="../reference/status.html">hvtiR::status()</a></code> there shows members missing, run <code><a href="../reference/setup.html">setup()</a></code> below with <code>adopt = TRUE</code>.</p>
 <p>A new study may have been set up when its directory was made, because the <code>study-setup</code> command in <code>qhsprograms</code> runs <code><a href="../reference/setup.html">hvtiR::setup()</a></code> for you. Otherwise, carry on here.</p>
@@ -134,6 +144,10 @@
 </ul>
 <p>It needs no data, so you can run it at kick-off. It needs no personal GitHub token to install, either, since pak carries a shared one. It warns when you have none, because restoring a package a lockfile already pins on GitHub may need your own <code>GITHUB_PAT</code>.</p>
 <p>If it stops partway, fix what it names and run the same command again. Each step checks before it acts, so a rerun is safe.</p>
+</section><section class="level3"><h3 id="when-it-worked">When it worked<a class="anchor" aria-label="anchor" href="#when-it-worked"></a>
+</h3>
+<p>The last step restarts RStudio inside the study. The project name in RStudio’s top right corner changes from <code>Project: (None)</code> to the study’s directory name, and the Files pane shows the study’s folders. Go on to <a href="#check-the-study">Check the study</a>.</p>
+<p>If R printed an error instead, read the message from its first line: it names what stopped the run. Fix that and run the same <code><a href="../reference/setup.html">hvtiR::setup()</a></code> command again.</p>
 </section><section class="level3"><h3 id="what-not-to-run">What not to run<a class="anchor" aria-label="anchor" href="#what-not-to-run"></a>
 </h3>
 <p>Do not run <code><a href="https://rstudio.github.io/renv/reference/init.html" class="external-link">renv::init()</a></code> on the study: <code><a href="../reference/setup.html">setup()</a></code> has already made the environment, and <code><a href="https://rstudio.github.io/renv/reference/init.html" class="external-link">renv::init()</a></code> starts the library over. Do not run <code>organize_templates.sh</code>: <code>setup(adopt = TRUE)</code> replaces it. When a study needs a package the family and the standard set do not bring, add it from inside the project:</p>
@@ -146,7 +160,11 @@
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">hvtiRutilities</span><span class="fu">::</span><span class="fu">study_status</span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="fu">hvtiR</span><span class="fu">::</span><span class="fu"><a href="../reference/status.html">status</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-<p>Expect <code>study_status()</code> to report that no dataset is registered yet. That is the next step, and it belongs to the tutorials.</p>
+<p><code>study_status()</code> prints a checklist, one line per thing a study needs: <code>[x]</code> marks one that is in place, <code>[ ]</code> one that is not, and <code>[~]</code> one that is in place but not yet confirmed. On a study set up as above, <code>renv.lock</code> is ticked and <code>_study.yml</code> shows <code>[~]</code>. You typed the title and ID (<code>identity_source = "manual"</code>), so the line says they were entered by hand and to confirm them with <code>study-setup --verify</code>.</p>
+<p>That is a shell command, so it goes in RStudio’s <strong>Terminal</strong> tab, not the Console. Run it from the study’s directory:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="ex">study-setup</span> <span class="at">--verify</span></span></code></pre></div>
+<p>It looks the ID up in Study Tracker and compares the title you typed. When they match, it marks the identity verified, and <code>study_status()</code> then shows <code>[x]</code> for <code>_study.yml</code>. When they differ, it lists each difference and asks whether to take Study Tracker’s values; answer no and nothing changes. A study that the <code>study-setup</code> command created was read from Study Tracker in the first place, so its <code>_study.yml</code> shows <code>[x]</code> from the start.</p>
+<p>The <code>manifest.yaml</code> and <code>dataset</code> lines are not ticked either, and each says to run <code>register_data()</code>. That is expected: registering the data is the next step, and it belongs to the tutorials. <code><a href="../reference/status.html">hvtiR::status()</a></code> reports whether each family package in the study is current, and how to update any that are not.</p>
 </section><section class="level2"><h2 id="go-on-to-the-tutorials">Go on to the tutorials<a class="anchor" aria-label="anchor" href="#go-on-to-the-tutorials"></a>
 </h2>
 <p>From here the work moves to <a href="https://ehrlinger.github.io/hvtiRtemplates/"><code>hvtiRtemplates</code></a>.</p>
@@ -159,10 +177,79 @@
 <strong>Choose the next template.</strong> The <a href="https://ehrlinger.github.io/hvtiRtemplates/gallery/">template gallery</a> shows what each one produces on a synthetic study.</li>
 </ol>
 <p>If you are coming from SAS, <a href="https://ehrlinger.github.io/hvtiRtemplates/articles/sas-to-r-descriptive.html">From SAS descriptive jobs to R</a> sets the descriptive templates beside the <code>tp.dc.*</code> jobs they replace.</p>
-</section><section class="level2"><h2 id="when-something-goes-wrong">When something goes wrong<a class="anchor" aria-label="anchor" href="#when-something-goes-wrong"></a>
+</section><section class="level2"><h2 id="common-errors">Common errors<a class="anchor" aria-label="anchor" href="#common-errors"></a>
+</h2>
+<p>R’s error messages are terse. These are the ones new users of the family meet most, word for word as R prints them, with what each means.</p>
+<section class="level3"><h3 id="could-not-find-function-read_built">
+<code>could not find function "read_built"</code><a class="anchor" aria-label="anchor" href="#could-not-find-function-read_built"></a>
+</h3>
+<pre><code>Error in read_built() : could not find function "read_built"</code></pre>
+<p>R knows a function only once its package is attached, and a new session attaches none of the family. Either name the package in the call, as this page does:</p>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">d</span> <span class="op">&lt;-</span> <span class="fu">hvtiRutilities</span><span class="fu">::</span><span class="fu">read_built</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<p>or attach the package once per session, then call the function by its name:</p>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">hvtiRutilities</span><span class="op">)</span></span>
+<span><span class="va">d</span> <span class="op">&lt;-</span> <span class="fu">read_built</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<p>Attaching lasts until R restarts, and <code><a href="../reference/setup.html">hvtiR::setup()</a></code> restarts it, so attach again afterwards. The functions you will use most come from three packages:</p>
+<table class="table caption-top">
+<colgroup>
+<col style="width: 20%">
+<col style="width: 79%">
+</colgroup>
+<thead><tr class="header">
+<th>Package</th>
+<th>Functions</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td><code>hvtiR</code></td>
+<td>
+<code><a href="../reference/setup.html">setup()</a></code>, <code><a href="../reference/status.html">status()</a></code>, <code><a href="../reference/update.html">update()</a></code>, <code><a href="../reference/doctor.html">doctor()</a></code>
+</td>
+</tr>
+<tr class="even">
+<td><code>hvtiRutilities</code></td>
+<td>
+<code>register_data()</code>, <code>read_built()</code>, <code>study_status()</code>, <code>study_need()</code>
+</td>
+</tr>
+<tr class="odd">
+<td><code>hvtiRtemplates</code></td>
+<td>
+<code>add_job()</code>, <code>job_status()</code>, <code>run_job()</code>, <code>upgrade_job()</code>
+</td>
+</tr>
+</tbody>
+</table></section><section class="level3"><h3 id="package-must-be-of-length-1">
+<code>'package' must be of length 1</code><a class="anchor" aria-label="anchor" href="#package-must-be-of-length-1"></a>
+</h3>
+<pre><code>Error in library(c("hvtiRutilities", "hvtiRtemplates")) :
+  'package' must be of length 1</code></pre>
+<p><code><a href="https://rdrr.io/r/base/library.html" class="external-link">library()</a></code> attaches one package per call. To attach all three at once:</p>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/invisible.html" class="external-link">invisible</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"hvtiR"</span>, <span class="st">"hvtiRutilities"</span>, <span class="st">"hvtiRtemplates"</span><span class="op">)</span>, <span class="va">library</span>, character.only <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+</section><section class="level3"><h3 id="the-following-object-is-masked-from-packagestats-update">
+<code>The following object is masked from ‘package:stats’: update</code><a class="anchor" aria-label="anchor" href="#the-following-object-is-masked-from-packagestats-update"></a>
+</h3>
+<p>This is a note, not an error, printed when <code><a href="https://github.com/ehrlinger/hvtiR" class="external-link">library(hvtiR)</a></code> attaches. It means that <code><a href="../reference/update.html">update()</a></code> now runs <code><a href="../reference/update.html">hvtiR::update()</a></code>, which updates the family. To update a fitted model, write <code>stats::update(fit, ...)</code>.</p>
+</section><section class="level3"><h3 id="there-is-no-package-called-cmprsk">
+<code>there is no package called ‘cmprsk’</code><a class="anchor" aria-label="anchor" href="#there-is-no-package-called-cmprsk"></a>
+</h3>
+<pre><code>Error in library(cmprsk) : there is no package called ‘cmprsk’</code></pre>
+<p>Each study has a library of its own, and that package is not in this one, even if another study or your own library has it. From inside the study’s project, install it into the study:</p>
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">hvtiRutilities</span><span class="fu">::</span><span class="fu">study_need</span><span class="op">(</span><span class="st">"cmprsk"</span><span class="op">)</span></span></code></pre></div>
+<p>When the missing package is one of the family, run <code><a href="../reference/status.html">hvtiR::status()</a></code> instead.</p>
+</section><section class="level3"><h3 id="no-_study-yml-found">
+<code>no _study.yml found</code><a class="anchor" aria-label="anchor" href="#no-_study-yml-found"></a>
+</h3>
+<pre><code>Error: study_config(): no _study.yml found.</code></pre>
+<p>R is working outside the study. A study function finds its study by looking for <code>_study.yml</code> in the working directory and each folder above it, and the message lists every folder it looked in. Open the study’s <code>.Rproj</code> file, or run <code><a href="https://rdrr.io/r/base/getwd.html" class="external-link">getwd()</a></code> to see where R is, and try again.</p>
+</section></section><section class="level2"><h2 id="when-something-goes-wrong">When something goes wrong<a class="anchor" aria-label="anchor" href="#when-something-goes-wrong"></a>
 </h2>
 <p>Start with the doctor:</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">hvtiR</span><span class="fu">::</span><span class="fu"><a href="../reference/doctor.html">doctor</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <p>It reports your R version, your platform, whether pak is available, the repositories R is configured to use and whether an renv project is active, and <a href="hvtiR.html#when-something-will-not-install">Install, update and check the family</a> explains the failures we see most. If that does not settle it, tell the team. Send the code you ran, what you expected, what happened instead, and the doctor’s output. A failure you hit is usually a gap in the tools or in this page, so report it early.</p>
 <p>Never send patient data. Column names and <code><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim()</a></code> are fine; rows are not.</p>
