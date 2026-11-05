@@ -1,7 +1,7 @@
 test_that("compile and configure failures are compile causes", {
   out <- paste(
-    "ERROR: compilation failed for package ‘vctrs’",
-    "ERROR: configuration failed for package ‘arrow’",
+    "ERROR: compilation failed for package \u2018vctrs\u2019",
+    "ERROR: configuration failed for package \u2018arrow\u2019",
     sep = "\n"
   )
   f <- classify_failures(out)
@@ -11,7 +11,10 @@ test_that("compile and configure failures are compile causes", {
 })
 
 test_that("a missing dependency names the package and what it needs", {
-  out <- "ERROR: dependency ‘tseries’ is not available for package ‘forecast’"
+  out <- paste0(
+    "ERROR: dependency \u2018tseries\u2019 is not available ",
+    "for package \u2018forecast\u2019"
+  )
   f <- classify_failures(out)
   expect_identical(f$package, "forecast")
   expect_identical(f$cause, "dependency")
@@ -55,7 +58,7 @@ test_that("output with no recognisable failure gives no rows", {
 })
 
 test_that("only valid package names are taken from untrusted output", {
-  out <- "ERROR: compilation failed for package ‘bad name;rm’"
+  out <- "ERROR: compilation failed for package \u2018bad name;rm\u2019"
   expect_identical(nrow(classify_failures(out)), 0L)
 })
 
@@ -179,7 +182,8 @@ test_that("record_expr records against the study's repositories", {
 test_that("install_expr installs into the project with no prompt", {
   root <- local_lock()
   expr <- install_expr(root, "tseries@0.10-58")
-  expect_match(expr, 'renv::install("tseries@0.10-58", project = ', fixed = TRUE)
+  expect_match(expr, 'renv::install("tseries@0.10-58", project = ',
+               fixed = TRUE)
   expect_match(expr, "prompt = FALSE", fixed = TRUE)
 })
 
@@ -236,4 +240,139 @@ test_that("a dependency row with no needs is an ordinary failure", {
   r <- decide(fails("forecast", "dependency", NA_character_))
   expect_identical(r$drop$package, "forecast")
   expect_identical(r$drop$reason, "failed to install")
+})
+
+local_children <- function(restores, recorded = "vctrs:0.7.3",
+                           env = parent.frame()) {
+  log <- new.env()
+  log$calls <- character()
+  log$exprs <- character()
+  queue <- restores
+  local_mocked_bindings(
+    run_in_study = function(expr, root) {
+      if (grepl("renv::restore(", expr, fixed = TRUE)) {
+        log$calls <- c(log$calls, "restore")
+        out <- queue[[1L]]
+        queue <<- queue[-1L]
+        ok <- identical(out, "ok")
+        return(list(status = if (ok) 0L else 1L,
+                    output = if (ok) "HVTIR_LIB=/l\n" else out))
+      }
+      kind <- if (grepl("renv::record(", expr, fixed = TRUE)) {
+        "record"
+      } else if (grepl("renv::install(", expr, fixed = TRUE)) {
+        "install"
+      } else {
+        "drop"
+      }
+      log$calls <- c(log$calls, kind)
+      log$exprs <- c(log$exprs, expr)
+      list(status = 0L, output = paste0("HVTIR_RECORDED=", recorded, "\n"))
+    },
+    save_setup_log = function(output, root = NULL) "renv/logs/x.log",
+    .env = env
+  )
+  log
+}
+compile_out <- function(pkg) {
+  paste0("ERROR: compilation failed for package \u2018", pkg, "\u2019")
+}
+dep_out <- function(dep, pkg) {
+  paste0("ERROR: dependency \u2018", dep, "\u2019 is not available ",
+         "for package \u2018", pkg, "\u2019")
+}
+
+test_that("a compile failure heals by moving the pin, then restores", {
+  root <- local_lock()
+  log <- local_children(list(compile_out("vctrs"), "ok"))
+  h <- heal_restore(root, NULL, TRUE, essential = "hvtiRutilities")
+  expect_identical(log$calls, c("restore", "record", "restore"))
+  expect_identical(h$healed$package, "vctrs")
+  expect_identical(h$healed$from, "0.7.2")
+  expect_identical(h$healed$to, "0.7.3")
+  expect_identical(nrow(h$missing), 0L)
+  expect_true(file.exists(file.path(root, h$backup)))
+})
+
+test_that("a package that fails again after moving is left out at once", {
+  root <- local_lock()
+  log <- local_children(list(compile_out("vctrs"), compile_out("vctrs"), "ok"))
+  h <- heal_restore(root, NULL, TRUE, essential = "hvtiRutilities")
+  expect_identical(log$calls,
+                   c("restore", "record", "restore", "drop", "restore"))
+  expect_identical(h$missing$package, "vctrs")
+})
+
+test_that("a pin that did not change is moved but not counted as healed", {
+  root <- local_lock()
+  log <- local_children(
+    list(compile_out("vctrs"), compile_out("vctrs"), "ok"),
+    recorded = "vctrs:0.7.2"
+  )
+  h <- heal_restore(root, NULL, TRUE, essential = "hvtiRutilities")
+  expect_identical(sum(log$calls == "record"), 1L)
+  expect_identical(h$missing$package, "vctrs")
+  expect_false("vctrs" %in% h$healed$package)
+})
+
+test_that("upgrade = FALSE leaves out an optional package without moving it", {
+  root <- local_lock()
+  log <- local_children(list(compile_out("vctrs"), "ok"))
+  h <- heal_restore(root, NULL, FALSE, essential = "hvtiRutilities")
+  expect_false("record" %in% log$calls)
+  expect_identical(h$missing$package, "vctrs")
+})
+
+test_that("an essential failure stops with today's diagnosis", {
+  root <- local_lock()
+  local_children(list(compile_out("hvtiRutilities"),
+                      compile_out("hvtiRutilities")))
+  expect_error(
+    heal_restore(root, NULL, TRUE, essential = "hvtiRutilities"),
+    "failed to compile"
+  )
+})
+
+test_that("a missing dependency is installed at its locked version first", {
+  root <- local_lock()
+  log <- local_children(list(dep_out("vctrs", "forecast"), "ok"))
+  heal_restore(root, NULL, TRUE, essential = "hvtiRutilities")
+  expect_identical(log$calls, c("restore", "install", "restore"))
+  expect_match(log$exprs[1L], '"vctrs@0.7.2"', fixed = TRUE)
+})
+
+test_that("the same failed set twice ends healing", {
+  root <- local_lock()
+  dep <- dep_out("tseries", "forecast")
+  log <- local_children(list(dep, dep, "ok"))
+  h <- heal_restore(root, NULL, TRUE, essential = "hvtiRutilities")
+  expect_identical(log$calls,
+                   c("restore", "install", "restore", "drop", "restore"))
+  expect_identical(h$missing$package, "forecast")
+  expect_identical(h$missing$because, "tseries")
+})
+
+test_that("the round cap leaves out whatever still fails", {
+  root <- local_lock()
+  outs <- lapply(1:3, function(i) compile_out(paste0("p", i)))
+  log <- local_children(c(outs, list("ok")))
+  h <- heal_restore(root, NULL, TRUE, essential = "hvtiRutilities",
+                    max_rounds = 3L)
+  expect_identical(sum(log$calls == "restore"), 4L)
+  expect_true("p3" %in% h$missing$package)
+})
+
+test_that("an unrecognised failure stops with today's diagnosis", {
+  root <- local_lock()
+  local_children(list("Error: could not resolve host"))
+  expect_error(heal_restore(root, NULL, TRUE, essential = "hvtiRutilities"),
+               "Installing the study's packages failed")
+})
+
+test_that("a clean first restore heals nothing and backs nothing up", {
+  root <- local_lock()
+  log <- local_children(list("ok"))
+  h <- heal_restore(root, NULL, TRUE, essential = "hvtiRutilities")
+  expect_identical(log$calls, "restore")
+  expect_true(is.na(h$backup))
 })
