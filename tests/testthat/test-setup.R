@@ -1974,7 +1974,10 @@ test_that("the study folder list matches hvtiRutilities", {
   skip_if_not_installed("hvtiRutilities")
   # An hvtiRutilities older than the numbered layout has no list to compare.
   skip_if_not(
-    exists(".study_folders", envir = asNamespace("hvtiRutilities")),
+    exists(
+      ".study_folders",
+      envir = asNamespace("hvtiRutilities"), inherits = FALSE
+    ),
     "the installed hvtiRutilities predates .study_folders()"
   )
   expect_identical(
