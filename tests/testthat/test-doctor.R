@@ -325,3 +325,21 @@ test_that("doctor says nothing about setup with no record", {
   withr::local_dir(root)
   expect_no_match(doctor_text(), "left out")
 })
+
+test_that("doctor survives a malformed setup record", {
+  root <- withr::local_tempdir()
+  dir.create(file.path(root, "renv"))
+  writeLines(c("not a dcf", ": : :", "\001\002"),
+             file.path(root, "renv", "hvtiR-setup.dcf"))
+  local_mocked_bindings(
+    installed_version = function(pkg) "1.0.0",
+    remote_version = function(repo, ref = "main") "1.0.0",
+    fetch_description = function(...) NULL,
+    repo_versions = function(...) character(),
+    enclosing_study = function() root
+  )
+  out <- NULL
+  expect_no_error(out <- capture.output(suppressMessages(doctor())))
+  expect_true(any(grepl("cannot be read|can't be read|could not be read",
+                        out)))
+})

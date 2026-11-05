@@ -330,6 +330,10 @@ test_that("a missing dependency of an optional package leaves it out", {
     "forecast"
   )
   expect_identical(attr(status, "missing")$because, "tseries")
+  expect_identical(
+    attr(status, "missing")$reason,
+    "installed, but needs tseries, which is not installed"
+  )
   expect_true("open" %in% log$steps)
 })
 
@@ -402,6 +406,107 @@ test_that("a package healing left out and pak then installs is not missing", {
   )
   expect_identical(nrow(attr(status, "missing")), 0L)
   expect_identical(nrow(log$record[[3L]]), 0L)
+})
+
+# A heal_restore() result that reports a locked library, so `others` is
+# computed from real lock and library lists.
+healed_lock <- function(left_out, locked, lib, libpkgs = character()) {
+  force(lib)
+  base <- left_out_by_healing(left_out, lib)
+  function(root, repos, upgrade, essential, ...) {
+    out <- base(root, repos, upgrade, essential)
+    out$result$output <- paste0(
+      "HVTIR_LIB=", lib, "\nHVTIR_LOCKVER=",
+      paste(sprintf("%s:1.0:", locked), collapse = ","),
+      "\nHVTIR_LIBPKGS=", paste(libpkgs, collapse = ","), "\n"
+    )
+    out
+  }
+}
+
+test_that("upgrade = FALSE never installs a package healing left out", {
+  root <- withr::local_tempdir()
+  log <- local_setup()
+  lib <- withr::local_tempdir()
+  seen <- character()
+  local_mocked_bindings(
+    heal_restore = left_out_by_healing("survminer", lib),
+    pak_install_lib = function(specs, lib, repos = NULL) {
+      seen <<- c(seen, specs)
+      invisible(NULL)
+    }
+  )
+  status <- NULL
+  expect_warning(
+    suppressMessages(
+      status <- setup("A study", 7L, root = root, upgrade = FALSE)
+    ),
+    "set up without 1 package"
+  )
+  expect_false("survminer" %in% seen)
+  expect_identical(attr(status, "missing")$package, "survminer")
+})
+
+test_that("a package healing left out, already installed, is cleared", {
+  root <- withr::local_tempdir()
+  log <- local_setup()
+  lib <- withr::local_tempdir()
+  dir.create(file.path(lib, "survminer"))
+  file.create(file.path(lib, "survminer", "DESCRIPTION"))
+  seen <- character()
+  locked <- setdiff(declared_packages(), "survminer")
+  local_mocked_bindings(
+    heal_restore = healed_lock("survminer", locked, lib, "survminer"),
+    pak_install_lib = function(specs, lib, repos = NULL) {
+      seen <<- c(seen, specs)
+      invisible(NULL)
+    }
+  )
+  status <- suppressMessages(setup("A study", 7L, root = root))
+  expect_false("survminer" %in% seen)
+  expect_identical(nrow(attr(status, "missing")), 0L)
+})
+
+test_that("a GitHub authentication failure adds the token hint", {
+  root <- withr::local_tempdir()
+  local_setup()
+  local_mocked_bindings(
+    pak_install_lib = function(specs, lib, repos = NULL) {
+      if ("arrow" %in% specs) {
+        stop("Bad authentication credentials for GitHub")
+      }
+      invisible(NULL)
+    }
+  )
+  w <- tryCatch(
+    suppressMessages(setup("A study", 7L, root = root)),
+    warning = function(w) w
+  )
+  expect_s3_class(w, "warning")
+  expect_match(conditionMessage(w), "create_github_token", fixed = TRUE)
+})
+
+test_that("a joint authentication failure also adds the token hint", {
+  root <- withr::local_tempdir()
+  local_setup()
+  local_mocked_bindings(
+    pak_install_lib = function(specs, lib, repos = NULL) {
+      if ("arrow" %in% specs) {
+        stop(if (length(specs) > 1L) {
+          "Bad authentication credentials"
+        } else {
+          "compile failed"
+        })
+      }
+      invisible(NULL)
+    }
+  )
+  w <- tryCatch(
+    suppressMessages(setup("A study", 7L, root = root)),
+    warning = function(w) w
+  )
+  expect_s3_class(w, "warning")
+  expect_match(conditionMessage(w), "create_github_token", fixed = TRUE)
 })
 
 test_that("a left-out package whose retry fails has one row, the first", {

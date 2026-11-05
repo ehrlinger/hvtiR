@@ -118,16 +118,20 @@ this session, so they must be there before the study's library exists.
 When an install fails, \code{setup()} heals what it safely can and leaves out
 what it cannot. Before it changes \code{renv.lock} it copies the file to
 \verb{renv/renv.lock.before-setup-<time>}. A restore that fails is healed in up
-to 10 rounds: a package whose locked version R forced to fail moves to the
+to 10 rounds: a package that will not build under this R moves to the
 newest version the study's repositories serve (only with \code{upgrade = TRUE}),
-and a missing dependency is installed first. After that, \code{setup()} keeps
-leaving out optional packages until the restore succeeds. A package left
-out stays declared but is dropped from \code{renv.lock}. The install stage then
-retries it at its current release, and it is locked if it installs. A
-package still missing at the end is named in a warning and recorded in
-\code{renv/hvtiR-setup.dcf}; \code{setup()} finishes and opens the project, and
-\code{\link[=doctor]{doctor()}} lists what was left out. A family member that cannot install
-still stops \code{setup()}. Each failure's log is kept in \verb{renv/logs/}.
+and a missing dependency is installed first; a dependency that will not
+install leaves its dependents out. After that, \code{setup()} keeps leaving out
+packages outside the family until the restore succeeds. A package left out
+stays declared but is dropped from \code{renv.lock}. With \code{upgrade = TRUE} the
+install stage then retries it at its current release, and it is locked if
+it installs; with \code{upgrade = FALSE} it is not retried, because that would
+move a pin. A package still missing at the end is named in a warning and
+recorded in \code{renv/hvtiR-setup.dcf}; \code{setup()} finishes and opens the
+project, and \code{\link[=doctor]{doctor()}} lists what was left out. A package whose
+dependency is missing stays locked but cannot load until the dependency
+installs. A family member that cannot install still stops \code{setup()}. Each
+failure's log is kept in \verb{renv/logs/}.
 
 Safe to rerun: each step checks before it acts.
 }

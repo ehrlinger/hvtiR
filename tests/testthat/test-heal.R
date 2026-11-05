@@ -415,14 +415,39 @@ test_that("a first round that only drops has a backup equal to the lock", {
   expect_identical(readLines(file.path(root, h$backup)), original)
 })
 
-test_that("an install child failing after a record round names the backup", {
+test_that("a dependency that will not install leaves its dependent out", {
+  root <- local_lock()
+  log <- local_children(list(dep_out("tseries", "forecast"), "ok"),
+                        fail = "install")
+  h <- heal_restore(root, NULL, TRUE, essential = "hvtiRutilities")
+  expect_identical(log$calls, c("restore", "install", "drop", "restore"))
+  expect_identical(h$missing$package, "forecast")
+  expect_identical(h$missing$because, "tseries")
+  expect_identical(h$missing$reason,
+                   "dependency tseries could not be installed")
+  expect_identical(h$missing$log, "renv/logs/x.log")
+  expect_match(log$exprs[2L], "forecast", fixed = TRUE)
+})
+
+test_that("an essential dependent of an uninstallable dependency aborts", {
   root <- local_lock()
   local_children(list(compile_out("vctrs"), dep_out("tseries", "forecast"),
                       "ok"), fail = "install")
   expect_error(
-    heal_restore(root, NULL, TRUE, essential = "hvtiRutilities"),
+    heal_restore(root, NULL, TRUE, essential = "forecast"),
     "Healing changed renv.lock"
   )
+})
+
+test_that("plan_round does not install what it leaves out or moves", {
+  r <- decide(fails(c("forecast", "vctrs"), c("dependency", "compile"),
+                    c("vctrs", NA)))
+  expect_identical(names(r$move), "vctrs")
+  expect_length(r$install, 0L)
+  r <- decide(fails(c("a", "b"), c("compile", "dependency"), c(NA, "a")),
+              upgrade = FALSE)
+  expect_identical(r$drop$package, "a")
+  expect_length(r$install, 0L)
 })
 
 test_that("an abort after a lock change keeps the original message", {

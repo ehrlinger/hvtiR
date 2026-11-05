@@ -756,7 +756,21 @@ doctor <- function(remote = TRUE) {
     }
 
     study <- enclosing_study()
-    record <- if (is.null(study)) NULL else read_setup_record(study)
+    unreadable <- FALSE
+    record <- if (is.null(study)) {
+      NULL
+    } else {
+      tryCatch(read_setup_record(study), error = function(e) {
+        unreadable <<- TRUE
+        NULL
+      })
+    }
+    if (unreadable) {
+      cli::cli_alert_warning(paste(
+        "The record of the last {.fn setup}, {.file renv/hvtiR-setup.dcf},",
+        "cannot be read."
+      ))
+    }
     if (!is.null(record) && nrow(record$missing)) {
       at <- record$run$At
       when <- ""

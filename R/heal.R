@@ -119,6 +119,8 @@ plan_round <- function(failures, specs, moved, missing, essential, upgrade,
     if (!is.null(gave$stop)) stop_pkgs <- c(stop_pkgs, gave$stop)
     if (!is.null(gave$drop)) drop[nrow(drop) + 1L, ] <- gave$drop
   }
+  # A package being left out is not a dependency worth installing for it.
+  install <- setdiff(install, c(names(move), drop$package))
   list(move = move, install = install, drop = drop, stop = stop_pkgs)
 }
 
@@ -320,14 +322,42 @@ heal_restore <- function(root, repos, upgrade, essential, max_rounds = 10L) {
       version <- locked_versions(decision$install, root)
       specs <- ifelse(is.na(version), decision$install,
                       paste0(decision$install, "@", version))
-      child(install_expr(root, specs, repos), "installing dependencies first")
+      out <- run_in_study(install_expr(root, specs, repos), root)
+      if (out$status != 0L) {
+        # A dependency that will not install degrades its dependents.
+        log <- save_setup_log(out$output, root)
+        needed <- strsplit(failures$needs, ",", fixed = TRUE)
+        dep <- vapply(needed, function(x) {
+          hit <- intersect(x, decision$install)
+          if (length(hit)) hit[1L] else NA_character_
+        }, character(1L))
+        blocked <- which(!is.na(dep) & !failures$package %in% missing$package)
+        if (any(failures$package[blocked] %in% essential)) {
+          abort_after(result, raw$output)
+        }
+        extra <- data.frame(
+          package = failures$package[blocked],
+          reason = paste0("dependency ", dep[blocked],
+                          " could not be installed"),
+          because = dep[blocked], log = rep(log, length(blocked)),
+          stringsAsFactors = FALSE
+        )
+        extra <- extra[!extra$package %in% fresh$package, , drop = FALSE]
+        if (!nrow(extra) && !nrow(fresh)) {
+          child_failed("installing dependencies first", out$output)
+        }
+        fresh$log <- rep(NA_character_, nrow(fresh))
+        fresh <- rbind(fresh, extra)
+      }
     }
     if (nrow(fresh)) {
+      if (is.null(fresh$log)) fresh$log <- NA_character_
       log <- save_setup_log(raw$output, root)
       child(drop_expr(root, fresh$package), "leaving packages out")
       for (i in seq_len(nrow(fresh))) {
         missing[nrow(missing) + 1L, ] <- list(
-          fresh$package[i], fresh$reason[i], fresh$because[i], log
+          fresh$package[i], fresh$reason[i], fresh$because[i],
+          if (is.na(fresh$log[i])) log else fresh$log[i]
         )
       }
     }
