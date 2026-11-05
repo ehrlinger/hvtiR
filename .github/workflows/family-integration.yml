@@ -64,6 +64,18 @@ jobs:
           hvtiR::install()
           print(hvtiR::status())
 
+      - name: hvtiR's study folder list matches the installed hvtiRutilities
+        shell: Rscript {0}
+        run: |
+          # STUDY_FOLDERS copies an internal hvtiRutilities list; this is the
+          # one gate where both are installed, so drift fails here.
+          ours <- getFromNamespace("STUDY_FOLDERS", "hvtiR")
+          theirs <- getFromNamespace(".study_folders", "hvtiRutilities")()
+          if (!identical(ours, theirs)) {
+            print(list(hvtiR = ours, hvtiRutilities = theirs))
+            stop("hvtiR's STUDY_FOLDERS differs from hvtiRutilities")
+          }
+
       # From here on, every step reads this record, never GitHub main, which
       # can move between steps. Consumers come from the INSTALLED DESCRIPTION
       # files: a member whose installed code imports a sibling is tested even
