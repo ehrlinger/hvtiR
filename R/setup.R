@@ -1361,6 +1361,20 @@ guard_session <- function(root, study, study_tracker_id,
 #' `hvtiRutilities` also when it is older than 1.5.6. `setup()` runs them from
 #' this session, so they must be there before the study's library exists.
 #'
+#' When an install fails, `setup()` heals what it safely can and leaves out
+#' what it cannot. Before it changes `renv.lock` it copies the file to
+#' `renv/renv.lock.before-setup-<time>`. A restore that fails is healed in up
+#' to 10 rounds: a package whose locked version R forced to fail moves to the
+#' newest version the study's repositories serve (only with `upgrade = TRUE`),
+#' and a missing dependency is installed first. After that, `setup()` keeps
+#' leaving out optional packages until the restore succeeds. A package left
+#' out stays declared but is dropped from `renv.lock`. The install stage then
+#' retries it at its current release, and it is locked if it installs. A
+#' package still missing at the end is named in a warning and recorded in
+#' `renv/hvtiR-setup.dcf`; `setup()` finishes and opens the project, and
+#' [doctor()] lists what was left out. A family member that cannot install
+#' still stops `setup()`. Each failure's log is kept in `renv/logs/`.
+#'
 #' Safe to rerun: each step checks before it acts.
 #'
 #' @param study The Study Tracker title.
@@ -1386,7 +1400,9 @@ guard_session <- function(root, study, study_tracker_id,
 #'   `template_dir` or `owner`. `renv` is not accepted: `setup()` always uses
 #'   renv, so use `hvtiRutilities::study_setup()` directly for a study without
 #'   it.
-#' @return The study status from `hvtiRutilities::study_setup()`, invisibly.
+#' @return The study status from `hvtiRutilities::study_setup()`, invisibly,
+#'   with attributes `healed` and `missing`: data frames of the pins moved
+#'   and the packages left out.
 #' @export
 #' @examples
 #' \dontrun{

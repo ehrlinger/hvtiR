@@ -150,6 +150,7 @@ steps of your own.
 | `setup()` says no study encloses the folder | Open the study's folder itself as the RStudio project, not one of its subfolders, and run `setup()` there; or pass `root` |
 | "Could not solve package dependencies" | Run `hvtiR::doctor()`. It lists the repositories R uses, warns on a dated snapshot and names any version floor they cannot meet |
 | `renv::restore()` fails on a package that is not on CRAN | Look for `RemoteRepo` in `renv.lock`. A package pinned on GitHub may need your own `GITHUB_PAT` |
+| `setup()` warns that the study is set up without some packages | They would not install, and jobs that load them stop. `hvtiR::doctor()` lists them and why; the logs are in `renv/logs/` and the record is `renv/hvtiR-setup.dcf`. Rerun `hvtiR::setup()` to try them again, or install one by hand in the study and run `renv::snapshot()`. A family member that will not install stops `setup()` instead. The lockfile as it was is in `renv/renv.lock.before-setup-<time>` |
 | An install fails reading a package in someone's home directory | The library holds links into a per-user cache. Rerun `setup()` for the study: it turns the cache off and replaces the links with real copies |
 | A package is installed but not in `renv.lock` | It is not declared. Run `hvtiRutilities::study_declare("name")`, then `renv::snapshot()` |
 | `renv.lock` is behind the library | `renv::status()` shows the drift, and `renv::snapshot()` records it once you have checked that it is what you meant |

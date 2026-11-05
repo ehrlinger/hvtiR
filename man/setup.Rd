@@ -46,7 +46,9 @@ renv, so use \code{hvtiRutilities::study_setup()} directly for a study without
 it.}
 }
 \value{
-The study status from \code{hvtiRutilities::study_setup()}, invisibly.
+The study status from \code{hvtiRutilities::study_setup()}, invisibly,
+with attributes \code{healed} and \code{missing}: data frames of the pins moved
+and the packages left out.
 }
 \description{
 The one command a study needs before analysis. In order: checks R, installs
@@ -112,6 +114,20 @@ Two packages can land in this session's library rather than the study's:
 pak into the first library in \code{\link[base:.libPaths]{base::.libPaths()}} when they are missing, and
 \code{hvtiRutilities} also when it is older than 1.5.6. \code{setup()} runs them from
 this session, so they must be there before the study's library exists.
+
+When an install fails, \code{setup()} heals what it safely can and leaves out
+what it cannot. Before it changes \code{renv.lock} it copies the file to
+\verb{renv/renv.lock.before-setup-<time>}. A restore that fails is healed in up
+to 10 rounds: a package whose locked version R forced to fail moves to the
+newest version the study's repositories serve (only with \code{upgrade = TRUE}),
+and a missing dependency is installed first. After that, \code{setup()} keeps
+leaving out optional packages until the restore succeeds. A package left
+out stays declared but is dropped from \code{renv.lock}. The install stage then
+retries it at its current release, and it is locked if it installs. A
+package still missing at the end is named in a warning and recorded in
+\code{renv/hvtiR-setup.dcf}; \code{setup()} finishes and opens the project, and
+\code{\link[=doctor]{doctor()}} lists what was left out. A family member that cannot install
+still stops \code{setup()}. Each failure's log is kept in \verb{renv/logs/}.
 
 Safe to rerun: each step checks before it acts.
 }
