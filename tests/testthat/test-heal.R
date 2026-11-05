@@ -18,6 +18,25 @@ test_that("a missing dependency names the package and what it needs", {
   expect_identical(f$needs, "tseries")
 })
 
+test_that("R's plural dependency line gives every name, comma-joined", {
+  out <- paste0(
+    "ERROR: dependencies \u2018tseries\u2019, \u2018urca\u2019 are not ",
+    "available for package \u2018forecast\u2019"
+  )
+  f <- classify_failures(out)
+  expect_identical(f$package, "forecast")
+  expect_identical(f$cause, "dependency")
+  expect_identical(f$needs, "tseries,urca")
+})
+
+test_that("an ASCII-quoted dependency line parses", {
+  f <- classify_failures(
+    "ERROR: dependency 'xx' is not available for package 'yy'"
+  )
+  expect_identical(f$package, "yy")
+  expect_identical(f$needs, "xx")
+})
+
 test_that("renv's failed list fills in packages with no other cause", {
   out <- paste(
     "ERROR: compilation failed for package 'xts'",
@@ -188,4 +207,33 @@ test_that("backup_lock copies the lock once under renv/", {
   expect_identical(readLines(file.path(root, rel)),
                    readLines(file.path(root, "renv.lock")))
   expect_true(is.na(backup_lock(withr::local_tempdir())))
+})
+
+test_that("an empty failures table plans nothing", {
+  r <- decide(fails(character(), character(), character()))
+  expect_length(r$move, 0L)
+  expect_length(r$install, 0L)
+  expect_identical(nrow(r$drop), 0L)
+  expect_length(r$stop, 0L)
+})
+
+test_that("plural needs, none left out, are all installed", {
+  r <- decide(fails("forecast", "dependency", "tseries,urca"))
+  expect_identical(r$install, c("tseries", "urca"))
+  expect_identical(nrow(r$drop), 0L)
+})
+
+test_that("plural needs with one left out drop the dependent, naming it", {
+  r <- decide(fails("forecast", "dependency", "tseries,urca"),
+              missing = "urca")
+  expect_identical(r$drop$package, "forecast")
+  expect_identical(r$drop$because, "urca")
+  expect_identical(r$drop$reason, "needs urca, which was left out")
+  expect_length(r$install, 0L)
+})
+
+test_that("a dependency row with no needs is an ordinary failure", {
+  r <- decide(fails("forecast", "dependency", NA_character_))
+  expect_identical(r$drop$package, "forecast")
+  expect_identical(r$drop$reason, "failed to install")
 })

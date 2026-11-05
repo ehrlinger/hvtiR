@@ -9,8 +9,8 @@
 #' @noRd
 classify_failures <- function(output) {
   name <- "([A-Za-z][A-Za-z0-9.]*[A-Za-z0-9])"
-  open <- "[‘'\"“]"
-  close <- "[’'\"”]"
+  open <- "[\u2018'\"\u201c]"
+  close <- "[\u2019'\"\u201d]"
   configured <- paste0(
     "configuration failed for package ", open, name, close
   )
@@ -19,12 +19,21 @@ classify_failures <- function(output) {
     compile_failures(output), sub(configured, "\\1", hits)
   ))
   dependency <- paste0(
-    "dependency ", open, name, close, " is not available for package ",
+    "dependenc(?:y|ies) ([^\n]*?) (?:is|are) not available for package ",
     open, name, close
   )
-  dep_hits <- regmatches(output, gregexpr(dependency, output))[[1L]]
-  dep_pkg <- sub(dependency, "\\2", dep_hits)
-  dep_needs <- sub(dependency, "\\1", dep_hits)
+  dep_hits <- regmatches(
+    output, gregexpr(dependency, output, perl = TRUE)
+  )[[1L]]
+  dep_pkg <- sub(dependency, "\\2", dep_hits, perl = TRUE)
+  dep_needs <- vapply(
+    sub(dependency, "\\1", dep_hits, perl = TRUE),
+    function(part) {
+      found <- regmatches(part, gregexpr(name, part, perl = TRUE))[[1L]]
+      paste(found, collapse = ",")
+    },
+    character(1L), USE.NAMES = FALSE
+  )
   failed <- restore_failures(output)
   other <- if (is.null(failed)) character() else failed$pkgs
   out <- data.frame(
@@ -68,35 +77,47 @@ plan_round <- function(failures, specs, moved, missing, essential, upgrade,
   stop_pkgs <- character()
   give_up <- function(pkg, reason, because = NA_character_) {
     if (pkg %in% essential) {
-      stop_pkgs <<- c(stop_pkgs, pkg)
+      list(stop = pkg)
     } else {
-      drop[nrow(drop) + 1L, ] <<- list(pkg, reason, because)
+      list(drop = list(pkg, reason, because))
     }
   }
   for (i in seq_len(nrow(failures))) {
     pkg <- failures$package[i]
     cause <- failures$cause[i]
+    needs <- failures$needs[i]
+    if (cause == "dependency" && (is.na(needs) || !nzchar(needs))) {
+      cause <- "other"
+    }
+    gave <- NULL
     if (cause == "compile") {
       spec <- unname(specs[pkg])
       if (pkg %in% moved) {
-        give_up(pkg, "still failed to compile after its version moved")
+        gave <- give_up(pkg, "still failed to compile after its version moved")
       } else if (isTRUE(upgrade) && !stuck && length(spec) && !is.na(spec)) {
         move[pkg] <- spec
       } else {
-        give_up(pkg, "failed to compile at its locked version")
+        gave <- give_up(pkg, "failed to compile at its locked version")
       }
     } else if (cause == "dependency") {
-      needs <- failures$needs[i]
-      if (needs %in% missing) {
-        give_up(pkg, paste0("needs ", needs, ", which was left out"), needs)
+      wanted <- strsplit(needs, ",", fixed = TRUE)[[1L]]
+      absent <- wanted[wanted %in% missing][1L]
+      if (!is.na(absent)) {
+        gave <- give_up(
+          pkg, paste0("needs ", absent, ", which was left out"), absent
+        )
       } else if (!stuck) {
-        install <- union(install, needs)
+        install <- union(install, wanted)
       } else {
-        give_up(pkg, paste0("dependency ", needs, " is not available"), needs)
+        gave <- give_up(
+          pkg, paste0("dependency ", needs, " is not available"), needs
+        )
       }
     } else {
-      give_up(pkg, "failed to install")
+      gave <- give_up(pkg, "failed to install")
     }
+    if (!is.null(gave$stop)) stop_pkgs <- c(stop_pkgs, gave$stop)
+    if (!is.null(gave$drop)) drop[nrow(drop) + 1L, ] <- gave$drop
   }
   list(move = move, install = install, drop = drop, stop = stop_pkgs)
 }
