@@ -116,3 +116,76 @@ test_that("an essential package whose dependency was left out stops", {
   expect_identical(r$stop, "hvtiRutilities")
   expect_identical(nrow(r$drop), 0L)
 })
+
+local_lock <- function(env = parent.frame()) {
+  root <- withr::local_tempdir(.local_envir = env)
+  writeLines(c(
+    "{", '  "R": {"Version": "4.5.1"},', '  "Packages": {',
+    '    "vctrs": {"Package": "vctrs", "Version": "0.7.2",',
+    '      "Source": "Repository", "Repository": "CRAN"},',
+    '    "hvtiRutilities": {"Package": "hvtiRutilities", "Version": "1.5.6",',
+    '      "Source": "GitHub", "RemoteUsername": "ehrlinger",',
+    '      "RemoteRepo": "hvtiRutilities"}',
+    "  }", "}"
+  ), file.path(root, "renv.lock"))
+  dir.create(file.path(root, "renv"))
+  root
+}
+
+test_that("locked_versions reads each record's version", {
+  root <- local_lock()
+  expect_identical(
+    locked_versions(c("vctrs", "hvtiRutilities", "absent"), root),
+    c(vctrs = "0.7.2", hvtiRutilities = "1.5.6", absent = NA)
+  )
+})
+
+test_that("record_specs is unchanged by the refactor", {
+  root <- local_lock()
+  expect_identical(
+    record_specs(c("vctrs", "hvtiRutilities"), root),
+    c(vctrs = "vctrs", hvtiRutilities = "ehrlinger/hvtiRutilities")
+  )
+})
+
+test_that("record_expr records against the study's repositories", {
+  root <- local_lock()
+  expr <- record_expr(root, c(vctrs = "vctrs"), c(PPM = "https://ppm/x"))
+  expect_match(expr, "options(repos = hvtir_repos)", fixed = TRUE)
+  expect_match(expr, 'renv::record("vctrs", project = ', fixed = TRUE)
+  expect_match(expr, "HVTIR_RECORDED=", fixed = TRUE)
+  expect_true(startsWith(expr, pak_off()))
+})
+
+test_that("install_expr installs into the project with no prompt", {
+  root <- local_lock()
+  expr <- install_expr(root, "tseries@0.10-58")
+  expect_match(expr, 'renv::install("tseries@0.10-58", project = ', fixed = TRUE)
+  expect_match(expr, "prompt = FALSE", fixed = TRUE)
+})
+
+test_that("drop_expr removes records from the lock", {
+  root <- local_lock()
+  expect_match(drop_expr(root, "vctrs"), 'lf$Packages["vctrs"] <- NULL',
+               fixed = TRUE)
+})
+
+test_that("drop_expr really removes the record from a lockfile", {
+  skip_on_cran()
+  skip_if_not_installed("renv")
+  root <- local_lock()
+  status <- system2(file.path(R.home("bin"), "Rscript"),
+                    c("--vanilla", "-e", shQuote(drop_expr(root, "vctrs"))))
+  expect_identical(status, 0L)
+  kept <- names(renv::lockfile_read(file.path(root, "renv.lock"))$Packages)
+  expect_identical(kept, "hvtiRutilities")
+})
+
+test_that("backup_lock copies the lock once under renv/", {
+  root <- local_lock()
+  rel <- backup_lock(root, stamp = "20261105-161000")
+  expect_identical(rel, "renv/renv.lock.before-setup-20261105-161000")
+  expect_identical(readLines(file.path(root, rel)),
+                   readLines(file.path(root, "renv.lock")))
+  expect_true(is.na(backup_lock(withr::local_tempdir())))
+})

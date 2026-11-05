@@ -957,6 +957,25 @@ restore_failures <- function(output) {
   list(pkgs = sub(pattern, "\\1", hits), complete = !endsWith(line, ","))
 }
 
+#' One field of a package's record in a lockfile's text
+#'
+#' Read with patterns, as [lockfile_r_version()] is.
+#' @param text The lockfile's text.
+#' @param pkg A valid package name.
+#' @param name The field.
+#' @return The value, or `NA_character_` when the record or field is absent.
+#' @noRd
+lock_field <- function(text, pkg, name) {
+  key <- gsub(".", "\\.", pkg, fixed = TRUE)
+  block <- regmatches(
+    text, regexpr(paste0('"', key, '"\\s*:\\s*\\{[^}]*\\}'), text)
+  )
+  hit <- regmatches(
+    block, regexec(paste0('"', name, '"\\s*:\\s*"([^"]*)"'), block)
+  )
+  if (length(hit) && length(hit[[1L]]) == 2L) hit[[1L]][2L] else NA_character_
+}
+
 #' The `renv::record()` spec that keeps each locked package's source
 #'
 #' Read with patterns, as [lockfile_r_version()] is. A repository record keeps
@@ -974,19 +993,9 @@ record_specs <- function(pkgs, root) {
     ""
   }
   spec <- function(pkg) {
-    key <- gsub(".", "\\.", pkg, fixed = TRUE)
-    block <- regmatches(
-      text, regexpr(paste0('"', key, '"\\s*:\\s*\\{[^}]*\\}'), text)
-    )
-    field <- function(name) {
-      hit <- regmatches(
-        block, regexec(paste0('"', name, '"\\s*:\\s*"([^"]*)"'), block)
-      )
-      if (length(hit) && length(hit[[1L]]) == 2L) hit[[1L]][2L] else NA
-    }
-    source <- field("Source")
-    user <- field("RemoteUsername")
-    repo <- field("RemoteRepo")
+    source <- lock_field(text, pkg, "Source")
+    user <- lock_field(text, pkg, "RemoteUsername")
+    repo <- lock_field(text, pkg, "RemoteRepo")
     if (identical(source, "Repository")) {
       pkg
     } else if (identical(source, "GitHub") && !is.na(user) && !is.na(repo)) {
