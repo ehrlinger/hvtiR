@@ -124,12 +124,13 @@ plan_round <- function(failures, specs, moved, missing, essential, upgrade,
   list(move = move, install = install, drop = drop, stop = stop_pkgs)
 }
 
-#' The locked version of each package
+#' The locked version of each package, or another field of its record
 #' @param pkgs Valid package names.
 #' @param root The study root.
-#' @return A character vector named by `pkgs`, `NA` with no record.
+#' @param field The record's field, `Version` unless named.
+#' @return A character vector named by `pkgs`, `NA` with no record or field.
 #' @noRd
-locked_versions <- function(pkgs, root) {
+locked_versions <- function(pkgs, root, field = "Version") {
   path <- file.path(root, "renv.lock")
   text <- if (file.exists(path)) {
     paste(readLines(path, warn = FALSE), collapse = "\n")
@@ -138,7 +139,7 @@ locked_versions <- function(pkgs, root) {
   }
   vapply(
     stats::setNames(pkgs, pkgs),
-    function(pkg) lock_field(text, pkg, "Version"),
+    function(pkg) lock_field(text, pkg, field),
     character(1L)
   )
 }
@@ -223,7 +224,9 @@ backup_lock <- function(root, stamp = format(Sys.time(), "%Y%m%d-%H%M%S")) {
 #' @param upgrade As passed to [setup()].
 #' @param essential Packages whose failure stops the run.
 #' @param max_rounds The most healing rounds.
-#' @return `list(result, raw, healed, missing, backup)`.
+#' @return `list(result, raw, healed, missing, backup, pins)`. `pins` holds
+#'   the `version` and `sha` (`RemoteSha`, `NA` for none) each dropped record
+#'   had, so [setup()] can judge a copy already in the library against it.
 #' @noRd
 heal_restore <- function(root, repos, upgrade, essential, max_rounds = 10L) {
   healed <- data.frame(
@@ -233,6 +236,10 @@ heal_restore <- function(root, repos, upgrade, essential, max_rounds = 10L) {
   missing <- data.frame(
     package = character(), reason = character(), because = character(),
     log = character(), stringsAsFactors = FALSE
+  )
+  pins <- data.frame(
+    package = character(), version = character(), sha = character(),
+    stringsAsFactors = FALSE
   )
   moved <- character()
   backup <- NA_character_
@@ -279,7 +286,7 @@ heal_restore <- function(root, repos, upgrade, essential, max_rounds = 10L) {
     result$output <- iconv(raw$output, "UTF-8", "UTF-8", sub = "?")
     if (result$status == 0L) {
       return(list(result = result, raw = raw$output, healed = healed,
-                  missing = missing, backup = backup))
+                  missing = missing, backup = backup, pins = pins))
     }
     failures <- classify_failures(result$output)
     if (!nrow(failures)) abort_after(result, raw$output)
@@ -353,6 +360,13 @@ heal_restore <- function(root, repos, upgrade, essential, max_rounds = 10L) {
     if (nrow(fresh)) {
       if (is.null(fresh$log)) fresh$log <- NA_character_
       log <- save_setup_log(raw$output, root)
+      # Read before the drop: afterwards the lock no longer holds them.
+      pins <- rbind(pins, data.frame(
+        package = fresh$package,
+        version = unname(locked_versions(fresh$package, root)),
+        sha = unname(locked_versions(fresh$package, root, "RemoteSha")),
+        stringsAsFactors = FALSE
+      ))
       child(drop_expr(root, fresh$package), "leaving packages out")
       for (i in seq_len(nrow(fresh))) {
         missing[nrow(missing) + 1L, ] <- list(

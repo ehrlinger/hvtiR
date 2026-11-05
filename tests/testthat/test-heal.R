@@ -572,3 +572,21 @@ test_that("a vector value is written as a display list", {
                      list(status = "done", left = c(NA, "")))
   expect_null(read_setup_record(root)$cleanup$Left)
 })
+
+test_that("a dropped record keeps its pin, read before the drop", {
+  root <- local_lock()
+  local_children(list(compile_out("vctrs"), "ok"))
+  h <- heal_restore(root, NULL, FALSE, essential = "hvtiRutilities")
+  expect_identical(h$missing$package, "vctrs")
+  expect_identical(h$pins$package, "vctrs")
+  expect_identical(h$pins$version, "0.7.2")
+  expect_true(is.na(h$pins$sha))
+})
+
+test_that("locked_versions reads another field when named", {
+  root <- local_lock()
+  expect_identical(
+    locked_versions(c("hvtiRutilities", "vctrs"), root, "RemoteRepo"),
+    c(hvtiRutilities = "hvtiRutilities", vctrs = NA)
+  )
+})

@@ -11,6 +11,15 @@
   project opens. A package whose dependency is missing stays locked but
   cannot load until the dependency installs. A family member that cannot
   install still stops `setup()`.
+* A package healing left out that is already in the study's library is
+  judged against the pin healing removed. With `upgrade = FALSE` a copy at
+  another version stays left out and out of `renv.lock`, so the lock never
+  gains a version the study did not pin; with `upgrade = TRUE` the move is
+  reported like any other.
+* A build-time (`LinkingTo`) dependency or a version floor that will not
+  install no longer stops `setup()`. The package that needs it, and every
+  package that depends on that one, is left out of `renv.lock` and recorded
+  as missing. A family member in that position still stops `setup()`.
 * `setup()` copies `renv.lock` to `renv/renv.lock.before-setup-<time>` before
   healing changes it, and keeps the logs in `renv/logs/`.
 * `doctor()` lists the packages the last `setup()` left out, and why. A
