@@ -1105,7 +1105,7 @@ test_that("no _study.yml stops before hvtiRutilities can be installed", {
     renv_state = function(...) "installed"
   )
   withr::local_dir(withr::local_tempdir())
-  expect_error(setup("A study", 7L), "Pass .*root")
+  expect_error(setup("A study", 7L), "[Pp]ass .*root")
 })
 
 test_that("workspace_prefs = FALSE leaves RStudio's preferences alone", {
@@ -1993,4 +1993,128 @@ test_that("setup_command names every formal once dots carry anything", {
     "adopt = FALSE, workspace_prefs = TRUE, upgrade = TRUE, cleanup = FALSE",
     fixed = TRUE
   )
+})
+
+local_project <- function(env = parent.frame()) {
+  dir <- withr::local_tempdir(.local_envir = env)
+  file.create(file.path(dir, "study.Rproj"))
+  withr::local_dir(dir, .local_envir = env)
+  normalizePath(dir, winslash = "/")
+}
+
+test_that("in a project with no study, Yes adopts the project folder", {
+  dir <- local_project()
+  log <- local_setup()
+  asked <- NULL
+  local_mocked_bindings(
+    is_interactive = function() TRUE,
+    ask_adopt_project = function(question) {
+      asked <<- question
+      TRUE
+    }
+  )
+  setup("A study", 7L)
+  expect_identical(
+    normalizePath(log$setup_args$root, winslash = "/"), dir
+  )
+  expect_true(log$setup_args$adopt)
+  expect_match(asked, "tp.*", fixed = TRUE)
+  expect_match(asked, "Study Tracker 7", fixed = TRUE)
+})
+
+test_that("No leaves everything as it was, RStudio preferences too", {
+  local_project()
+  log <- local_setup()
+  local_mocked_bindings(
+    is_interactive = function() TRUE,
+    ask_adopt_project = function(question) FALSE
+  )
+  expect_error(setup("A study", 7L), class = "hvtiR_adopt_declined")
+  expect_identical(log$steps, character(0))
+})
+
+test_that("a cancelled prompt counts as No", {
+  local_project()
+  log <- local_setup()
+  local_mocked_bindings(
+    is_interactive = function() TRUE,
+    ask_adopt_project = function(question) NA
+  )
+  expect_error(setup("A study", 7L), class = "hvtiR_adopt_declined")
+})
+
+test_that("cleanup = FALSE drops the deletion warning from the prompt", {
+  local_project()
+  local_setup()
+  asked <- NULL
+  local_mocked_bindings(
+    is_interactive = function() TRUE,
+    ask_adopt_project = function(question) {
+      asked <<- question
+      TRUE
+    }
+  )
+  setup("A study", 7L, cleanup = FALSE)
+  expect_no_match(asked, "tp.*", fixed = TRUE)
+})
+
+test_that("adopt = TRUE adopts the project folder without asking", {
+  dir <- local_project()
+  log <- local_setup()
+  local_mocked_bindings(
+    is_interactive = function() TRUE,
+    ask_adopt_project = function(question) stop("asked")
+  )
+  expect_message(setup("A study", 7L, adopt = TRUE), "adopting")
+  expect_identical(
+    normalizePath(log$setup_args$root, winslash = "/"), dir
+  )
+})
+
+test_that("non-interactive, it stops and quotes the adopt call", {
+  dir <- local_project()
+  log <- local_setup()
+  local_mocked_bindings(is_interactive = function() FALSE)
+  err <- expect_error(
+    setup("A study", 7L), class = "hvtiR_adopt_unconfirmed"
+  )
+  expect_identical(
+    err$command,
+    setup_command(dir, "A study", 7L, adopt = TRUE)
+  )
+  expect_identical(log$steps, character(0))
+})
+
+test_that("a refused folder stops before the prompt", {
+  dir <- file.path(withr::local_tempdir(), "30_analyses")
+  dir.create(dir)
+  file.create(file.path(dir, "study.Rproj"))
+  withr::local_dir(dir)
+  local_setup()
+  local_mocked_bindings(
+    is_interactive = function() TRUE,
+    ask_adopt_project = function(question) stop("asked")
+  )
+  expect_error(setup("A study", 7L), class = "hvtiR_adopt_refused")
+})
+
+test_that("an enclosing study wins over a project inside it", {
+  parent <- withr::local_tempdir()
+  file.create(file.path(parent, "_study.yml"))
+  child <- file.path(parent, "inner")
+  dir.create(child)
+  file.create(file.path(child, "inner.Rproj"))
+  withr::local_dir(child)
+  local_setup(root_error = "took the study branch")
+  local_mocked_bindings(
+    is_interactive = function() TRUE,
+    ask_adopt_project = function(question) stop("asked")
+  )
+  expect_error(setup("A study", 7L), "took the study branch")
+})
+
+test_that("no project and no study still stops with no target", {
+  withr::local_dir(withr::local_tempdir())
+  local_setup()
+  expect_error(setup("A study", 7L), "New Project")
 })

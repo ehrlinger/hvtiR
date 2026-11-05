@@ -1123,12 +1123,79 @@ refuse_candidate <- function(candidate) {
   invisible(candidate)
 }
 
+#' `interactive()`, as a seam the tests replace
+#' @noRd
+is_interactive <- function() interactive()
+
+#' Ask whether to adopt the project folder, defaulting to No
+#' @param question The prompt.
+#' @return `TRUE`, `FALSE` or `NA` (cancelled).
+#' @noRd
+ask_adopt_project <- function(question) {
+  utils::askYesNo(question, default = FALSE)
+}
+
+#' Confirm adopting the project folder as the study
+#'
+#' `adopt = TRUE` is the caller's confirmation; otherwise an interactive
+#' session is asked and a non-interactive one stops, quoting the call.
+#' @param candidate The folder `project_candidate()` returned.
+#' @param study,study_tracker_id,adopt,workspace_prefs,upgrade As passed to
+#'   [setup()].
+#' @param dots `list(...)` from [setup()].
+#' @return `candidate`.
+#' @noRd
+adopt_project <- function(candidate, study, study_tracker_id, adopt,
+                          workspace_prefs, upgrade, dots) {
+  refuse_candidate(candidate)
+  if (isTRUE(adopt)) {
+    cli::cli_alert_info(paste(
+      "No {.file _study.yml} here; adopting the project folder",
+      "{.path {candidate}}."
+    ))
+    return(candidate)
+  }
+  if (!is_interactive()) {
+    cmd <- setup_command(
+      candidate, study, study_tracker_id, TRUE, workspace_prefs, upgrade, dots
+    )
+    cli::cli_abort(c(
+      paste(
+        "{.path {candidate}} has no {.file _study.yml}, and {.fn setup}",
+        "adopts a folder only when asked."
+      ),
+      i = "To adopt it, run: {.code {cmd}}"
+    ), class = "hvtiR_adopt_unconfirmed", command = cmd, call = NULL)
+  }
+  question <- paste0(
+    candidate, " has no _study.yml. Adopt it as study \"", study,
+    "\" (Study Tracker ", study_tracker_id, ")?",
+    if (!isFALSE(dots[["cleanup"]])) {
+      paste(
+        " Adopting deletes the tp.* files, binder.summaries.doc and exact",
+        "template copies it holds; pass cleanup = FALSE to keep them."
+      )
+    }
+  )
+  if (!isTRUE(ask_adopt_project(question))) {
+    cli::cli_abort(
+      "Not adopted. Nothing was changed.",
+      class = "hvtiR_adopt_declined", call = NULL
+    )
+  }
+  candidate
+}
+
 #' Stop because `setup()` has no study to write to
 #' @noRd
 abort_no_study <- function() {
   cli::cli_abort(c(
     "No study encloses {.path {getwd()}}, so {.fn setup} has no target.",
-    i = "Pass {.arg root}, the directory to set the study up in."
+    i = paste(
+      "Open the study's folder as an RStudio project (File > New Project >",
+      "Existing Directory) and run {.fn setup} there."
+    ),
+    i = "Or pass {.arg root}, the directory to set the study up in."
   ), call = NULL)
 }
 
@@ -1324,6 +1391,18 @@ setup <- function(study, study_tracker_id, root = NULL, adopt = FALSE,
   }
   if (!isTRUE(workspace_prefs) && !isFALSE(workspace_prefs)) {
     cli::cli_abort("{.arg workspace_prefs} must be `TRUE` or `FALSE`.")
+  }
+  # The default path: a legacy study opened as its own RStudio project.
+  # Resolved before the guard, so the guard and its quoted call name it.
+  if (is.null(root) && is.null(enclosing_study())) {
+    candidate <- project_candidate()
+    if (!is.null(candidate)) {
+      root <- adopt_project(
+        candidate, study, study_tracker_id, adopt, workspace_prefs, upgrade,
+        list(...)
+      )
+      adopt <- TRUE
+    }
   }
   guard_session(
     root, study, study_tracker_id, adopt, workspace_prefs, upgrade, list(...)
