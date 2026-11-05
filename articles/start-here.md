@@ -50,9 +50,9 @@ from an older
 [`renv::init()`](https://rstudio.github.io/renv/reference/init.html),
 which brings neither the family nor the standard packages. If
 [`hvtiR::status()`](https://ehrlinger.github.io/hvtiR/reference/status.md)
-there shows members missing, run
-[`setup()`](https://ehrlinger.github.io/hvtiR/reference/setup.md) below
-with `adopt = TRUE`.
+there shows members missing, adopt the study from outside the project,
+as [If it says to run from outside the project](#from-outside)
+describes.
 
 A new study may have been set up when its directory was made, because
 the `study-setup` command in `qhsprograms` runs
@@ -61,18 +61,15 @@ for you. Otherwise, carry on here.
 
 ## Set up the study
 
-Close any open project first (**File \> Close Project**), so that R
-starts outside the study.
-[`setup()`](https://ehrlinger.github.io/hvtiR/reference/setup.md)
-replaces packages in the study’s library, and a session inside the
-project has those packages loaded. Run from there it stops before
-installing anything and names the command to run instead. That is why
-the call names the directory with `root`.
+Most studies already have a directory, with folders and files of their
+own. Set one of those up from inside it, as an RStudio project. A study
+whose directory does not exist yet is set up from outside; [A new
+directory](#a-new-directory) covers that case.
 
 ### What adopting deletes
 
-Adopting deletes three kinds of file anywhere in the study, and makes no
-backup:
+Setting up an existing directory is called adopting it. Adopting deletes
+three kinds of file anywhere in the study, and makes no backup:
 
 - every file whose name starts with `tp.`, **matched by name alone**, so
   an edited or study-specific `tp.*` file goes too;
@@ -84,9 +81,22 @@ Before you adopt, look through the study for `tp.*` files that hold work
 of your own, and rename or copy any you need. To adopt without deleting
 anything, add `cleanup = FALSE` to the call below.
 
+### Open the study as a project
+
+If the study’s top directory holds a `.Rproj` file, open it (**File \>
+Open Project**). If it has none, make one: **File \> New Project \>
+Existing Directory**, then browse to the study’s top directory and click
+**Create Project**.
+
+Choose the top directory, the one that holds the study’s folders, not
+one of those folders.
+[`setup()`](https://ehrlinger.github.io/hvtiR/reference/setup.md)
+refuses a folder named like a study folder, such as `datasets` or
+`30_analyses`, and names the directory above it to open instead.
+
 ### Run it
 
-Install the installer, then set the study up:
+In the Console, install the installer, then set the study up:
 
 ``` r
 
@@ -96,18 +106,23 @@ pak::pak("ehrlinger/hvtiR")
 hvtiR::setup(
   study = "EDIT: the Study Tracker title",
   study_tracker_id = 0L,  # EDIT: the Study Tracker ID
-  root = "EDIT: the study directory",
-  adopt = TRUE,  # EDIT: leave out only when the directory does not exist yet
   identity_source = "manual"
 )
 ```
 
-`adopt` is the choice you have to get right. A directory that already
-exists needs `adopt = TRUE`, even an empty one, or
-[`setup()`](https://ehrlinger.github.io/hvtiR/reference/setup.md) stops.
-An adopted study keeps the folder names it has and loses the files
-listed above. An empty or new directory gets the numbered folders
-(`00_datasets`, `10_descriptive` and so on).
+The call names no directory:
+[`setup()`](https://ehrlinger.github.io/hvtiR/reference/setup.md) takes
+the project you have open. Because that directory has no `_study.yml`
+yet, it asks before changing anything:
+
+    /path/to/study has no _study.yml. Adopt it as study "..." (Study Tracker ...)?
+    Adopting deletes the tp.* files, binder.summaries.doc and exact template copies
+    it holds; pass cleanup = FALSE to keep them. (yes/No/cancel)
+
+Check the directory, title and ID in the question, then type `yes` and
+press Enter. The answer it shows in capitals, `No`, is what pressing
+Enter alone gives. `No` or `cancel` prints
+`Not adopted. Nothing was changed.`, and nothing was.
 
 `identity_source = "manual"` is there because you typed the title and
 ID. The default says they came from a Study Tracker record, and a new
@@ -121,6 +136,51 @@ a version the lockfile pins when the family needs a newer one, and lists
 each move. In revision those versions must not move, so with
 `upgrade = FALSE` a package the install would move stops the run
 instead, and `renv.lock` stays as it was.
+
+### If it says to run from outside the project
+
+A study that already has a package library of its own, from an older
+[`renv::init()`](https://rstudio.github.io/renv/reference/init.html),
+loads that library when you open the project.
+[`setup()`](https://ehrlinger.github.io/hvtiR/reference/setup.md)
+replaces packages in it, which it cannot do from a session that has them
+loaded. So it stops, after you answer `yes` if it asked, before
+installing anything, and prints the call to run instead:
+
+    Run it from a session started outside any project: hvtiR::setup(root = "...", ...)
+
+Close the project (**File \> Close Project**). Check that
+`Sys.getenv("RENV_PROJECT")` prints `""`, then paste the call it printed
+into the Console. That call names the directory with `root`. When the
+study already has a `_study.yml`, it asks before changing anything:
+
+    /path/to/study already has a _study.yml for this study. Adopt it, adding only
+    what is missing? (yes/No/cancel)
+
+Type `yes` and press Enter. The question does not say so, but adopting
+deletes the files listed in [What adopting
+deletes](#what-adopting-deletes), as it does for a first setup. To keep
+them, add `cleanup = FALSE` to the call before you run it.
+
+### A new directory
+
+For a study whose directory does not exist yet, close any open project,
+then name the directory with `root`:
+
+``` r
+
+hvtiR::setup(
+  study = "EDIT: the Study Tracker title",
+  study_tracker_id = 0L,  # EDIT: the Study Tracker ID
+  root = "EDIT: the study directory",
+  identity_source = "manual"
+)
+```
+
+[`setup()`](https://ehrlinger.github.io/hvtiR/reference/setup.md)
+creates the directory with the numbered folders (`00_datasets`,
+`10_descriptive` and so on). An adopted study keeps the folder names it
+has.
 
 ### What it does
 
@@ -151,9 +211,9 @@ Each step checks before it acts, so a rerun is safe.
 ### When it worked
 
 The last step restarts RStudio inside the study. The project name in
-RStudio’s top right corner changes from `Project: (None)` to the study’s
-directory name, and the Files pane shows the study’s folders. Go on to
-[Check the study](#check-the-study).
+RStudio’s top right corner is the study’s directory name, and the Files
+pane shows `_study.yml` and `renv.lock` beside the study’s folders. Go
+on to [Check the study](#check-the-study).
 
 If R printed an error instead, read the message from its first line: it
 names what stopped the run. Fix that and run the same

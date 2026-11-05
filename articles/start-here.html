@@ -100,23 +100,27 @@
 <code><a href="../reference/setup.html">hvtiR::setup()</a></code> means “the <code><a href="../reference/setup.html">setup()</a></code> function from the <code>hvtiR</code> package”. The page writes every call that way so that it works in a fresh session. <a href="#common-errors">Common errors</a> explains why.</li>
 </ul></section><section class="level2"><h2 id="has-the-study-been-set-up-already">Has the study been set up already?<a class="anchor" aria-label="anchor" href="#has-the-study-been-set-up-already"></a>
 </h2>
-<p>Look in the study’s directory. If it holds both <code>_study.yml</code> and <code>renv.lock</code>, someone has probably set it up: open its <code>.Rproj</code>, then go to <a href="#check-the-study">Check the study</a>. Those two files can also come from an older <code><a href="https://rstudio.github.io/renv/reference/init.html" class="external-link">renv::init()</a></code>, which brings neither the family nor the standard packages. If <code><a href="../reference/status.html">hvtiR::status()</a></code> there shows members missing, run <code><a href="../reference/setup.html">setup()</a></code> below with <code>adopt = TRUE</code>.</p>
+<p>Look in the study’s directory. If it holds both <code>_study.yml</code> and <code>renv.lock</code>, someone has probably set it up: open its <code>.Rproj</code>, then go to <a href="#check-the-study">Check the study</a>. Those two files can also come from an older <code><a href="https://rstudio.github.io/renv/reference/init.html" class="external-link">renv::init()</a></code>, which brings neither the family nor the standard packages. If <code><a href="../reference/status.html">hvtiR::status()</a></code> there shows members missing, adopt the study from outside the project, as <a href="#from-outside">If it says to run from outside the project</a> describes.</p>
 <p>A new study may have been set up when its directory was made, because the <code>study-setup</code> command in <code>qhsprograms</code> runs <code><a href="../reference/setup.html">hvtiR::setup()</a></code> for you. Otherwise, carry on here.</p>
 </section><section class="level2"><h2 id="set-up-the-study">Set up the study<a class="anchor" aria-label="anchor" href="#set-up-the-study"></a>
 </h2>
-<p>Close any open project first (<strong>File &gt; Close Project</strong>), so that R starts outside the study. <code><a href="../reference/setup.html">setup()</a></code> replaces packages in the study’s library, and a session inside the project has those packages loaded. Run from there it stops before installing anything and names the command to run instead. That is why the call names the directory with <code>root</code>.</p>
+<p>Most studies already have a directory, with folders and files of their own. Set one of those up from inside it, as an RStudio project. A study whose directory does not exist yet is set up from outside; <a href="#a-new-directory">A new directory</a> covers that case.</p>
 <section class="level3"><h3 id="what-adopting-deletes">What adopting deletes<a class="anchor" aria-label="anchor" href="#what-adopting-deletes"></a>
 </h3>
-<p>Adopting deletes three kinds of file anywhere in the study, and makes no backup:</p>
+<p>Setting up an existing directory is called adopting it. Adopting deletes three kinds of file anywhere in the study, and makes no backup:</p>
 <ul>
 <li>every file whose name starts with <code>tp.</code>, <strong>matched by name alone</strong>, so an edited or study-specific <code>tp.*</code> file goes too;</li>
 <li>every <code>binder.summaries.doc</code>;</li>
 <li>every other file whose name and exact content match one in the template corpus.</li>
 </ul>
 <p>Before you adopt, look through the study for <code>tp.*</code> files that hold work of your own, and rename or copy any you need. To adopt without deleting anything, add <code>cleanup = FALSE</code> to the call below.</p>
+</section><section class="level3"><h3 id="open-the-study-as-a-project">Open the study as a project<a class="anchor" aria-label="anchor" href="#open-the-study-as-a-project"></a>
+</h3>
+<p>If the study’s top directory holds a <code>.Rproj</code> file, open it (<strong>File &gt; Open Project</strong>). If it has none, make one: <strong>File &gt; New Project &gt; Existing Directory</strong>, then browse to the study’s top directory and click <strong>Create Project</strong>.</p>
+<p>Choose the top directory, the one that holds the study’s folders, not one of those folders. <code><a href="../reference/setup.html">setup()</a></code> refuses a folder named like a study folder, such as <code>datasets</code> or <code>30_analyses</code>, and names the directory above it to open instead.</p>
 </section><section class="level3"><h3 id="run-it">Run it<a class="anchor" aria-label="anchor" href="#run-it"></a>
 </h3>
-<p>Install the installer, then set the study up:</p>
+<p>In the Console, install the installer, then set the study up:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"pak"</span><span class="op">)</span>  <span class="co"># once per machine</span></span>
 <span><span class="fu">pak</span><span class="fu">::</span><span class="fu"><a href="https://pak.r-lib.org/reference/pak.html" class="external-link">pak</a></span><span class="op">(</span><span class="st">"ehrlinger/hvtiR"</span><span class="op">)</span></span>
@@ -124,13 +128,34 @@
 <span><span class="fu">hvtiR</span><span class="fu">::</span><span class="fu"><a href="../reference/setup.html">setup</a></span><span class="op">(</span></span>
 <span>  study <span class="op">=</span> <span class="st">"EDIT: the Study Tracker title"</span>,</span>
 <span>  study_tracker_id <span class="op">=</span> <span class="fl">0L</span>,  <span class="co"># EDIT: the Study Tracker ID</span></span>
-<span>  root <span class="op">=</span> <span class="st">"EDIT: the study directory"</span>,</span>
-<span>  adopt <span class="op">=</span> <span class="cn">TRUE</span>,  <span class="co"># EDIT: leave out only when the directory does not exist yet</span></span>
 <span>  identity_source <span class="op">=</span> <span class="st">"manual"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p><code>adopt</code> is the choice you have to get right. A directory that already exists needs <code>adopt = TRUE</code>, even an empty one, or <code><a href="../reference/setup.html">setup()</a></code> stops. An adopted study keeps the folder names it has and loses the files listed above. An empty or new directory gets the numbered folders (<code>00_datasets</code>, <code>10_descriptive</code> and so on).</p>
+<p>The call names no directory: <code><a href="../reference/setup.html">setup()</a></code> takes the project you have open. Because that directory has no <code>_study.yml</code> yet, it asks before changing anything:</p>
+<pre><code>/path/to/study has no _study.yml. Adopt it as study "..." (Study Tracker ...)?
+Adopting deletes the tp.* files, binder.summaries.doc and exact template copies
+it holds; pass cleanup = FALSE to keep them. (yes/No/cancel)</code></pre>
+<p>Check the directory, title and ID in the question, then type <code>yes</code> and press Enter. The answer it shows in capitals, <code>No</code>, is what pressing Enter alone gives. <code>No</code> or <code>cancel</code> prints <code>Not adopted. Nothing was changed.</code>, and nothing was.</p>
 <p><code>identity_source = "manual"</code> is there because you typed the title and ID. The default says they came from a Study Tracker record, and a new <code>_study.yml</code> would then record them as verified. A <code>_study.yml</code> the study already has is not rewritten.</p>
 <p>A study in revision needs one more argument, <code>upgrade = FALSE</code>. By default, <code><a href="../reference/setup.html">setup()</a></code> moves a version the lockfile pins when the family needs a newer one, and lists each move. In revision those versions must not move, so with <code>upgrade = FALSE</code> a package the install would move stops the run instead, and <code>renv.lock</code> stays as it was.</p>
+</section><section class="level3"><h3 id="from-outside">If it says to run from outside the project<a class="anchor" aria-label="anchor" href="#from-outside"></a>
+</h3>
+<p>A study that already has a package library of its own, from an older <code><a href="https://rstudio.github.io/renv/reference/init.html" class="external-link">renv::init()</a></code>, loads that library when you open the project. <code><a href="../reference/setup.html">setup()</a></code> replaces packages in it, which it cannot do from a session that has them loaded. So it stops, after you answer <code>yes</code> if it asked, before installing anything, and prints the call to run instead:</p>
+<pre><code>Run it from a session started outside any project: hvtiR::setup(root = "...", ...)</code></pre>
+<p>Close the project (<strong>File &gt; Close Project</strong>). Check that <code>Sys.getenv("RENV_PROJECT")</code> prints <code>""</code>, then paste the call it printed into the Console. That call names the directory with <code>root</code>. When the study already has a <code>_study.yml</code>, it asks before changing anything:</p>
+<pre><code>/path/to/study already has a _study.yml for this study. Adopt it, adding only
+what is missing? (yes/No/cancel)</code></pre>
+<p>Type <code>yes</code> and press Enter. The question does not say so, but adopting deletes the files listed in <a href="#what-adopting-deletes">What adopting deletes</a>, as it does for a first setup. To keep them, add <code>cleanup = FALSE</code> to the call before you run it.</p>
+</section><section class="level3"><h3 id="a-new-directory">A new directory<a class="anchor" aria-label="anchor" href="#a-new-directory"></a>
+</h3>
+<p>For a study whose directory does not exist yet, close any open project, then name the directory with <code>root</code>:</p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">hvtiR</span><span class="fu">::</span><span class="fu"><a href="../reference/setup.html">setup</a></span><span class="op">(</span></span>
+<span>  study <span class="op">=</span> <span class="st">"EDIT: the Study Tracker title"</span>,</span>
+<span>  study_tracker_id <span class="op">=</span> <span class="fl">0L</span>,  <span class="co"># EDIT: the Study Tracker ID</span></span>
+<span>  root <span class="op">=</span> <span class="st">"EDIT: the study directory"</span>,</span>
+<span>  identity_source <span class="op">=</span> <span class="st">"manual"</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p><code><a href="../reference/setup.html">setup()</a></code> creates the directory with the numbered folders (<code>00_datasets</code>, <code>10_descriptive</code> and so on). An adopted study keeps the folder names it has.</p>
 </section><section class="level3"><h3 id="what-it-does">What it does<a class="anchor" aria-label="anchor" href="#what-it-does"></a>
 </h3>
 <p>In order, <code><a href="../reference/setup.html">setup()</a></code>:</p>
@@ -146,23 +171,23 @@
 <p>If it stops partway, fix what it names and run the same command again. Each step checks before it acts, so a rerun is safe.</p>
 </section><section class="level3"><h3 id="when-it-worked">When it worked<a class="anchor" aria-label="anchor" href="#when-it-worked"></a>
 </h3>
-<p>The last step restarts RStudio inside the study. The project name in RStudio’s top right corner changes from <code>Project: (None)</code> to the study’s directory name, and the Files pane shows the study’s folders. Go on to <a href="#check-the-study">Check the study</a>.</p>
+<p>The last step restarts RStudio inside the study. The project name in RStudio’s top right corner is the study’s directory name, and the Files pane shows <code>_study.yml</code> and <code>renv.lock</code> beside the study’s folders. Go on to <a href="#check-the-study">Check the study</a>.</p>
 <p>If R printed an error instead, read the message from its first line: it names what stopped the run. Fix that and run the same <code><a href="../reference/setup.html">hvtiR::setup()</a></code> command again.</p>
 </section><section class="level3"><h3 id="what-not-to-run">What not to run<a class="anchor" aria-label="anchor" href="#what-not-to-run"></a>
 </h3>
 <p>Do not run <code><a href="https://rstudio.github.io/renv/reference/init.html" class="external-link">renv::init()</a></code> on the study: <code><a href="../reference/setup.html">setup()</a></code> has already made the environment, and <code><a href="https://rstudio.github.io/renv/reference/init.html" class="external-link">renv::init()</a></code> starts the library over. Do not run <code>organize_templates.sh</code>: <code>setup(adopt = TRUE)</code> replaces it. When a study needs a package the family and the standard set do not bring, add it from inside the project:</p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">hvtiRutilities</span><span class="fu">::</span><span class="fu">study_need</span><span class="op">(</span><span class="st">"cmprsk"</span><span class="op">)</span></span></code></pre></div>
 <p>That installs it, declares it and records it in <code>renv.lock</code>. A package already installed is only declared, so run <code><a href="https://rstudio.github.io/renv/reference/snapshot.html" class="external-link">renv::snapshot()</a></code> after it. <a href="study-environment.html">A study’s package environment</a> covers updates, revisions and what to do when the environment misbehaves.</p>
 </section></section><section class="level2"><h2 id="check-the-study">Check the study<a class="anchor" aria-label="anchor" href="#check-the-study"></a>
 </h2>
 <p>Now you are inside the project. Ask the study what it still needs, and the family whether you are current:</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">hvtiRutilities</span><span class="fu">::</span><span class="fu">study_status</span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="fu">hvtiR</span><span class="fu">::</span><span class="fu"><a href="../reference/status.html">status</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <p><code>study_status()</code> prints a checklist, one line per thing a study needs: <code>[x]</code> marks one that is in place, <code>[ ]</code> one that is not, and <code>[~]</code> one that is in place but not yet confirmed. On a study set up as above, <code>renv.lock</code> is ticked and <code>_study.yml</code> shows <code>[~]</code>. You typed the title and ID (<code>identity_source = "manual"</code>), so the line says they were entered by hand and to confirm them with <code>study-setup --verify</code>.</p>
 <p>That is a shell command, so it goes in RStudio’s <strong>Terminal</strong> tab, not the Console. Run it from the study’s directory:</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="ex">study-setup</span> <span class="at">--verify</span></span></code></pre></div>
+<div class="sourceCode" id="cb8"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="ex">study-setup</span> <span class="at">--verify</span></span></code></pre></div>
 <p>It looks the ID up in Study Tracker and compares the title you typed. When they match, it marks the identity verified, and <code>study_status()</code> then shows <code>[x]</code> for <code>_study.yml</code>. When they differ, it lists each difference and asks whether to take Study Tracker’s values; answer no and nothing changes. A study that the <code>study-setup</code> command created was read from Study Tracker in the first place, so its <code>_study.yml</code> shows <code>[x]</code> from the start.</p>
 <p>The <code>manifest.yaml</code> and <code>dataset</code> lines are not ticked either, and each says to run <code>register_data()</code>. That is expected: registering the data is the next step, and it belongs to the tutorials. <code><a href="../reference/status.html">hvtiR::status()</a></code> reports whether each family package in the study is current, and how to update any that are not.</p>
 </section><section class="level2"><h2 id="go-on-to-the-tutorials">Go on to the tutorials<a class="anchor" aria-label="anchor" href="#go-on-to-the-tutorials"></a>
@@ -185,10 +210,10 @@
 </h3>
 <pre><code>Error in read_built() : could not find function "read_built"</code></pre>
 <p>R knows a function only once its package is attached, and a new session attaches none of the family. Either name the package in the call, as this page does:</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">d</span> <span class="op">&lt;-</span> <span class="fu">hvtiRutilities</span><span class="fu">::</span><span class="fu">read_built</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <p>or attach the package once per session, then call the function by its name:</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">hvtiRutilities</span><span class="op">)</span></span>
 <span><span class="va">d</span> <span class="op">&lt;-</span> <span class="fu">read_built</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <p>Attaching lasts until R restarts, and <code><a href="../reference/setup.html">hvtiR::setup()</a></code> restarts it, so attach again afterwards. The functions you will use most come from three packages:</p>
@@ -227,7 +252,7 @@
 <pre><code>Error in library(c("hvtiRutilities", "hvtiRtemplates")) :
   'package' must be of length 1</code></pre>
 <p><code><a href="https://rdrr.io/r/base/library.html" class="external-link">library()</a></code> attaches one package per call. To attach all three at once:</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/invisible.html" class="external-link">invisible</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"hvtiR"</span>, <span class="st">"hvtiRutilities"</span>, <span class="st">"hvtiRtemplates"</span><span class="op">)</span>, <span class="va">library</span>, character.only <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 </section><section class="level3"><h3 id="the-following-object-is-masked-from-packagestats-update">
 <code>The following object is masked from ‘package:stats’: update</code><a class="anchor" aria-label="anchor" href="#the-following-object-is-masked-from-packagestats-update"></a>
@@ -238,7 +263,7 @@
 </h3>
 <pre><code>Error in library(cmprsk) : there is no package called ‘cmprsk’</code></pre>
 <p>Each study has a library of its own, and that package is not in this one, even if another study or your own library has it. From inside the study’s project, install it into the study:</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">hvtiRutilities</span><span class="fu">::</span><span class="fu">study_need</span><span class="op">(</span><span class="st">"cmprsk"</span><span class="op">)</span></span></code></pre></div>
 <p>When the missing package is one of the family, run <code><a href="../reference/status.html">hvtiR::status()</a></code> instead.</p>
 </section><section class="level3"><h3 id="no-_study-yml-found">
@@ -249,7 +274,7 @@
 </section></section><section class="level2"><h2 id="when-something-goes-wrong">When something goes wrong<a class="anchor" aria-label="anchor" href="#when-something-goes-wrong"></a>
 </h2>
 <p>Start with the doctor:</p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">hvtiR</span><span class="fu">::</span><span class="fu"><a href="../reference/doctor.html">doctor</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <p>It reports your R version, your platform, whether pak is available, the repositories R is configured to use and whether an renv project is active, and <a href="hvtiR.html#when-something-will-not-install">Install, update and check the family</a> explains the failures we see most. If that does not settle it, tell the team. Send the code you ran, what you expected, what happened instead, and the doctor’s output. A failure you hit is usually a gap in the tools or in this page, so report it early.</p>
 <p>Never send patient data. Column names and <code><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim()</a></code> are fine; rows are not.</p>
