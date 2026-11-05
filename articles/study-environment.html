@@ -203,22 +203,28 @@
 </td>
 </tr>
 <tr class="odd">
+<td>
+<code><a href="../reference/setup.html">setup()</a></code> warns that the study is set up without some packages</td>
+<td>They would not install, and jobs that load them stop. <code><a href="../reference/doctor.html">hvtiR::doctor()</a></code> lists them and why; the logs are in <code>renv/logs/</code> and the record is <code>renv/hvtiR-setup.dcf</code>. Rerun <code><a href="../reference/setup.html">hvtiR::setup()</a></code> to try them again, or install one by hand in the study and run <code><a href="https://rstudio.github.io/renv/reference/snapshot.html" class="external-link">renv::snapshot()</a></code>. A family member that will not install stops <code><a href="../reference/setup.html">setup()</a></code> instead. The lockfile as it was is in <code>renv/renv.lock.before-setup-&lt;time&gt;</code>
+</td>
+</tr>
+<tr class="even">
 <td>An install fails reading a package in someone’s home directory</td>
 <td>The library holds links into a per-user cache. Rerun <code><a href="../reference/setup.html">setup()</a></code> for the study: it turns the cache off and replaces the links with real copies</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td>A package is installed but not in <code>renv.lock</code>
 </td>
 <td>It is not declared. Run <code>hvtiRutilities::study_declare("name")</code>, then <code><a href="https://rstudio.github.io/renv/reference/snapshot.html" class="external-link">renv::snapshot()</a></code>
 </td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td>
 <code>renv.lock</code> is behind the library</td>
 <td>
 <code><a href="https://rstudio.github.io/renv/reference/status.html" class="external-link">renv::status()</a></code> shows the drift, and <code><a href="https://rstudio.github.io/renv/reference/snapshot.html" class="external-link">renv::snapshot()</a></code> records it once you have checked that it is what you meant</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td>A teammate’s session errors just after setup</td>
 <td>They had the project open while the library changed. Restart the session</td>
 </tr>

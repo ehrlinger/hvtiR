@@ -71,7 +71,9 @@ setup(
 
 ## Value
 
-The study status from `hvtiRutilities::study_setup()`, invisibly.
+The study status from `hvtiRutilities::study_setup()`, invisibly, with
+attributes `healed` and `missing`: data frames of the pins moved and the
+packages left out.
 
 ## Details
 
@@ -132,6 +134,26 @@ with pak into the first library in
 are missing, and `hvtiRutilities` also when it is older than 1.5.6.
 `setup()` runs them from this session, so they must be there before the
 study's library exists.
+
+When an install fails, `setup()` heals what it safely can and leaves out
+what it cannot. Before it changes `renv.lock` it copies the file to
+`renv/renv.lock.before-setup-<time>`. A restore that fails is healed in
+up to 10 rounds: a package that will not build under this R moves to the
+newest version the study's repositories serve (only with
+`upgrade = TRUE`), and a missing dependency is installed first; a
+dependency that will not install leaves its dependents out. After that,
+`setup()` keeps leaving out packages outside the family until the
+restore succeeds. A package left out stays declared but is dropped from
+`renv.lock`. With `upgrade = TRUE` the install stage then retries it at
+its current release, and it is locked if it installs; with
+`upgrade = FALSE` it is not retried, because that would move a pin. A
+package still missing at the end is named in a warning and recorded in
+`renv/hvtiR-setup.dcf`; `setup()` finishes and opens the project, and
+[`doctor()`](https://ehrlinger.github.io/hvtiR/reference/doctor.md)
+lists what was left out. A package whose dependency is missing stays
+locked but cannot load until the dependency installs. A family member
+that cannot install still stops `setup()`. Each failure's log is kept in
+`renv/logs/`.
 
 Safe to rerun: each step checks before it acts.
 

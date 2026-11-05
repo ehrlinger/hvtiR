@@ -138,7 +138,9 @@ it.</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>The study status from <code>hvtiRutilities::study_setup()</code>, invisibly.</p>
+    <p>The study status from <code>hvtiRutilities::study_setup()</code>, invisibly,
+with attributes <code>healed</code> and <code>missing</code>: data frames of the pins moved
+and the packages left out.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
@@ -188,6 +190,23 @@ credential store) covers that, and <code>setup()</code> warns when there is none
 pak into the first library in <code><a href="https://rdrr.io/r/base/libPaths.html" class="external-link">base::.libPaths()</a></code> when they are missing, and
 <code>hvtiRutilities</code> also when it is older than 1.5.6. <code>setup()</code> runs them from
 this session, so they must be there before the study's library exists.</p>
+<p>When an install fails, <code>setup()</code> heals what it safely can and leaves out
+what it cannot. Before it changes <code>renv.lock</code> it copies the file to
+<code>renv/renv.lock.before-setup-&lt;time&gt;</code>. A restore that fails is healed in up
+to 10 rounds: a package that will not build under this R moves to the
+newest version the study's repositories serve (only with <code>upgrade = TRUE</code>),
+and a missing dependency is installed first; a dependency that will not
+install leaves its dependents out. After that, <code>setup()</code> keeps leaving out
+packages outside the family until the restore succeeds. A package left out
+stays declared but is dropped from <code>renv.lock</code>. With <code>upgrade = TRUE</code> the
+install stage then retries it at its current release, and it is locked if
+it installs; with <code>upgrade = FALSE</code> it is not retried, because that would
+move a pin. A package still missing at the end is named in a warning and
+recorded in <code>renv/hvtiR-setup.dcf</code>; <code>setup()</code> finishes and opens the
+project, and <code><a href="doctor.html">doctor()</a></code> lists what was left out. A package whose
+dependency is missing stays locked but cannot load until the dependency
+installs. A family member that cannot install still stops <code>setup()</code>. Each
+failure's log is kept in <code>renv/logs/</code>.</p>
 <p>Safe to rerun: each step checks before it acts.</p>
     </div>
 
