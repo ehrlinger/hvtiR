@@ -61,7 +61,7 @@ local_setup <- function(run_status = 0L,
     study_setup = function(...) {
       log$setup_args <- list(...)
       step("study_setup")
-      structure(list(), class = "x")
+      structure(list(), class = "x", cleanup = "known-cleanup")
     },
     study_declare = function(packages, root) {
       log$declared <- packages
@@ -349,6 +349,99 @@ test_that("every run writes the setup record, with the cleanup it was given", {
   suppressMessages(setup("A study", 7L, root = root))
   expect_false(is.null(log$record))
   expect_identical(log$record[[1L]], normalizePath(root, winslash = "/"))
+  expect_identical(log$record[[5L]], "known-cleanup")
+})
+
+test_that("a finish stage that aborts never writes the setup record", {
+  root <- withr::local_tempdir()
+  log <- local_setup(run_status = 1L, run_output = "boom\n")
+  expect_error(suppressMessages(setup("A study", 7L, root = root)), "boom")
+  expect_null(log$record)
+})
+
+# What heal_restore() returns when it left `pkgs` out of the lock.
+left_out_by_healing <- function(pkgs, lib) {
+  force(lib)
+  function(root, repos, upgrade, essential, ...) {
+    list(
+      result = list(
+        status = 0L,
+        output = paste0("HVTIR_LIB=", lib, "\nHVTIR_LOCKVER=\n")
+      ),
+      raw = "",
+      healed = data.frame(
+        package = character(), from = character(), to = character(),
+        round = integer()
+      ),
+      missing = data.frame(
+        package = pkgs, reason = "would not build",
+        because = NA_character_, log = NA_character_
+      ),
+      backup = NA_character_
+    )
+  }
+}
+
+test_that("a package healing left out and pak then installs is not missing", {
+  root <- withr::local_tempdir()
+  log <- local_setup()
+  lib <- withr::local_tempdir()
+  local_mocked_bindings(
+    heal_restore = left_out_by_healing("survminer", lib),
+    pak_install_lib = function(specs, lib, repos = NULL) {
+      if ("survminer" %in% specs) {
+        dir.create(file.path(lib, "survminer"))
+        file.create(file.path(lib, "survminer", "DESCRIPTION"))
+      }
+      invisible(NULL)
+    }
+  )
+  status <- NULL
+  expect_no_warning(
+    suppressMessages(status <- setup("A study", 7L, root = root))
+  )
+  expect_identical(nrow(attr(status, "missing")), 0L)
+  expect_identical(nrow(log$record[[3L]]), 0L)
+})
+
+test_that("a left-out package whose retry fails has one row, the first", {
+  root <- withr::local_tempdir()
+  log <- local_setup()
+  lib <- withr::local_tempdir()
+  local_mocked_bindings(
+    heal_restore = left_out_by_healing("survminer", lib),
+    pak_install_lib = function(specs, lib, repos = NULL) {
+      if ("survminer" %in% specs) stop("compile failed")
+      invisible(NULL)
+    }
+  )
+  status <- NULL
+  suppressWarnings(
+    suppressMessages(status <- setup("A study", 7L, root = root))
+  )
+  miss <- attr(status, "missing")
+  expect_identical(miss$package, "survminer")
+  expect_identical(miss$reason, "would not build")
+})
+
+test_that("a joint pak failure and clean retries leave no _cache behind", {
+  root <- withr::local_tempdir()
+  local_setup()
+  seen <- NULL
+  local_mocked_bindings(
+    pak_install_lib = function(specs, lib, repos = NULL) {
+      seen <<- lib
+      if (length(specs) > 1L && "arrow" %in% specs) {
+        dir.create(file.path(lib, "_cache"), showWarnings = FALSE)
+        stop("joint solve failed")
+      }
+      invisible(NULL)
+    }
+  )
+  status <- suppressMessages(setup("A study", 7L, root = root))
+  expect_identical(nrow(attr(status, "missing")), 0L)
+  expect_false(is.null(seen))
+  expect_false(dir.exists(file.path(seen, "_cache")))
 })
 
 test_that("a left-out reason with braces cannot break the warning", {
@@ -361,12 +454,12 @@ test_that("a left-out reason with braces cannot break the warning", {
     }
   )
   status <- NULL
-  expect_warning(
+  w <- tryCatch(
     suppressMessages(status <- setup("A study", 7L, root = root)),
-    "{boom}",
-    fixed = TRUE
+    warning = function(w) w
   )
-  expect_true("open" %in% log$steps)
+  expect_s3_class(w, "warning")
+  expect_true(grepl("{boom}", conditionMessage(w), fixed = TRUE))
 })
 
 test_that("pak gets only the declared packages the lockfile lacks", {

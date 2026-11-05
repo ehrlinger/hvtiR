@@ -1576,23 +1576,24 @@ setup <- function(study, study_tracker_id, root = NULL, adopt = FALSE,
       error = function(e) FALSE
     )
     if (!together) {
+      # pak's staging folder, left by a failed install, trips the snapshot.
+      clear_staging <- function() {
+        staging <- intersect(library_debris(project_lib), "_cache")
+        unlink(file.path(project_lib, staging), recursive = TRUE)
+      }
+      clear_staging()
       errors <- lapply(stats::setNames(others, others), function(pkg) {
         tryCatch(
           {
             pak_install_lib(install_specs(pkg), project_lib, repos)
             NULL
           },
-          error = function(e) {
-            # pak's staging folder, left by a failed install, trips the
-            # snapshot.
-            staging <- intersect(library_debris(project_lib), "_cache")
-            unlink(file.path(project_lib, staging), recursive = TRUE)
-            conditionMessage(e)
-          }
+          error = function(e) conditionMessage(e)
         )
       })
+      clear_staging()
       errors <- Filter(Negate(is.null), errors)
-      for (pkg in names(errors)) {
+      for (pkg in setdiff(names(errors), missing$package)) {
         reason <- strsplit(errors[[pkg]], "\n", fixed = TRUE)[[1L]][1L]
         if (is.na(reason) || !nzchar(reason)) reason <- "failed to install"
         missing[nrow(missing) + 1L, ] <- list(
@@ -1600,6 +1601,9 @@ setup <- function(study, study_tracker_id, root = NULL, adopt = FALSE,
         )
       }
     }
+    # A package the retry installed is no longer left out.
+    now <- file.exists(file.path(project_lib, missing$package, "DESCRIPTION"))
+    missing <- missing[!now, , drop = FALSE]
   }
 
   result <- run_in_study(
@@ -1647,7 +1651,7 @@ setup <- function(study, study_tracker_id, root = NULL, adopt = FALSE,
         bullets
       ))
     }
-    for (i in seq_len(nrow(gone))) {
+    for (i in which(!gone$package %in% missing$package)) {
       missing[nrow(missing) + 1L, ] <- list(
         gone$package[i], paste("needs", gone$missing[i]), gone$missing[i],
         NA_character_
