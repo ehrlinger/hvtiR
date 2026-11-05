@@ -59,8 +59,8 @@ It also stops the study using renv's
 per-user cache, so the shared library holds real copies a teammate can read,
 and reinstalls any package that was only a link into someone's home. It cleans
 up template copies first and only then locks the packages, so the lockfile records what the study declares and not what the templates
-happened to mention. For an existing (legacy) study pass `adopt = TRUE`, which
-is what cleans up its template copies. **That deletes every `tp.*` file by name, even
+happened to mention. Adopting an existing (legacy) study, by answering Yes or by passing
+`adopt = TRUE` with `root =`, is what cleans up its template copies. **That deletes every `tp.*` file by name, even
 an edited one, with no backup**, so rescue your own first or add `cleanup = FALSE`. A study that already has a `renv.lock`
 keeps its locked versions unless the declared family needs newer ones, in which case
 `setup()` moves them, lists each move and records them (`upgrade = TRUE`, the default; pass
