@@ -642,9 +642,13 @@ ending "restarts into the project."):
 #' `cleanup = FALSE` is passed. It refuses a project opened at one of a
 #' study's folders, such as `30_analyses`, or at a package. A
 #' non-interactive session never adopts unasked: it stops and prints the
-#' `setup(root = ..., adopt = TRUE)` call to run.
+#' `setup(root = ..., adopt = TRUE)` call to run. The step-by-step flow,
+#' with where to type each command, is in `vignette("start-here")`.
 #'
 ```
+
+Confirm the article name before committing:
+`grep -n "start-here" _pkgdown.yml vignettes/start-here.qmd`.
 
 Replace the paragraph beginning "`setup()` replaces packages in the study's
 library" with:
@@ -758,3 +762,8 @@ git commit -m "setup: document adopting a study from its own project"
   `/code-review` stood in for the bot if it did. Link the spec and the
   quick-start hand-off to PR #174.
 - [ ] **Step 3:** Leave the version bump and the merge to John.
+- [ ] **Step 4:** When the PR merges, message the session that owns hvtiR #174,
+  `local_031bf01b-9438-4f9d-abc1-aa84abb37b55` ("Biostats Teams training"),
+  with the PR number. It is holding its "Set up the study" rewrite of
+  `vignettes/start-here.qmd` until then, and will check its text against the
+  merged code.
