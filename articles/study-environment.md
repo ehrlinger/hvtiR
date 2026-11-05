@@ -171,7 +171,8 @@ your own.
 
 | Problem | Fix |
 |----|----|
-| [`setup()`](https://ehrlinger.github.io/hvtiR/reference/setup.md) stops before installing and prints a command | You ran it inside the project. Close the project, then run a command with the same arguments from outside it |
+| [`setup()`](https://ehrlinger.github.io/hvtiR/reference/setup.md) stops before installing and prints a command | You ran it inside a project whose renv is active. Close the project, then run the printed command from outside it |
+| [`setup()`](https://ehrlinger.github.io/hvtiR/reference/setup.md) says no study encloses the folder | Open the study’s folder itself as the RStudio project, not one of its subfolders, and run [`setup()`](https://ehrlinger.github.io/hvtiR/reference/setup.md) there; or pass `root` |
 | “Could not solve package dependencies” | Run [`hvtiR::doctor()`](https://ehrlinger.github.io/hvtiR/reference/doctor.md). It lists the repositories R uses, warns on a dated snapshot and names any version floor they cannot meet |
 | [`renv::restore()`](https://rstudio.github.io/renv/reference/restore.html) fails on a package that is not on CRAN | Look for `RemoteRepo` in `renv.lock`. A package pinned on GitHub may need your own `GITHUB_PAT` |
 | An install fails reading a package in someone’s home directory | The library holds links into a per-user cache. Rerun [`setup()`](https://ehrlinger.github.io/hvtiR/reference/setup.md) for the study: it turns the cache off and replaces the links with real copies |

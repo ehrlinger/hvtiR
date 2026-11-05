@@ -184,35 +184,41 @@
 <tr class="odd">
 <td>
 <code><a href="../reference/setup.html">setup()</a></code> stops before installing and prints a command</td>
-<td>You ran it inside the project. Close the project, then run a command with the same arguments from outside it</td>
+<td>You ran it inside a project whose renv is active. Close the project, then run the printed command from outside it</td>
 </tr>
 <tr class="even">
+<td>
+<code><a href="../reference/setup.html">setup()</a></code> says no study encloses the folder</td>
+<td>Open the study’s folder itself as the RStudio project, not one of its subfolders, and run <code><a href="../reference/setup.html">setup()</a></code> there; or pass <code>root</code>
+</td>
+</tr>
+<tr class="odd">
 <td>“Could not solve package dependencies”</td>
 <td>Run <code><a href="../reference/doctor.html">hvtiR::doctor()</a></code>. It lists the repositories R uses, warns on a dated snapshot and names any version floor they cannot meet</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td>
 <code><a href="https://rstudio.github.io/renv/reference/restore.html" class="external-link">renv::restore()</a></code> fails on a package that is not on CRAN</td>
 <td>Look for <code>RemoteRepo</code> in <code>renv.lock</code>. A package pinned on GitHub may need your own <code>GITHUB_PAT</code>
 </td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td>An install fails reading a package in someone’s home directory</td>
 <td>The library holds links into a per-user cache. Rerun <code><a href="../reference/setup.html">setup()</a></code> for the study: it turns the cache off and replaces the links with real copies</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td>A package is installed but not in <code>renv.lock</code>
 </td>
 <td>It is not declared. Run <code>hvtiRutilities::study_declare("name")</code>, then <code><a href="https://rstudio.github.io/renv/reference/snapshot.html" class="external-link">renv::snapshot()</a></code>
 </td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td>
 <code>renv.lock</code> is behind the library</td>
 <td>
 <code><a href="https://rstudio.github.io/renv/reference/status.html" class="external-link">renv::status()</a></code> shows the drift, and <code><a href="https://rstudio.github.io/renv/reference/snapshot.html" class="external-link">renv::snapshot()</a></code> records it once you have checked that it is what you meant</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td>A teammate’s session errors just after setup</td>
 <td>They had the project open while the library changed. Restart the session</td>
 </tr>
