@@ -30,9 +30,10 @@ versions from moving, not R.
 
 ## Where to type
 
-Every command on this page goes in RStudio's **Console** pane, at the `>`
+Every R command on this page goes in RStudio's **Console** pane, at the `>`
 prompt, one command at a time. Press Enter to run it. The **Terminal** tab beside
-the Console is a shell, not R, and an R command typed there fails.
+the Console is a shell, not R, and an R command typed there fails. The page has
+one shell command, `study-setup --verify`, and it says so where it comes.
 
 - Text after a `#` is a comment. R ignores it, so you can paste it or leave it out.
 - `EDIT:` marks a value that is yours to fill in. Replace the words, and keep the
@@ -170,10 +171,29 @@ hvtiR::status()
 ```
 
 `study_status()` prints a checklist, one line per thing a study needs: `[x]`
-marks one that is in place and `[ ]` one that is not. On a study just set up,
-`_study.yml` and `renv.lock` are ticked. The `manifest.yaml` and `dataset` lines
-are not, and each says to run `register_data()`. That is expected: registering
-the data is the next step, and it belongs to the tutorials. `hvtiR::status()`
+marks one that is in place, `[ ]` one that is not, and `[~]` one that is in
+place but not yet confirmed. On a study set up as above, `renv.lock` is ticked
+and `_study.yml` shows `[~]`. You typed the title and ID
+(`identity_source = "manual"`), so the line says they were entered by hand and
+to confirm them with `study-setup --verify`.
+
+That is a shell command, so it goes in RStudio's **Terminal** tab, not the
+Console. Run it from the study's directory:
+
+```sh
+study-setup --verify
+```
+
+It looks the ID up in Study Tracker and compares the title you typed. When they
+match, it marks the identity verified, and `study_status()` then shows `[x]` for
+`_study.yml`. When they differ, it lists each difference and asks whether to
+take Study Tracker's values; answer no and nothing changes. A study that the
+`study-setup` command created was read from Study Tracker in the first place, so
+its `_study.yml` shows `[x]` from the start.
+
+The `manifest.yaml` and `dataset` lines are not ticked either, and each says to
+run `register_data()`. That is expected: registering the data is the next step,
+and it belongs to the tutorials. `hvtiR::status()`
 reports whether each family package in the study is current, and how to update
 any that are not.
 
