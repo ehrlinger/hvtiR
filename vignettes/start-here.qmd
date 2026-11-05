@@ -143,10 +143,10 @@ Run it from a session started outside any project: hvtiR::setup(root = "...", ..
 
 Close the project (**File > Close Project**). Check that
 `Sys.getenv("RENV_PROJECT")` prints `""`, then paste the call it printed into the
-Console. That call names the directory with `root`. If it says `adopt = FALSE`,
-change that to `adopt = TRUE` before you run it: the study already has a
-`_study.yml`, and `setup()` stops on one unless told to adopt. With
-`adopt = TRUE` it asks nothing.
+Console. That call names the directory with `root` and says `adopt = TRUE`, so
+it asks nothing. The message says so too: adopting deletes the files listed in
+[What adopting deletes](#what-adopting-deletes), and adding `cleanup = FALSE`
+to the call keeps them.
 
 ### A new directory {#a-new-directory}
 
