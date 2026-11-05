@@ -1261,6 +1261,9 @@ guard_session <- function(root, study, study_tracker_id,
   } else {
     guess
   }
+  # study_setup() refuses any existing root without adopt = TRUE, so the call
+  # offered for one must carry it, or it stops when run as printed.
+  adopt <- isTRUE(adopt) || (!is.null(target) && dir.exists(target))
   # Read by cli's glue below, which lintr cannot see.
   # nolint next: object_usage_linter.
   cmd <- setup_command(
@@ -1287,7 +1290,13 @@ guard_session <- function(root, study, study_tracker_id,
     i = paste(
       "In RStudio, File > Close Project; check that",
       "{.code Sys.getenv(\"RENV_PROJECT\")} is empty."
-    )
+    ),
+    if (adopt && !isFALSE(dots[["cleanup"]])) {
+      c(i = paste(
+        "Adopting deletes the tp.* files, binder.summaries.doc and exact",
+        "template copies the study holds; add cleanup = FALSE to keep them."
+      ))
+    }
   ))
 }
 

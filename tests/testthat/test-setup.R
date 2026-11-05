@@ -1237,6 +1237,37 @@ test_that("an explicit root is named in the message when renv is active", {
   expect_match(err, "adopt = TRUE", fixed = TRUE)
 })
 
+test_that("the guard's offered command adopts a study that exists", {
+  local_mocked_bindings(
+    renv_state = function(...) "active",
+    utilities_fn = function(name) stop("must not be reached")
+  )
+  root <- withr::local_tempdir()
+  writeLines("study: A study", file.path(root, "_study.yml"))
+  withr::local_envvar(RENV_PROJECT = root)
+  offered <- function(...) {
+    err <- gsub("\\s+", " ", tryCatch(setup(...), error = conditionMessage))
+    cmd <- regmatches(err, regexpr("hvtiR::setup\\([^`]*\\)", err))
+    list(err = err, call = as.list(match.call(setup, parse(text = cmd)[[1L]])))
+  }
+  # study_setup() stops on an existing root without adopt = TRUE, so the call
+  # must carry it to run as printed, and say what adopting deletes.
+  got <- offered("A study", 7L)
+  expect_true(got$call$adopt)
+  expect_match(got$err, "Adopting deletes the tp.* files", fixed = TRUE)
+  expect_true(offered("A study", 7L, root = root, adopt = FALSE)$call$adopt)
+
+  got <- offered("A study", 7L, cleanup = FALSE)
+  expect_true(got$call$adopt)
+  expect_false(got$call$cleanup)
+  expect_no_match(got$err, "Adopting deletes", fixed = TRUE)
+
+  # A directory that does not exist yet is created, not adopted.
+  got <- offered("A study", 7L, root = file.path(root, "new"))
+  expect_null(got$call$adopt)
+  expect_no_match(got$err, "Adopting deletes", fixed = TRUE)
+})
+
 test_that("a session in another project names that project, not loaded ones", {
   local_mocked_bindings(
     renv_state = function(...) "active",
