@@ -1055,6 +1055,8 @@ enclosing_study <- function() {
 #' A copy of the internal `hvtiRutilities:::.study_folders()`; a test fails
 #' when the two differ.
 #' @noRd
+# Package constant, spelled like MIN_R_VERSION.
+# nolint next: object_name_linter.
 STUDY_FOLDERS <- c(
   datasets = "00_datasets", descriptive = "10_descriptive",
   distributions = "20_distributions", analyses = "30_analyses",
