@@ -1927,3 +1927,53 @@ test_that("raised packages that moved get their own group in the report", {
   expect_message(setup("A study", 7L, root = root),
                  "Other unmet requirements resolved")
 })
+
+test_that("a folder holding a .Rproj is a project candidate", {
+  dir <- withr::local_tempdir()
+  file.create(file.path(dir, "study.Rproj"))
+  expect_identical(
+    project_candidate(dir), normalizePath(dir, winslash = "/")
+  )
+})
+
+test_that("RStudio's active project is a candidate without a .Rproj", {
+  dir <- withr::local_tempdir()
+  local_mocked_bindings(active_project = function() dir)
+  expect_identical(
+    project_candidate(dir), normalizePath(dir, winslash = "/")
+  )
+})
+
+test_that("a plain folder, or one below the project, is no candidate", {
+  dir <- withr::local_tempdir()
+  sub <- file.path(dir, "sub")
+  dir.create(sub)
+  file.create(file.path(dir, "study.Rproj"))
+  local_mocked_bindings(active_project = function() dir)
+  expect_null(project_candidate(sub))
+})
+
+test_that("a study subfolder is refused, numbered or bare", {
+  for (name in c("30_analyses", "analyses")) {
+    dir <- file.path(withr::local_tempdir(), name)
+    dir.create(dir)
+    expect_error(refuse_candidate(dir), class = "hvtiR_adopt_refused")
+  }
+})
+
+test_that("a package DESCRIPTION is refused, a study's is not", {
+  dir <- withr::local_tempdir()
+  desc <- file.path(dir, "DESCRIPTION")
+  writeLines(c("Package: x", "Version: 1.0.0"), desc)
+  expect_error(refuse_candidate(dir), class = "hvtiR_adopt_refused")
+  writeLines(c("Type: Project", "Depends: hvtiR"), desc)
+  expect_identical(refuse_candidate(dir), dir)
+})
+
+test_that("the study folder list matches hvtiRutilities", {
+  skip_if_not_installed("hvtiRutilities")
+  expect_identical(
+    STUDY_FOLDERS,
+    getFromNamespace(".study_folders", "hvtiRutilities")()
+  )
+})

@@ -1050,6 +1050,77 @@ enclosing_study <- function() {
   }
 }
 
+#' A study's folders, numbered and bare
+#'
+#' A copy of the internal `hvtiRutilities:::.study_folders()`; a test fails
+#' when the two differ.
+#' @noRd
+STUDY_FOLDERS <- c(
+  datasets = "00_datasets", descriptive = "10_descriptive",
+  distributions = "20_distributions", analyses = "30_analyses",
+  graphs = "40_graphs", documents = "50_documents",
+  estimates = "90_estimates"
+)
+
+#' The RStudio project open in this session
+#' @return A path, or `NULL` outside RStudio or with no project open.
+#' @noRd
+active_project <- function() {
+  if (!rstudio_available()) return(NULL)
+  tryCatch(rstudioapi::getActiveProject(), error = function(e) NULL)
+}
+
+#' The working directory, when it is a project root `setup()` may adopt
+#'
+#' Only `dir` itself is looked at: a project above it is not this
+#' session's project.
+#' @param dir The folder to test.
+#' @return `dir`, normalized, or `NULL`.
+#' @noRd
+project_candidate <- function(dir = getwd()) {
+  dir <- normalizePath(dir, winslash = "/", mustWork = TRUE)
+  rproj <- list.files(dir, pattern = "[.]Rproj$", all.files = TRUE)
+  if (length(rproj)) return(dir)
+  active <- active_project()
+  if (!is.null(active) &&
+        identical(normalizePath(active, winslash = "/", mustWork = FALSE),
+                  dir)) {
+    return(dir)
+  }
+  NULL
+}
+
+#' Stop when a candidate folder cannot be a study root
+#' @param candidate The folder `project_candidate()` returned.
+#' @return `candidate`, invisibly.
+#' @noRd
+refuse_candidate <- function(candidate) {
+  name <- basename(candidate)
+  if (name %in% c(names(STUDY_FOLDERS), STUDY_FOLDERS)) {
+    cli::cli_abort(c(
+      "{.path {candidate}} is a study's {.file {name}} folder, not a study.",
+      i = paste(
+        "Open {.path {dirname(candidate)}} as the project instead, then",
+        "run {.fn setup} again."
+      )
+    ), class = "hvtiR_adopt_refused", call = NULL)
+  }
+  desc <- file.path(candidate, "DESCRIPTION")
+  if (file.exists(desc)) {
+    type <- tryCatch(
+      unname(read.dcf(desc, fields = "Type")[1L, 1L]),
+      error = function(e) NA_character_
+    )
+    if (!identical(type, "Project")) {
+      cli::cli_abort(c(
+        "{.path {candidate}} holds a package {.file DESCRIPTION}, not a study.",
+        i = "Pass {.arg root} to name the study folder."
+      ), class = "hvtiR_adopt_refused", call = NULL)
+    }
+  }
+  invisible(candidate)
+}
+
 #' Stop because `setup()` has no study to write to
 #' @noRd
 abort_no_study <- function() {
