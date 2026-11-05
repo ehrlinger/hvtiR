@@ -1145,6 +1145,31 @@ study_root_or_abort <- function(study_root) {
   })
 }
 
+#' The `setup()` call to quote back in a stop
+#'
+#' Every formal is named once `dots` carries anything: one left off would
+#' take an unnamed argument by position, or a short name by partial matching.
+#' @param root,study,study_tracker_id,adopt,workspace_prefs,upgrade As for
+#'   [setup()].
+#' @param dots `list(...)` from [setup()].
+#' @return The call, deparsed.
+#' @noRd
+setup_command <- function(root, study, study_tracker_id, adopt = FALSE,
+                          workspace_prefs = TRUE, upgrade = TRUE,
+                          dots = list()) {
+  all_formals <- length(dots) > 0L
+  deparse1(as.call(c(
+    list(quote(hvtiR::setup)),
+    list(root = root, study = study, study_tracker_id = study_tracker_id),
+    if (all_formals || isTRUE(adopt)) list(adopt = adopt),
+    if (all_formals || isFALSE(workspace_prefs)) {
+      list(workspace_prefs = workspace_prefs)
+    },
+    if (all_formals || isFALSE(upgrade)) list(upgrade = upgrade),
+    dots
+  )))
+}
+
 #' Refuse to run from inside the study
 #'
 #' `setup()` replaces packages this session has loaded and would install into
@@ -1168,21 +1193,11 @@ guard_session <- function(root, study, study_tracker_id,
   } else {
     guess
   }
-  # Name every formal when `...` carries anything: one left off would take an
-  # unnamed argument by position, or a short name by partial matching.
-  all_formals <- length(dots) > 0L
   # Read by cli's glue below, which lintr cannot see.
   # nolint next: object_usage_linter.
-  cmd <- deparse1(as.call(c(
-    list(quote(hvtiR::setup)),
-    list(root = target, study = study, study_tracker_id = study_tracker_id),
-    if (all_formals || isTRUE(adopt)) list(adopt = adopt),
-    if (all_formals || isFALSE(workspace_prefs)) {
-      list(workspace_prefs = workspace_prefs)
-    },
-    if (all_formals || isFALSE(upgrade)) list(upgrade = upgrade),
-    dots
-  )))
+  cmd <- setup_command(
+    target, study, study_tracker_id, adopt, workspace_prefs, upgrade, dots
+  )
   project <- Sys.getenv("RENV_PROJECT", "")
   # A restart in RStudio reopens the last project, so the session can sit in
   # a different study's renv; nothing loaded then belongs to the target.

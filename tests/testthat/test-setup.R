@@ -1977,3 +1977,20 @@ test_that("the study folder list matches hvtiRutilities", {
     getFromNamespace(".study_folders", "hvtiRutilities")()
   )
 })
+
+test_that("setup_command names every formal once dots carry anything", {
+  expect_identical(
+    setup_command("/s", "A", 7L),
+    'hvtiR::setup(root = "/s", study = "A", study_tracker_id = 7L)'
+  )
+  expect_identical(
+    setup_command("/s", "A", 7L, adopt = TRUE),
+    paste0('hvtiR::setup(root = "/s", study = "A", study_tracker_id = 7L, ',
+           "adopt = TRUE)")
+  )
+  expect_match(
+    setup_command("/s", "A", 7L, dots = list(cleanup = FALSE)),
+    "adopt = FALSE, workspace_prefs = TRUE, upgrade = TRUE, cleanup = FALSE",
+    fixed = TRUE
+  )
+})
