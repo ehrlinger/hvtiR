@@ -301,3 +301,45 @@ test_that("doctor warns when the study's lockfile was made under another R", {
   out <- capture.output(doctor(remote = FALSE))
   expect_match(out, "4[.]4[.]1", all = FALSE)
 })
+
+test_that("doctor lists packages the last setup left out", {
+  root <- withr::local_tempdir()
+  file.create(file.path(root, "_study.yml"))
+  write_setup_record(
+    root, data.frame(),
+    data.frame(package = "forecast", reason = "needs {boom} tseries",
+               because = "tseries", log = "renv/logs/x.log",
+               stringsAsFactors = FALSE),
+    NA_character_, NULL
+  )
+  withr::local_dir(root)
+  out <- doctor_text()
+  expect_match(out, "left out 1 package")
+  expect_match(out, "forecast")
+  expect_match(out, "needs {boom} tseries", fixed = TRUE)
+})
+
+test_that("doctor says nothing about setup with no record", {
+  root <- withr::local_tempdir()
+  file.create(file.path(root, "_study.yml"))
+  withr::local_dir(root)
+  expect_no_match(doctor_text(), "left out")
+})
+
+test_that("doctor survives a malformed setup record", {
+  root <- withr::local_tempdir()
+  dir.create(file.path(root, "renv"))
+  writeLines(c("not a dcf", ": : :", "\001\002"),
+             file.path(root, "renv", "hvtiR-setup.dcf"))
+  local_mocked_bindings(
+    installed_version = function(pkg) "1.0.0",
+    remote_version = function(repo, ref = "main") "1.0.0",
+    fetch_description = function(...) NULL,
+    repo_versions = function(...) character(),
+    enclosing_study = function() root
+  )
+  out <- NULL
+  expect_no_error(out <- capture.output(suppressMessages(doctor())))
+  expect_true(any(grepl("cannot be read|can't be read|could not be read",
+                        out)))
+})

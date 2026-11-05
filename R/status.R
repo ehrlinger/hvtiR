@@ -755,6 +755,43 @@ doctor <- function(remote = TRUE) {
       )
     }
 
+    study <- enclosing_study()
+    unreadable <- FALSE
+    record <- if (is.null(study)) {
+      NULL
+    } else {
+      tryCatch(read_setup_record(study), error = function(e) {
+        unreadable <<- TRUE
+        NULL
+      })
+    }
+    if (unreadable) {
+      cli::cli_alert_warning(paste(
+        "The record of the last {.fn setup}, {.file renv/hvtiR-setup.dcf},",
+        "cannot be read."
+      ))
+    }
+    if (!is.null(record) && nrow(record$missing)) {
+      at <- record$run$At
+      when <- ""
+      if (length(at) && !is.na(at[1L])) when <- paste0(" (", at[1L], ")")
+      cli::cli_h2("Study setup")
+      cli::cli_alert_warning(paste0(
+        "The last {.fn setup}", escape_braces(when), " left out ",
+        nrow(record$missing), " package",
+        if (nrow(record$missing) > 1L) "s", "; jobs that load them stop."
+      ))
+      reasons <- record$missing$Reason
+      if (is.null(reasons)) reasons <- rep(NA_character_, nrow(record$missing))
+      for (i in seq_len(nrow(record$missing))) {
+        cli::cli_alert_danger(paste0(
+          "{.pkg ", escape_braces(record$missing$Package[i]), "}",
+          if (!is.na(reasons[i])) paste0(": ", escape_braces(reasons[i]))
+        ))
+      }
+      cli::cli_alert_info("Rerun {.fn hvtiR::setup} to try them again.")
+    }
+
     if (remote) {
       cli::cli_h2("Dependency floors")
       report_unmet_floors()
@@ -784,3 +821,9 @@ doctor <- function(remote = TRUE) {
 
   invisible(st)
 }
+
+#' Escape braces so cli prints untrusted text literally
+#' @param x A character vector.
+#' @return `x` with `{` and `}` doubled.
+#' @noRd
+escape_braces <- function(x) gsub("\\}", "}}", gsub("\\{", "{{", x))

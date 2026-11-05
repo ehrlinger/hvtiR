@@ -39,7 +39,8 @@ test_that("install_specs maps members to GitHub and leaves others alone", {
 local_setup <- function(run_status = 0L,
                         run_output = "installing\nHVTIR_LIB=@LIB@\n",
                         restore_status = 0L, restore_output = NULL,
-                        pak_error = NULL,
+                        pak_error = NULL, restore_outputs = NULL,
+                        recorded = "vctrs:0.7.3",
                         renv_present = TRUE,
                         session_lib = "/nonexistent/session/lib",
                         gone = data.frame(
@@ -60,7 +61,7 @@ local_setup <- function(run_status = 0L,
     study_setup = function(...) {
       log$setup_args <- list(...)
       step("study_setup")
-      structure(list(), class = "x")
+      structure(list(), class = "x", cleanup = "known-cleanup")
     },
     study_declare = function(packages, root) {
       log$declared <- packages
@@ -88,6 +89,15 @@ local_setup <- function(run_status = 0L,
         log$expr1 <- expr
         step("child1")
         out <- restore_output
+        queued <- !is.null(restore_outputs) && length(restore_outputs)
+        if (queued) {
+          out <- restore_outputs[[1L]]
+          restore_outputs <<- restore_outputs[-1L]
+          if (!identical(out, "ok")) {
+            return(list(status = 1L, output = out))
+          }
+          out <- NULL
+        }
         if (is.null(out)) {
           out <- paste0(
             "HVTIR_LIB=@LIB@\nHVTIR_LOCKVER=",
@@ -96,6 +106,20 @@ local_setup <- function(run_status = 0L,
         }
         out <- gsub("@LIB@", lib, out, fixed = TRUE)
         return(list(status = restore_status, output = out))
+      }
+      kind <- c(
+        "renv::record(" = "record", "renv::install(" = "install",
+        "lockfile_write(" = "drop"
+      )
+      hit <- names(kind)[vapply(
+        names(kind), grepl, NA, x = expr, fixed = TRUE
+      )]
+      # The final child installs and snapshots; it is the "run" step.
+      if (length(hit) && !grepl("renv::snapshot(", expr, fixed = TRUE)) {
+        step(kind[[hit[1L]]])
+        return(list(
+          status = 0L, output = paste0("HVTIR_RECORDED=", recorded, "\n")
+        ))
       }
       log$expr <- expr
       step("run")
@@ -108,6 +132,10 @@ local_setup <- function(run_status = 0L,
       )
       step("pak_lib")
       if (!is.null(pak_error)) stop(pak_error)
+      invisible(NULL)
+    },
+    write_setup_record = function(...) {
+      log$record <- list(...)
       invisible(NULL)
     },
     renv_available = function() renv_present,
@@ -185,7 +213,8 @@ test_that("order is child 1, then pak into the project library, then child 2", {
   expect_true(dir.exists(log$pak_lib[[1L]]$lib))
   expect_true("ehrlinger/hvtiRutilities" %in% log$pak_lib[[1L]]$specs)
   expect_false("arrow" %in% log$pak_lib[[1L]]$specs)
-  expect_identical(log$pak_lib[[2L]]$specs, "arrow")
+  expect_true("arrow" %in% log$pak_lib[[2L]]$specs)
+  expect_false(SELF_REPO %in% log$pak_lib[[2L]]$specs)
 })
 
 test_that("an optional extra that fails to install warns, and setup goes on", {
@@ -195,36 +224,43 @@ test_that("an optional extra that fails to install warns, and setup goes on", {
     pak_install_lib = function(specs, lib, repos = NULL) {
       log$pak_lib <- c(log$pak_lib, list(list(specs = specs, lib = lib)))
       if ("arrow" %in% specs) {
-        dir.create(file.path(lib, "_cache"))
+        dir.create(file.path(lib, "_cache"), showWarnings = FALSE)
         stop("a C++20 compiler is required")
       }
       invisible(NULL)
     }
   )
+  status <- NULL
   expect_warning(
-    suppressMessages(setup("A study", 7L, root = root)),
-    "arrow"
+    suppressMessages(status <- setup("A study", 7L, root = root)),
+    "set up without 1 package"
   )
+  expect_identical(attr(status, "missing")$package, "arrow")
   expect_true("run" %in% log$steps)
   expect_true("open" %in% log$steps)
   # pak's staging folder from the failed install would trip renv's snapshot.
-  expect_false(dir.exists(file.path(log$pak_lib[[2L]]$lib, "_cache")))
+  expect_false(dir.exists(file.path(log$pak_lib[[1L]]$lib, "_cache")))
 })
 
 test_that("the optional-extra warning carries pak's message", {
   root <- withr::local_tempdir()
-  local_setup()
+  log <- local_setup()
   local_mocked_bindings(
     pak_install_lib = function(specs, lib, repos = NULL) {
-      if ("arrow" %in% specs) stop("a C++20 compiler is required")
+      if ("arrow" %in% specs) stop("a C++20 compiler is required\nmore")
       invisible(NULL)
     }
   )
+  status <- NULL
   expect_warning(
-    suppressMessages(setup("A study", 7L, root = root)),
+    suppressMessages(status <- setup("A study", 7L, root = root)),
     "C++20 compiler",
     fixed = TRUE
   )
+  expect_identical(
+    attr(status, "missing")$reason, "a C++20 compiler is required"
+  )
+  expect_identical(log$record[[3L]]$package, "arrow")
 })
 
 test_that("a failure installing the other packages still stops setup", {
@@ -232,12 +268,303 @@ test_that("a failure installing the other packages still stops setup", {
   log <- local_setup()
   local_mocked_bindings(
     pak_install_lib = function(specs, lib, repos = NULL) {
-      if (!"arrow" %in% specs) stop("could not solve")
+      if (SELF_REPO %in% specs) stop("could not solve")
       invisible(NULL)
     }
   )
   expect_error(setup("A study", 7L, root = root), "could not solve")
   expect_false("run" %in% log$steps)
+})
+
+test_that("a healed restore finishes, records the move and opens the project", {
+  root <- withr::local_tempdir()
+  writeLines(paste0(
+    '{"Packages": {"vctrs": {"Package": "vctrs", "Version": "0.7.2", ',
+    '"Source": "Repository"}}}'
+  ), file.path(root, "renv.lock"))
+  log <- local_setup(restore_outputs = list(
+    "ERROR: compilation failed for package \u2018vctrs\u2019", "ok"
+  ))
+  status <- suppressMessages(setup("A study", 7L, root = root))
+  expect_true(all(c("record", "open") %in% log$steps))
+  expect_identical(attr(status, "healed")$package, "vctrs")
+  expect_identical(nrow(attr(status, "missing")), 0L)
+})
+
+test_that("an optional package that cannot install warns and still opens", {
+  root <- withr::local_tempdir()
+  log <- local_setup()
+  local_mocked_bindings(
+    pak_install_lib = function(specs, lib, repos = NULL) {
+      if ("survminer" %in% specs) stop("compile failed")
+      invisible(NULL)
+    }
+  )
+  status <- NULL
+  expect_warning(
+    suppressMessages(status <- setup("A study", 7L, root = root)),
+    "set up without 1 package"
+  )
+  expect_identical(attr(status, "missing")$package, "survminer")
+  expect_true("open" %in% log$steps)
+})
+
+test_that("a family member that cannot install still stops setup", {
+  root <- withr::local_tempdir()
+  log <- local_setup(pak_error = "member build failed")
+  expect_error(
+    setup("A study", 7L, root = root),
+    "Installing the study's packages failed"
+  )
+  expect_false("open" %in% log$steps)
+})
+
+test_that("a missing dependency of an optional package leaves it out", {
+  root <- withr::local_tempdir()
+  log <- local_setup(gone = data.frame(
+    package = "forecast", missing = "tseries"
+  ))
+  status <- NULL
+  expect_warning(
+    suppressMessages(status <- setup("A study", 7L, root = root)),
+    "forecast"
+  )
+  expect_identical(attr(status, "missing")$because, "tseries")
+  expect_identical(
+    attr(status, "missing")$reason,
+    "installed, but needs tseries, which is not installed"
+  )
+  expect_true("open" %in% log$steps)
+})
+
+test_that("a family member missing a dependency still stops", {
+  root <- withr::local_tempdir()
+  local_setup(gone = data.frame(
+    package = "hvtiRutilities", missing = "yaml"
+  ))
+  expect_error(
+    setup("A study", 7L, root = root), "missing dependencies"
+  )
+})
+
+test_that("every run writes the setup record, with the cleanup it was given", {
+  root <- withr::local_tempdir()
+  log <- local_setup()
+  suppressMessages(setup("A study", 7L, root = root))
+  expect_false(is.null(log$record))
+  expect_identical(log$record[[1L]], normalizePath(root, winslash = "/"))
+  expect_identical(log$record[[5L]], "known-cleanup")
+})
+
+test_that("a finish stage that aborts never writes the setup record", {
+  root <- withr::local_tempdir()
+  log <- local_setup(run_status = 1L, run_output = "boom\n")
+  expect_error(suppressMessages(setup("A study", 7L, root = root)), "boom")
+  expect_null(log$record)
+})
+
+# What heal_restore() returns when it left `pkgs` out of the lock.
+left_out_by_healing <- function(pkgs, lib) {
+  force(lib)
+  function(root, repos, upgrade, essential, ...) {
+    list(
+      result = list(
+        status = 0L,
+        output = paste0("HVTIR_LIB=", lib, "\nHVTIR_LOCKVER=\n")
+      ),
+      raw = "",
+      healed = data.frame(
+        package = character(), from = character(), to = character(),
+        round = integer()
+      ),
+      missing = data.frame(
+        package = pkgs, reason = "would not build",
+        because = NA_character_, log = NA_character_
+      ),
+      backup = NA_character_
+    )
+  }
+}
+
+test_that("a package healing left out and pak then installs is not missing", {
+  root <- withr::local_tempdir()
+  log <- local_setup()
+  lib <- withr::local_tempdir()
+  local_mocked_bindings(
+    heal_restore = left_out_by_healing("survminer", lib),
+    pak_install_lib = function(specs, lib, repos = NULL) {
+      if ("survminer" %in% specs) {
+        dir.create(file.path(lib, "survminer"))
+        file.create(file.path(lib, "survminer", "DESCRIPTION"))
+      }
+      invisible(NULL)
+    }
+  )
+  status <- NULL
+  expect_no_warning(
+    suppressMessages(status <- setup("A study", 7L, root = root))
+  )
+  expect_identical(nrow(attr(status, "missing")), 0L)
+  expect_identical(nrow(log$record[[3L]]), 0L)
+})
+
+# A heal_restore() result that reports a locked library, so `others` is
+# computed from real lock and library lists.
+healed_lock <- function(left_out, locked, lib, libpkgs = character()) {
+  force(lib)
+  base <- left_out_by_healing(left_out, lib)
+  function(root, repos, upgrade, essential, ...) {
+    out <- base(root, repos, upgrade, essential)
+    out$result$output <- paste0(
+      "HVTIR_LIB=", lib, "\nHVTIR_LOCKVER=",
+      paste(sprintf("%s:1.0:", locked), collapse = ","),
+      "\nHVTIR_LIBPKGS=", paste(libpkgs, collapse = ","), "\n"
+    )
+    out
+  }
+}
+
+test_that("upgrade = FALSE never installs a package healing left out", {
+  root <- withr::local_tempdir()
+  log <- local_setup()
+  lib <- withr::local_tempdir()
+  seen <- character()
+  local_mocked_bindings(
+    heal_restore = left_out_by_healing("survminer", lib),
+    pak_install_lib = function(specs, lib, repos = NULL) {
+      seen <<- c(seen, specs)
+      invisible(NULL)
+    }
+  )
+  status <- NULL
+  expect_warning(
+    suppressMessages(
+      status <- setup("A study", 7L, root = root, upgrade = FALSE)
+    ),
+    "set up without 1 package"
+  )
+  expect_false("survminer" %in% seen)
+  expect_identical(attr(status, "missing")$package, "survminer")
+})
+
+test_that("a package healing left out, already installed, is cleared", {
+  root <- withr::local_tempdir()
+  log <- local_setup()
+  lib <- withr::local_tempdir()
+  dir.create(file.path(lib, "survminer"))
+  file.create(file.path(lib, "survminer", "DESCRIPTION"))
+  seen <- character()
+  locked <- setdiff(declared_packages(), "survminer")
+  local_mocked_bindings(
+    heal_restore = healed_lock("survminer", locked, lib, "survminer"),
+    pak_install_lib = function(specs, lib, repos = NULL) {
+      seen <<- c(seen, specs)
+      invisible(NULL)
+    }
+  )
+  status <- suppressMessages(setup("A study", 7L, root = root))
+  expect_false("survminer" %in% seen)
+  expect_identical(nrow(attr(status, "missing")), 0L)
+})
+
+test_that("a GitHub authentication failure adds the token hint", {
+  root <- withr::local_tempdir()
+  local_setup()
+  local_mocked_bindings(
+    pak_install_lib = function(specs, lib, repos = NULL) {
+      if ("arrow" %in% specs) {
+        stop("Bad authentication credentials for GitHub")
+      }
+      invisible(NULL)
+    }
+  )
+  w <- tryCatch(
+    suppressMessages(setup("A study", 7L, root = root)),
+    warning = function(w) w
+  )
+  expect_s3_class(w, "warning")
+  expect_match(conditionMessage(w), "create_github_token", fixed = TRUE)
+})
+
+test_that("a joint authentication failure also adds the token hint", {
+  root <- withr::local_tempdir()
+  local_setup()
+  local_mocked_bindings(
+    pak_install_lib = function(specs, lib, repos = NULL) {
+      if ("arrow" %in% specs) {
+        stop(if (length(specs) > 1L) {
+          "Bad authentication credentials"
+        } else {
+          "compile failed"
+        })
+      }
+      invisible(NULL)
+    }
+  )
+  w <- tryCatch(
+    suppressMessages(setup("A study", 7L, root = root)),
+    warning = function(w) w
+  )
+  expect_s3_class(w, "warning")
+  expect_match(conditionMessage(w), "create_github_token", fixed = TRUE)
+})
+
+test_that("a left-out package whose retry fails has one row, the first", {
+  root <- withr::local_tempdir()
+  log <- local_setup()
+  lib <- withr::local_tempdir()
+  local_mocked_bindings(
+    heal_restore = left_out_by_healing("survminer", lib),
+    pak_install_lib = function(specs, lib, repos = NULL) {
+      if ("survminer" %in% specs) stop("compile failed")
+      invisible(NULL)
+    }
+  )
+  status <- NULL
+  suppressWarnings(
+    suppressMessages(status <- setup("A study", 7L, root = root))
+  )
+  miss <- attr(status, "missing")
+  expect_identical(miss$package, "survminer")
+  expect_identical(miss$reason, "would not build")
+})
+
+test_that("a joint pak failure and clean retries leave no _cache behind", {
+  root <- withr::local_tempdir()
+  local_setup()
+  seen <- NULL
+  local_mocked_bindings(
+    pak_install_lib = function(specs, lib, repos = NULL) {
+      seen <<- lib
+      if (length(specs) > 1L && "arrow" %in% specs) {
+        dir.create(file.path(lib, "_cache"), showWarnings = FALSE)
+        stop("joint solve failed")
+      }
+      invisible(NULL)
+    }
+  )
+  status <- suppressMessages(setup("A study", 7L, root = root))
+  expect_identical(nrow(attr(status, "missing")), 0L)
+  expect_false(is.null(seen))
+  expect_false(dir.exists(file.path(seen, "_cache")))
+})
+
+test_that("a left-out reason with braces cannot break the warning", {
+  root <- withr::local_tempdir()
+  log <- local_setup()
+  local_mocked_bindings(
+    pak_install_lib = function(specs, lib, repos = NULL) {
+      if ("arrow" %in% specs) stop("{boom} {{x}} failed")
+      invisible(NULL)
+    }
+  )
+  status <- NULL
+  w <- tryCatch(
+    suppressMessages(status <- setup("A study", 7L, root = root)),
+    warning = function(w) w
+  )
+  expect_s3_class(w, "warning")
+  expect_true(grepl("{boom}", conditionMessage(w), fixed = TRUE))
 })
 
 test_that("pak gets only the declared packages the lockfile lacks", {
@@ -411,10 +738,10 @@ test_that("a failed install reports the real error and keeps the log", {
   msg <- conditionMessage(err)
   expect_match(msg, "boom", fixed = TRUE)
   expect_match(msg, "curly", fixed = TRUE)
-  expect_match(msg, "hvtiR-setup-", fixed = TRUE)
+  expect_match(msg, "renv/logs/setup-", fixed = TRUE)
   expect_false(grepl("ansi_strwrap", msg, fixed = TRUE))
-  pat <- "[^ '\n]*hvtiR-setup-[^ '\n]*\\.log"
-  log_file <- regmatches(msg, regexpr(pat, msg))
+  pat <- "renv/logs/setup-[^ '\n]*\\.log"
+  log_file <- file.path(root, regmatches(msg, regexpr(pat, msg)))
   expect_true(file.exists(log_file))
   saved <- rawToChar(readBin(log_file, "raw", file.size(log_file)))
   expect_true(grepl("Downloading 10%", saved, fixed = TRUE, useBytes = TRUE))
@@ -748,6 +1075,7 @@ test_that("child 2 fills LinkingTo gaps, guards the lock, then snapshots", {
 run_fill <- function(lib) {
   env <- new.env()
   env$lib <- lib
+  env$out <- character()
   env$installed <- NULL
   env$fake_install <- function(x, ...) assign("installed", x, envir = env)
   # Defined in setup.R; lintr cannot resolve it across source files.
@@ -1034,7 +1362,7 @@ test_that("setup names an installed extra to pak only when it is missing", {
     )
   )
   setup("A study", 7L, root = root)
-  specs <- log$pak_lib[[1L]]$specs
+  specs <- unlist(lapply(log$pak_lib, `[[`, "specs"))
   expect_false("arrow" %in% specs)
   expect_true("quarto" %in% specs)
   expect_true(install_specs("hvtiPlotR") %in% specs)
@@ -1817,6 +2145,8 @@ run_floors <- function(lib, upgrade, fix = NULL, repos = NULL) {
   env <- new.env()
   env$lib <- lib
   env$upgrade <- upgrade
+  env$essential <- "pkgA"
+  env$out <- character()
   env$hvtir_repos <- repos
   env$installed <- NULL
   env$fake_install <- function(x, ...) {
@@ -1879,7 +2209,7 @@ test_that("child 2 meets floors after the LinkingTo fill, before the guard", {
   expect_match(finish_expr("/tmp", c(pkgA = "1.0"), repos = c(CRAN = "u")),
                "unique(unmet$dep), project = ", fixed = TRUE)
   expect_match(finish_expr("/tmp", c(pkgA = "1.0"), repos = c(CRAN = "u")),
-               "prompt = FALSE, repos = hvtir_repos); cat('\\nHVTIR_RAISED",
+               "prompt = FALSE, repos = hvtir_repos); TRUE }",
                fixed = TRUE)
 })
 
@@ -2148,4 +2478,219 @@ test_that("no project and no study still stops with no target", {
   withr::local_dir(withr::local_tempdir())
   local_setup()
   expect_error(setup("A study", 7L), "New Project")
+})
+
+# A heal_restore() result whose drop left a pin: `pkg` was locked at
+# `version` and healing removed its record.
+dropped_pin <- function(pkg, version, lib) {
+  base <- healed_lock(pkg, setdiff(declared_packages(), pkg), lib, pkg)
+  function(root, repos, upgrade, essential, ...) {
+    out <- base(root, repos, upgrade, essential)
+    out$pins <- data.frame(package = pkg, version = version,
+                           sha = NA_character_)
+    out
+  }
+}
+
+test_that("upgrade = FALSE keeps a dropped pin's other copy out of the lock", {
+  root <- withr::local_tempdir()
+  log <- local_setup()
+  lib <- withr::local_tempdir()
+  dep_pkg(lib, "survminer", "2.0")
+  local_mocked_bindings(
+    heal_restore = dropped_pin("survminer", "1.0", lib),
+    pak_install_lib = function(specs, lib, repos = NULL) invisible(NULL)
+  )
+  status <- NULL
+  expect_warning(
+    suppressMessages(
+      status <- setup("A study", 7L, root = root, upgrade = FALSE)
+    ),
+    "set up without 1 package"
+  )
+  m <- attr(status, "missing")
+  expect_identical(m$package, "survminer")
+  expect_match(m$reason, "the library has 2.0 but renv.lock pinned 1.0",
+               fixed = TRUE)
+  # The final child leaves it out of the snapshot.
+  expect_match(log$expr, "out <- c(survminer = ", fixed = TRUE)
+  expect_match(log$expr, "exclude = if (length(out)) names(out)",
+               fixed = TRUE)
+})
+
+test_that("upgrade = FALSE clears a dropped pin whose copy is that pin", {
+  root <- withr::local_tempdir()
+  log <- local_setup()
+  lib <- withr::local_tempdir()
+  dep_pkg(lib, "survminer", "1.0")
+  local_mocked_bindings(
+    heal_restore = dropped_pin("survminer", "1.0", lib),
+    pak_install_lib = function(specs, lib, repos = NULL) invisible(NULL)
+  )
+  status <- suppressMessages(
+    setup("A study", 7L, root = root, upgrade = FALSE)
+  )
+  expect_identical(nrow(attr(status, "missing")), 0L)
+  expect_match(log$expr, "out <- character(0)", fixed = TRUE)
+})
+
+test_that("with upgrade a dropped pin's other version is guarded as a move", {
+  root <- withr::local_tempdir()
+  log <- local_setup()
+  lib <- withr::local_tempdir()
+  dep_pkg(lib, "survminer", "2.0")
+  local_mocked_bindings(
+    heal_restore = dropped_pin("survminer", "1.0", lib),
+    pak_install_lib = function(specs, lib, repos = NULL) invisible(NULL)
+  )
+  status <- suppressMessages(setup("A study", 7L, root = root))
+  expect_identical(nrow(attr(status, "missing")), 0L)
+  # The pin joins the guard's `before`, which reports the move.
+  before <- regmatches(log$expr, regexpr("before <- [^;]*;", log$expr))
+  expect_match(before, 'survminer = "1.0"', fixed = TRUE)
+})
+
+# The LinkingTo fill with an installer that fails.
+run_fill_failing <- function(lib) {
+  env <- new.env()
+  env$lib <- lib
+  env$out <- character()
+  env$fake_install <- function(x, ...) stop("no binary for ", x[1L])
+  # Defined in setup.R; lintr cannot resolve it across source files.
+  # nolint next: object_usage_linter.
+  code <- linking_expr("lib", "/tmp", "fake_install")
+  printed <- capture.output(eval(parse(text = code), env))
+  list(out = env$out, printed = paste(printed, collapse = "\n"))
+}
+
+test_that("a failed LinkingTo fill leaves out its user, not the run", {
+  lib <- withr::local_tempdir()
+  fake_pkg(lib, "fakeUser", "LinkingTo: fakeLinkDep (>= 0.2.0)")
+  fake_pkg(lib, "fakeOther")
+  res <- run_fill_failing(lib)
+  expect_identical(names(res$out), "fakeUser")
+  expect_match(res$out[["fakeUser"]], "needs fakeLinkDep to build",
+               fixed = TRUE)
+  expect_match(res$printed, "HVTIR_FILLERR=no binary for fakeLinkDep",
+               fixed = TRUE)
+})
+
+run_floors_failing <- function(lib, essential = character()) {
+  env <- new.env()
+  env$lib <- lib
+  env$upgrade <- TRUE
+  env$essential <- essential
+  env$out <- character()
+  env$fake_install <- function(x, ...) stop("cannot install ", x[1L])
+  code <- floors_expr("/tmp", "fake_install")
+  code <- sub("quit(status = 5L, save = 'no')", "cat('QUIT5\\n')", code,
+              fixed = TRUE)
+  out <- paste(capture.output(eval(parse(text = code), env)), collapse = "\n")
+  list(out = out, left = env$out)
+}
+
+test_that("a failed floor install leaves out an optional package", {
+  lib <- withr::local_tempdir()
+  dep_pkg(lib, "pkgA", "1.0", "Imports: pkgB (>= 2.0)")
+  dep_pkg(lib, "pkgB", "1.0")
+  res <- run_floors_failing(lib)
+  expect_identical(names(res$left), "pkgA")
+  expect_match(res$left[["pkgA"]], "needs pkgB (>= 2.0), has 1.0",
+               fixed = TRUE)
+  expect_match(res$out, "HVTIR_RAISEERR=cannot install pkgB", fixed = TRUE)
+  expect_no_match(res$out, "HVTIR_RAISED=", fixed = TRUE)
+  expect_no_match(res$out, "QUIT5", fixed = TRUE)
+})
+
+test_that("a failed floor install still stops for a family member", {
+  lib <- withr::local_tempdir()
+  dep_pkg(lib, "hvtiPlotR", "1.0", "Imports: pkgB (>= 2.0)")
+  dep_pkg(lib, "pkgB", "1.0")
+  res <- run_floors_failing(lib, essential = "hvtiPlotR")
+  expect_length(res$left, 0L)
+  expect_match(res$out, "HVTIR_UNMET=hvtiPlotR needs pkgB (>= 2.0)",
+               fixed = TRUE)
+  expect_match(res$out, "QUIT5", fixed = TRUE)
+})
+
+test_that("left_out_closure adds every dependent, transitively", {
+  lib <- withr::local_tempdir()
+  dep_pkg(lib, "pkgB", "1.0")
+  dep_pkg(lib, "pkgC", "1.0", "Imports: pkgB")
+  dep_pkg(lib, "pkgD", "1.0", "Depends: pkgC (>= 0.5)")
+  dep_pkg(lib, "pkgE", "1.0", "Imports: stats")
+  out <- left_out_closure(lib, c(pkgB = "needs x"))
+  expect_setequal(names(out), c("pkgB", "pkgC", "pkgD"))
+  expect_identical(out[["pkgC"]], "needs pkgB, which is left out")
+  expect_identical(out[["pkgD"]], "needs pkgC, which is left out")
+  expect_identical(left_out_closure(lib, character()), character())
+})
+
+test_that("child 2 widens the left-out list before the guard and snapshot", {
+  expr <- finish_expr("/tmp", c(pkgA = "1.0"), essential = "hvtiR")
+  at <- anchor_at(expr)
+  expect_true(at("unmet <- unmet_requirements(lib)") <
+                at("out <- left_out_closure(lib, out)"))
+  expect_true(at("out <- left_out_closure(lib, out)") < at("HVTIR_BLOCKED="))
+  expect_true(at("HVTIR_BLOCKED=") < at("HVTIR_LEFTOUT="))
+  expect_true(at("HVTIR_LEFTOUT=") < at("changed <- "))
+  expect_true(at("changed <- ") < at("exclude = if (length(out))"))
+  expect_match(expr, 'essential <- "hvtiR"', fixed = TRUE)
+})
+
+test_that("a real snapshot keeps a failed fill and its dependents out", {
+  skip_on_cran()
+  skip_if_not_installed("renv")
+  proj <- withr::local_tempdir()
+  lib <- file.path(proj, "lib")
+  dir.create(lib)
+  cran <- c("Repository: CRAN", "Built: R 4.5.0; ; 2026-01-01; unix")
+  dep_pkg(lib, "fakeA", "1.0", cran)
+  dep_pkg(lib, "fakeB", "1.0", cran, "LinkingTo: fakeMissing")
+  dep_pkg(lib, "fakeC", "1.0", cran, "Imports: fakeB")
+  writeLines(c("Package: s", "Version: 0.1", "Imports: fakeA, fakeB, fakeC"),
+             file.path(proj, "DESCRIPTION"))
+  env <- new.env()
+  env$lib <- lib
+  env$out <- character()
+  env$fake_install <- function(x, ...) stop("no binary")
+  capture.output(eval(parse(text = linking_expr("lib", proj, "fake_install")),
+                      env))
+  out <- left_out_closure(lib, env$out)
+  expect_setequal(names(out), c("fakeB", "fakeC"))
+  withr::local_options(renv.consent = TRUE)
+  suppressMessages(capture.output(renv::snapshot(
+    proj, library = lib, type = "explicit", prompt = FALSE,
+    exclude = names(out)
+  )))
+  locked <- names(renv::lockfile_read(file.path(proj, "renv.lock"))$Packages)
+  expect_identical(locked, "fakeA")
+})
+
+test_that("setup() records what the final child left out", {
+  root <- withr::local_tempdir()
+  local_setup(run_output = paste0(
+    "HVTIR_LEFTOUT=fakeB=needs fakeMissing to build, which could not be ",
+    "installed;fakeC=needs fakeB, which is left out\nHVTIR_LIB=@LIB@\n"
+  ))
+  status <- NULL
+  expect_warning(
+    suppressMessages(status <- setup("A study", 7L, root = root)),
+    "set up without 2 packages"
+  )
+  m <- attr(status, "missing")
+  expect_identical(m$package, c("fakeB", "fakeC"))
+  expect_identical(m$reason[2L], "needs fakeB, which is left out")
+})
+
+test_that("a blocked family member stops setup, naming it", {
+  root <- withr::local_tempdir()
+  local_setup(
+    run_status = 5L,
+    run_output = paste0("HVTIR_BLOCKED=hvtiPlotR needs fakeMissing to ",
+                        "build, which could not be installed\n")
+  )
+  err <- tryCatch(setup("A study", 7L, root = root), error = conditionMessage)
+  expect_match(err, "hvtiPlotR needs fakeMissing", fixed = TRUE)
+  expect_match(err, "cannot", fixed = TRUE)
 })

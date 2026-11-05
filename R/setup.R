@@ -30,19 +30,6 @@ environment_extras <- function() {
   )
 }
 
-#' Extras a study can be set up without
-#'
-#' A failure installing one of these warns rather than stopping setup, so they
-#' are installed last, on their own. arrow is one because some servers cannot
-#' build it: arrow 23 and later need C++20 and, for the prebuilt library,
-#' OpenSSL 3, and earlier releases do not compile on R 4.6. A study without it
-#' loses Parquet reading until it installs.
-#'
-#' @return A character vector of package names, a subset of
-#'   [environment_extras()].
-#' @noRd
-optional_extras <- function() "arrow"
-
 #' Every package a study declares
 #'
 #' @param registry The registry, as returned by [members()].
@@ -190,7 +177,7 @@ tail_lines <- function(output, n = 40L) {
   output <- iconv(paste(output, collapse = "\n"), "UTF-8", "UTF-8", sub = "?")
   lines <- cli::ansi_strip(unlist(strsplit(output, "[\r\n]+")))
   lines <- lines[nzchar(trimws(lines))]
-  lines <- gsub("\\}", "}}", gsub("\\{", "{{", lines))
+  lines <- escape_braces(lines)
   utils::tail(lines, n)
 }
 
@@ -203,14 +190,23 @@ output_bullets <- function(output, n = 40L) {
 }
 
 #' Save a child's full raw output where the abort can name it
+#' @param output The child's output.
+#' @param root The study root. With it the log goes under `renv/logs/` and
+#'   the path returned is relative to `root`; without it, to `tempdir()`.
 #' @noRd
-save_setup_log <- function(output) {
-  path <- file.path(
-    tempdir(), paste0("hvtiR-setup-", format(Sys.time(), "%Y%m%d-%H%M%S"),
-                      ".log")
-  )
+save_setup_log <- function(output, root = NULL) {
+  stamp <- format(Sys.time(), "%Y%m%d-%H%M%S")
+  pattern <- paste0("setup-", stamp, "-")
+  if (is.null(root)) {
+    path <- tempfile(pattern = paste0("hvtiR-", pattern), fileext = ".log")
+  } else {
+    dir <- file.path(root, "renv", "logs")
+    dir.create(dir, recursive = TRUE, showWarnings = FALSE)
+    path <- tempfile(pattern = pattern, tmpdir = dir, fileext = ".log")
+    rel <- file.path("renv", "logs", basename(path))
+  }
   writeBin(charToRaw(enc2native(paste0(output, collapse = "\n"))), path)
-  path
+  if (is.null(root)) path else rel
 }
 
 #' Is `path` inside `dir`?
@@ -521,7 +517,10 @@ restore_expr <- function(root, repos = NULL) {
 #'
 #' pak installs hard dependencies but not `LinkingTo` packages, and the
 #' snapshot's validation then aborts. Those are CRAN packages, which renv
-#' installs from the configured repositories with no GitHub API.
+#' installs from the configured repositories with no GitHub API. An install
+#' that fails does not stop the child: each package that still lacks one is
+#' named in `out`, the child's left-out list, for [left_out_closure()].
+#' Expects `out` in the child.
 #' @param lib_var Name of the child's variable holding the library path.
 #' @param project The study root.
 #' @param installer The function that installs, called as `installer(need,
@@ -543,8 +542,20 @@ linking_expr <- function(lib_var, project, installer = "renv::install",
     "lt <- unique(lt[nzchar(lt) & lt != 'R']); ",
     "need <- lt[!vapply(lt, function(n) length(find.package(n, lib.loc = c(",
     lib_var, ", .Library), quiet = TRUE)) > 0L, NA)]; ",
-    "if (length(need)) ", installer, "(need, project = ", p,
-    ", prompt = FALSE", if (length(repos)) ", repos = hvtir_repos", "); "
+    "if (length(need)) tryCatch(", installer, "(need, project = ", p,
+    ", prompt = FALSE", if (length(repos)) ", repos = hvtir_repos",
+    "), error = function(e) cat('\\nHVTIR_FILLERR=', gsub('[\\r\\n]+', ' ', ",
+    "conditionMessage(e)), '\\n', sep = '')); ",
+    "still <- need[!vapply(need, function(n) length(find.package(n, ",
+    "lib.loc = c(", lib_var, ", .Library), quiet = TRUE)) > 0L, NA)]; ",
+    "for (f in if (length(still)) d else character()) { ",
+    "x <- tryCatch(read.dcf(f, fields = c('Package', 'LinkingTo'))[1L, ], ",
+    "error = function(e) NULL); ",
+    "if (is.null(x) || is.na(x[['LinkingTo']])) next; ",
+    "hit <- intersect(trimws(sub('[(].*$', '', strsplit(x[['LinkingTo']], ",
+    "',')[[1L]])), still); ",
+    "if (length(hit)) out[x[['Package']]] <- paste0('needs ', hit[1L], ",
+    "' to build, which could not be installed') }; "
   )
 }
 
@@ -623,11 +634,14 @@ unmet_requirements <- function(lib, paths = unique(c(lib, .libPaths()))) {
 #' installed version is below what another package requires; some of those
 #' pre-exist in a study library. With `upgrade` the unmet packages are
 #' installed through renv from the binary repositories, the library is checked
-#' once more, and `HVTIR_RAISED=` names what was installed. Whatever is still
-#' unmet, or all of it when not `upgrade`, is printed as `HVTIR_UNMET=` (entries
-#' separated by `;`, as an entry holds a comma) and the child exits 5 before
-#' the snapshot. The lock guard that follows sees the installs, so a locked
-#' package they moved is reported there. Expects `lib` and `upgrade` in the
+#' once more, and `HVTIR_RAISED=` names what was installed. With `upgrade`, a
+#' package outside `essential` that is still unmet, because the install failed
+#' or did not reach the floor, is named in `out`, the child's left-out list,
+#' rather than stopping the run. Whatever else is unmet, or all of it when not
+#' `upgrade`, is printed as `HVTIR_UNMET=` (entries separated by `;`, as an
+#' entry holds a comma) and the child exits 5 before the snapshot. The lock
+#' guard that follows sees the installs, so a locked package they moved is
+#' reported there. Expects `lib`, `upgrade`, `essential` and `out` in the
 #' child.
 #' @param project The study root.
 #' @param installer The function that installs, called as `installer(need,
@@ -643,11 +657,21 @@ floors_expr <- function(project, installer = "renv::install", repos = NULL) {
     paste(deparse(unmet_requirements), collapse = "\n"), "\n",
     "unmet <- unmet_requirements(lib); ",
     "if (nrow(unmet) && upgrade) { ",
+    "raised <- tryCatch({ ",
     installer, "(unique(unmet$dep), project = ", p, ", prompt = FALSE",
-    if (length(repos)) ", repos = hvtir_repos", "); ",
-    "cat('\\nHVTIR_RAISED=', paste(unique(unmet$dep), collapse = ','), ",
-    "'\\n', sep = ''); ",
-    "unmet <- unmet_requirements(lib) }; ",
+    if (length(repos)) ", repos = hvtir_repos", "); TRUE }, ",
+    "error = function(e) { cat('\\nHVTIR_RAISEERR=', gsub('[\\r\\n]+', ' ', ",
+    "conditionMessage(e)), '\\n', sep = ''); FALSE }); ",
+    "if (raised) cat('\\nHVTIR_RAISED=', paste(unique(unmet$dep), ",
+    "collapse = ','), '\\n', sep = ''); ",
+    "unmet <- unmet_requirements(lib); ",
+    "opt <- !unmet$by %in% essential; ",
+    "for (i in which(opt)) if (!unmet$by[i] %in% names(out)) ",
+    "out[unmet$by[i]] <- paste0('needs ', unmet$dep[i], ",
+    "ifelse(nzchar(unmet$op[i]), paste0(' (', unmet$op[i], ' ', ",
+    "unmet$ver[i], ')'), ''), ', has ', ifelse(is.na(unmet$has[i]), ",
+    "'none', unmet$has[i])); ",
+    "unmet <- unmet[!opt, , drop = FALSE] }; ",
     "if (nrow(unmet)) { cat('\\nHVTIR_UNMET=', paste0(unmet$by, ' needs ', ",
     "unmet$dep, ifelse(nzchar(unmet$op), paste0(' (', unmet$op, ' ', ",
     "unmet$ver, ')'), ''), ', has ', ifelse(is.na(unmet$has), 'none', ",
@@ -656,11 +680,56 @@ floors_expr <- function(project, installer = "renv::install", repos = NULL) {
   )
 }
 
+#' Widen a left-out list to every package that depends on one in it
+#'
+#' A package left out of the snapshot cannot be recorded, so nothing that
+#' depends on it can be either: renv's snapshot validation would fail on the
+#' dependent. Reads `Depends`, `Imports` and `LinkingTo` of every package in
+#' `lib` and adds, until nothing changes, each package that needs one already
+#' left out. Base R only: [finish_expr()] ships it to the child.
+#' @param lib A library path.
+#' @param out Reasons, named by the package left out.
+#' @return `out`, with a reason for each dependent added.
+#' @noRd
+left_out_closure <- function(lib, out) {
+  desc <- file.path(lib, list.files(lib), "DESCRIPTION")
+  deps <- lapply(desc[file.exists(desc)], function(f) {
+    x <- tryCatch(
+      read.dcf(f, fields = c("Package", "Depends", "Imports", "LinkingTo")),
+      error = function(e) NULL
+    )
+    if (is.null(x)) return(NULL)
+    spec <- unlist(strsplit(paste(x[1L, 2:4][!is.na(x[1L, 2:4])],
+                                  collapse = ","), ","))
+    spec <- trimws(sub("[(].*$", "", spec))
+    list(pkg = unname(x[1L, 1L]), deps = spec[nzchar(spec)])
+  })
+  deps <- Filter(Negate(is.null), deps)
+  repeat {
+    added <- FALSE
+    for (d in deps) {
+      if (d$pkg %in% names(out)) next
+      hit <- intersect(d$deps, names(out))
+      if (length(hit)) {
+        out[d$pkg] <- paste0("needs ", hit[1L], ", which is left out")
+        added <- TRUE
+      }
+    }
+    if (!added) break
+  }
+  out
+}
+
 #' Child run 2: fill LinkingTo gaps, meet version floors, guard the lock,
 #' snapshot
 #'
 #' The fill and the floors step go first because they install through renv,
-#' which can move a locked package; the guard then sees that too.
+#' which can move a locked package; the guard then sees that too. What they
+#' could not satisfy, plus `keep_out`, is widened by [left_out_closure()] and
+#' kept out of the snapshot with `exclude`, so the lock records none of it and
+#' renv's validation does not trip on it. The child names it in
+#' `HVTIR_LEFTOUT=` (`pkg=reason`, separated by `;`). A package in `essential`
+#' among it is printed as `HVTIR_BLOCKED=` instead, and the child exits 5.
 #' @param root The study root.
 #' @param before Locked versions after restore, named by package.
 #' @param sha Locked `RemoteSha`s, named by package, `""` for none.
@@ -672,10 +741,14 @@ floors_expr <- function(project, installer = "renv::install", repos = NULL) {
 #'   already records, so the rewrite has to follow it.
 #' @param upgrade Whether the guard reports moved packages instead of rolling
 #'   them back.
+#' @param essential Packages whose loss stops the run.
+#' @param keep_out Reasons, named by package, for packages to leave out of the
+#'   snapshot from the start.
 #' @return One string of R code.
 #' @noRd
 finish_expr <- function(root, before, sha = NULL, libpkgs = NULL,
-                        repos = NULL, record = FALSE, upgrade = TRUE) {
+                        repos = NULL, record = FALSE, upgrade = TRUE,
+                        essential = character(), keep_out = character()) {
   root <- normalizePath(root, winslash = "/")
   p <- deparse1(root)
   if (is.null(sha)) {
@@ -690,10 +763,23 @@ finish_expr <- function(root, before, sha = NULL, libpkgs = NULL,
     "sha <- ", deparse1(sha, width.cutoff = 500L), "; ",
     "libpkgs <- ", deparse1(libpkgs, width.cutoff = 500L), "; ",
     "upgrade <- ", if (isFALSE(upgrade)) "FALSE" else "TRUE", "; ",
+    "essential <- ", deparse1(as.character(essential), width.cutoff = 500L),
+    "; ",
+    "out <- ", deparse1(keep_out, width.cutoff = 500L), "; ",
     linking_expr("lib", root, repos = repos),
     floors_expr(root, repos = repos),
+    "left_out_closure <- ",
+    paste(deparse(left_out_closure), collapse = "\n"), "\n",
+    "out <- left_out_closure(lib, out); ",
+    "blocked <- intersect(names(out), essential); ",
+    "if (length(blocked)) { cat('\\nHVTIR_BLOCKED=', paste0(blocked, ' ', ",
+    "out[blocked], collapse = ';'), '\\n', sep = ''); ",
+    "quit(status = 5L, save = 'no') }; ",
+    "if (length(out)) cat('\\nHVTIR_LEFTOUT=', paste0(names(out), '=', ",
+    "gsub('[;\\r\\n]+', ' ', out), collapse = ';'), '\\n', sep = ''); ",
     guard_expr(p),
-    "renv::snapshot(project = ", p, ", prompt = FALSE); ",
+    "renv::snapshot(project = ", p, ", prompt = FALSE, ",
+    "exclude = if (length(out)) names(out)); ",
     if (record && length(repos)) {
       paste0(
         "lf <- renv::lockfile_read(file.path(", p, ", 'renv.lock')); ",
@@ -740,7 +826,7 @@ pak_install_lib <- function(specs, lib, repos = NULL) {
 grouped_moves <- function(moves, mark = "*", raised = character()) {
   pkg <- sub(":.*$", "", moves)
   line <- sub(":", " ", gsub("->", " -> ", moves, fixed = TRUE), fixed = TRUE)
-  line <- gsub("\\}", "}}", gsub("\\{", "{{", line))
+  line <- escape_braces(line)
   fam <- pkg %in% c("hvtiR", members()$package)
   out <- character(0)
   other <- !fam & pkg %in% raised
@@ -791,7 +877,7 @@ abort_stage <- function(result, raw, root, upgrade = TRUE) {
     failed <- child_value(result$output, "HVTIR_RESTOREFAIL")
     outcome <- if (length(failed)) {
       err <- child_value(result$output, "HVTIR_RESTOREERR")[1L]
-      err <- gsub("\\}", "}}", gsub("\\{", "{{", err))
+      err <- escape_braces(err)
       c(
         i = paste(
           "{.file renv.lock} was left unchanged and the packages this run",
@@ -827,10 +913,25 @@ abort_stage <- function(result, raw, root, upgrade = TRUE) {
       )
     ))
   }
+  blocked <- child_value(result$output, "HVTIR_BLOCKED")
+  if (length(blocked)) {
+    reqs <- escape_braces(strsplit(blocked[1L], ";", fixed = TRUE)[[1L]])
+    cli::cli_abort(c(
+      "hvtiR packages in the study's library lack what they need:",
+      stats::setNames(reqs, rep("x", length(reqs))),
+      i = "{.file renv.lock} is unchanged.",
+      i = paste(
+        "The other packages can be left out, but these cannot. Install what",
+        "they need by hand, then run {.fn setup} again; details in the full",
+        "output."
+      ),
+      i = "Full output: {.file {save_setup_log(raw, root)}}"
+    ))
+  }
   unmet <- child_value(result$output, "HVTIR_UNMET")
   if (length(unmet)) {
     reqs <- strsplit(unmet[1L], ";", fixed = TRUE)[[1L]]
-    reqs <- gsub("\\}", "}}", gsub("\\{", "{{", reqs))
+    reqs <- escape_braces(reqs)
     cli::cli_abort(c(
       "Packages in the study's library do not meet their version requirements:",
       stats::setNames(reqs, rep("x", length(reqs))),
@@ -919,7 +1020,7 @@ abort_stage <- function(result, raw, root, upgrade = TRUE) {
         )
       },
       output_bullets(result$output),
-      i = "Full output: {.file {save_setup_log(raw)}}"
+      i = "Full output: {.file {save_setup_log(raw, root)}}"
     ))
   }
   invisible(NULL)
@@ -957,6 +1058,40 @@ restore_failures <- function(output) {
   list(pkgs = sub(pattern, "\\1", hits), complete = !endsWith(line, ","))
 }
 
+#' One field of a package's record in a lockfile's text
+#'
+#' Read with patterns, as [lockfile_r_version()] is.
+#' @param text The lockfile's text.
+#' @param pkg A valid package name.
+#' @param name The field.
+#' @return The value, or `NA_character_` when the record or field is absent.
+#' @noRd
+lock_field <- function(text, pkg, name) {
+  key <- gsub(".", "\\.", pkg, fixed = TRUE)
+  block <- regmatches(
+    text, regexpr(paste0('"', key, '"\\s*:\\s*\\{[^}]*\\}'), text)
+  )
+  hit <- regmatches(
+    block, regexec(paste0('"', name, '"\\s*:\\s*"([^"]*)"'), block)
+  )
+  if (length(hit) && length(hit[[1L]]) == 2L) hit[[1L]][2L] else NA_character_
+}
+
+#' A field of an installed package's `DESCRIPTION` in one library
+#' @param lib A library path.
+#' @param pkg A package name.
+#' @param field The field.
+#' @return The value, or `NA` when the package or the field is absent.
+#' @noRd
+desc_field <- function(lib, pkg, field) {
+  path <- file.path(lib, pkg, "DESCRIPTION")
+  if (!file.exists(path)) return(NA_character_)
+  tryCatch(
+    unname(read.dcf(path, fields = field)[1L, 1L]),
+    error = function(e) NA_character_
+  )
+}
+
 #' The `renv::record()` spec that keeps each locked package's source
 #'
 #' Read with patterns, as [lockfile_r_version()] is. A repository record keeps
@@ -974,19 +1109,9 @@ record_specs <- function(pkgs, root) {
     ""
   }
   spec <- function(pkg) {
-    key <- gsub(".", "\\.", pkg, fixed = TRUE)
-    block <- regmatches(
-      text, regexpr(paste0('"', key, '"\\s*:\\s*\\{[^}]*\\}'), text)
-    )
-    field <- function(name) {
-      hit <- regmatches(
-        block, regexec(paste0('"', name, '"\\s*:\\s*"([^"]*)"'), block)
-      )
-      if (length(hit) && length(hit[[1L]]) == 2L) hit[[1L]][2L] else NA
-    }
-    source <- field("Source")
-    user <- field("RemoteUsername")
-    repo <- field("RemoteRepo")
+    source <- lock_field(text, pkg, "Source")
+    user <- lock_field(text, pkg, "RemoteUsername")
+    repo <- lock_field(text, pkg, "RemoteRepo")
     if (identical(source, "Repository")) {
       pkg
     } else if (identical(source, "GitHub") && !is.na(user) && !is.na(repo)) {
@@ -1356,6 +1481,24 @@ guard_session <- function(root, study, study_tracker_id,
 #' `hvtiRutilities` also when it is older than 1.5.6. `setup()` runs them from
 #' this session, so they must be there before the study's library exists.
 #'
+#' When an install fails, `setup()` heals what it safely can and leaves out
+#' what it cannot. Before it changes `renv.lock` it copies the file to
+#' `renv/renv.lock.before-setup-<time>`. A restore that fails is healed in up
+#' to 10 rounds: a package that will not build under this R moves to the
+#' newest version the study's repositories serve (only with `upgrade = TRUE`),
+#' and a missing dependency is installed first; a dependency that will not
+#' install leaves its dependents out. After that, `setup()` keeps leaving out
+#' packages outside the family until the restore succeeds. A package left out
+#' stays declared but is dropped from `renv.lock`. With `upgrade = TRUE` the
+#' install stage then retries it at its current release, and it is locked if
+#' it installs; with `upgrade = FALSE` it is not retried, because that would
+#' move a pin. A package still missing at the end is named in a warning and
+#' recorded in `renv/hvtiR-setup.dcf`; `setup()` finishes and opens the
+#' project, and [doctor()] lists what was left out. A package whose
+#' dependency is missing stays locked but cannot load until the dependency
+#' installs. A family member that cannot install still stops `setup()`. Each
+#' failure's log is kept in `renv/logs/`.
+#'
 #' Safe to rerun: each step checks before it acts.
 #'
 #' @param study The Study Tracker title.
@@ -1381,7 +1524,9 @@ guard_session <- function(root, study, study_tracker_id,
 #'   `template_dir` or `owner`. `renv` is not accepted: `setup()` always uses
 #'   renv, so use `hvtiRutilities::study_setup()` directly for a study without
 #'   it.
-#' @return The study status from `hvtiRutilities::study_setup()`, invisibly.
+#' @return The study status from `hvtiRutilities::study_setup()`, invisibly,
+#'   with attributes `healed` and `missing`: data frames of the pins moved
+#'   and the packages left out.
 #' @export
 #' @examples
 #' \dontrun{
@@ -1505,14 +1650,15 @@ setup <- function(study, study_tracker_id, root = NULL, adopt = FALSE,
 
   packages <- union(declared_packages(), setdiff(locked, "renv"))
   utilities_fn("study_declare")(packages, root = root)
+  # A failure of these stops setup; anything else is left out and recorded.
+  essential <- c("hvtiR", members()$package)
 
   cli::cli_alert_info(
     "Installing the study's packages; this can take several minutes."
   )
-  first <- run_in_study(restore_expr(root, repos), root)
-  first_raw <- first$output
-  first$output <- iconv(first_raw, "UTF-8", "UTF-8", sub = "?")
-  abort_stage(first, first_raw, root, upgrade)
+  heal <- heal_restore(root, repos, upgrade, essential)
+  first <- heal$result
+  missing <- heal$missing
   project_lib <- child_value(first$output, "HVTIR_LIB")
   lockver <- child_value(first$output, "HVTIR_LOCKVER")
   if (length(project_lib) != 1L || !dir.exists(project_lib) ||
@@ -1520,7 +1666,7 @@ setup <- function(study, study_tracker_id, root = NULL, adopt = FALSE,
     cli::cli_abort(c(
       "The restore did not report the study's library and locked versions.",
       output_bullets(first$output),
-      i = "Full output: {.file {save_setup_log(first_raw)}}"
+      i = "Full output: {.file {save_setup_log(heal$raw, root)}}"
     ))
   }
   unlinked <- child_value(first$output, "HVTIR_UNLINKED")
@@ -1542,8 +1688,12 @@ setup <- function(study, study_tracker_id, root = NULL, adopt = FALSE,
   wanted <- setdiff(packages, names(before))
   family <- c("hvtiR", members()$package)
   wanted <- wanted[wanted %in% family | !wanted %in% libpkgs]
-  optional <- intersect(wanted, optional_extras())
-  add <- install_specs(setdiff(wanted, optional))
+  family_wanted <- intersect(wanted, family)
+  others <- setdiff(wanted, family)
+  # upgrade = FALSE never moves a pin, and installing what healing left out
+  # would lock it at its newest release.
+  if (!isTRUE(upgrade)) others <- setdiff(others, missing$package)
+  add <- install_specs(family_wanted)
   if (length(add)) {
     tryCatch(
       pak_install_lib(add, project_lib, repos),
@@ -1558,37 +1708,107 @@ setup <- function(study, study_tracker_id, root = NULL, adopt = FALSE,
       }
     )
   }
-  for (pkg in optional) {
-    tryCatch(
-      pak_install_lib(install_specs(pkg), project_lib, repos),
+  # Everything outside the family may be left out: one call first, then one
+  # at a time, so a single failure leaves out only itself.
+  joint_error <- NULL
+  errors <- list()
+  if (length(others)) {
+    together <- tryCatch(
+      {
+        pak_install_lib(install_specs(others), project_lib, repos)
+        TRUE
+      },
       error = function(e) {
-        msg <- conditionMessage(e)
-        # pak's staging folder, left by the failed install, trips the snapshot.
-        staging <- intersect(library_debris(project_lib), "_cache")
-        unlink(file.path(project_lib, staging), recursive = TRUE)
-        cli::cli_warn(c(
-          paste(
-            "{.pkg {pkg}} could not be installed; the study is set up",
-            "without it."
-          ),
-          output_bullets(msg, n = 10L),
-          i = "Full output: {.file {save_setup_log(msg)}}",
-          i = paste(
-            "Install it in the study once the server can build it, then run",
-            "{.code renv::snapshot()}."
-          )
-        ))
+        joint_error <<- conditionMessage(e)
+        FALSE
       }
     )
+    if (!together) {
+      # pak's staging folder, left by a failed install, trips the snapshot.
+      clear_staging <- function() {
+        staging <- intersect(library_debris(project_lib), "_cache")
+        unlink(file.path(project_lib, staging), recursive = TRUE)
+      }
+      clear_staging()
+      errors <- lapply(stats::setNames(others, others), function(pkg) {
+        tryCatch(
+          {
+            pak_install_lib(install_specs(pkg), project_lib, repos)
+            NULL
+          },
+          error = function(e) conditionMessage(e)
+        )
+      })
+      clear_staging()
+      errors <- Filter(Negate(is.null), errors)
+      for (pkg in setdiff(names(errors), missing$package)) {
+        reason <- strsplit(errors[[pkg]], "\n", fixed = TRUE)[[1L]][1L]
+        if (is.na(reason) || !nzchar(reason)) reason <- "failed to install"
+        missing[nrow(missing) + 1L, ] <- list(
+          pkg, reason, NA_character_, save_setup_log(errors[[pkg]], root)
+        )
+      }
+    }
   }
+  # A package the retry installed, or already there, is no longer left out,
+  # unless healing dropped its pin and the copy is not that pin: under
+  # upgrade = FALSE it stays out of the lock, and under upgrade its pin joins
+  # the guard so the move is reported.
+  keep_out <- character()
+  pins <- heal$pins
+  if (is.null(pins)) pins <- data.frame(package = character(),
+                                        version = character(),
+                                        sha = character())
+  have <- vapply(missing$package, function(n) {
+    desc_field(project_lib, n, "Version")
+  }, character(1L))
+  clear <- file.exists(file.path(project_lib, missing$package, "DESCRIPTION"))
+  pinned <- pins$package[!is.na(pins$version)]
+  for (i in which(clear & missing$package %in% pinned)) {
+    pkg <- missing$package[i]
+    pin <- pins[match(pkg, pins$package), ]
+    lsha <- if (is.na(pin$sha)) "" else pin$sha
+    if (isTRUE(upgrade)) {
+      before[pkg] <- pin$version
+      sha[pkg] <- lsha
+      next
+    }
+    nsha <- desc_field(project_lib, pkg, "RemoteSha")
+    same <- isTRUE(tryCatch(
+      package_version(have[[i]]) == package_version(pin$version),
+      error = function(e) identical(have[[i]], pin$version)
+    )) && (!nzchar(lsha) || identical(nsha, lsha))
+    if (same) next
+    clear[i] <- FALSE
+    missing$reason[i] <- paste0(
+      "the library has ", have[[i]], " but renv.lock pinned ", pin$version,
+      "; left out of renv.lock, as upgrade = FALSE keeps pins"
+    )
+    keep_out[pkg] <- missing$reason[i]
+  }
+  missing <- missing[!clear, , drop = FALSE]
 
   result <- run_in_study(
-    finish_expr(root, before, sha, libpkgs, repos, record, upgrade), root
+    finish_expr(root, before, sha, libpkgs, repos, record, upgrade,
+                essential, keep_out),
+    root
   )
   raw_output <- result$output
   result$output <- iconv(raw_output, "UTF-8", "UTF-8", sub = "?")
   abort_stage(result, raw_output, root, upgrade)
   report_moves(result$output)
+  # What the child kept out of the snapshot: failed fills and their dependents.
+  leftout <- child_value(result$output, "HVTIR_LEFTOUT")
+  if (length(leftout)) {
+    for (entry in strsplit(leftout[1L], ";", fixed = TRUE)[[1L]]) {
+      pkg <- sub("=.*$", "", entry)
+      if (!nzchar(pkg) || pkg %in% missing$package) next
+      missing[nrow(missing) + 1L, ] <- list(
+        pkg, sub("^[^=]*=", "", entry), NA_character_,
+        save_setup_log(raw_output, root)
+      )
+    }
+  }
   if (length(unlinked)) {
     gone <- strsplit(unlinked[1L], ",", fixed = TRUE)[[1L]]
     # pak's staging folder is not a link, and nothing reinstalls it.
@@ -1611,22 +1831,70 @@ setup <- function(study, study_tracker_id, root = NULL, adopt = FALSE,
     cli::cli_abort(c(
       "The install did not report the study's library path.",
       output_bullets(result$output),
-      i = "Full output: {.file {save_setup_log(raw_output)}}"
+      i = "Full output: {.file {save_setup_log(raw_output, root)}}"
     ))
   }
   # Defined in status.R; lintr cannot resolve it across source files.
   # nolint next: object_usage_linter.
   gone <- unresolved_imports(packages, lib_loc = c(lib, .Library))
   if (nrow(gone)) {
-    bullets <- paste(gone$package, "needs", gone$missing)
-    names(bullets) <- rep("x", nrow(gone))
-    cli::cli_abort(c(
-      "Packages in the study's library are missing dependencies:",
-      bullets
-    ))
+    stuck <- gone[gone$package %in% essential, , drop = FALSE]
+    if (nrow(stuck)) {
+      bullets <- paste(stuck$package, "needs", stuck$missing)
+      names(bullets) <- rep("x", nrow(stuck))
+      cli::cli_abort(c(
+        "Packages in the study's library are missing dependencies:",
+        bullets
+      ))
+    }
+    for (i in which(!gone$package %in% missing$package)) {
+      missing[nrow(missing) + 1L, ] <- list(
+        gone$package[i],
+        paste0("installed, but needs ", gone$missing[i],
+               ", which is not installed"),
+        gone$missing[i], NA_character_
+      )
+    }
   }
 
-  cli::cli_alert_success("The study's environment is set up.")
+  write_setup_record(root, heal$healed, missing, heal$backup,
+                     attr(status, "cleanup"))
+  # Reasons and pins come from child output, so braces are escaped.
+  if (nrow(heal$healed)) {
+    moves <- escape_braces(paste0(
+      heal$healed$package, " ", heal$healed$from, " -> ", heal$healed$to,
+      " (round ", heal$healed$round, ")"
+    ))
+    cli::cli_alert_info(paste(
+      "Moved {nrow(heal$healed)} pin{?s} that would not build under this R;",
+      "the old lock is {.file {heal$backup}}."
+    ))
+    cli::cli_bullets(stats::setNames(moves, rep("*", length(moves))))
+  }
+  if (nrow(missing)) {
+    auth <- any(grepl("authentication credentials",
+                      c(joint_error, unlist(errors)), fixed = TRUE))
+    cli::cli_warn(c(
+      paste(
+        "The study is set up without {nrow(missing)} package{?s}:",
+        "{.pkg {missing$package}}."
+      ),
+      stats::setNames(
+        escape_braces(paste0(missing$package, ": ", missing$reason)),
+        rep("x", nrow(missing))
+      ),
+      if (auth) github_credentials_hint(),
+      i = "Jobs that load them stop until they install.",
+      i = paste(
+        "Rerun {.fn hvtiR::setup} to try them again; details in",
+        "{.file renv/hvtiR-setup.dcf}."
+      )
+    ))
+  } else {
+    cli::cli_alert_success("The study's environment is set up.")
+  }
+  attr(status, "healed") <- heal$healed
+  attr(status, "missing") <- missing
   open_project(root)
   invisible(status)
 }
