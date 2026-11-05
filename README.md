@@ -37,21 +37,25 @@ hvtiR::install()
 
 ### Set up a study
 
+Open the study's folder as an RStudio project (File > New Project > Existing
+Directory), then in that project's console:
+
 ```r
 install.packages("pak")
 pak::pak("ehrlinger/hvtiR")
 hvtiR::setup(
   study = "EDIT: the Study Tracker title",
   study_tracker_id = 0L,  # EDIT: the Study Tracker ID
-  root = "EDIT: the study directory",
   identity_source = "manual"  # you typed the identity; the default records it as verified
 )
 ```
 
-Run this once per study, before anything else, from an R session started
-outside any project, passing `root =`. From inside the study's RStudio project
-it stops before installing anything and names the command to run: it replaces
-packages that session has loaded. It also stops the study using renv's
+With no `_study.yml` there, `setup()` asks whether to adopt the folder; the
+default answer is No. Run this once per study, before anything else. Once the
+study's renv is active, rerun it from an R session started outside the
+project, passing `root =`: from inside it stops before installing anything and
+names the command to run, because it replaces packages that session has loaded.
+It also stops the study using renv's
 per-user cache, so the shared library holds real copies a teammate can read,
 and reinstalls any package that was only a link into someone's home. It cleans
 up template copies first and only then locks the packages, so the lockfile records what the study declares and not what the templates

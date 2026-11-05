@@ -1302,6 +1302,17 @@ guard_session <- function(root, study, study_tracker_id,
 #' study's library with pak and renv; snapshots; checks that every
 #' package's dependencies resolve there; and restarts into the project.
 #'
+#' The usual start is a legacy study opened as its own RStudio project
+#' (File > New Project > Existing Directory): run
+#' `setup(study, study_tracker_id)` in that project's console. With no
+#' `_study.yml` there, `setup()` asks whether to adopt the project folder
+#' (the default answer is No), and adopting cleans up template copies unless
+#' `cleanup = FALSE` is passed. It refuses a project opened at one of a
+#' study's folders, such as `30_analyses`, or at a package. A
+#' non-interactive session never adopts unasked: it stops and prints the
+#' `setup(root = ..., adopt = TRUE)` call to run. The step-by-step flow,
+#' with where to type each command, is in `vignette("start-here")`.
+#'
 #' renv runs in explicit mode: the lockfile records what the study's
 #' `DESCRIPTION` declares, not whatever the code happens to mention. A study
 #' that already has a `renv.lock` keeps its locked versions, and on first
@@ -1318,10 +1329,10 @@ guard_session <- function(root, study, study_tracker_id,
 #' step to have them; anything beyond them is added with
 #' `hvtiRutilities::study_need()`.
 #'
-#' `setup()` replaces packages in the study's library, so run it from a
-#' session started outside the study project, passing `root`. From inside
-#' the project it stops before installing anything, and names the command to
-#' run.
+#' Once the study's renv is active in a session, `setup()` replaces packages
+#' that session has loaded, so rerun it from a session started outside the
+#' project, passing `root`. From inside an active project it stops before
+#' installing anything, and names the command to run.
 #'
 #' In the install, the study stops using renv's per-user cache
 #' (`renv::settings$use.cache(FALSE)`, kept in `renv/settings.json`, so it
@@ -1349,8 +1360,10 @@ guard_session <- function(root, study, study_tracker_id,
 #' @param study The Study Tracker title.
 #' @param study_tracker_id The Study Tracker ID, an integer.
 #' @param root The study root, where `setup()` writes. By default the study
-#'   enclosing the working directory; outside a study `setup()` stops and asks
-#'   for it, so a new study always names its directory.
+#'   enclosing the working directory; with none, the RStudio project folder
+#'   the session is in, once its adoption is confirmed. Outside both,
+#'   `setup()` stops and asks for it, so a new study always names its
+#'   directory.
 #' @param adopt Set up an existing study, adding only what is missing.
 #'   Adopting cleans up template copies unless `cleanup = FALSE` is passed.
 #' @param upgrade Whether the install may move versions the lockfile pins.
