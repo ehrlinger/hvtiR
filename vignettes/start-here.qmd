@@ -28,6 +28,21 @@ A study that already has a `renv.lock` is the exception: pick the R version its
 snapshot then records the R you are running. `upgrade = FALSE` keeps package
 versions from moving, not R.
 
+## Where to type
+
+Every command on this page goes in RStudio's **Console** pane, at the `>`
+prompt, one command at a time. Press Enter to run it. The **Terminal** tab beside
+the Console is a shell, not R, and an R command typed there fails.
+
+- Text after a `#` is a comment. R ignores it, so you can paste it or leave it out.
+- `EDIT:` marks a value that is yours to fill in. Replace the words, and keep the
+  quotation marks around them.
+- A command can run over several lines. Paste it whole: R waits, showing `+`
+  instead of `>`, until the closing parenthesis arrives.
+- `hvtiR::setup()` means "the `setup()` function from the `hvtiR` package". The
+  page writes every call that way so that it works in a fresh session.
+  [Common errors](#common-errors) explains why.
+
 ## Has the study been set up already?
 
 Look in the study's directory. If it holds both `_study.yml` and `renv.lock`,
@@ -117,6 +132,16 @@ own `GITHUB_PAT`.
 If it stops partway, fix what it names and run the same command again. Each step
 checks before it acts, so a rerun is safe.
 
+### When it worked
+
+The last step restarts RStudio inside the study. The project name in RStudio's
+top right corner changes from `Project: (None)` to the study's directory name,
+and the Files pane shows the study's folders. Go on to
+[Check the study](#check-the-study).
+
+If R printed an error instead, read the message from its first line: it names
+what stopped the run. Fix that and run the same `hvtiR::setup()` command again.
+
 ### What not to run
 
 Do not run `renv::init()` on the study: `setup()` has already made the
@@ -144,8 +169,13 @@ hvtiRutilities::study_status()
 hvtiR::status()
 ```
 
-Expect `study_status()` to report that no dataset is registered yet. That is the
-next step, and it belongs to the tutorials.
+`study_status()` prints a checklist, one line per thing a study needs: `[x]`
+marks one that is in place and `[ ]` one that is not. On a study just set up,
+`_study.yml` and `renv.lock` are ticked. The `manifest.yaml` and `dataset` lines
+are not, and each says to run `register_data()`. That is expected: registering
+the data is the next step, and it belongs to the tutorials. `hvtiR::status()`
+reports whether each family package in the study is current, and how to update
+any that are not.
 
 ## Go on to the tutorials
 
@@ -167,6 +197,87 @@ From here the work moves to
 If you are coming from SAS,
 [From SAS descriptive jobs to R](https://ehrlinger.github.io/hvtiRtemplates/articles/sas-to-r-descriptive.html)
 sets the descriptive templates beside the `tp.dc.*` jobs they replace.
+
+## Common errors {#common-errors}
+
+R's error messages are terse. These are the ones new users of the family meet
+most, word for word as R prints them, with what each means.
+
+### `could not find function "read_built"`
+
+```
+Error in read_built() : could not find function "read_built"
+```
+
+R knows a function only once its package is attached, and a new session
+attaches none of the family. Either name the package in the call, as this page
+does:
+
+```r
+d <- hvtiRutilities::read_built()
+```
+
+or attach the package once per session, then call the function by its name:
+
+```r
+library(hvtiRutilities)
+d <- read_built()
+```
+
+Attaching lasts until R restarts, and `hvtiR::setup()` restarts it, so attach
+again afterwards. The functions you will use most come from three packages:
+
+| Package          | Functions                                                           |
+|------------------|---------------------------------------------------------------------|
+| `hvtiR`          | `setup()`, `status()`, `update()`, `doctor()`                       |
+| `hvtiRutilities` | `register_data()`, `read_built()`, `study_status()`, `study_need()` |
+| `hvtiRtemplates` | `add_job()`, `job_status()`, `run_job()`, `upgrade_job()`           |
+
+### `'package' must be of length 1`
+
+```
+Error in library(c("hvtiRutilities", "hvtiRtemplates")) :
+  'package' must be of length 1
+```
+
+`library()` attaches one package per call. To attach all three at once:
+
+```r
+invisible(lapply(c("hvtiR", "hvtiRutilities", "hvtiRtemplates"), library, character.only = TRUE))
+```
+
+### `The following object is masked from ‘package:stats’: update`
+
+This is a note, not an error, printed when `library(hvtiR)` attaches. It means
+that `update()` now runs `hvtiR::update()`, which updates the family. To update a
+fitted model, write `stats::update(fit, ...)`.
+
+### `there is no package called ‘cmprsk’`
+
+```
+Error in library(cmprsk) : there is no package called ‘cmprsk’
+```
+
+Each study has a library of its own, and that package is not in this one, even
+if another study or your own library has it. From inside the study's project,
+install it into the study:
+
+```r
+hvtiRutilities::study_need("cmprsk")
+```
+
+When the missing package is one of the family, run `hvtiR::status()` instead.
+
+### `no _study.yml found`
+
+```
+Error: study_config(): no _study.yml found.
+```
+
+R is working outside the study. A study function finds its study by looking for
+`_study.yml` in the working directory and each folder above it, and the message
+lists every folder it looked in. Open the study's `.Rproj` file, or run
+`getwd()` to see where R is, and try again.
 
 ## When something goes wrong
 
