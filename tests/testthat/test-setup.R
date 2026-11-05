@@ -39,7 +39,8 @@ test_that("install_specs maps members to GitHub and leaves others alone", {
 local_setup <- function(run_status = 0L,
                         run_output = "installing\nHVTIR_LIB=@LIB@\n",
                         restore_status = 0L, restore_output = NULL,
-                        pak_error = NULL,
+                        pak_error = NULL, restore_outputs = NULL,
+                        recorded = "vctrs:0.7.3",
                         renv_present = TRUE,
                         session_lib = "/nonexistent/session/lib",
                         gone = data.frame(
@@ -88,6 +89,15 @@ local_setup <- function(run_status = 0L,
         log$expr1 <- expr
         step("child1")
         out <- restore_output
+        queued <- !is.null(restore_outputs) && length(restore_outputs)
+        if (queued) {
+          out <- restore_outputs[[1L]]
+          restore_outputs <<- restore_outputs[-1L]
+          if (!identical(out, "ok")) {
+            return(list(status = 1L, output = out))
+          }
+          out <- NULL
+        }
         if (is.null(out)) {
           out <- paste0(
             "HVTIR_LIB=@LIB@\nHVTIR_LOCKVER=",
@@ -96,6 +106,20 @@ local_setup <- function(run_status = 0L,
         }
         out <- gsub("@LIB@", lib, out, fixed = TRUE)
         return(list(status = restore_status, output = out))
+      }
+      kind <- c(
+        "renv::record(" = "record", "renv::install(" = "install",
+        "lockfile_write(" = "drop"
+      )
+      hit <- names(kind)[vapply(
+        names(kind), grepl, NA, x = expr, fixed = TRUE
+      )]
+      # The final child installs and snapshots; it is the "run" step.
+      if (length(hit) && !grepl("renv::snapshot(", expr, fixed = TRUE)) {
+        step(kind[[hit[1L]]])
+        return(list(
+          status = 0L, output = paste0("HVTIR_RECORDED=", recorded, "\n")
+        ))
       }
       log$expr <- expr
       step("run")
@@ -108,6 +132,10 @@ local_setup <- function(run_status = 0L,
       )
       step("pak_lib")
       if (!is.null(pak_error)) stop(pak_error)
+      invisible(NULL)
+    },
+    write_setup_record = function(...) {
+      log$record <- list(...)
       invisible(NULL)
     },
     renv_available = function() renv_present,
@@ -185,7 +213,8 @@ test_that("order is child 1, then pak into the project library, then child 2", {
   expect_true(dir.exists(log$pak_lib[[1L]]$lib))
   expect_true("ehrlinger/hvtiRutilities" %in% log$pak_lib[[1L]]$specs)
   expect_false("arrow" %in% log$pak_lib[[1L]]$specs)
-  expect_identical(log$pak_lib[[2L]]$specs, "arrow")
+  expect_true("arrow" %in% log$pak_lib[[2L]]$specs)
+  expect_false(SELF_REPO %in% log$pak_lib[[2L]]$specs)
 })
 
 test_that("an optional extra that fails to install warns, and setup goes on", {
@@ -195,36 +224,43 @@ test_that("an optional extra that fails to install warns, and setup goes on", {
     pak_install_lib = function(specs, lib, repos = NULL) {
       log$pak_lib <- c(log$pak_lib, list(list(specs = specs, lib = lib)))
       if ("arrow" %in% specs) {
-        dir.create(file.path(lib, "_cache"))
+        dir.create(file.path(lib, "_cache"), showWarnings = FALSE)
         stop("a C++20 compiler is required")
       }
       invisible(NULL)
     }
   )
+  status <- NULL
   expect_warning(
-    suppressMessages(setup("A study", 7L, root = root)),
-    "arrow"
+    suppressMessages(status <- setup("A study", 7L, root = root)),
+    "set up without 1 package"
   )
+  expect_identical(attr(status, "missing")$package, "arrow")
   expect_true("run" %in% log$steps)
   expect_true("open" %in% log$steps)
   # pak's staging folder from the failed install would trip renv's snapshot.
-  expect_false(dir.exists(file.path(log$pak_lib[[2L]]$lib, "_cache")))
+  expect_false(dir.exists(file.path(log$pak_lib[[1L]]$lib, "_cache")))
 })
 
 test_that("the optional-extra warning carries pak's message", {
   root <- withr::local_tempdir()
-  local_setup()
+  log <- local_setup()
   local_mocked_bindings(
     pak_install_lib = function(specs, lib, repos = NULL) {
-      if ("arrow" %in% specs) stop("a C++20 compiler is required")
+      if ("arrow" %in% specs) stop("a C++20 compiler is required\nmore")
       invisible(NULL)
     }
   )
+  status <- NULL
   expect_warning(
-    suppressMessages(setup("A study", 7L, root = root)),
+    suppressMessages(status <- setup("A study", 7L, root = root)),
     "C++20 compiler",
     fixed = TRUE
   )
+  expect_identical(
+    attr(status, "missing")$reason, "a C++20 compiler is required"
+  )
+  expect_identical(log$record[[3L]]$package, "arrow")
 })
 
 test_that("a failure installing the other packages still stops setup", {
@@ -232,12 +268,105 @@ test_that("a failure installing the other packages still stops setup", {
   log <- local_setup()
   local_mocked_bindings(
     pak_install_lib = function(specs, lib, repos = NULL) {
-      if (!"arrow" %in% specs) stop("could not solve")
+      if (SELF_REPO %in% specs) stop("could not solve")
       invisible(NULL)
     }
   )
   expect_error(setup("A study", 7L, root = root), "could not solve")
   expect_false("run" %in% log$steps)
+})
+
+test_that("a healed restore finishes, records the move and opens the project", {
+  root <- withr::local_tempdir()
+  writeLines(paste0(
+    '{"Packages": {"vctrs": {"Package": "vctrs", "Version": "0.7.2", ',
+    '"Source": "Repository"}}}'
+  ), file.path(root, "renv.lock"))
+  log <- local_setup(restore_outputs = list(
+    "ERROR: compilation failed for package \u2018vctrs\u2019", "ok"
+  ))
+  status <- suppressMessages(setup("A study", 7L, root = root))
+  expect_true(all(c("record", "open") %in% log$steps))
+  expect_identical(attr(status, "healed")$package, "vctrs")
+  expect_identical(nrow(attr(status, "missing")), 0L)
+})
+
+test_that("an optional package that cannot install warns and still opens", {
+  root <- withr::local_tempdir()
+  log <- local_setup()
+  local_mocked_bindings(
+    pak_install_lib = function(specs, lib, repos = NULL) {
+      if ("survminer" %in% specs) stop("compile failed")
+      invisible(NULL)
+    }
+  )
+  status <- NULL
+  expect_warning(
+    suppressMessages(status <- setup("A study", 7L, root = root)),
+    "set up without 1 package"
+  )
+  expect_identical(attr(status, "missing")$package, "survminer")
+  expect_true("open" %in% log$steps)
+})
+
+test_that("a family member that cannot install still stops setup", {
+  root <- withr::local_tempdir()
+  log <- local_setup(pak_error = "member build failed")
+  expect_error(
+    setup("A study", 7L, root = root),
+    "Installing the study's packages failed"
+  )
+  expect_false("open" %in% log$steps)
+})
+
+test_that("a missing dependency of an optional package leaves it out", {
+  root <- withr::local_tempdir()
+  log <- local_setup(gone = data.frame(
+    package = "forecast", missing = "tseries"
+  ))
+  status <- NULL
+  expect_warning(
+    suppressMessages(status <- setup("A study", 7L, root = root)),
+    "forecast"
+  )
+  expect_identical(attr(status, "missing")$because, "tseries")
+  expect_true("open" %in% log$steps)
+})
+
+test_that("a family member missing a dependency still stops", {
+  root <- withr::local_tempdir()
+  local_setup(gone = data.frame(
+    package = "hvtiRutilities", missing = "yaml"
+  ))
+  expect_error(
+    setup("A study", 7L, root = root), "missing dependencies"
+  )
+})
+
+test_that("every run writes the setup record, with the cleanup it was given", {
+  root <- withr::local_tempdir()
+  log <- local_setup()
+  suppressMessages(setup("A study", 7L, root = root))
+  expect_false(is.null(log$record))
+  expect_identical(log$record[[1L]], normalizePath(root, winslash = "/"))
+})
+
+test_that("a left-out reason with braces cannot break the warning", {
+  root <- withr::local_tempdir()
+  log <- local_setup()
+  local_mocked_bindings(
+    pak_install_lib = function(specs, lib, repos = NULL) {
+      if ("arrow" %in% specs) stop("{boom} {{x}} failed")
+      invisible(NULL)
+    }
+  )
+  status <- NULL
+  expect_warning(
+    suppressMessages(status <- setup("A study", 7L, root = root)),
+    "{boom}",
+    fixed = TRUE
+  )
+  expect_true("open" %in% log$steps)
 })
 
 test_that("pak gets only the declared packages the lockfile lacks", {
@@ -1034,7 +1163,7 @@ test_that("setup names an installed extra to pak only when it is missing", {
     )
   )
   setup("A study", 7L, root = root)
-  specs <- log$pak_lib[[1L]]$specs
+  specs <- unlist(lapply(log$pak_lib, `[[`, "specs"))
   expect_false("arrow" %in% specs)
   expect_true("quarto" %in% specs)
   expect_true(install_specs("hvtiPlotR") %in% specs)

@@ -30,19 +30,6 @@ environment_extras <- function() {
   )
 }
 
-#' Extras a study can be set up without
-#'
-#' A failure installing one of these warns rather than stopping setup, so they
-#' are installed last, on their own. arrow is one because some servers cannot
-#' build it: arrow 23 and later need C++20 and, for the prebuilt library,
-#' OpenSSL 3, and earlier releases do not compile on R 4.6. A study without it
-#' loses Parquet reading until it installs.
-#'
-#' @return A character vector of package names, a subset of
-#'   [environment_extras()].
-#' @noRd
-optional_extras <- function() "arrow"
-
 #' Every package a study declares
 #'
 #' @param registry The registry, as returned by [members()].
@@ -1523,14 +1510,15 @@ setup <- function(study, study_tracker_id, root = NULL, adopt = FALSE,
 
   packages <- union(declared_packages(), setdiff(locked, "renv"))
   utilities_fn("study_declare")(packages, root = root)
+  # A failure of these stops setup; anything else is left out and recorded.
+  essential <- c("hvtiR", members()$package)
 
   cli::cli_alert_info(
     "Installing the study's packages; this can take several minutes."
   )
-  first <- run_in_study(restore_expr(root, repos), root)
-  first_raw <- first$output
-  first$output <- iconv(first_raw, "UTF-8", "UTF-8", sub = "?")
-  abort_stage(first, first_raw, root, upgrade)
+  heal <- heal_restore(root, repos, upgrade, essential)
+  first <- heal$result
+  missing <- heal$missing
   project_lib <- child_value(first$output, "HVTIR_LIB")
   lockver <- child_value(first$output, "HVTIR_LOCKVER")
   if (length(project_lib) != 1L || !dir.exists(project_lib) ||
@@ -1538,7 +1526,7 @@ setup <- function(study, study_tracker_id, root = NULL, adopt = FALSE,
     cli::cli_abort(c(
       "The restore did not report the study's library and locked versions.",
       output_bullets(first$output),
-      i = "Full output: {.file {save_setup_log(first_raw)}}"
+      i = "Full output: {.file {save_setup_log(heal$raw, root)}}"
     ))
   }
   unlinked <- child_value(first$output, "HVTIR_UNLINKED")
@@ -1560,8 +1548,9 @@ setup <- function(study, study_tracker_id, root = NULL, adopt = FALSE,
   wanted <- setdiff(packages, names(before))
   family <- c("hvtiR", members()$package)
   wanted <- wanted[wanted %in% family | !wanted %in% libpkgs]
-  optional <- intersect(wanted, optional_extras())
-  add <- install_specs(setdiff(wanted, optional))
+  family_wanted <- intersect(wanted, family)
+  others <- setdiff(wanted, family)
+  add <- install_specs(family_wanted)
   if (length(add)) {
     tryCatch(
       pak_install_lib(add, project_lib, repos),
@@ -1576,28 +1565,41 @@ setup <- function(study, study_tracker_id, root = NULL, adopt = FALSE,
       }
     )
   }
-  for (pkg in optional) {
-    tryCatch(
-      pak_install_lib(install_specs(pkg), project_lib, repos),
-      error = function(e) {
-        msg <- conditionMessage(e)
-        # pak's staging folder, left by the failed install, trips the snapshot.
-        staging <- intersect(library_debris(project_lib), "_cache")
-        unlink(file.path(project_lib, staging), recursive = TRUE)
-        cli::cli_warn(c(
-          paste(
-            "{.pkg {pkg}} could not be installed; the study is set up",
-            "without it."
-          ),
-          output_bullets(msg, n = 10L),
-          i = "Full output: {.file {save_setup_log(msg)}}",
-          i = paste(
-            "Install it in the study once the server can build it, then run",
-            "{.code renv::snapshot()}."
-          )
-        ))
-      }
+  # Everything outside the family may be left out: one call first, then one
+  # at a time, so a single failure leaves out only itself.
+  if (length(others)) {
+    together <- tryCatch(
+      {
+        pak_install_lib(install_specs(others), project_lib, repos)
+        TRUE
+      },
+      error = function(e) FALSE
     )
+    if (!together) {
+      errors <- lapply(stats::setNames(others, others), function(pkg) {
+        tryCatch(
+          {
+            pak_install_lib(install_specs(pkg), project_lib, repos)
+            NULL
+          },
+          error = function(e) {
+            # pak's staging folder, left by a failed install, trips the
+            # snapshot.
+            staging <- intersect(library_debris(project_lib), "_cache")
+            unlink(file.path(project_lib, staging), recursive = TRUE)
+            conditionMessage(e)
+          }
+        )
+      })
+      errors <- Filter(Negate(is.null), errors)
+      for (pkg in names(errors)) {
+        reason <- strsplit(errors[[pkg]], "\n", fixed = TRUE)[[1L]][1L]
+        if (is.na(reason) || !nzchar(reason)) reason <- "failed to install"
+        missing[nrow(missing) + 1L, ] <- list(
+          pkg, reason, NA_character_, save_setup_log(errors[[pkg]], root)
+        )
+      }
+    }
   }
 
   result <- run_in_study(
@@ -1629,22 +1631,66 @@ setup <- function(study, study_tracker_id, root = NULL, adopt = FALSE,
     cli::cli_abort(c(
       "The install did not report the study's library path.",
       output_bullets(result$output),
-      i = "Full output: {.file {save_setup_log(raw_output)}}"
+      i = "Full output: {.file {save_setup_log(raw_output, root)}}"
     ))
   }
   # Defined in status.R; lintr cannot resolve it across source files.
   # nolint next: object_usage_linter.
   gone <- unresolved_imports(packages, lib_loc = c(lib, .Library))
   if (nrow(gone)) {
-    bullets <- paste(gone$package, "needs", gone$missing)
-    names(bullets) <- rep("x", nrow(gone))
-    cli::cli_abort(c(
-      "Packages in the study's library are missing dependencies:",
-      bullets
-    ))
+    stuck <- gone[gone$package %in% essential, , drop = FALSE]
+    if (nrow(stuck)) {
+      bullets <- paste(stuck$package, "needs", stuck$missing)
+      names(bullets) <- rep("x", nrow(stuck))
+      cli::cli_abort(c(
+        "Packages in the study's library are missing dependencies:",
+        bullets
+      ))
+    }
+    for (i in seq_len(nrow(gone))) {
+      missing[nrow(missing) + 1L, ] <- list(
+        gone$package[i], paste("needs", gone$missing[i]), gone$missing[i],
+        NA_character_
+      )
+    }
   }
 
-  cli::cli_alert_success("The study's environment is set up.")
+  write_setup_record(root, heal$healed, missing, heal$backup,
+                     attr(status, "cleanup"))
+  # Reasons and pins come from child output, so braces are escaped.
+  literal <- function(x) gsub("\\}", "}}", gsub("\\{", "{{", x))
+  if (nrow(heal$healed)) {
+    moves <- literal(paste0(
+      heal$healed$package, " ", heal$healed$from, " -> ", heal$healed$to,
+      " (round ", heal$healed$round, ")"
+    ))
+    cli::cli_alert_info(paste(
+      "Moved {nrow(heal$healed)} pin{?s} that would not build under this R;",
+      "the old lock is {.file {heal$backup}}."
+    ))
+    cli::cli_bullets(stats::setNames(moves, rep("*", length(moves))))
+  }
+  if (nrow(missing)) {
+    cli::cli_warn(c(
+      paste(
+        "The study is set up without {nrow(missing)} package{?s}:",
+        "{.pkg {missing$package}}."
+      ),
+      stats::setNames(
+        literal(paste0(missing$package, ": ", missing$reason)),
+        rep("x", nrow(missing))
+      ),
+      i = "Jobs that load them stop until they install.",
+      i = paste(
+        "Rerun {.fn hvtiR::setup} to try them again; details in",
+        "{.file renv/hvtiR-setup.dcf}."
+      )
+    ))
+  } else {
+    cli::cli_alert_success("The study's environment is set up.")
+  }
+  attr(status, "healed") <- heal$healed
+  attr(status, "missing") <- missing
   open_project(root)
   invisible(status)
 }
