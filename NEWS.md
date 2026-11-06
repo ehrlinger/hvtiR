@@ -1,5 +1,59 @@
 Package: hvtiR
-Version: 1.3.6
+Version: 1.3.7
+
+# hvtiR 1.3.7
+
+* "Start here" says where to type each command, what a finished `setup()` and a
+  new study's `study_status()` look like, and what the common errors mean:
+  `could not find function`, `library()` given several packages, `update()`
+  masked by `library(hvtiR)`, a package missing from the study's library, and
+  working outside the study (#172, #173).
+
+* `setup()` run inside a legacy study's own RStudio project, with no
+  `_study.yml` above it, now offers to adopt the project folder (the default
+  answer is No) instead of stopping. It refuses a project opened at a study
+  folder such as `30_analyses`, or at a package, and a non-interactive
+  session stops and prints the `setup(root = ..., adopt = TRUE)` call. This
+  is now the usual way to start a study.
+
+* `vignette("start-here")` sets a study up the way `setup()` now works: open the
+  study's directory as an RStudio project, run `hvtiR::setup()` with the title
+  and Study Tracker ID, and answer `yes` when it asks to adopt the directory. It
+  says what to do when `setup()` asks to be run from outside the project, and
+  keeps `root =` for a study whose directory does not exist yet.
+
+* `setup()` no longer stops when a package will not install. A restore that
+  fails is healed in up to 10 rounds: a package that will not build under
+  this R moves to the newest version the study's repositories serve (only
+  with `upgrade = TRUE`), and a missing dependency is installed first; one
+  that will not install leaves its dependents out. After that, `setup()` keeps
+  leaving out packages outside the family until the restore succeeds. With
+  `upgrade = TRUE`, a package left out is retried at its current release by
+  the install stage and locked if it installs; with `upgrade = FALSE` it is
+  not retried, since that would move a pin. One still missing is named in a
+  warning and recorded in `renv/hvtiR-setup.dcf`; the study is set up and the
+  project opens. A package whose dependency is missing stays locked but
+  cannot load until the dependency installs. A family member that cannot
+  install still stops `setup()`.
+* A package healing left out that is already in the study's library is
+  judged against the pin healing removed. With `upgrade = FALSE` a copy at
+  another version stays left out and out of `renv.lock`, so the lock never
+  gains a version the study did not pin; with `upgrade = TRUE` the move is
+  reported like any other.
+* A build-time (`LinkingTo`) dependency or a version floor that will not
+  install no longer stops `setup()`. The package that needs it, and every
+  package that depends on that one, is left out of `renv.lock` and recorded
+  as missing. A family member in that position still stops `setup()`.
+* `setup()` copies `renv.lock` to `renv/renv.lock.before-setup-<time>` before
+  healing changes it, and keeps the logs in `renv/logs/`.
+* `doctor()` lists the packages the last `setup()` left out, and why. A
+  record it cannot read gets one line, not an error.
+
+* hvtiR now needs hvtiRutilities 1.5.21 or later, and installs it the first
+  time a function that reaches hvtiRutilities finds an older one. 1.5.21 lets
+  `study_setup(renv = TRUE)` repair a study whose `renv.lock` is sound but
+  whose `renv/activate.R` or `.Rprofile` line is missing, and refuses a lock
+  whose contents are invalid.
 
 # hvtiR 1.3.6
 
