@@ -56,7 +56,7 @@ install_specs <- function(packages, registry = members()) {
 # 1.5.6 (hvtiRutilities#231, versioned in #232).
 # Package constant, spelled like MIN_R_VERSION.
 # nolint next: object_name_linter.
-UTILITIES_FLOOR <- "1.5.6"
+UTILITIES_FLOOR <- "1.5.21"
 
 #' An exported hvtiRutilities function, installing the package first if needed
 #'
