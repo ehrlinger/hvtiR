@@ -43,7 +43,7 @@ doctor(remote = FALSE)
 #> 
 #> ── Environment ──
 #> 
-#> ℹ hvtiR 1.3.6
+#> ℹ hvtiR 1.3.7
 #> ✔ R version 4.6.2 (>= 4.4.0 required)
 #> ℹ Platform x86_64-pc-linux-gnu
 #> ✔ pak is installed
@@ -54,7 +54,7 @@ doctor(remote = FALSE)
 #> 
 #> ── Members ──
 #> 
-#> hvtiR 1.3.6 - 12 members
+#> hvtiR 1.3.7 - 12 members
 #> 
 #>   x hvtiRutilities   -          -          missing
 #>   x hvtiRdatabuild   -          -          missing
