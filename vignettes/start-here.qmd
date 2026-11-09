@@ -44,11 +44,85 @@ one shell command, `study-setup --verify`, and it says so where it comes.
   page writes every call that way so that it works in a fresh session.
   [Common errors](#common-errors) explains why.
 
+## Coming back to a study {#coming-back}
+
+A study you have worked on before holds `_study.yml` and `renv.lock` in its top
+directory. Do not run `hvtiR::setup()` on it again: setup is once per study.
+Each time you come back, work through these steps in order.
+
+1. **Open the study's `.Rproj`** (**File > Open Project**). Every command below
+   runs inside it. A `setup()` run from inside one project, with `root` naming
+   another study, stops: it would install into the open project's library.
+
+2. **Ask the family whether you are current:**
+
+   ```r
+   hvtiR::status()
+   ```
+
+3. **Run what its last lines print.** When the installer is behind, they name
+   `pak::pak("ehrlinger/hvtiR")`. Run that first, then restart R
+   (**Session > Restart R**). When members are behind, they say
+   `Run hvtiR::update()`. Run it as
+
+   ```r
+   hvtiR::update(force = TRUE)
+   ```
+
+   and restart R again. `force = TRUE` installs over a member that is already
+   loaded, and the restart is what makes R use the new copy. On Windows that
+   is unsafe: restart R first and run `hvtiR::update()` without it.
+
+4. **Record the update in the lockfile.** After an update, or whenever renv
+   says the project is out of sync (as it does when the project opens, or when
+   you run `renv::status()`), record what the library now holds:
+
+   ```r
+   renv::snapshot()
+   ```
+
+   When renv itself needs updating, the command is `renv::upgrade()`. The names
+   are easy to mix up: `renv::update()` updates the packages in the study's
+   library, not renv. [A study's package environment](study-environment.html#updating-packages)
+   has the details.
+
+5. **Record rebuilt data.** When the built datasets have been rebuilt under the
+   same file names since you last worked, record the new versions:
+
+   ```r
+   hvtiRutilities::update_manifest()
+   ```
+
+   Each registered dataset whose file changed gets a new dated version, and jobs
+   read that version from then on. Unchanged datasets are left alone.
+
+6. **Upgrade a job to its template's current version.** Name the job's `.qmd`
+   file from the study's top directory. Type the opening quotation mark and
+   press Tab: RStudio completes the folder and file names for you.
+
+   ```r
+   hvtiRtemplates::upgrade_job("10_descriptive/dc.general.cohort.eda.qmd")  # EDIT: your job
+   ```
+
+   Save the job if it is open in the editor, then render it and follow it:
+
+   ```r
+   hvtiRtemplates::run_job("10_descriptive/dc.general.cohort.eda.qmd")     # EDIT: your job
+   hvtiRtemplates::job_status("10_descriptive/dc.general.cohort.eda.qmd")  # EDIT: your job
+   ```
+
+   The upgrade keeps the old job, and a report of the chunks to check, in the
+   `_archive` folder beside it.
+
+[Check the study](#check-the-study) explains what `status()` and
+`study_status()` report.
+
 ## Has the study been set up already?
 
 Look in the study's directory. If it holds both `_study.yml` and `renv.lock`,
 someone has probably set it up: open its `.Rproj`, then go to
-[Check the study](#check-the-study). Those two files can also come from an older
+[Check the study](#check-the-study). If you set it up and are returning to it,
+see [Coming back to a study](#coming-back). Those two files can also come from an older
 `renv::init()`, which brings neither the family nor the standard packages. If
 `hvtiR::status()` there shows members missing, adopt the study from outside the
 project, as [If it says to run from outside the project](#from-outside)
