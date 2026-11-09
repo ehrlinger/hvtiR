@@ -47,7 +47,7 @@ doctor(remote = FALSE)
 #> ✔ R version 4.6.2 (>= 4.4.0 required)
 #> ℹ Platform x86_64-pc-linux-gnu
 #> ✔ pak is installed
-#> ℹ Repository RSPM: <https://packagemanager.posit.co/cran/__linux__/noble/latest>
+#> ℹ Repository RSPM: <https://packagemanager.posit.co/cran/__linux__/resolute/latest>
 #> ℹ Repository CRAN: <https://cran.rstudio.com>
 #> ℹ renv is installed, but this is not an renv project
 #> ℹ Member versions are not pinned - installs resolve from GitHub "main".
