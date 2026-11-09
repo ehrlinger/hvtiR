@@ -103,9 +103,10 @@ already advises on them; rejecting them would break those studies.
   still stops.
 - **`study_checkpoint()` and `study_close()`** on a provisional study commit and
   tag in `.checkpoint/repo/`, as they do today with no `checkpoint: remote:`.
-  Each one records a `log.yml` entry marked `pushed: false` and a reason
-  (`provisional`), and pushes nothing. The outbox's ST field holds the
-  provisional ID.
+  The outbox already holds entries back for an unverified identity, and uses
+  the same mechanism here: `delivery$git` stays `pending` with
+  `delivery$reason: provisional`, and nothing is pushed. The entry's `st_id`
+  holds the provisional ID. Its only consumer is the commit-message header.
 - **`study_checkpoint_push()`** refuses a provisional study. It names
   `study_promote()` as the way forward.
 - **`study_status()`** reports "exploratory, derived from ST 1234, provisional
@@ -128,13 +129,14 @@ already advises on them; rejecting them would break those studies.
 
 ### hvtiR (after hvtiRutilities)
 
-- **`setup()`** gains `derived_from = NULL`, after `study_tracker_id`. It
-  requires exactly one of the two before doing any work, and passes the one it
-  gets to `study_setup()`.
+- **`setup()`** gains `derived_from = NULL`, placed last before `...` and not
+  after `study_tracker_id`. Putting it there would move `root` to a different
+  position and break `setup("t", 7L, "/path")`. `study_setup()` likewise gets
+  it after `r_upgrade`.
 
-  `study_tracker_id` loses its position-only requirement: it becomes
-  `study_tracker_id = NULL`. Existing positional calls
-  `setup("title", 1234L)` still work.
+  `setup()` requires exactly one of the two IDs before doing any work, and
+  passes the one it gets to `study_setup()`. `study_tracker_id` now defaults to
+  `NULL`, and existing positional calls still work.
 - `setup_command()`, `guard_session()` and the adopt prompt quote whichever ID
   was given. The adopt prompt reads "(exploration of ST 1234)" for a provisional
   study.
@@ -169,8 +171,8 @@ already advises on them; rejecting them would break those studies.
 - **hvtiRutilities.** Fixture `_study.yml` files for each of the three states,
   and one for each invalid combination:
   - `study_setup()` mints the ID once and keeps it on rerun and adopt.
-  - Checkpoint and close on a provisional study, with no remote, write
-    `pushed: false`.
+  - Checkpoint and close on a provisional study, even with a remote set, leave
+    the entry `pending` with reason `provisional`.
   - `study_promote()` moves provisional → promoted and refuses the other two
     states.
   - `study_status()` reports the exploratory state.
