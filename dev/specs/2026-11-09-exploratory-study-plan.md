@@ -27,8 +27,10 @@ Spec: [`2026-11-09-exploratory-study-design.md`](2026-11-09-exploratory-study-de
 - Versions are straight three digits, and only the patch digit moves. A PR does
   **not** touch `Version:` or `NEWS.md`. It adds `news/<branch>.md`, with `/`
   in the branch name replaced by `-`.
-- Every existing positional call keeps working: `setup("t", 7L, root = r)` and
-  `study_setup(root, "t", 42L)`. New arguments go **last** in the formals.
+- Every existing positional call keeps working: `setup("t", 7L, "/path")` and
+  `study_setup(root, "t", 42L)`. In `setup()`, `derived_from` goes **after
+  `...`**, so it can only be passed by name. In `study_setup()`, which has no
+  `...`, it goes last.
 - hvtiRutilities roxygen uses **Rd markup** (`\code{}`). hvtiR roxygen uses
   **markdown**.
 - hvtiR runs lintr's defaults, so lines are at most 80 characters.
@@ -672,11 +674,16 @@ git commit -m "feat: study_status reports an exploration and its setup command"
 
 **Interfaces:**
 - Consumes: `.study_identity_state()`, `.study_check_id()`,
-  `.read_study_yml()`, `.study_write_atomic()`, `study_config()` and
-  `.cp_log_read()`.
+  `.read_study_yml()`, `.study_write_atomic()`, `study_config()`,
+  `.cp_log_read()` and `.cp_log_write()` (the outbox reader and writer that
+  `.cp_deliver()` uses).
 - Produces: an exported `study_promote(study_tracker_id, start = ".")`. It
-  returns, invisibly, the count (an integer) of outbox entries held as
-  `"provisional"`, which `study_checkpoint_push()` will now send.
+  rewrites every outbox entry held with reason `"provisional"`:
+  - `st_id` becomes the integer ID.
+  - The entry gains a `provisional_id` field holding the old string.
+  - `delivery$reason` becomes `NULL`.
+
+  It returns, invisibly, the count of entries it rewrote, as an integer.
 
 - [ ] **Step 1: Write the failing tests**
 
@@ -709,6 +716,34 @@ test_that("study_promote refuses a bad ID", {
                "study_tracker_id must be one positive integer")
 })
 
+test_that("promotion rewrites held entries so they deliver the issued ID", {
+  skip_if_no_git()
+  local_git_env()
+  root <- file.path(withr::local_tempdir(), "explore")
+  study_setup(root, "S", derived_from = 12L, renv = FALSE)
+  # KIND: the manual-trigger kind the first test in test-study_checkpoint.R
+  # uses (Task A3 Step 1); do not invent one.
+  study_checkpoint(KIND, root = root)
+  log_path <- file.path(root, ".checkpoint", "log.yml")
+  old <- yaml::read_yaml(log_path)
+  prov <- old[[length(old)]]$st_id
+  expect_match(prov, "^x12-")
+
+  expect_identical(study_promote(345L, start = root), 1L)
+  entry <- yaml::read_yaml(log_path)[[length(old)]]
+  expect_identical(entry$st_id, 345L)
+  expect_identical(entry$provisional_id, prov)
+  expect_null(entry$delivery$reason)
+
+  bare <- withr::local_tempdir()
+  system2("git", c("init", "--bare", "-q", bare))
+  set_study_keys(root, checkpoint = list(remote = bare))
+  study_checkpoint_push(root)
+  delivered <- yaml::read_yaml(log_path)[[length(old)]]
+  expect_identical(delivered$delivery$git, "delivered")
+  expect_identical(delivered$st_id, 345L)
+})
+
 test_that("promoting to the parent's own ID warns", {
   root <- file.path(withr::local_tempdir(), "explore")
   study_setup(root, "S", derived_from = 12L, renv = FALSE)
@@ -726,9 +761,16 @@ Expected: FAIL with `could not find function "study_promote"`.
 ⚠️ First confirm that `study_config()` returns a `file` element.
 `study_update_identity()` uses `cfg$file`, so it should. Also confirm that
 `.cp_log_read(root)` returns `list()` when `.checkpoint/log.yml` is absent. If
-it errors instead, wrap the `held` computation in
-`if (file.exists(file.path(root, ".checkpoint", "log.yml")))`, and use `0L`
-otherwise.
+it errors instead, guard the outbox block with
+`if (file.exists(file.path(root, ".checkpoint", "log.yml")))`. Also confirm
+that `.cp_log_write()` takes `(root, log)`, as `.cp_deliver()` calls it.
+`log[[i]]$delivery["reason"] <- list(NULL)` removes the key. If the log writer
+needs the key present, set it to `NULL` the same way `.cp_deliver()` does.
+
+Also add `study_promote` to the `@seealso` of `study_checkpoint_push`, and add
+this sentence to its `@description`: "A promoted exploration's held
+checkpoints are delivered once \code{checkpoint: remote:} is set; promotion
+does not set it."
 
 ```r
 # R/study_promote.R
@@ -769,14 +811,25 @@ study_promote <- function(study_tracker_id, start = ".") {
             "exploration's checkpoints will be filed under the parent study",
             call. = FALSE)
   }
+  # The outbox first: its entries are posted to the Workspace API unchanged,
+  # so none may keep the provisional string once the study can deliver. If
+  # this is interrupted before _study.yml is written, the study is still
+  # provisional and a rerun repeats the (idempotent) rewrite.
+  root <- dirname(cfg$file)
+  log <- .cp_log_read(root)
+  held <- which(vapply(log, function(e) {
+    identical(e$delivery$reason, "provisional")
+  }, logical(1)))
+  for (i in held) {
+    log[[i]]$provisional_id <- log[[i]]$st_id
+    log[[i]]$st_id <- id
+    log[[i]]$delivery["reason"] <- list(NULL)
+  }
+  if (length(held)) .cp_log_write(root, log)
   raw <- append(raw[names(raw) != "provisional_id"],
                 list(study_tracker_id = id), after = 1L)
   .study_write_atomic(raw, cfg$file)
-  root <- dirname(cfg$file)
-  held <- sum(vapply(.cp_log_read(root), function(e) {
-    identical(e$delivery$reason, "provisional")
-  }, logical(1)))
-  invisible(as.integer(held))
+  invisible(length(held))
 }
 ```
 
@@ -855,7 +908,7 @@ Start only after Part A's version is on hvtiRutilities `main`. Branch
 **Interfaces:**
 - Consumes: `hvtiRutilities::study_setup(..., derived_from = )` from Part A.
 - Produces:
-  `setup(study, study_tracker_id = NULL, root = NULL, adopt = FALSE, upgrade = TRUE, workspace_prefs = TRUE, derived_from = NULL, ...)`.
+  `setup(study, study_tracker_id = NULL, root = NULL, adopt = FALSE, upgrade = TRUE, workspace_prefs = TRUE, ..., derived_from = NULL)`.
 
 - [ ] **Step 1: Write the failing tests** with the existing `local_setup()`
   harness. `setup()` makes two `pak_lib` calls: the family first, then the
@@ -907,12 +960,26 @@ Expected: FAIL. `setup("An exploration", root = …)` errors because
 
 - [ ] **Step 3: Implement**
 
-Signature: `derived_from` goes last, before `...`.
+Signature: `derived_from` goes after `...`, so it can only be passed by
+name and no positional argument can reach it.
 
 ```r
 setup <- function(study, study_tracker_id = NULL, root = NULL, adopt = FALSE,
-                  upgrade = TRUE, workspace_prefs = TRUE,
-                  derived_from = NULL, ...) {
+                  upgrade = TRUE, workspace_prefs = TRUE, ...,
+                  derived_from = NULL) {
+```
+
+Add a test that a seventh positional argument still reaches `study_setup()`
+through `...` rather than `derived_from`:
+
+```r
+test_that("derived_from takes no positional argument", {
+  root <- withr::local_tempdir()
+  log <- local_setup()
+  expect_error(setup("S", 7L, root, FALSE, TRUE, TRUE, 12L), NA)
+  expect_null(log$setup_args$derived_from)
+  expect_identical(log$setup_args$study_tracker_id, 7L)
+})
 ```
 
 At the top of the body, after the R-version check, validate the two IDs and
@@ -1044,7 +1111,9 @@ covering:
 2. `StudyRecord`: an optional `derived_from`. `study_tracker_id` becomes
    optional when it is set.
 3. `bridge.R`: allow `derived_from` and forward it.
-4. `ado.py`: create no repository for a provisional study.
+4. `recovery.py`/`ado.py`: skip the ADO lookup for a provisional study, since
+   it has no ST ID to look up. `ado.py` only looks repositories up; nothing in
+   qhsprograms creates one.
 5. `readme.py`: link the parent's Tracker page as "derived from ST…".
 6. `recovery.py`: accept a provisional `_study.yml`.
 

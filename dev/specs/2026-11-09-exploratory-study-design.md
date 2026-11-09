@@ -106,7 +106,10 @@ already advises on them; rejecting them would break those studies.
   The outbox already holds entries back for an unverified identity, and uses
   the same mechanism here: `delivery$git` stays `pending` with
   `delivery$reason: provisional`, and nothing is pushed. The entry's `st_id`
-  holds the provisional ID. Its only consumer is the commit-message header.
+  holds the provisional ID. That is safe only while the entry is held:
+  `checkpoint_log.R` keeps entries in the Workspace API's record shape so that
+  qhsprograms can post them unchanged. `study_promote()` therefore rewrites
+  them before anything can deliver them (see below).
 - **`study_checkpoint_push()`** refuses a provisional study. It names
   `study_promote()` as the way forward.
 - **`study_status()`** reports "exploratory, derived from ST 1234, provisional
@@ -114,8 +117,27 @@ already advises on them; rejecting them would break those studies.
 - **New `study_promote(study_tracker_id, start = ".")`.** It refuses a study
   that is not provisional and refuses an invalid ID. It writes
   `study_tracker_id`, removes `provisional_id`, and keeps `derived_from` and
-  `workspace_id`. It returns the outbox entries that are now pushable, so the
-  next `study_checkpoint_push()` sends them.
+  `workspace_id`.
+
+  In the same call it rewrites every outbox entry held with reason
+  `provisional`:
+  - `st_id` becomes the issued integer.
+  - The old string moves to a new field, `provisional_id`, so the provenance
+    is kept.
+  - `delivery$reason` is cleared.
+
+  It writes the log before `_study.yml`. If it is interrupted between the two
+  writes, a rerun finds the study still provisional and repeats the rewrite,
+  which is idempotent. It returns the number of entries it rewrote.
+
+  ⚠️ **Promotion does not provision a remote.** Nothing in the family creates a
+  `CORR_STUDIES` repository or writes `checkpoint: remote:`. qhsprograms'
+  `ado.py` only looks repositories up, for `--recover`. So a promoted study is
+  exactly like a registered study today: until someone sets
+  `checkpoint: remote:`, its entries stay pending with reason
+  `no remote configured`, and `study_checkpoint_push()` delivers them once the
+  remote is set. Provisioning is the StudyTracker Workspace API's job (out of
+  scope below).
 
   It does not rename existing tags. Checkpoint tags carry their kind and
   sequence, not the ID.
@@ -129,10 +151,12 @@ already advises on them; rejecting them would break those studies.
 
 ### hvtiR (after hvtiRutilities)
 
-- **`setup()`** gains `derived_from = NULL`, placed last before `...` and not
-  after `study_tracker_id`. Putting it there would move `root` to a different
-  position and break `setup("t", 7L, "/path")`. `study_setup()` likewise gets
-  it after `r_upgrade`.
+- **`setup()`** gains `derived_from = NULL` **after `...`**, so it can only be
+  passed by name. Placed after `study_tracker_id`, it would take `root`'s
+  position and break `setup("t", 7L, "/path")`. Even placed just before `...`,
+  it would capture a seventh positional argument that today reaches `...`.
+  `study_setup()` has no `...`, so it gets the argument last, after
+  `r_upgrade`.
 
   `setup()` requires exactly one of the two IDs before doing any work, and
   passes the one it gets to `study_setup()`. `study_tracker_id` now defaults to
@@ -140,9 +164,12 @@ already advises on them; rejecting them would break those studies.
 - `setup_command()`, `guard_session()` and the adopt prompt quote whichever ID
   was given. The adopt prompt reads "(exploration of ST 1234)" for a provisional
   study.
-- The `Imports` floor on hvtiRutilities moves to the release that adds
-  `derived_from`, in this package's own bump, because it relies on that
-  release.
+- hvtiRutilities is not in hvtiR's `Imports`. It is installed on demand
+  through `utilities_fn()`, so that hvtiR still installs on a bare machine.
+  The compatibility gate is `UTILITIES_FLOOR` in `R/setup.R`. It moves to the
+  hvtiRutilities release that adds `derived_from`, in hvtiR's own bump, so
+  `setup()` never sends `derived_from` to an older release. `Imports` is left
+  alone, to keep that bare-machine bootstrap working.
 - `vignette("start-here")` gets a short section on starting an exploration and
   promoting it.
 
@@ -150,9 +177,9 @@ already advises on them; rejecting them would break those studies.
 
 - `study-setup` gains `--derived-from N`, mutually exclusive with the Tracker ID
   argument. `bridge.R` passes it through.
-- `ado.py` creates no `CORR_STUDIES` repository for a provisional study. The
-  repository is created on the first push after promotion, as it is today for a
-  registered study.
+- `ado.py` only looks repositories up; it creates none. A provisional study has
+  no ST ID to look up, so `--recover` skips the ADO lookup for one and recovers
+  from its local history and identity instead.
 
 ## Errors
 
@@ -173,6 +200,9 @@ already advises on them; rejecting them would break those studies.
   - `study_setup()` mints the ID once and keeps it on rerun and adopt.
   - Checkpoint and close on a provisional study, even with a remote set, leave
     the entry `pending` with reason `provisional`.
+  - Checkpoint, then promote, then push to a local bare remote: the delivered
+    entry's `st_id` is the issued integer, and its `provisional_id` keeps the
+    old string.
   - `study_promote()` moves provisional → promoted and refuses the other two
     states.
   - `study_status()` reports the exploratory state.
@@ -188,5 +218,8 @@ already advises on them; rejecting them would break those studies.
   and the StudyTracker Workspace API is not built.
 - Inheriting anything from the parent. If that is wanted later, it would be an
   opt-in argument.
+- Provisioning a `CORR_STUDIES` repository or writing `checkpoint: remote:` on
+  promotion. No tool does this for a registered study either. It belongs to
+  the Workspace API.
 - Telling the Tracker about the lineage. `derived_from` is recorded so that the
   Workspace API can read it when it exists.
