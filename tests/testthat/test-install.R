@@ -137,7 +137,7 @@ test_that("update warns with blocked metadata when a target is loaded", {
   )
 
   expect_warning(
-    result <- update(),
+    result <- update(force = FALSE),
     "hvtiRutilities.*already loaded.*Restart R.*attaches it.*force = TRUE"
   )
   expect_type(result, "character")
@@ -160,7 +160,7 @@ test_that("update says it installed nothing even when warnings are lost", {
 
   msgs <- character(0)
   withCallingHandlers(
-    suppressWarnings(update()),
+    suppressWarnings(update(force = FALSE)),
     message = function(m) {
       msgs <<- c(msgs, conditionMessage(m))
       invokeRestart("muffleMessage")
@@ -192,6 +192,46 @@ test_that("update can be forced through its loaded-member guard", {
   expect_identical(calls[[1L]], "ehrlinger/hvtiRutilities")
 })
 
+test_that("update forces past the guard by default except on Windows", {
+  expect_identical(
+    formals(update)$force,
+    quote(.Platform$OS.type != "windows")
+  )
+})
+
+test_that("update installs over a loaded member by default off Windows", {
+  skip_on_os("windows")
+  calls <- list()
+  local_mocked_bindings(
+    installed_version = function(pkg) {
+      if (pkg == "hvtiRutilities") "0.9.0" else "1.0.0"
+    },
+    remote_version = function(repo, ref = "main") "1.0.0",
+    check_loaded = function(targets, loaded = loadedNamespaces()) {
+      intersect(targets, "hvtiRutilities")
+    },
+    pak_install = function(specs) {
+      calls[[length(calls) + 1L]] <<- specs
+      invisible(specs)
+    }
+  )
+
+  expect_message(update(), "Restart R.*hvtiRutilities")
+  expect_length(calls, 1L)
+})
+
+test_that("a forced install over a loaded member says to restart R", {
+  local_mocked_bindings(
+    pak_install = function(specs) invisible(specs),
+    check_loaded = function(targets, loaded = loadedNamespaces()) "hvtiPlotR"
+  )
+
+  expect_message(
+    install_members("hvtiPlotR", force = TRUE),
+    "Restart R.*hvtiPlotR.*old version"
+  )
+})
+
 test_that("a loaded co-resolved dependency is reported as required", {
   local_mocked_bindings(
     installed_version = function(pkg) {
@@ -205,7 +245,7 @@ test_that("a loaded co-resolved dependency is reported as required", {
   )
 
   expect_warning(
-    result <- update(),
+    result <- update(force = FALSE),
     "Cannot install required TemporalHazard.*already loaded"
   )
   expect_identical(attr(result, "blocked"), "TemporalHazard")

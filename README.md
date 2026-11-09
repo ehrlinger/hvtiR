@@ -93,9 +93,10 @@ stays outside the member table, but the report names the available version and
 `pak::pak("ehrlinger/hvtiR")` when it is behind. `hvtiR::update()` reuses the
 same check; it cannot update its own loaded namespace.
 
-`hvtiR::update()` will refuse to overwrite a member you have already
-attached in the session, because a loaded package cannot be safely replaced.
-Restart R and run it again before attaching anything.
+On Linux and macOS, `hvtiR::update()` installs over a member you have already
+attached in the session, then tells you to restart R: the session keeps the old
+copy until you do. On Windows a loaded package cannot be replaced, so there it
+refuses; restart R and run it again before attaching anything.
 
 ## Reproducible installs
 

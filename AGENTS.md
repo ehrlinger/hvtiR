@@ -119,9 +119,12 @@ Do not read a green PR as broader assurance than it gives.
 - **A later `update.packages()` can silently downgrade `ggRandomForests`** to its CRAN
   version, because that member exists on CRAN as well as GitHub. `status()` is how
   a user notices; nothing prevents it.
-- **`update()` refuses to overwrite a member whose namespace is already loaded**,
-  and `force` bypasses that guard. A user reporting "update did nothing" has probably loaded
-  the package in the same session.
+- **`update()` overwrites a loaded member by default, except on Windows.** Its `force`
+  defaults to `.Platform$OS.type != "windows"`, so on Linux and macOS it installs past the
+  loaded-namespace guard and then says to restart R, because the session still runs the
+  old copy. On Windows, and in `install()` everywhere, the guard refuses. A user reporting
+  "update did nothing" is on Windows or passed `force = FALSE`, with the package loaded; one
+  reporting old behaviour after an update has not restarted R.
 - `pak` is not a hard dependency — `pak_install()` checks for it and aborts with an install
   hint. Do not promote it to `Imports` to make a test simpler.
 - `VignetteBuilder` is **quarto**, not `knitr`.

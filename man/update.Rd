@@ -4,10 +4,12 @@
 \alias{update}
 \title{Update out-of-date hvtiR members}
 \usage{
-update(force = FALSE)
+update(force = .Platform$OS.type != "windows")
 }
 \arguments{
-\item{force}{Bypass the loaded-namespace guard. See \code{\link[=install]{install()}}.}
+\item{force}{Bypass the loaded-namespace guard. \code{TRUE} by default except
+on Windows, where overwriting a loaded package leaves a broken library.
+See \code{\link[=install]{install()}}.}
 }
 \value{
 The character vector of \code{"owner/repo"} specs passed to pak,
@@ -33,8 +35,10 @@ installed. \code{update()} reuses that check; calling it means the installer's
 namespace is already loaded, so it cannot update itself. When the installer
 is behind, the report names \code{pak::pak("ehrlinger/hvtiR")} as the remedy.
 
-If a required member is already loaded, \code{update()} warns and installs
-nothing. Restart R and run \code{update()} before those packages attach. The
+On Linux and macOS \code{update()} installs over a member that is already
+loaded, then tells you to restart R: the session keeps running the old copy
+until you do. On Windows it cannot, so there \code{update()} warns and installs
+nothing; restart R and run \code{update()} before those packages attach. The
 returned empty character vector carries a \code{blocked} attribute listing the
 loaded members, so callers can distinguish this from an up-to-date result.
 }
