@@ -71,7 +71,7 @@
       <h1>Install, update and check the family</h1>
 
       <p class="author">John Ehrlinger</p>
-      <p class="date">2026-11-09</p>
+      <p class="date">2026-11-10</p>
 
       <small class="dont-index">Source: <a href="https://github.com/ehrlinger/hvtiR/blob/main/vignettes/hvtiR.qmd" class="external-link"><code>vignettes/hvtiR.qmd</code></a></small>
       <div class="d-none name"><code></code></div>
@@ -203,14 +203,17 @@ i Remote was not consulted; versions shown are installed versions only.</code></
 <div class="sourceCode cell-code" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">pak</span><span class="fu">::</span><span class="fu"><a href="https://pak.r-lib.org/reference/pak.html" class="external-link">pak</a></span><span class="op">(</span><span class="st">"ehrlinger/hvtiR"</span><span class="op">)</span></span></code></pre></div>
 </div>
-<section class="level3"><h3 id="why-it-may-refuse">Why it may refuse<a class="anchor" aria-label="anchor" href="#why-it-may-refuse"></a>
+<section class="level3"><h3 id="when-a-member-is-already-loaded">When a member is already loaded<a class="anchor" aria-label="anchor" href="#when-a-member-is-already-loaded"></a>
 </h3>
-<p><code><a href="../reference/update.html">hvtiR::update()</a></code> warns and installs nothing if a required member is already loaded in the session:</p>
+<p>On Linux and macOS, <code><a href="../reference/update.html">hvtiR::update()</a></code> installs over a member that is already loaded in the session, then says so:</p>
+<pre><code>! Restart R: hvtiPlotR was loaded and runs the old version until you do.</code></pre>
+<p>Restart R before you use it. The session keeps the copy it loaded, and the new one on disk is not the one running.</p>
+<p>On Windows <code><a href="../reference/update.html">hvtiR::update()</a></code> cannot do that, so it warns and installs nothing. <code><a href="../reference/install.html">hvtiR::install()</a></code> refuses the same way on every platform, but stops with an error rather than a warning:</p>
 <pre><code>Warning:
 Cannot install required hvtiPlotR: already loaded in this session.
 i No members were installed. Restart R and run `hvtiR::update()` before anything attaches it.
 i Pass `force = TRUE` to install anyway (unsafe on Windows).</code></pre>
-<p>This is not fussiness. A package whose namespace is loaded cannot be safely overwritten — on Windows the write fails outright and leaves a half-installed library. The returned empty character vector carries a <code>blocked</code> attribute with the loaded package names. Restart R and run the update before you attach anything.</p>
+<p>This is not fussiness. On Windows a package whose namespace is loaded cannot be overwritten: the write fails outright and leaves a half-installed library. The returned empty character vector carries a <code>blocked</code> attribute with the loaded package names. Restart R and run the update before you attach anything.</p>
 </section></section><section class="level2"><h2 id="set-up-a-study">Set up a study<a class="anchor" aria-label="anchor" href="#set-up-a-study"></a>
 </h2>
 <p>A study needs more than an installed family: its own library, a lockfile and its identity. <code><a href="../reference/setup.html">hvtiR::setup()</a></code> does all of that once per study, and <a href="start-here.html">Start here</a> walks through it.</p>
@@ -218,7 +221,7 @@ i Pass `force = TRUE` to install anyway (unsafe on Windows).</code></pre>
 </h2>
 <p><code><a href="../reference/install.html">hvtiR::install()</a></code> resolves every member from GitHub <code>main</code>, so it gives you the newest code rather than a fixed one. Two people running it a week apart can end up on different commits under the same version number. A study pins them through <code><a href="../reference/setup.html">setup()</a></code>, as <a href="study-environment.html">A study’s package environment</a> explains. For any other project, pin the versions with <a href="https://rstudio.github.io/renv/" class="external-link">renv</a>:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">renv</span><span class="fu">::</span><span class="fu"><a href="https://rstudio.github.io/renv/reference/init.html" class="external-link">init</a></span><span class="op">(</span><span class="op">)</span>      <span class="co"># once per project</span></span>
 <span><span class="fu">hvtiR</span><span class="fu">::</span><span class="fu"><a href="../reference/install.html">install</a></span><span class="op">(</span><span class="op">)</span>  <span class="co"># installs into the project library</span></span>
 <span><span class="fu">renv</span><span class="fu">::</span><span class="fu"><a href="https://rstudio.github.io/renv/reference/snapshot.html" class="external-link">snapshot</a></span><span class="op">(</span><span class="op">)</span>  <span class="co"># records every package, and each member's commit</span></span></code></pre></div>
@@ -228,7 +231,7 @@ i Pass `force = TRUE` to install anyway (unsafe on Windows).</code></pre>
 </section><section class="level2"><h2 id="when-something-will-not-install">When something will not install<a class="anchor" aria-label="anchor" href="#when-something-will-not-install"></a>
 </h2>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">hvtiR</span><span class="fu">::</span><span class="fu"><a href="../reference/doctor.html">doctor</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 </div>
 <p>The doctor reports on your environment ahead of the status table: the installed <code>hvtiR</code> version, your R version against the family’s strictest requirement, your platform, whether <code>pak</code> is installed to install members with, the package repositories R is configured to use, and whether an <code>renv</code> project is active.</p>

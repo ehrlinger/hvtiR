@@ -120,7 +120,7 @@
 <ul><li>
 <strong>A later <code><a href="https://rdrr.io/r/utils/update.packages.html" class="external-link">update.packages()</a></code> can silently downgrade <code>ggRandomForests</code></strong> to its CRAN version, because that member exists on CRAN as well as GitHub. <code><a href="reference/status.html">status()</a></code> is how a user notices; nothing prevents it.</li>
 <li>
-<strong><code><a href="reference/update.html">update()</a></code> refuses to overwrite a member whose namespace is already loaded</strong>, and <code>force</code> bypasses that guard. A user reporting “update did nothing” has probably loaded the package in the same session.</li>
+<strong><code><a href="reference/update.html">update()</a></code> overwrites a loaded member by default, except on Windows.</strong> Its <code>force</code> defaults to <code>.Platform$OS.type != "windows"</code>, so on Linux and macOS it installs past the loaded-namespace guard and then says to restart R, because the session still runs the old copy. On Windows, and in <code><a href="reference/install.html">install()</a></code> everywhere, the guard refuses. A user reporting “update did nothing” is on Windows or passed <code>force = FALSE</code>, with the package loaded; one reporting old behaviour after an update has not restarted R.</li>
 <li>
 <code>pak</code> is not a hard dependency — <code>pak_install()</code> checks for it and aborts with an install hint. Do not promote it to <code>Imports</code> to make a test simpler.</li>
 <li>
