@@ -229,6 +229,13 @@ install_members <- function(packages,
   )
 
   cli::cli_alert_success("Installed {length(specs)} member{?s}.")
+  if (length(blocked) > 0L) {
+    # Forced past the guard: the session still runs the old copies.
+    cli::cli_alert_warning(paste0(
+      "Restart R: {.pkg {blocked}} {?was/were} loaded and ",
+      "{?runs/run} the old version until you do."
+    ))
+  }
   invisible(specs)
 }
 
@@ -428,12 +435,16 @@ install <- function(force = FALSE) {
 #' namespace is already loaded, so it cannot update itself. When the installer
 #' is behind, the report names `pak::pak("ehrlinger/hvtiR")` as the remedy.
 #'
-#' If a required member is already loaded, `update()` warns and installs
-#' nothing. Restart R and run `update()` before those packages attach. The
+#' On Linux and macOS `update()` installs over a member that is already
+#' loaded, then tells you to restart R: the session keeps running the old copy
+#' until you do. On Windows it cannot, so there `update()` warns and installs
+#' nothing; restart R and run `update()` before those packages attach. The
 #' returned empty character vector carries a `blocked` attribute listing the
 #' loaded members, so callers can distinguish this from an up-to-date result.
 #'
-#' @param force Bypass the loaded-namespace guard. See [hvtiR::install()].
+#' @param force Bypass the loaded-namespace guard. `TRUE` by default except
+#'   on Windows, where overwriting a loaded package leaves a broken library.
+#'   See [hvtiR::install()].
 #' @return The character vector of `"owner/repo"` specs passed to pak,
 #'   invisibly. Empty if nothing needed updating. If loaded members prevent
 #'   installation, the empty vector has a `blocked` attribute with their names.
@@ -442,7 +453,7 @@ install <- function(force = FALSE) {
 #' \dontrun{
 #' update()
 #' }
-update <- function(force = FALSE) {
+update <- function(force = .Platform$OS.type != "windows") {
   st <- status(remote = TRUE)
 
   self <- attr(st, "self", exact = TRUE)
