@@ -285,9 +285,10 @@ own. Once Study Tracker registers it, record that ID from inside the project:
 hvtiRutilities::study_promote(5678L)  # EDIT: the new Study Tracker ID
 ```
 
-`study_promote()` keeps `derived_from` as the study's lineage, records a
-checkpoint of the promotion, and sends it to the remote with the ones held
-until then.
+`study_promote()` keeps `derived_from` as the study's lineage. When the study
+has a checkpoint repository, it also records a checkpoint of the promotion.
+The checkpoints held until then become pushable: they reach the study's
+remote, when it has one, the next time a push gets through.
 
 ### What it does
 
