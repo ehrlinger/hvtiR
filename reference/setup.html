@@ -79,12 +79,13 @@ package's dependencies resolve there; and restarts into the project.</p>
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">setup</span><span class="op">(</span></span>
 <span>  <span class="va">study</span>,</span>
-<span>  <span class="va">study_tracker_id</span>,</span>
+<span>  study_tracker_id <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  root <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  adopt <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  upgrade <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  workspace_prefs <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  <span class="va">...</span></span>
+<span>  <span class="va">...</span>,</span>
+<span>  derived_from <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -97,7 +98,8 @@ package's dependencies resolve there; and restarts into the project.</p>
 
 
 <dt id="arg-study-tracker-id">study_tracker_id<a class="anchor" aria-label="anchor" href="#arg-study-tracker-id"></a></dt>
-<dd><p>The Study Tracker ID, an integer.</p></dd>
+<dd><p>The Study Tracker ID, an integer. Give this or
+<code>derived_from</code>, not both.</p></dd>
 
 
 <dt id="arg-root">root<a class="anchor" aria-label="anchor" href="#arg-root"></a></dt>
@@ -134,6 +136,13 @@ to every project that user opens. <code>FALSE</code> leaves them as they are.</p
 <code>template_dir</code> or <code>owner</code>. <code>renv</code> is not accepted: <code>setup()</code> always uses
 renv, so use <code>hvtiRutilities::study_setup()</code> directly for a study without
 it.</p></dd>
+
+
+<dt id="arg-derived-from">derived_from<a class="anchor" aria-label="anchor" href="#arg-derived-from"></a></dt>
+<dd><p>For an exploration of a registered study with no
+Study Tracker record of its own, the parent's Study Tracker ID. The study
+gets a provisional ID and checkpoints locally until
+<code>hvtiRutilities::study_promote()</code> gives it its own.</p></dd>
 
 </dl></div>
     <div class="section level2">

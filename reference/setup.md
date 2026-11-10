@@ -15,12 +15,13 @@ package's dependencies resolve there; and restarts into the project.
 ``` r
 setup(
   study,
-  study_tracker_id,
+  study_tracker_id = NULL,
   root = NULL,
   adopt = FALSE,
   upgrade = TRUE,
   workspace_prefs = TRUE,
-  ...
+  ...,
+  derived_from = NULL
 )
 ```
 
@@ -32,7 +33,8 @@ setup(
 
 - study_tracker_id:
 
-  The Study Tracker ID, an integer.
+  The Study Tracker ID, an integer. Give this or `derived_from`, not
+  both.
 
 - root:
 
@@ -68,6 +70,13 @@ setup(
   `template_dir` or `owner`. `renv` is not accepted: `setup()` always
   uses renv, so use `hvtiRutilities::study_setup()` directly for a study
   without it.
+
+- derived_from:
+
+  For an exploration of a registered study with no Study Tracker record
+  of its own, the parent's Study Tracker ID. The study gets a
+  provisional ID and checkpoints locally until
+  `hvtiRutilities::study_promote()` gives it its own.
 
 ## Value
 
