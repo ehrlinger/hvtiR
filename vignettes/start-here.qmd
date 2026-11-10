@@ -73,12 +73,21 @@ Each time you come back, work through these steps in order.
    loaded, and the restart is what makes R use the new copy. On Windows that
    is unsafe: restart R first and run `hvtiR::update()` without it.
 
-4. **Record the update in the lockfile.** After an update, or whenever renv
-   says the project is out of sync (as it does when the project opens, or when
-   you run `renv::status()`), record what the library now holds:
+4. **Record your update, or restore the study's.** After you updated packages
+   in step 3, record what the library now holds:
 
    ```r
    renv::snapshot()
+   ```
+
+   When renv says the project is out of sync and you updated nothing, the
+   lockfile is the record to trust: someone else may have updated the study, or
+   this machine's library is behind it. Do not snapshot. Run `renv::status()`,
+   and when it lists packages that the lockfile records but the library lacks,
+   or holds at other versions, bring the library back to the lockfile:
+
+   ```r
+   renv::restore()
    ```
 
    When renv itself needs updating, the command is `renv::upgrade()`. The names
@@ -96,23 +105,27 @@ Each time you come back, work through these steps in order.
    Each registered dataset whose file changed gets a new dated version, and jobs
    read that version from then on. Unchanged datasets are left alone.
 
-6. **Upgrade a job to its template's current version.** Name the job's `.qmd`
-   file from the study's top directory. Type the opening quotation mark and
-   press Tab: RStudio completes the folder and file names for you.
+6. **Upgrade a job to its template's current version.** If the job is open in
+   the editor, save it and close it first. `upgrade_job()` reads the file on
+   disk, so edits you have not saved are left out of the upgrade, and saving
+   the old copy afterwards would overwrite it.
+
+   Name the job's `.qmd` file from the study's top directory. Type the opening
+   quotation mark and press Tab: RStudio completes the folder and file names
+   for you.
 
    ```r
    hvtiRtemplates::upgrade_job("10_descriptive/dc.general.cohort.eda.qmd")  # EDIT: your job
    ```
 
-   Save the job if it is open in the editor, then render it and follow it:
+   The upgrade keeps the old job, and a report of the chunks to check, in the
+   `_archive` folder beside it. Open the upgraded job, check the chunks the
+   report names, then render it and follow it:
 
    ```r
    hvtiRtemplates::run_job("10_descriptive/dc.general.cohort.eda.qmd")     # EDIT: your job
    hvtiRtemplates::job_status("10_descriptive/dc.general.cohort.eda.qmd")  # EDIT: your job
    ```
-
-   The upgrade keeps the old job, and a report of the chunks to check, in the
-   `_archive` folder beside it.
 
 [Check the study](#check-the-study) explains what `status()` and
 `study_status()` report.
