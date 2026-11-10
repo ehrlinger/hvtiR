@@ -6,18 +6,20 @@
 \usage{
 setup(
   study,
-  study_tracker_id,
+  study_tracker_id = NULL,
   root = NULL,
   adopt = FALSE,
   upgrade = TRUE,
   workspace_prefs = TRUE,
-  ...
+  ...,
+  derived_from = NULL
 )
 }
 \arguments{
 \item{study}{The Study Tracker title.}
 
-\item{study_tracker_id}{The Study Tracker ID, an integer.}
+\item{study_tracker_id}{The Study Tracker ID, an integer. Give this or
+\code{derived_from}, not both.}
 
 \item{root}{The study root, where \code{setup()} writes. By default the study
 enclosing the working directory; with none, the RStudio project folder
@@ -44,6 +46,11 @@ to every project that user opens. \code{FALSE} leaves them as they are.}
 \code{template_dir} or \code{owner}. \code{renv} is not accepted: \code{setup()} always uses
 renv, so use \code{hvtiRutilities::study_setup()} directly for a study without
 it.}
+
+\item{derived_from}{For an exploration of a registered study with no
+Study Tracker record of its own, the parent's Study Tracker ID. The study
+gets a provisional ID and checkpoints locally until
+\code{hvtiRutilities::study_promote()} gives it its own.}
 }
 \value{
 The study status from \code{hvtiRutilities::study_setup()}, invisibly,
