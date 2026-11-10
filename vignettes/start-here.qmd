@@ -260,6 +260,36 @@ hvtiR::setup(
 `setup()` creates the directory with the numbered folders (`00_datasets`,
 `10_descriptive` and so on). An adopted study keeps the folder names it has.
 
+### An exploration of a registered study {#an-exploration}
+
+Sometimes the work starts before Study Tracker has a record for it: a question
+that grew out of a registered study and may become a study of its own. Set it
+up with `derived_from`, the registered study's ID, in place of
+`study_tracker_id`:
+
+```r
+hvtiR::setup(
+  study = "Lactate trajectories (exploration)",
+  derived_from = 1234L,  # EDIT: the registered study's ID
+  root = "EDIT: the study directory",
+  identity_source = "manual"
+)
+```
+
+Give one ID or the other, never both. The study gets a provisional ID, and
+`study_status()` shows its `_study.yml` as `EXPLORATORY`. Checkpoints are made
+and kept on your machine, but none is pushed until the study has an ID of its
+own. Once Study Tracker registers it, record that ID from inside the project:
+
+```r
+hvtiRutilities::study_promote(5678L)  # EDIT: the new Study Tracker ID
+```
+
+`study_promote()` keeps `derived_from` as the study's lineage. When the study
+has a checkpoint repository, it also records a checkpoint of the promotion.
+The checkpoints held until then become pushable: they reach the study's
+remote, when it has one, the next time a push gets through.
+
 ### What it does
 
 In order, `setup()`:
