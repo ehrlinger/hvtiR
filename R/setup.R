@@ -52,11 +52,11 @@ install_specs <- function(packages, registry = members()) {
   unname(ifelse(packages %in% names(repos), repos[packages], packages))
 }
 
-# The hvtiRutilities release that carries study_declare() and study_need().
-# 1.5.6 (hvtiRutilities#231, versioned in #232).
+# The hvtiRutilities release that carries study_setup(derived_from =) and
+# study_promote(): 1.5.22 (hvtiRutilities#283, #284, versioned in #285).
 # Package constant, spelled like MIN_R_VERSION.
 # nolint next: object_name_linter.
-UTILITIES_FLOOR <- "1.5.21"
+UTILITIES_FLOOR <- "1.5.22"
 
 #' An exported hvtiRutilities function, installing the package first if needed
 #'
@@ -1293,9 +1293,14 @@ adopt_project <- function(candidate, study, study_tracker_id, adopt,
       i = "To adopt it, run: {.code {cmd}}"
     ), class = "hvtiR_adopt_unconfirmed", command = cmd, call = NULL)
   }
+  ident <- if (is.null(study_tracker_id)) {
+    paste0("exploration of ST ", dots[["derived_from"]])
+  } else {
+    paste0("Study Tracker ", study_tracker_id)
+  }
   question <- paste0(
     candidate, " has no _study.yml. Adopt it as study \"", study,
-    "\" (Study Tracker ", study_tracker_id, ")?",
+    "\" (", ident, ")?",
     if (!isFALSE(dots[["cleanup"]])) {
       paste(
         " Adopting deletes the tp.* files, binder.summaries.doc and exact",
@@ -1353,7 +1358,9 @@ setup_command <- function(root, study, study_tracker_id, adopt = FALSE,
   all_formals <- length(dots) > 0L
   deparse1(as.call(c(
     list(quote(hvtiR::setup)),
-    list(root = root, study = study, study_tracker_id = study_tracker_id),
+    Filter(Negate(is.null),
+           list(root = root, study = study,
+                study_tracker_id = study_tracker_id)),
     if (all_formals || isTRUE(adopt)) list(adopt = adopt),
     if (all_formals || isFALSE(workspace_prefs)) {
       list(workspace_prefs = workspace_prefs)
@@ -1502,7 +1509,8 @@ guard_session <- function(root, study, study_tracker_id,
 #' Safe to rerun: each step checks before it acts.
 #'
 #' @param study The Study Tracker title.
-#' @param study_tracker_id The Study Tracker ID, an integer.
+#' @param study_tracker_id The Study Tracker ID, an integer. Give this or
+#'   `derived_from`, not both.
 #' @param root The study root, where `setup()` writes. By default the study
 #'   enclosing the working directory; with none, the RStudio project folder
 #'   the session is in, once its adoption is confirmed. Outside both,
@@ -1524,6 +1532,10 @@ guard_session <- function(root, study, study_tracker_id,
 #'   `template_dir` or `owner`. `renv` is not accepted: `setup()` always uses
 #'   renv, so use `hvtiRutilities::study_setup()` directly for a study without
 #'   it.
+#' @param derived_from For an exploration of a registered study with no
+#'   Study Tracker record of its own, the parent's Study Tracker ID. The study
+#'   gets a provisional ID and checkpoints locally until
+#'   `hvtiRutilities::study_promote()` gives it its own.
 #' @return The study status from `hvtiRutilities::study_setup()`, invisibly,
 #'   with attributes `healed` and `missing`: data frames of the pins moved
 #'   and the packages left out.
@@ -1535,14 +1547,23 @@ guard_session <- function(root, study, study_tracker_id,
 #'   root = "/studies/example"
 #' )
 #' }
-setup <- function(study, study_tracker_id, root = NULL, adopt = FALSE,
-                  upgrade = TRUE, workspace_prefs = TRUE, ...) {
+setup <- function(study, study_tracker_id = NULL, root = NULL, adopt = FALSE,
+                  upgrade = TRUE, workspace_prefs = TRUE, ...,
+                  derived_from = NULL) {
   if (getRversion() < MIN_R_VERSION) {
     cli::cli_abort(
       "R {getRversion()} is below the {MIN_R_VERSION} the family requires."
     )
   }
-  if ("renv" %in% names(list(...))) {
+  if (is.null(study_tracker_id) == is.null(derived_from)) {
+    cli::cli_abort(paste(
+      "Give exactly one of {.arg study_tracker_id} (a registered study)",
+      "or {.arg derived_from} (an exploration of one)."
+    ))
+  }
+  dots <- list(...)
+  if (!is.null(derived_from)) dots$derived_from <- derived_from
+  if ("renv" %in% names(dots)) {
     cli::cli_abort(c(
       "{.fn setup} always uses renv; {.arg renv} cannot be passed.",
       i = "Use {.fn hvtiRutilities::study_setup} for a study without renv."
@@ -1558,13 +1579,13 @@ setup <- function(study, study_tracker_id, root = NULL, adopt = FALSE,
     if (!is.null(candidate)) {
       root <- adopt_project(
         candidate, study, study_tracker_id, adopt, workspace_prefs, upgrade,
-        list(...)
+        dots
       )
       adopt <- TRUE
     }
   }
   guard_session(
-    root, study, study_tracker_id, adopt, workspace_prefs, upgrade, list(...)
+    root, study, study_tracker_id, adopt, workspace_prefs, upgrade, dots
   )
   if (is.null(root)) {
     # Before utilities_fn(), which can install into this session's library.
@@ -1642,10 +1663,11 @@ setup <- function(study, study_tracker_id, root = NULL, adopt = FALSE,
     ))
   }
 
-  status <- utilities_fn("study_setup")(
-    root = root, study = study, study_tracker_id = study_tracker_id,
-    adopt = adopt, renv = TRUE, ...
-  )
+  status <- do.call(utilities_fn("study_setup"), c(
+    list(root = root, study = study, study_tracker_id = study_tracker_id,
+         adopt = adopt, renv = TRUE),
+    dots
+  ))
   root <- normalizePath(root, winslash = "/", mustWork = TRUE)
 
   packages <- union(declared_packages(), setdiff(locked, "renv"))

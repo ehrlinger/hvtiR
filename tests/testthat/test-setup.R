@@ -2694,3 +2694,47 @@ test_that("a blocked family member stops setup, naming it", {
   expect_match(err, "hvtiPlotR needs fakeMissing", fixed = TRUE)
   expect_match(err, "cannot", fixed = TRUE)
 })
+
+test_that("setup passes derived_from to study_setup and no tracker ID", {
+  root <- withr::local_tempdir()
+  log <- local_setup()
+  setup("An exploration", root = root, derived_from = 12L)
+  expect_identical(log$setup_args$derived_from, 12L)
+  expect_null(log$setup_args$study_tracker_id)
+})
+
+test_that("setup needs exactly one ID, before anything runs", {
+  root <- withr::local_tempdir()
+  log <- local_setup()
+  msg <- "exactly one of"
+  expect_error(setup("S", root = root), msg)
+  expect_error(setup("S", 7L, root = root, derived_from = 12L), msg)
+  expect_identical(log$steps, character(0))
+})
+
+test_that("an exploration installs the whole family in one pak call", {
+  root <- withr::local_tempdir()
+  log <- local_setup()
+  setup("S", root = root, derived_from = 12L)
+  expect_length(log$pak_lib, 2L)
+  family <- install_specs(c("hvtiR", members()$package))
+  expect_true(all(family %in% log$pak_lib[[1L]]$specs))
+})
+
+test_that("the quoted command names derived_from and drops the NULL ID", {
+  cmd <- setup_command("/s", "A", NULL, dots = list(derived_from = 12L))
+  expect_match(cmd, "derived_from = 12L", fixed = TRUE)
+  expect_no_match(cmd, "study_tracker_id")
+  expect_identical(
+    setup_command("/s", "A", 7L),
+    'hvtiR::setup(root = "/s", study = "A", study_tracker_id = 7L)'
+  )
+})
+
+test_that("derived_from takes no positional argument", {
+  root <- withr::local_tempdir()
+  log <- local_setup()
+  expect_error(setup("S", 7L, root, FALSE, TRUE, TRUE, 12L), NA)
+  expect_null(log$setup_args$derived_from)
+  expect_identical(log$setup_args$study_tracker_id, 7L)
+})
