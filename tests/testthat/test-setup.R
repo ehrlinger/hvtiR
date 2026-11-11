@@ -898,7 +898,11 @@ test_that("compile_failures() takes valid names only, once each", {
 })
 
 test_that("compiler output is never evaluated as cli markup", {
-  withr::defer(rm(list = "hvtir_pwned", envir = globalenv()))
+  withr::defer(
+    if (exists("hvtir_pwned", envir = globalenv(), inherits = FALSE)) {
+      rm(list = "hvtir_pwned", envir = globalenv())
+    }
+  )
   out <- paste0(
     "ERROR: compilation failed for package ",
     "'x{assign(\"hvtir_pwned\", TRUE, envir = globalenv())}y'\n",
