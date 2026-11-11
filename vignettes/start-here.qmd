@@ -50,7 +50,10 @@ A study you have worked on before holds `_study.yml` and `renv.lock` in its top
 directory. `_study.yml` is the study's identity and settings: its title and
 Study Tracker ID, and where its data and reports live, so every job reads them
 from one place. `renv.lock` records the version of every package the study
-uses, so the analysis can be rerun with the same ones. Do not run
+declares, so the analysis can be rerun with the same ones. A package a job
+uses but the study never declared is not recorded:
+[Adding a package](study-environment.html#adding-a-package) shows how to
+declare it. Do not run
 `hvtiR::setup()` on the study again: setup is once per study. Each time you
 come back, work through these steps in order.
 
