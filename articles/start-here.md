@@ -44,10 +44,17 @@ typed there fails. The page has one shell command,
 ## Coming back to a study
 
 A study you have worked on before holds `_study.yml` and `renv.lock` in
-its top directory. Do not run
+its top directory. `_study.yml` is the study’s identity and settings:
+its title and Study Tracker ID, and where its data and reports live, so
+every job reads them from one place. `renv.lock` records the version of
+every package the study declares, so the analysis can be rerun with the
+same ones. A package a job uses but the study never declared is not
+recorded: [Adding a
+package](https://ehrlinger.github.io/hvtiR/articles/study-environment.html#adding-a-package)
+shows how to declare it. Do not run
 [`hvtiR::setup()`](https://ehrlinger.github.io/hvtiR/reference/setup.md)
-on it again: setup is once per study. Each time you come back, work
-through these steps in order.
+on the study again: setup is once per study. Each time you come back,
+work through these steps in order.
 
 1.  **Open the study’s `.Rproj`** (**File \> Open Project**). Every
     command below runs inside it. A
@@ -55,12 +62,22 @@ through these steps in order.
     run from inside one project, with `root` naming another study,
     stops: it would install into the open project’s library.
 
-2.  **Ask the family whether you are current:**
+2.  **Ask the family whether you are current.**
+    [`status()`](https://ehrlinger.github.io/hvtiR/reference/status.md)
+    compares each family package installed in the study with the latest
+    version on GitHub:
 
     ``` r
 
     hvtiR::status()
     ```
+
+    It prints one line per package, then what to do. When the installer
+    and some packages are behind, the end looks something like this:
+
+        ! hvtiR 1.3.1 is behind 1.3.8 on GitHub.
+        ℹ Update the installer with `pak::pak("ehrlinger/hvtiR")`.
+        ℹ 11 members need updating. Run hvtiR::update().
 
 3.  **Run what its last lines print.** When the installer is behind,
     they name `pak::pak("ehrlinger/hvtiR")`. Run that first, then
@@ -120,7 +137,16 @@ through these steps in order.
 
     Each registered dataset whose file changed gets a new dated version,
     and jobs read that version from then on. Unchanged datasets are left
-    alone.
+    alone. To update one dataset only, name it:
+
+    ``` r
+
+    hvtiRutilities::update_manifest(dataset = "built")
+    ```
+
+    Do not pass the file with `file =` to do this: naming a file
+    switches `update_manifest()` to registering that one file as a new
+    source.
 
 6.  **Upgrade a job to its template’s current version.** If the job is
     open in the editor, save it and close it first. `upgrade_job()`
@@ -145,6 +171,29 @@ through these steps in order.
     hvtiRtemplates::run_job("10_descriptive/dc.general.cohort.eda.qmd")     # EDIT: your job
     hvtiRtemplates::job_status("10_descriptive/dc.general.cohort.eda.qmd")  # EDIT: your job
     ```
+
+7.  **Add a job the study does not have yet.** List the templates, or
+    browse what each one produces in the [template
+    gallery](https://ehrlinger.github.io/hvtiRtemplates/gallery/):
+
+    ``` r
+
+    hvtiRtemplates::template_list()
+    ```
+
+    Then add one. `subject` and `type` are yours to choose: they name
+    the job, and every job of one analysis shares them.
+
+    ``` r
+
+    hvtiRtemplates::add_job("dc.eda", subject = "cohort", type = "eda")  # EDIT: your template and names
+    ```
+
+    The job is written into its template’s folder, here
+    `10_descriptive/`. Open it, fill in its `EDIT:` lines, and run it as
+    in step 6. [Work a job, from template to final
+    report](https://ehrlinger.github.io/hvtiRtemplates/articles/work-a-job.html)
+    walks through the whole loop.
 
 [Check the study](#check-the-study) explains what
 [`status()`](https://ehrlinger.github.io/hvtiR/reference/status.md) and
