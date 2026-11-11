@@ -1,1 +1,0 @@
-* `setup()` gains `derived_from`, to set up an exploration of a registered study that has no Study Tracker record of its own. `study_tracker_id` now defaults to `NULL`, and exactly one of the two is required. Needs hvtiRutilities 1.5.22.
