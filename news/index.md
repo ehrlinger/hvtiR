@@ -1,5 +1,67 @@
 # Changelog
 
+## hvtiR 1.3.8
+
+- Catalog versions refreshed from CRAN and `main`: `ggRandomForests`
+  CRAN 3.5.5 to 4.0.0, which closes its gap, so its `dev_ahead` marker
+  is cleared; `TemporalHazard` dev 1.2.18 to 1.3.0; `hvtiRdatabuild` dev
+  0.3.3 to 0.3.4; `hvtiRtemplates` dev 1.5.5 to 1.5.6; `hvtiRutilities`
+  dev 1.5.19 to 1.5.21. The catalog ships in the package and is
+  published as `members.json`, so its recorded versions are content
+  rather than bookkeeping.
+
+- Family floors refreshed from `main`: `hvtiRdatabuild` Imports
+  `hvtiRutilities` (\>= 1.5.3) to (\>= 1.5.20); `hvtiRtemplates` Imports
+  `hvtiRutilities` (\>= 1.5.17) to (\>= 1.5.20). `family-floors.csv`
+  ships in the package and records the version floors members declare on
+  one another.
+
+- Catalog versions refreshed from CRAN and `main`: `TemporalHazard` CRAN
+  1.1.0 to 1.3.0; `hvtiRtables` dev 1.0.12 to 1.0.13. The catalog ships
+  in the package and is published as `members.json`, so its recorded
+  versions are content rather than bookkeeping. `TemporalHazard`’s
+  `dev_ahead` marker is cleared: the 1.3.0 release closed the gap it
+  recorded.
+
+- [`update()`](https://ehrlinger.github.io/hvtiR/reference/update.md)
+  now defaults to `force = TRUE` on Linux and macOS
+  (`force = .Platform$OS.type != "windows"`), so it installs over a
+  member that is already loaded instead of warning and installing
+  nothing. It then says to restart R, because the session keeps running
+  the old copy. Windows keeps `force = FALSE`: overwriting a loaded
+  package there leaves a broken library.
+  [`install()`](https://ehrlinger.github.io/hvtiR/reference/install.md)
+  keeps its guard everywhere.
+
+- The “Start here” vignette has a new section, “Coming back to a study”,
+  for an analyst returning to a study that already has `_study.yml` and
+  `renv.lock`: open the `.Rproj` and never rerun
+  [`setup()`](https://ehrlinger.github.io/hvtiR/reference/setup.md),
+  then
+  [`status()`](https://ehrlinger.github.io/hvtiR/reference/status.md),
+  [`update()`](https://ehrlinger.github.io/hvtiR/reference/update.md),
+  [`renv::snapshot()`](https://rstudio.github.io/renv/reference/snapshot.html)
+  after an update you made (or
+  [`renv::restore()`](https://rstudio.github.io/renv/reference/restore.html)
+  when the lockfile is ahead of the library), `update_manifest()` and
+  `upgrade_job()`, in that order.
+
+- [`setup()`](https://ehrlinger.github.io/hvtiR/reference/setup.md)
+  gains `derived_from`, to set up an exploration of a registered study
+  that has no Study Tracker record of its own. `study_tracker_id` now
+  defaults to `NULL`, and exactly one of the two is required. Needs
+  hvtiRutilities 1.5.22.
+
+- Catalog versions refreshed from `main`: `hvtiRtemplates` dev 1.5.6 to
+  1.5.7; `hvtiRutilities` dev 1.5.21 to 1.5.22. The catalog ships in the
+  package and is published as `members.json`, so its recorded versions
+  are content rather than bookkeeping.
+
+- Family floors refreshed from `main`: `hvtiRtemplates` Suggests
+  `hvtiRtables` (\>= 1.0.11) to (\>= 1.0.13). `family-floors.csv` ships
+  in the package and records the version floors members declare on one
+  another.
+
 ## hvtiR 1.3.7
 
 - “Start here” says where to type each command, what a finished
