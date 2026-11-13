@@ -82,3 +82,18 @@ test_that("the status table says nothing in a study project", {
   expect_no_match(paste(capture.output(print(st)), collapse = " "),
                   "Not in a study project")
 })
+
+test_that("pak installs into the library the guard checked, not pkg.library", {
+  seen <- NULL
+  local_mocked_bindings(
+    pak = function(pkg, ...) {
+      seen <<- list(...)$lib
+      invisible(NULL)
+    },
+    .package = "pak"
+  )
+  withr::local_options(pkg.library = "/home/u/R")
+  local_mocked_bindings(session_library = function() "/studies/x/renv/library")
+  pak_install("ehrlinger/hvtiRutilities")
+  expect_identical(seen, "/studies/x/renv/library")
+})

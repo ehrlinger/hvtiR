@@ -38,10 +38,15 @@ build_specs <- function(registry, packages) {
 #' The seam that performs the actual installation, isolated so that tests can
 #' replace it and never install anything.
 #'
+#' The library is named rather than left to pak, which would otherwise honor
+#' a `pkg.library` option and could install somewhere other than the library
+#' `require_study_library()` checked.
+#'
 #' @param specs Character vector of `"owner/repo"` strings.
+#' @param lib The library to install into.
 #' @return The value returned by [pak::pak()], invisibly.
 #' @noRd
-pak_install <- function(specs) {
+pak_install <- function(specs, lib = session_library()) {
   if (!requireNamespace("pak", quietly = TRUE)) {
     cli::cli_abort(c(
       "The {.pkg pak} package is required to install hvtiR members.",
@@ -49,7 +54,7 @@ pak_install <- function(specs) {
     ))
   }
 
-  invisible(pak::pak(specs, ask = FALSE))
+  invisible(pak::pak(specs, lib = lib, ask = FALSE))
 }
 
 #' Point dated snapshots at the latest view of the same repository
