@@ -71,7 +71,7 @@
       <h1>Install, update and check the family</h1>
 
       <p class="author">John Ehrlinger</p>
-      <p class="date">2026-11-11</p>
+      <p class="date">2026-11-13</p>
 
       <small class="dont-index">Source: <a href="https://github.com/ehrlinger/hvtiR/blob/main/vignettes/hvtiR.qmd" class="external-link"><code>vignettes/hvtiR.qmd</code></a></small>
       <div class="d-none name"><code></code></div>
@@ -188,7 +188,7 @@ i 2 members need updating. Run hvtiR::update().</code></pre>
 i Remote was not consulted; versions shown are installed versions only.</code></pre>
 </section><section class="level2"><h2 id="installing-and-updating">Installing and updating<a class="anchor" aria-label="anchor" href="#installing-and-updating"></a>
 </h2>
-<p>On a new machine, install everything:</p>
+<p>In a project with nothing installed yet, install everything. hvtiR installs only into a study’s library or another renv project’s, never your personal one: outside a project <code><a href="../reference/install.html">install()</a></code> and <code><a href="../reference/update.html">update()</a></code> stop and say which <code>.Rproj</code> to open.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">hvtiR</span><span class="fu">::</span><span class="fu"><a href="../reference/install.html">install</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>

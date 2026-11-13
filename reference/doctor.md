@@ -49,12 +49,12 @@ doctor(remote = FALSE)
 #> ✔ pak is installed
 #> ℹ Repository RSPM: <https://packagemanager.posit.co/cran/__linux__/resolute/latest>
 #> ℹ Repository CRAN: <https://cran.rstudio.com>
-#> ℹ renv is installed, but this is not an renv project
-#> ℹ Member versions are not pinned - installs resolve from GitHub "main".
 #> 
 #> ── Members ──
 #> 
 #> hvtiR 1.3.8 - 12 members
+#> ✖ Not in a study project: `hvtiR::update()` would install into your personal library, so it stops.
+#> ℹ Open the study's project: double-click its .Rproj file in the Files pane (or File > Open Project), then run it again.
 #> 
 #>   x hvtiRutilities   -          -          missing
 #>   x hvtiRdatabuild   -          -          missing

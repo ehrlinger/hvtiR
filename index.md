@@ -23,7 +23,10 @@ tutorials](https://ehrlinger.github.io/hvtiRtemplates/), in that order.
 pak::pak("ehrlinger/hvtiR")
 ```
 
-Then install every member:
+Then, in a study’s project or another renv project, install every
+member. hvtiR installs only into a project’s library, never your
+personal one, so outside a project this stops and says which `.Rproj` to
+open:
 
 ``` r
 

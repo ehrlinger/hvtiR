@@ -82,7 +82,7 @@
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># install.packages("pak")</span></span>
 <span><span class="fu">pak</span><span class="fu">::</span><span class="fu"><a href="https://pak.r-lib.org/reference/pak.html" class="external-link">pak</a></span><span class="op">(</span><span class="st">"ehrlinger/hvtiR"</span><span class="op">)</span></span></code></pre></div>
-<p>Then install every member:</p>
+<p>Then, in a study’s project or another renv project, install every member. hvtiR installs only into a project’s library, never your personal one, so outside a project this stops and says which <code>.Rproj</code> to open:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">hvtiR</span><span class="fu">::</span><span class="fu"><a href="reference/install.html">install</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <div class="section level3">

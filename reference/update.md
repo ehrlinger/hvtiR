@@ -1,9 +1,12 @@
 # Update out-of-date hvtiR members
 
-Installs only the members whose status is `"missing"` or `"stale"`. When
-everything is current, reports that and installs nothing. Members whose
-version or commit could not be checked against GitHub are reported as
-unchecked rather than silently treated as current.
+Installs only the members whose status is `"missing"` or `"stale"`, into
+the study's library: outside a study project or another renv project it
+stops before installing anything, as
+[`install()`](https://ehrlinger.github.io/hvtiR/reference/install.md)
+does. When everything is current, reports that and installs nothing.
+Members whose version or commit could not be checked against GitHub are
+reported as unchecked rather than silently treated as current.
 
 ## Usage
 

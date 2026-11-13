@@ -120,7 +120,12 @@ hvtiR::status(remote = FALSE)
 
 ## Installing and updating
 
-On a new machine, install everything:
+In a project with nothing installed yet, install everything. hvtiR
+installs only into a study’s library or another renv project’s, never
+your personal one: outside a project
+[`install()`](https://ehrlinger.github.io/hvtiR/reference/install.md)
+and [`update()`](https://ehrlinger.github.io/hvtiR/reference/update.md)
+stop and say which `.Rproj` to open.
 
 ``` r
 
