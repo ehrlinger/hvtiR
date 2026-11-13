@@ -395,8 +395,13 @@ warn_shared_cache <- function() {
 #' Install every hvtiR member
 #'
 #' Installs all members from GitHub `main`, whether or not they are already
-#' present. This is the fresh-machine command; use [hvtiR::update()] to
-#' install only what is missing or out of date.
+#' present. This is the command for a project with nothing installed yet;
+#' use [hvtiR::update()] to install only what is missing or out of date.
+#'
+#' It installs only into a project's library: a study's, or another renv
+#' project's. In a session whose library is your personal one it stops before
+#' installing anything and names the `.Rproj` to open. A new study starts
+#' with [hvtiR::setup()] instead, run outside any project.
 #'
 #' Members are installed from GitHub rather than CRAN because GitHub is where
 #' family releases land first. CRAN is a downstream republication for members
@@ -413,12 +418,90 @@ warn_shared_cache <- function() {
 #' install()
 #' }
 install <- function(force = FALSE) {
+  require_study_library("install")
   install_members(members()$package, force = force)
+}
+
+#' How to get into a study project, for a message
+#'
+#' @param study The enclosing study root, or `NULL` when there is none.
+#' @return One string: the study's own `.Rproj` when one is there.
+#' @noRd
+open_project_hint <- function(study = enclosing_study()) {
+  rproj <- if (is.null(study)) {
+    character(0)
+  } else {
+    list.files(study, pattern = "[.]Rproj$")
+  }
+  if (length(rproj)) {
+    return(paste0(
+      "Open the study's project: double-click {.file ",
+      escape_braces(rproj[1L]), "} in the Files pane, then run it again."
+    ))
+  }
+  paste(
+    "Open the study's project: double-click its {.file .Rproj} file in the",
+    "Files pane (or File > Open Project), then run it again."
+  )
+}
+
+#' Is this session's library the active study project's?
+#' @param project The `RENV_PROJECT` environment variable, possibly `""`.
+#' @param library The session's first library.
+#' @return `TRUE` or `FALSE`.
+#' @noRd
+in_study_library <- function(project = Sys.getenv("RENV_PROJECT", ""),
+                             library = session_library()) {
+  nzchar(project) && path_within(library, project)
+}
+
+#' Stop unless this session installs into a study's renv library
+#'
+#' hvtiR installs into a study's library and never into a personal one.
+#' Outside the study's project renv is not active, so the session's library
+#' is the user's own, and an install there leaves the study's lockfile
+#' behind it (2026-11-12: a later snapshot failed). [setup()] starts a study
+#' from outside any project, and installs through a child R in the study.
+#' @param command The calling function's name, without parentheses.
+#' @param project The `RENV_PROJECT` environment variable, possibly `""`.
+#' @param library The session's first library.
+#' @param study The enclosing study root, or `NULL`.
+#' @return `project`, invisibly.
+#' @noRd
+require_study_library <- function(command,
+                                  project = Sys.getenv("RENV_PROJECT", ""),
+                                  library = session_library(),
+                                  study = enclosing_study()) {
+  if (in_study_library(project, library)) return(invisible(project))
+  cli::cli_abort(c(
+    paste0(
+      "This session is not in a study project, so {.fn ", command, "} would ",
+      "install into your personal library, {.file {library}}. hvtiR installs ",
+      "only into a study's library."
+    ),
+    i = open_project_hint(study),
+    i = "A new study starts with {.fn hvtiR::setup}, run outside any project."
+  ))
+}
+
+#' The status() and doctor() lines for a session outside a study project
+#' @return Character vector of formatted lines.
+#' @noRd
+not_in_project_lines <- function() {
+  cli::cli_fmt({
+    cli::cli_alert_danger(paste(
+      "Not in a study project: {.fn hvtiR::update} would install into your",
+      "personal library, so it stops."
+    ))
+    cli::cli_alert_info(open_project_hint())
+  })
 }
 
 #' Update out-of-date hvtiR members
 #'
-#' Installs only the members whose status is `"missing"` or `"stale"`. When
+#' Installs only the members whose status is `"missing"` or `"stale"`, into
+#' the study's library: outside a study project or another renv project it
+#' stops before installing anything, as [hvtiR::install()] does. When
 #' everything is current, reports that and installs nothing. Members whose
 #' version or commit could not be checked against GitHub are reported as
 #' unchecked rather than silently treated as current.
@@ -454,6 +537,7 @@ install <- function(force = FALSE) {
 #' update()
 #' }
 update <- function(force = .Platform$OS.type != "windows") {
+  require_study_library("update")
   st <- status(remote = TRUE)
 
   self <- attr(st, "self", exact = TRUE)

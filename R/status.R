@@ -259,6 +259,8 @@ print.hvtiR_status <- function(x, ...) {
     } else {
       cli::cli_text("{.strong hvtiR} {version} - {nrow(x)} member{?s}")
     }
+    # First, because update() refuses to run until it is fixed.
+    if (!in_study_library()) cli::cli_verbatim(not_in_project_lines())
     cli::cli_verbatim("")
 
     for (i in seq_len(nrow(x))) {
@@ -707,19 +709,11 @@ doctor <- function(remote = TRUE) {
         "{.pkg renv} project is active - it can pin member versions"
       )
     } else {
-      if (renv == "installed") {
-        cli::cli_alert_info(
-          "{.pkg renv} is installed, but this is not an {.pkg renv} project"
-        )
-      } else {
+      # The member table below opens with what to do: update() and install()
+      # refuse to run outside a study project.
+      if (renv == "absent") {
         cli::cli_alert_info("{.pkg renv} is not installed")
       }
-      cli::cli_alert_info(
-        paste0(
-          "Member versions are not pinned - installs resolve from ",
-          "GitHub {.val main}."
-        )
-      )
     }
 
     gone <- unresolved_imports(c("hvtiR", members()$package))

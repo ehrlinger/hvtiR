@@ -116,26 +116,29 @@ test_that("doctor reports an active renv project and asks for nothing", {
   expect_no_match(out, "not pinned")
 })
 
-test_that("doctor reports renv present but no project, and versions float", {
+test_that("doctor outside a project says to open one, once", {
   local_mocked_bindings(
     installed_version = function(pkg) "1.0.0",
     renv_state = function(...) "installed"
   )
+  withr::local_envvar(RENV_PROJECT = "")
 
   out <- doctor_text()
-  expect_match(out, "not an renv project")
-  expect_match(out, "not pinned")
+  expect_length(gregexpr("Not in a study project", out)[[1L]], 1L)
+  expect_match(out, "\\.Rproj")
+  expect_no_match(out, "not pinned")
 })
 
-test_that("doctor reports renv missing, and says versions float", {
+test_that("doctor reports renv missing, and no project", {
   local_mocked_bindings(
     installed_version = function(pkg) "1.0.0",
     renv_state = function(...) "absent"
   )
+  withr::local_envvar(RENV_PROJECT = "")
 
   out <- doctor_text()
   expect_match(out, "renv is not installed")
-  expect_match(out, "not pinned")
+  expect_match(out, "Not in a study project")
 })
 
 test_that("snapshot_repos flags dated and numbered Package Manager URLs", {

@@ -1,3 +1,7 @@
+# These tests drive install() and update() past the study-library guard,
+# which test-study-library.R covers; for the whole file, as if in a study.
+local_mocked_bindings(require_study_library = function(...) invisible(""))
+
 test_that("install_members passes every spec to pak in a single call", {
   calls <- list()
   local_mocked_bindings(

@@ -17,7 +17,9 @@ invisibly. Empty if nothing needed updating. If loaded members prevent
 installation, the empty vector has a \code{blocked} attribute with their names.
 }
 \description{
-Installs only the members whose status is \code{"missing"} or \code{"stale"}. When
+Installs only the members whose status is \code{"missing"} or \code{"stale"}, into
+the study's library: outside a study project or another renv project it
+stops before installing anything, as \code{\link[=install]{install()}} does. When
 everything is current, reports that and installs nothing. Members whose
 version or commit could not be checked against GitHub are reported as
 unchecked rather than silently treated as current.
