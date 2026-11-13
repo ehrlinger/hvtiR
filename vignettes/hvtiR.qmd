@@ -116,7 +116,10 @@ i Remote was not consulted; versions shown are installed versions only.
 
 ## Installing and updating
 
-On a new machine, install everything:
+In a project with nothing installed yet, install everything. hvtiR installs
+only into a study's library or another renv project's, never your personal
+one: outside a project `install()` and `update()` stop and say which `.Rproj`
+to open.
 
 ```{r install, eval = FALSE}
 hvtiR::install()

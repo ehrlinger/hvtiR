@@ -1,0 +1,2 @@
+* `install()` and `update()` stop when the session is not in a study project, or another renv project, instead of installing into your personal library. The message names the study's `.Rproj` to open when the working directory sits inside one. On 2026-11-12 an `update()` run outside its study's project installed into the user's own library, and the study's next snapshot failed.
+* `status()` and `doctor()` now open with that warning, in red, where `doctor()` used to note only that renv was installed but not active.
