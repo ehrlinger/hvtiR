@@ -82,6 +82,8 @@ interactive figures. `setup()` declares them in the study's `DESCRIPTION`, so th
 
 ## Keeping current
 
+Run these in the study's project; outside one, `update()` stops as `install()` does:
+
 ```r
 hvtiR::status()   # what is installed, what is available
 hvtiR::update()   # install only what is missing or stale
