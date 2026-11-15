@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">hvtiR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.3.8</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.3.9</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -46,6 +46,16 @@
       <small>Source: <a href="https://github.com/ehrlinger/hvtiR/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.3.9" id="hvtir-139">hvtiR 1.3.9<a class="anchor" aria-label="anchor" href="#hvtir-139"></a></h2>
+<ul><li><p>The test that compiler output is never evaluated as cli markup no longer warns <code>object 'hvtir_pwned' not found</code> when it passes: its cleanup now removes the object only if the injection created it.</p></li>
+<li><p>“Start here”, Coming back to a study: says what <code>_study.yml</code> and <code>renv.lock</code> are and what <code><a href="../reference/status.html">status()</a></code> prints when packages are behind, shows <code>update_manifest(dataset = "built")</code> for updating one dataset, and adds a seventh step for adding a job the study does not have yet.</p></li>
+<li><p><code><a href="../reference/install.html">install()</a></code> and <code><a href="../reference/update.html">update()</a></code> stop when the session is not in a study project, or another renv project, instead of installing into your personal library. The message names the study’s <code>.Rproj</code> to open when the working directory sits inside one. On 2026-11-12 an <code><a href="../reference/update.html">update()</a></code> run outside its study’s project installed into the user’s own library, and the study’s next snapshot failed.</p></li>
+<li><p><code><a href="../reference/status.html">status()</a></code> and <code><a href="../reference/doctor.html">doctor()</a></code> now open with that warning, in red, where <code><a href="../reference/doctor.html">doctor()</a></code> used to note only that renv was installed but not active.</p></li>
+<li><p>Catalog versions refreshed from <code>main</code>: <code>TemporalHazard</code> dev 1.3.0 to 1.3.1; <code>hvtiPlotR</code> dev 2.8.21 to 2.8.22; <code>hvtiRtemplates</code> dev 1.5.7 to 1.6.0; <code>hvtiRutilities</code> dev 1.5.22 to 1.5.23. The catalog ships in the package and is published as <code>members.json</code>, so its recorded versions are content rather than bookkeeping.</p></li>
+<li><p>README, Keeping current: says to run <code><a href="../reference/status.html">status()</a></code> and <code><a href="../reference/update.html">update()</a></code> in the study’s project, since <code><a href="../reference/update.html">update()</a></code>, like <code><a href="../reference/install.html">install()</a></code>, now stops unless an renv project is active and its library is the session’s; it does not check which project that is.</p></li>
+<li><p>hvtiR now imports rlang, which <code><a href="https://cli.r-lib.org/reference/cli_abort.html" class="external-link">cli::cli_abort()</a></code> needs to raise an error. In a library without it, every hvtiR error, the not-in-project guard’s included, read “there is no package called ‘rlang’” instead.</p></li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.3.8" id="hvtir-138">hvtiR 1.3.8<a class="anchor" aria-label="anchor" href="#hvtir-138"></a></h2>
 <ul><li><p>Catalog versions refreshed from CRAN and <code>main</code>: <code>ggRandomForests</code> CRAN 3.5.5 to 4.0.0, which closes its gap, so its <code>dev_ahead</code> marker is cleared; <code>TemporalHazard</code> dev 1.2.18 to 1.3.0; <code>hvtiRdatabuild</code> dev 0.3.3 to 0.3.4; <code>hvtiRtemplates</code> dev 1.5.5 to 1.5.6; <code>hvtiRutilities</code> dev 1.5.19 to 1.5.21. The catalog ships in the package and is published as <code>members.json</code>, so its recorded versions are content rather than bookkeeping.</p></li>

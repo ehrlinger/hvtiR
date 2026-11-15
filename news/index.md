@@ -1,5 +1,59 @@
 # Changelog
 
+## hvtiR 1.3.9
+
+- The test that compiler output is never evaluated as cli markup no
+  longer warns `object 'hvtir_pwned' not found` when it passes: its
+  cleanup now removes the object only if the injection created it.
+
+- “Start here”, Coming back to a study: says what `_study.yml` and
+  `renv.lock` are and what
+  [`status()`](https://ehrlinger.github.io/hvtiR/reference/status.md)
+  prints when packages are behind, shows
+  `update_manifest(dataset = "built")` for updating one dataset, and
+  adds a seventh step for adding a job the study does not have yet.
+
+- [`install()`](https://ehrlinger.github.io/hvtiR/reference/install.md)
+  and
+  [`update()`](https://ehrlinger.github.io/hvtiR/reference/update.md)
+  stop when the session is not in a study project, or another renv
+  project, instead of installing into your personal library. The message
+  names the study’s `.Rproj` to open when the working directory sits
+  inside one. On 2026-11-12 an
+  [`update()`](https://ehrlinger.github.io/hvtiR/reference/update.md)
+  run outside its study’s project installed into the user’s own library,
+  and the study’s next snapshot failed.
+
+- [`status()`](https://ehrlinger.github.io/hvtiR/reference/status.md)
+  and
+  [`doctor()`](https://ehrlinger.github.io/hvtiR/reference/doctor.md)
+  now open with that warning, in red, where
+  [`doctor()`](https://ehrlinger.github.io/hvtiR/reference/doctor.md)
+  used to note only that renv was installed but not active.
+
+- Catalog versions refreshed from `main`: `TemporalHazard` dev 1.3.0 to
+  1.3.1; `hvtiPlotR` dev 2.8.21 to 2.8.22; `hvtiRtemplates` dev 1.5.7 to
+  1.6.0; `hvtiRutilities` dev 1.5.22 to 1.5.23. The catalog ships in the
+  package and is published as `members.json`, so its recorded versions
+  are content rather than bookkeeping.
+
+- README, Keeping current: says to run
+  [`status()`](https://ehrlinger.github.io/hvtiR/reference/status.md)
+  and
+  [`update()`](https://ehrlinger.github.io/hvtiR/reference/update.md) in
+  the study’s project, since
+  [`update()`](https://ehrlinger.github.io/hvtiR/reference/update.md),
+  like
+  [`install()`](https://ehrlinger.github.io/hvtiR/reference/install.md),
+  now stops unless an renv project is active and its library is the
+  session’s; it does not check which project that is.
+
+- hvtiR now imports rlang, which
+  [`cli::cli_abort()`](https://cli.r-lib.org/reference/cli_abort.html)
+  needs to raise an error. In a library without it, every hvtiR error,
+  the not-in-project guard’s included, read “there is no package called
+  ‘rlang’” instead.
+
 ## hvtiR 1.3.8
 
 - Catalog versions refreshed from CRAN and `main`: `ggRandomForests`
