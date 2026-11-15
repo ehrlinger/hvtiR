@@ -60,6 +60,11 @@ jobs:
       # together. A failure here is what a user would see.
       - name: Install the family with hvtiR::install()
         shell: Rscript {0}
+        # install() stops unless an renv project is active and the session's
+        # library is inside it. The runner has no study, so its temp folder,
+        # which holds R_LIBS_USER, stands in for one.
+        env:
+          RENV_PROJECT: ${{ runner.temp }}
         run: |
           hvtiR::install()
           print(hvtiR::status())
