@@ -82,7 +82,7 @@ interactive figures. `setup()` declares them in the study's `DESCRIPTION`, so th
 
 ## Keeping current
 
-Run these in the study's project; outside one, `update()` stops as `install()` does:
+Run these in the study's project. `update()`, like `install()`, stops unless an renv project is active and the session's library is inside it; it cannot tell the study from another renv project, so opening the right one is yours:
 
 ```r
 hvtiR::status()   # what is installed, what is available
