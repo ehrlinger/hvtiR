@@ -1,0 +1,1 @@
+* README, Keeping current: says to run `status()` and `update()` in the study's project, since `update()`, like `install()`, now stops unless an renv project is active and its library is the session's; it does not check which project that is.
