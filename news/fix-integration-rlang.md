@@ -1,1 +1,0 @@
-* hvtiR now imports rlang, which `cli::cli_abort()` needs to raise an error. In a library without it, every hvtiR error, the not-in-project guard's included, read "there is no package called 'rlang'" instead.
