@@ -104,6 +104,7 @@
 <div class="section level2">
 <h2 id="keeping-current">Keeping current<a class="anchor" aria-label="anchor" href="#keeping-current"></a>
 </h2>
+<p>Run these in the study’s project. <code><a href="reference/update.html">update()</a></code>, like <code><a href="reference/install.html">install()</a></code>, stops unless an renv project is active and the session’s library is inside it; it cannot tell the study from another renv project, so opening the right one is yours:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">hvtiR</span><span class="fu">::</span><span class="fu"><a href="reference/status.html">status</a></span><span class="op">(</span><span class="op">)</span>   <span class="co"># what is installed, what is available</span></span>
 <span><span class="fu">hvtiR</span><span class="fu">::</span><span class="fu"><a href="reference/update.html">update</a></span><span class="op">(</span><span class="op">)</span>   <span class="co"># install only what is missing or stale</span></span></code></pre></div>

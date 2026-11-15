@@ -89,6 +89,14 @@ them. Add anything else with `hvtiRutilities::study_need()`.
 
 ## Keeping current
 
+Run these in the study’s project.
+[`update()`](https://ehrlinger.github.io/hvtiR/reference/update.md),
+like
+[`install()`](https://ehrlinger.github.io/hvtiR/reference/install.md),
+stops unless an renv project is active and the session’s library is
+inside it; it cannot tell the study from another renv project, so
+opening the right one is yours:
+
 ``` r
 
 hvtiR::status()   # what is installed, what is available
