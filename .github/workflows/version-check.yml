@@ -69,3 +69,34 @@ jobs:
           --changed-files "${RUNNER_TEMP}/changed-files"
           --added-files "${RUNNER_TEMP}/added-files"
           --rbuildignore "${RUNNER_TEMP}/base-Rbuildignore"
+
+      # A bump ships the catalog as it stands, and the weekly refresh is only
+      # as fresh as its last run. hvtiR 1.3.10 nearly shipped hvtiRdatabuild
+      # 0.3.6 after 0.3.7 was released between the refresh and the bump
+      # (2026-11-18, caught by review, not by a check). So a pull request that
+      # moves Version: must carry a catalog that matches every oracle now.
+      # Only the bump: on any other pull request a member's release would turn
+      # unrelated work red until the next refresh merged.
+      - name: Check the catalog is current (version bumps only)
+        run: |
+          base=$(sed -n 's/^Version: *//p' "${RUNNER_TEMP}/base-DESCRIPTION")
+          head=$(sed -n 's/^Version: *//p' DESCRIPTION)
+          if [ "$base" = "$head" ]; then
+            echo "Version: unchanged ($head); no catalog check."
+            exit 0
+          fi
+          set +e
+          python3 tools/refresh_catalog_versions.py --check
+          status=$?
+          set -e
+          case "$status" in
+            0) echo "Catalog matches every member's main and CRAN." ;;
+            1) echo "::error::The catalog is stale for this bump (drift above). Run catalog-versions.yml, merge its pull request, then update this branch from main."
+               exit 1 ;;
+            2) echo "::error::An oracle could not be read, so the catalog was not verified. Re-run this job; a bump does not ship an unverified catalog."
+               exit 1 ;;
+            3) echo "::error::A member declares a hard floor its dependency's main does not meet (above); install() fails until it is fixed."
+               exit 1 ;;
+            *) echo "::error::refresh_catalog_versions.py --check exited $status, which it never does deliberately."
+               exit 1 ;;
+          esac
