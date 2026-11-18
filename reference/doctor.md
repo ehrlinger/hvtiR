@@ -43,7 +43,7 @@ doctor(remote = FALSE)
 #> 
 #> ── Environment ──
 #> 
-#> ℹ hvtiR 1.3.9
+#> ℹ hvtiR 1.3.10
 #> ✔ R version 4.6.2 (>= 4.4.0 required)
 #> ℹ Platform x86_64-pc-linux-gnu
 #> ✔ pak is installed
@@ -52,7 +52,7 @@ doctor(remote = FALSE)
 #> 
 #> ── Members ──
 #> 
-#> hvtiR 1.3.9 - 12 members
+#> hvtiR 1.3.10 - 12 members
 #> ✖ Not in a study project: `hvtiR::update()` would install into your personal library, so it stops.
 #> ℹ Open the study's project: double-click its .Rproj file in the Files pane (or File > Open Project), then run it again.
 #> 
