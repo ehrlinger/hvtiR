@@ -231,11 +231,11 @@ requirement, your platform, whether `pak` is installed to install
 members with, the package repositories R is configured to use, and
 whether an `renv` project is active.
 
-`ggRandomForests` and `hvtiRlifetables` both need R 4.4.0 or newer,
-which is the single most common reason a member will not install. Note
-that `hvtiR` itself requires only R 4.1.0 — deliberately, so that the
-diagnostic still runs on a machine whose R is too old for the members it
-is reporting on.
+Every member but `TemporalHazard` and `ggRandomForests` needs R 4.4.0 or
+newer, which is the single most common reason a member will not install.
+Note that `hvtiR` itself requires only R 4.1.0 — deliberately, so that
+the diagnostic still runs on a machine whose R is too old for the
+members it is reporting on.
 
 The second most common reason is a repository that is frozen in time.
 RStudio Server sites often point R at a dated Posit Package Manager
