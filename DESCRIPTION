@@ -22,7 +22,6 @@ Imports:
     rlang,
     utils
 Suggests:
-    curl,
     gitcreds,
     knitr,
     pak,
