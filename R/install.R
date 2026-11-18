@@ -429,10 +429,21 @@ install <- function(force = FALSE) {
 
 #' How to get into a study project, for a message
 #'
+#' A study with no `renv/activate.R` has no library to open into: opening its
+#' `.Rproj` changes nothing, so the hint is [setup()] instead.
 #' @param study The enclosing study root, or `NULL` when there is none.
 #' @return One string: the study's own `.Rproj` when one is there.
 #' @noRd
 open_project_hint <- function(study = enclosing_study()) {
+  if (!is.null(study) &&
+        !file.exists(file.path(study, "renv", "activate.R"))) {
+    return(paste(
+      paste0("{.file ", escape_braces(study), "}"),
+      "has no study library yet: run",
+      "{.fn hvtiR::setup} here with its Study Tracker title and ID, then",
+      "run it again."
+    ))
+  }
   rproj <- if (is.null(study)) {
     character(0)
   } else {
@@ -485,7 +496,7 @@ require_study_library <- function(command,
       "only into a study's library."
     ),
     i = open_project_hint(study),
-    i = "A new study starts with {.fn hvtiR::setup}, run outside any project."
+    if (is.null(study)) c(i = "A new study starts with {.fn hvtiR::setup}.")
   ))
 }
 
