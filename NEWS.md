@@ -6,7 +6,7 @@ Version: 1.3.10
 - The `hvtiR` vignette says which members need R 4.4.0: every one but `TemporalHazard` and `ggRandomForests`, not only `ggRandomForests` and `hvtiRlifetables`.
 
 * Catalog versions refreshed from `main`: `hvtiPlotR` dev 2.8.22 to 2.8.24;
-  `hvtiRbootstrap` dev 0.9.7 to 0.9.8; `hvtiRdatabuild` dev 0.3.4 to 0.3.6;
+  `hvtiRbootstrap` dev 0.9.7 to 0.9.8; `hvtiRdatabuild` dev 0.3.4 to 0.3.7;
   `hvtiRimputation` dev 0.1.3 to 0.1.4; `hvtiRlifetables` dev 0.1.6 to
   0.1.7; `hvtiRpropensity` dev 0.2.2 to 0.2.3; `hvtiRtables` dev 1.0.13 to
   1.0.14; `hvtiRtemplates` dev 1.6.0 to 1.6.1; `hvtiRutilities` dev 1.5.23
