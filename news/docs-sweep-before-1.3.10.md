@@ -1,1 +1,0 @@
-- The `hvtiR` vignette says which members need R 4.4.0: every one but `TemporalHazard` and `ggRandomForests`, not only `ggRandomForests` and `hvtiRlifetables`.
