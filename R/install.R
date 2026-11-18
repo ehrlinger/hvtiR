@@ -429,16 +429,21 @@ install <- function(force = FALSE) {
 
 #' How to get into a study project, for a message
 #'
-#' A study with no `renv/activate.R` has no library to open into: opening its
-#' `.Rproj` changes nothing, so the hint is [setup()] instead.
+#' A study, or a project folder with no `_study.yml` yet (one made with
+#' RStudio's New Project wizard), that has no `renv/activate.R` has no
+#' library to open into: opening its `.Rproj` changes nothing, so the hint is
+#' [setup()] instead.
 #' @param study The enclosing study root, or `NULL` when there is none.
+#' @param candidate The project folder `setup()` would adopt, or `NULL`.
 #' @return One string: the study's own `.Rproj` when one is there.
 #' @noRd
-open_project_hint <- function(study = enclosing_study()) {
-  if (!is.null(study) &&
-        !file.exists(file.path(study, "renv", "activate.R"))) {
+open_project_hint <- function(study = enclosing_study(),
+                              candidate = safe_project_candidate()) {
+  root <- if (is.null(study)) candidate else study
+  if (!is.null(root) &&
+        !file.exists(file.path(root, "renv", "activate.R"))) {
     return(paste(
-      paste0("{.file ", escape_braces(study), "}"),
+      paste0("{.file ", escape_braces(root), "}"),
       "has no study library yet: run",
       "{.fn hvtiR::setup} here with its Study Tracker title and ID, then",
       "run it again."
@@ -459,6 +464,12 @@ open_project_hint <- function(study = enclosing_study()) {
     "Open the study's project: double-click its {.file .Rproj} file in the",
     "Files pane (or File > Open Project), then run it again."
   )
+}
+
+#' [project_candidate()], or `NULL` when the working directory is gone
+#' @noRd
+safe_project_candidate <- function() {
+  tryCatch(project_candidate(), error = function(e) NULL)
 }
 
 #' Is this session's library the active study project's?
@@ -482,12 +493,14 @@ in_study_library <- function(project = Sys.getenv("RENV_PROJECT", ""),
 #' @param project The `RENV_PROJECT` environment variable, possibly `""`.
 #' @param library The session's first library.
 #' @param study The enclosing study root, or `NULL`.
+#' @param candidate The project folder `setup()` would adopt, or `NULL`.
 #' @return `project`, invisibly.
 #' @noRd
 require_study_library <- function(command,
                                   project = Sys.getenv("RENV_PROJECT", ""),
                                   library = session_library(),
-                                  study = enclosing_study()) {
+                                  study = enclosing_study(),
+                                  candidate = safe_project_candidate()) {
   if (in_study_library(project, library)) return(invisible(project))
   cli::cli_abort(c(
     paste0(
@@ -495,8 +508,10 @@ require_study_library <- function(command,
       "install into your personal library, {.file {library}}. hvtiR installs ",
       "only into a study's library."
     ),
-    i = open_project_hint(study),
-    if (is.null(study)) c(i = "A new study starts with {.fn hvtiR::setup}.")
+    i = open_project_hint(study, candidate),
+    if (is.null(study) && is.null(candidate)) {
+      c(i = "A new study starts with {.fn hvtiR::setup}.")
+    }
   ))
 }
 

@@ -61,6 +61,23 @@ test_that("a study with no renv library is sent to setup(), not its .Rproj", {
   expect_no_match(msg, "outside any project")
 })
 
+test_that("a wizard project with no _study.yml is sent to setup()", {
+  # Discovery, not a passed-in study: the project folder holds a .Rproj and
+  # nothing else, so enclosing_study() finds no _study.yml.
+  proj <- withr::local_tempdir()
+  file.create(file.path(proj, "2020.Rproj"))
+  withr::local_dir(proj)
+  local_mocked_bindings(active_project = function() NULL)
+  msg <- tryCatch(
+    require_study_library("update", project = "", library = "/home/u/R"),
+    error = conditionMessage
+  )
+  expect_match(msg, "no study library yet")
+  expect_match(msg, "setup()", fixed = TRUE)
+  expect_no_match(msg, "double-click")
+  expect_no_match(msg, "outside any project")
+})
+
 test_that("a study with renv is sent to its .Rproj, with no setup() line", {
   study <- withr::local_tempdir()
   file.create(file.path(study, "lung.Rproj"))
