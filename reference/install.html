@@ -11,7 +11,7 @@ use update() to install only what is missing or out of date."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">hvtiR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.3.10</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.3.11</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -81,8 +81,9 @@ invisibly.</p>
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>It installs only into a project's library: a study's, or another renv
 project's. In a session whose library is your personal one it stops before
-installing anything and names the <code>.Rproj</code> to open. A new study starts
-with <code><a href="setup.html">setup()</a></code> instead, run outside any project.</p>
+installing anything and says what to do: open the study's <code>.Rproj</code>, or,
+in a study or project folder with no renv library yet, run
+<code><a href="setup.html">setup()</a></code> there.</p>
 <p>Members are installed from GitHub rather than CRAN because GitHub is where
 family releases land first. CRAN is a downstream republication for members
 that are published there.</p>

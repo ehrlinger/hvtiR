@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">hvtiR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.3.10</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.3.11</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -46,6 +46,13 @@
       <small>Source: <a href="https://github.com/ehrlinger/hvtiR/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.3.11" id="hvtir-1311">hvtiR 1.3.11<a class="anchor" aria-label="anchor" href="#hvtir-1311"></a></h2>
+<ul><li><p>The catalog marks <code>TemporalHazard</code> 1.3.1 on <code>main</code> as ahead of CRAN (1.3.0) by intent (<code>dev_ahead</code> is <code>expected</code>): 1.3.1 is awaiting CRAN acceptance. The mark is cleared once CRAN carries 1.3.1.</p></li>
+<li><p><code><a href="../reference/update.html">update()</a></code>, <code><a href="../reference/install.html">install()</a></code>, <code><a href="../reference/status.html">status()</a></code> and <code><a href="../reference/doctor.html">doctor()</a></code> no longer tell a user in a study, or in a project folder with no <code>_study.yml</code> yet (one made with RStudio’s New Project wizard), that has no renv library to open its <code>.Rproj</code>. Opening it changes nothing, because there is no library to activate; they now say to run <code><a href="../reference/setup.html">setup()</a></code> there instead. The line “A new study starts with <code><a href="../reference/setup.html">setup()</a></code>” appears only when neither a study nor a project folder is found, and no longer says “run outside any project”: read straight after the error, it was being taken as the fix.</p></li>
+<li><p>Catalog versions refreshed from <code>main</code>: <code>hvtiRlifetables</code> dev 0.1.7 to 0.1.8. The catalog ships in the package and is published as <code>members.json</code>, so its recorded versions are content rather than bookkeeping.</p></li>
+<li><p><code><a href="../reference/install.html">install()</a></code>’s help page says what its guard tells you instead of saying <code><a href="../reference/setup.html">setup()</a></code> runs “outside any project”: open the study’s <code>.Rproj</code>, or, in a study or project folder with no renv library yet, run <code><a href="../reference/setup.html">setup()</a></code> there.</p></li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.3.10" id="hvtir-1310">hvtiR 1.3.10<a class="anchor" aria-label="anchor" href="#hvtir-1310"></a></h2>
 <ul><li><p>The <code>hvtiR</code> vignette says which members need R 4.4.0: every one but <code>TemporalHazard</code> and <code>ggRandomForests</code>, not only <code>ggRandomForests</code> and <code>hvtiRlifetables</code>.</p></li>

@@ -61,7 +61,7 @@ scripting.
 ``` r
 # Offline: reports what is installed without contacting GitHub
 status(remote = FALSE)
-#> hvtiR 1.3.10 - 12 members
+#> hvtiR 1.3.11 - 12 members
 #> ✖ Not in a study project: `hvtiR::update()` would install into your personal library, so it stops.
 #> ℹ Open the study's project: double-click its .Rproj file in the Files pane (or File > Open Project), then run it again.
 #> 

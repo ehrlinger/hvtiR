@@ -27,10 +27,9 @@ The character vector of `"owner/repo"` specs passed to pak, invisibly.
 
 It installs only into a project's library: a study's, or another renv
 project's. In a session whose library is your personal one it stops
-before installing anything and names the `.Rproj` to open. A new study
-starts with
-[`setup()`](https://ehrlinger.github.io/hvtiR/reference/setup.md)
-instead, run outside any project.
+before installing anything and says what to do: open the study's
+`.Rproj`, or, in a study or project folder with no renv library yet, run
+[`setup()`](https://ehrlinger.github.io/hvtiR/reference/setup.md) there.
 
 Members are installed from GitHub rather than CRAN because GitHub is
 where family releases land first. CRAN is a downstream republication for
