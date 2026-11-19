@@ -36,11 +36,60 @@ test_that("require_study_library stops on a library outside the project", {
 test_that("require_study_library names the study's own .Rproj", {
   study <- withr::local_tempdir()
   file.create(file.path(study, "lung.Rproj"))
+  dir.create(file.path(study, "renv"))
+  file.create(file.path(study, "renv", "activate.R"))
   expect_error(
     require_study_library("update", project = "", library = "/home/u/R",
                           study = study),
     "lung\\.Rproj"
   )
+})
+
+test_that("a study with no renv library is sent to setup(), not its .Rproj", {
+  # 2026-11-18: a study made with RStudio's New Project wizard had its .Rproj
+  # open but no renv yet, and the hint to double-click that .Rproj led nowhere.
+  study <- withr::local_tempdir()
+  file.create(file.path(study, "2020.Rproj"))
+  msg <- tryCatch(
+    require_study_library("update", project = "", library = "/home/u/R",
+                          study = study),
+    error = conditionMessage
+  )
+  expect_match(msg, "no study library yet")
+  expect_match(msg, "setup()", fixed = TRUE)
+  expect_no_match(msg, "double-click")
+  expect_no_match(msg, "outside any project")
+})
+
+test_that("a wizard project with no _study.yml is sent to setup()", {
+  # Discovery, not a passed-in study: the project folder holds a .Rproj and
+  # nothing else, so enclosing_study() finds no _study.yml.
+  proj <- withr::local_tempdir()
+  file.create(file.path(proj, "2020.Rproj"))
+  withr::local_dir(proj)
+  local_mocked_bindings(active_project = function() NULL)
+  msg <- tryCatch(
+    require_study_library("update", project = "", library = "/home/u/R"),
+    error = conditionMessage
+  )
+  expect_match(msg, "no study library yet")
+  expect_match(msg, "setup()", fixed = TRUE)
+  expect_no_match(msg, "double-click")
+  expect_no_match(msg, "outside any project")
+})
+
+test_that("a study with renv is sent to its .Rproj, with no setup() line", {
+  study <- withr::local_tempdir()
+  file.create(file.path(study, "lung.Rproj"))
+  dir.create(file.path(study, "renv"))
+  file.create(file.path(study, "renv", "activate.R"))
+  msg <- tryCatch(
+    require_study_library("update", project = "", library = "/home/u/R",
+                          study = study),
+    error = conditionMessage
+  )
+  expect_match(msg, "lung.Rproj", fixed = TRUE)
+  expect_no_match(msg, "setup()", fixed = TRUE)
 })
 
 test_that("update() and install() stop before pak outside a study project", {
