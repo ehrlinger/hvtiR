@@ -1,5 +1,29 @@
 Package: hvtiR
-Version: 1.3.10
+Version: 1.3.11
+
+# hvtiR 1.3.11
+
+* The catalog marks `TemporalHazard` 1.3.1 on `main` as ahead of CRAN (1.3.0)
+  by intent (`dev_ahead` is `expected`): 1.3.1 is awaiting CRAN acceptance. The
+  mark is cleared once CRAN carries 1.3.1.
+
+- `update()`, `install()`, `status()` and `doctor()` no longer tell a user in a
+  study, or in a project folder with no `_study.yml` yet (one made with
+  RStudio's New Project wizard), that has no renv library to open its
+  `.Rproj`. Opening it changes nothing, because there is no library to
+  activate; they now say to run `setup()` there instead. The line "A new study
+  starts with `setup()`" appears only when neither a study nor a project
+  folder is found, and no longer says "run outside any project": read
+  straight after the error, it was being taken as the fix.
+
+* Catalog versions refreshed from `main`: `hvtiRlifetables` dev 0.1.7 to
+  0.1.8. The catalog ships in the package and is published as
+  `members.json`, so its recorded versions are content rather than
+  bookkeeping.
+
+- `install()`'s help page says what its guard tells you instead of saying
+  `setup()` runs "outside any project": open the study's `.Rproj`, or, in a
+  study or project folder with no renv library yet, run `setup()` there.
 
 # hvtiR 1.3.10
 
