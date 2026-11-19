@@ -23,8 +23,9 @@ use \code{\link[=update]{update()}} to install only what is missing or out of da
 \details{
 It installs only into a project's library: a study's, or another renv
 project's. In a session whose library is your personal one it stops before
-installing anything and names the \code{.Rproj} to open. A new study starts
-with \code{\link[=setup]{setup()}} instead, run outside any project.
+installing anything and says what to do: open the study's \code{.Rproj}, or,
+in a study or project folder with no renv library yet, run
+\code{\link[=setup]{setup()}} there.
 
 Members are installed from GitHub rather than CRAN because GitHub is where
 family releases land first. CRAN is a downstream republication for members
