@@ -11,6 +11,6 @@ hvtiRtemplates,Suggests,ggRandomForests,>=,4.0.0,4.0.0,TRUE
 hvtiRtemplates,Suggests,hvtiPlotR,>=,2.8.23,2.8.24,TRUE
 hvtiRtemplates,Suggests,hvtiRbootstrap,>=,0.9.8,0.9.8,TRUE
 hvtiRtemplates,Suggests,hvtiRdatabuild,>=,0.3.5,0.3.7,TRUE
-hvtiRtemplates,Suggests,hvtiRlifetables,>=,0.1.2,0.1.7,TRUE
+hvtiRtemplates,Suggests,hvtiRlifetables,>=,0.1.2,0.1.8,TRUE
 hvtiRtemplates,Suggests,hvtiRpropensity,>=,0.2.3,0.2.3,TRUE
 hvtiRtemplates,Suggests,hvtiRtables,>=,1.0.13,1.0.14,TRUE
