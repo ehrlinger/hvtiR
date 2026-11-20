@@ -261,6 +261,9 @@ print.hvtiR_status <- function(x, ...) {
     }
     # First, because update() refuses to run until it is fixed.
     if (!in_study_library()) cli::cli_verbatim(not_in_project_lines())
+    # Also before the table: update() stops while the installer is behind.
+    self_first <- self_needs_report && identical(self$state, "stale")
+    if (self_first) report_self(self)
     cli::cli_verbatim("")
 
     for (i in seq_len(nrow(x))) {
@@ -275,11 +278,16 @@ print.hvtiR_status <- function(x, ...) {
     }
 
     cli::cli_verbatim("")
-    if (self_needs_report) {
+    if (self_needs_report && !self_first) {
       report_self(self)
     }
 
-    if (stale > 0L) {
+    if (stale > 0L && self_first) {
+      cli::cli_alert_info(paste0(
+        "{stale} member{?s} need{?s/} updating. Update hvtiR first, restart ",
+        "R, then run {.run hvtiR::update()}."
+      ))
+    } else if (stale > 0L) {
       cli::cli_alert_info(
         "{stale} member{?s} need{?s/} updating. Run {.run hvtiR::update()}."
       )
