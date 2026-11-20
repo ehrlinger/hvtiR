@@ -4,12 +4,17 @@
 \alias{update}
 \title{Update out-of-date hvtiR members}
 \usage{
-update(force = .Platform$OS.type != "windows")
+update(force = .Platform$OS.type != "windows", stale_installer = FALSE)
 }
 \arguments{
 \item{force}{Bypass the loaded-namespace guard. \code{TRUE} by default except
 on Windows, where overwriting a loaded package leaves a broken library.
 See \code{\link[=install]{install()}}.}
+
+\item{stale_installer}{Update members even when hvtiR itself is behind
+GitHub, or newer on disk than the copy this session runs. \code{FALSE} by
+default, so an old installer stops rather than resolving members against
+its own release's registry.}
 }
 \value{
 The character vector of \code{"owner/repo"} specs passed to pak,
@@ -32,10 +37,15 @@ already current. Without this, installing e.g. just \code{hvtiRlifetables}
 sends pak to CRAN to resolve its \code{TemporalHazard} import, where the
 required version may not exist.
 
-\code{hvtiR} itself is checked by \code{\link[=status]{status()}} and reported here, but never
-installed. \code{update()} reuses that check; calling it means the installer's
-namespace is already loaded, so it cannot update itself. When the installer
-is behind, the report names \code{pak::pak("ehrlinger/hvtiR")} as the remedy.
+\code{hvtiR} itself is checked by \code{\link[=status]{status()}}, but never installed:
+calling \code{update()} means the installer's namespace is already loaded, so it
+cannot update itself. When the installer is behind GitHub, \code{update()} stops
+before installing any member and names \code{pak::pak("ehrlinger/hvtiR")}. An
+old installer carries its own release's registry and dependency edges, so
+members updated through it can be resolved against a stale map. Update
+hvtiR, restart R, then run \code{update()} again. It also stops when hvtiR was
+updated on disk but the session still runs the older copy, which is what
+happens until R is restarted.
 
 On Linux and macOS \code{update()} installs over a member that is already
 loaded, then tells you to restart R: the session keeps running the old copy

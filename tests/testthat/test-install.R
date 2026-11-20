@@ -396,14 +396,92 @@ test_that("update says how to upgrade hvtiR when the installer is behind", {
     }
   )
 
-  msgs <- character(0)
-  withCallingHandlers(update(), message = function(m) {
-    msgs <<- c(msgs, conditionMessage(m))
-    invokeRestart("muffleMessage")
-  })
+  err <- expect_error(update(), "hvtiR 1.0.0 is behind 1.1.0", fixed = TRUE)
+  expect_match(conditionMessage(err), "ehrlinger/hvtiR", fixed = TRUE)
+  expect_match(conditionMessage(err), "no members were updated", fixed = TRUE)
+  expect_match(conditionMessage(err), "stale_installer = TRUE", fixed = TRUE)
+})
 
-  expect_true(any(grepl("1.1.0", msgs, fixed = TRUE)))
-  expect_true(any(grepl("ehrlinger/hvtiR", msgs, fixed = TRUE)))
+test_that("update stops before installing anything when hvtiR is behind", {
+  local_mocked_bindings(
+    status = function(remote = TRUE) {
+      st <- data.frame(
+        package = "hvtiRutilities", repo = "ehrlinger/hvtiRutilities",
+        installed = "1.0.0", latest = "1.1.0", status = "stale",
+        stringsAsFactors = FALSE
+      )
+      class(st) <- c("hvtiR_status", "data.frame")
+      attr(st, "self") <- list(
+        installed = "1.0.0", latest = "1.1.0", state = "stale"
+      )
+      st
+    },
+    pak_install = function(specs) stop("must not install")
+  )
+
+  expect_error(update(), "no members were updated", fixed = TRUE)
+})
+
+test_that("update stops when hvtiR is newer on disk than the running copy", {
+  local_mocked_bindings(
+    status = function(remote = TRUE) {
+      st <- data.frame(
+        package = "hvtiRutilities", repo = "ehrlinger/hvtiRutilities",
+        installed = "1.0.0", latest = "1.1.0", status = "stale",
+        stringsAsFactors = FALSE
+      )
+      class(st) <- c("hvtiR_status", "data.frame")
+      # pak has replaced hvtiR on disk, so the disk copy reads current.
+      attr(st, "self") <- list(
+        installed = "1.1.0", latest = "1.1.0", state = "ok"
+      )
+      st
+    },
+    running_version = function() "1.0.0",
+    pak_install = function(specs) stop("must not install")
+  )
+
+  err <- expect_error(update(), "runs hvtiR 1.0.0", fixed = TRUE)
+  expect_match(conditionMessage(err), "1.1.0 is installed", fixed = TRUE)
+  expect_match(conditionMessage(err), "Restart R", fixed = TRUE)
+})
+
+test_that("running_version reads the loaded namespace, not the disk", {
+  expect_identical(
+    running_version(),
+    unname(getNamespaceVersion("hvtiR"))
+  )
+})
+
+test_that("update can update members with a stale installer when asked", {
+  calls <- list()
+  local_mocked_bindings(
+    status = function(remote = TRUE) {
+      st <- data.frame(
+        package = "hvtiRutilities", repo = "ehrlinger/hvtiRutilities",
+        installed = "1.0.0", latest = "1.1.0", status = "stale",
+        stringsAsFactors = FALSE
+      )
+      class(st) <- c("hvtiR_status", "data.frame")
+      attr(st, "self") <- list(
+        installed = "1.0.0", latest = "1.1.0", state = "stale"
+      )
+      st
+    },
+    expand_targets = function(targets) targets,
+    check_loaded = function(targets, loaded = loadedNamespaces()) character(0),
+    pak_install = function(specs) {
+      calls[[length(calls) + 1L]] <<- specs
+      invisible(specs)
+    }
+  )
+
+  expect_message(
+    update(stale_installer = TRUE),
+    "hvtiR 1.0.0 is behind 1.1.0"
+  )
+  expect_length(calls, 1L)
+  expect_identical(calls[[1]], "ehrlinger/hvtiRutilities")
 })
 
 test_that("update reuses the hvtiR check performed by status", {
@@ -426,7 +504,7 @@ test_that("update reuses the hvtiR check performed by status", {
     pak_install = function(specs) stop("must not install")
   )
 
-  expect_message(update(), "hvtiR 1.0.0 is behind 1.1.0")
+  expect_error(update(), "hvtiR 1.0.0 is behind 1.1.0", fixed = TRUE)
 })
 
 # A failed solve on an unmet floor --------------------------------------------

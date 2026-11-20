@@ -238,3 +238,20 @@ test_that("status says how to upgrade hvtiR when the installer is behind", {
   expect_output(print(st), "hvtiR 1.0.0 is behind 1.1.0")
   expect_output(print(st), "pak::pak\\(\\\"ehrlinger/hvtiR\\\"\\)")
 })
+
+test_that("status leads with a stale installer, before the member table", {
+  local_mocked_bindings(
+    installed_version = function(pkg) "1.0.0",
+    remote_version = function(repo, ref = "main") {
+      if (repo == SELF_REPO) "1.1.0" else "2.0.0"
+    }
+  )
+
+  out <- utils::capture.output(print(status()))
+  behind <- grep("hvtiR 1.0.0 is behind 1.1.0", out, fixed = TRUE)
+  first_row <- grep("hvtiRutilities", out, fixed = TRUE)[1]
+
+  expect_length(behind, 1L)
+  expect_lt(behind, first_row)
+  expect_true(any(grepl("Update hvtiR first", out, fixed = TRUE)))
+})

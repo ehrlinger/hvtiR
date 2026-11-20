@@ -314,6 +314,19 @@ report_self <- function(self) {
   invisible(NULL)
 }
 
+#' The hvtiR version this session runs
+#'
+#' `installed_version()` reads `DESCRIPTION` from disk, which pak replaces in
+#' place on Linux and macOS, while the loaded namespace keeps the version and
+#' registry it was loaded with until R restarts. A seam, so tests can set it.
+#'
+#' @return A version string, or `NA_character_` if hvtiR is not loaded.
+#' @noRd
+running_version <- function() {
+  if (!isNamespaceLoaded("hvtiR")) return(NA_character_)
+  unname(getNamespaceVersion("hvtiR"))
+}
+
 #' Warn when the active study's library holds debris
 #'
 #' Two kinds ([library_debris()]): links into a renv cache this user cannot
@@ -545,10 +558,15 @@ not_in_project_lines <- function() {
 #' sends pak to CRAN to resolve its `TemporalHazard` import, where the
 #' required version may not exist.
 #'
-#' `hvtiR` itself is checked by [hvtiR::status()] and reported here, but never
-#' installed. `update()` reuses that check; calling it means the installer's
-#' namespace is already loaded, so it cannot update itself. When the installer
-#' is behind, the report names `pak::pak("ehrlinger/hvtiR")` as the remedy.
+#' `hvtiR` itself is checked by [hvtiR::status()], but never installed:
+#' calling `update()` means the installer's namespace is already loaded, so it
+#' cannot update itself. When the installer is behind GitHub, `update()` stops
+#' before installing any member and names `pak::pak("ehrlinger/hvtiR")`. An
+#' old installer carries its own release's registry and dependency edges, so
+#' members updated through it can be resolved against a stale map. Update
+#' hvtiR, restart R, then run `update()` again. It also stops when hvtiR was
+#' updated on disk but the session still runs the older copy, which is what
+#' happens until R is restarted.
 #'
 #' On Linux and macOS `update()` installs over a member that is already
 #' loaded, then tells you to restart R: the session keeps running the old copy
@@ -560,6 +578,10 @@ not_in_project_lines <- function() {
 #' @param force Bypass the loaded-namespace guard. `TRUE` by default except
 #'   on Windows, where overwriting a loaded package leaves a broken library.
 #'   See [hvtiR::install()].
+#' @param stale_installer Update members even when hvtiR itself is behind
+#'   GitHub, or newer on disk than the copy this session runs. `FALSE` by
+#'   default, so an old installer stops rather than resolving members against
+#'   its own release's registry.
 #' @return The character vector of `"owner/repo"` specs passed to pak,
 #'   invisibly. Empty if nothing needed updating. If loaded members prevent
 #'   installation, the empty vector has a `blocked` attribute with their names.
@@ -568,12 +590,46 @@ not_in_project_lines <- function() {
 #' \dontrun{
 #' update()
 #' }
-update <- function(force = .Platform$OS.type != "windows") {
+update <- function(force = .Platform$OS.type != "windows",
+                   stale_installer = FALSE) {
   require_study_library("update")
   st <- status(remote = TRUE)
 
   self <- attr(st, "self", exact = TRUE)
   if (is.null(self)) self <- self_check()
+  if (identical(self$state, "stale") && !isTRUE(stale_installer)) {
+    cli::cli_abort(c(
+      paste0(
+        "hvtiR {self$installed} is behind {self$latest} on GitHub, so no ",
+        "members were updated."
+      ),
+      i = paste0(
+        "Update the installer with {.code pak::pak(\"ehrlinger/hvtiR\")}, ",
+        "restart R, then run {.run hvtiR::update()}."
+      ),
+      i = paste0(
+        "Pass {.code stale_installer = TRUE} to update members with this ",
+        "installer anyway."
+      )
+    ))
+  }
+  running <- running_version()
+  restart_first <- !is.na(running) && !is.na(self$installed) &&
+    package_version(running) < package_version(self$installed)
+  if (restart_first && !isTRUE(stale_installer)) {
+    # pak updated hvtiR on disk, but this session still runs the old registry.
+    cli::cli_abort(c(
+      paste0(
+        "This session runs hvtiR {running}, but {self$installed} is ",
+        "installed, so no members were updated."
+      ),
+      i = "Restart R, then run {.run hvtiR::update()}.",
+      i = paste0(
+        "Pass {.code stale_installer = TRUE} to update members with the ",
+        "running installer anyway."
+      )
+    ))
+  }
   report_self(self)
   targets <- st$package[st$status %in% c("missing", "stale")]
 
