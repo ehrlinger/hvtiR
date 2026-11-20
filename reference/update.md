@@ -11,7 +11,7 @@ reported as unchecked rather than silently treated as current.
 ## Usage
 
 ``` r
-update(force = .Platform$OS.type != "windows")
+update(force = .Platform$OS.type != "windows", stale_installer = FALSE)
 ```
 
 ## Arguments
@@ -22,6 +22,13 @@ update(force = .Platform$OS.type != "windows")
   Windows, where overwriting a loaded package leaves a broken library.
   See
   [`install()`](https://ehrlinger.github.io/hvtiR/reference/install.md).
+
+- stale_installer:
+
+  Update members even when hvtiR itself is behind GitHub, or newer on
+  disk than the copy this session runs. `FALSE` by default, so an old
+  installer stops rather than resolving members against its own
+  release's registry.
 
 ## Value
 
@@ -40,11 +47,16 @@ sends pak to CRAN to resolve its `TemporalHazard` import, where the
 required version may not exist.
 
 `hvtiR` itself is checked by
-[`status()`](https://ehrlinger.github.io/hvtiR/reference/status.md) and
-reported here, but never installed. `update()` reuses that check;
-calling it means the installer's namespace is already loaded, so it
-cannot update itself. When the installer is behind, the report names
-`pak::pak("ehrlinger/hvtiR")` as the remedy.
+[`status()`](https://ehrlinger.github.io/hvtiR/reference/status.md), but
+never installed: calling `update()` means the installer's namespace is
+already loaded, so it cannot update itself. When the installer is behind
+GitHub, `update()` stops before installing any member and names
+`pak::pak("ehrlinger/hvtiR")`. An old installer carries its own
+release's registry and dependency edges, so members updated through it
+can be resolved against a stale map. Update hvtiR, restart R, then run
+`update()` again. It also stops when hvtiR was updated on disk but the
+session still runs the older copy, which is what happens until R is
+restarted.
 
 On Linux and macOS `update()` installs over a member that is already
 loaded, then tells you to restart R: the session keeps running the old

@@ -68,7 +68,7 @@ unchecked rather than silently treated as current.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">update</span><span class="op">(</span>force <span class="op">=</span> <span class="va">.Platform</span><span class="op">$</span><span class="va">OS.type</span> <span class="op">!=</span> <span class="st">"windows"</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">update</span><span class="op">(</span>force <span class="op">=</span> <span class="va">.Platform</span><span class="op">$</span><span class="va">OS.type</span> <span class="op">!=</span> <span class="st">"windows"</span>, stale_installer <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -79,6 +79,13 @@ unchecked rather than silently treated as current.</p>
 <dd><p>Bypass the loaded-namespace guard. <code>TRUE</code> by default except
 on Windows, where overwriting a loaded package leaves a broken library.
 See <code><a href="install.html">install()</a></code>.</p></dd>
+
+
+<dt id="arg-stale-installer">stale_installer<a class="anchor" aria-label="anchor" href="#arg-stale-installer"></a></dt>
+<dd><p>Update members even when hvtiR itself is behind
+GitHub, or newer on disk than the copy this session runs. <code>FALSE</code> by
+default, so an old installer stops rather than resolving members against
+its own release's registry.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -95,10 +102,15 @@ dependency is sent to pak alongside it even when that dependency is
 already current. Without this, installing e.g. just <code>hvtiRlifetables</code>
 sends pak to CRAN to resolve its <code>TemporalHazard</code> import, where the
 required version may not exist.</p>
-<p><code>hvtiR</code> itself is checked by <code><a href="status.html">status()</a></code> and reported here, but never
-installed. <code>update()</code> reuses that check; calling it means the installer's
-namespace is already loaded, so it cannot update itself. When the installer
-is behind, the report names <code>pak::pak("ehrlinger/hvtiR")</code> as the remedy.</p>
+<p><code>hvtiR</code> itself is checked by <code><a href="status.html">status()</a></code>, but never installed:
+calling <code>update()</code> means the installer's namespace is already loaded, so it
+cannot update itself. When the installer is behind GitHub, <code>update()</code> stops
+before installing any member and names <code>pak::pak("ehrlinger/hvtiR")</code>. An
+old installer carries its own release's registry and dependency edges, so
+members updated through it can be resolved against a stale map. Update
+hvtiR, restart R, then run <code>update()</code> again. It also stops when hvtiR was
+updated on disk but the session still runs the older copy, which is what
+happens until R is restarted.</p>
 <p>On Linux and macOS <code>update()</code> installs over a member that is already
 loaded, then tells you to restart R: the session keeps running the old copy
 until you do. On Windows it cannot, so there <code>update()</code> warns and installs
