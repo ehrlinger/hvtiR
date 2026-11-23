@@ -1775,20 +1775,62 @@ test_that("the fresh R itself never starts another", {
   expect_false(started)
 })
 
+test_that("relative paths reach the fresh R as this session's", {
+  here <- withr::local_tempdir()
+  withr::local_dir(here)
+  log <- new.env()
+  log$result <- list()
+  local_mocked_bindings(
+    renv_state = function(...) "active",
+    run_outside_project = fresh_r(log),
+    open_project = function(root) NULL,
+    set_workspace_prefs = function() NULL
+  )
+  withr::local_envvar(RENV_PROJECT = "/studies/demo", HVTIR_SETUP_CHILD = NA)
+  setup("A study", 7L, root = "new-study", adopt = TRUE, template_dir = "tpl")
+  run <- paste(log$scripts[[2L]], collapse = " ")
+  base <- normalizePath(here, winslash = "/")
+  expect_match(run, paste0('root = "', base, '/new-study"'), fixed = TRUE)
+  expect_match(run, paste0('template_dir = "', base, '/tpl"'), fixed = TRUE)
+})
+
+test_that("on Windows a session holding the study's DLLs is not rerun", {
+  log <- new.env()
+  local_mocked_bindings(
+    renv_state = function(...) "active",
+    run_outside_project = fresh_r(log),
+    holds_study_dlls = function(target) TRUE
+  )
+  withr::local_envvar(RENV_PROJECT = "/studies/demo", HVTIR_SETUP_CHILD = NA)
+  err <- tryCatch(setup("A study", 7L), error = conditionMessage)
+  expect_match(err, "On Windows", fixed = TRUE)
+  expect_match(err, "Close Project", fixed = TRUE)
+  expect_length(log$scripts, 0L)
+})
+
+test_that("holds_study_dlls looks at Windows only, and at DLLs in the study", {
+  local_mocked_bindings(os_type = function() "unix")
+  expect_false(holds_study_dlls(R.home()))
+  local_mocked_bindings(os_type = function() "windows")
+  expect_false(holds_study_dlls(withr::local_tempdir()))
+  # base R's own DLLs sit under R.home().
+  expect_true(holds_study_dlls(R.home()))
+})
+
 test_that("the fresh R gets the variables renv saved, not the project's", {
   withr::local_envvar(
     RENV_PROJECT = "/studies/demo",
     R_LIBS_USER = "/studies/demo/renv/library",
     RENV_DEFAULT_R_LIBS_USER = "/home/me/R/library",
     R_PROFILE_USER = "/studies/demo/profile",
-    RENV_DEFAULT_R_PROFILE_USER = NA,
+    RENV_DEFAULT_R_PROFILE_USER = "<NA>",
     RENV_DEFAULT_R_LIBS = NA, RENV_DEFAULT_R_LIBS_SITE = NA,
     RENV_DEFAULT_R_PROFILE = NA, RENV_DEFAULT_R_ENVIRON = NA,
     RENV_DEFAULT_R_ENVIRON_USER = NA
   )
   env <- outside_project_env()
   expect_identical(env[["R_LIBS_USER"]], "/home/me/R/library")
-  # renv saved no value, so the variable was unset before it activated.
+  # renv's "<NA>": the variable was unset before it activated.
   expect_true(is.na(env[["R_PROFILE_USER"]]))
   expect_true(is.na(env[["RENV_PROJECT"]]))
   expect_true(is.na(env[["RENV_DEFAULT_R_LIBS_USER"]]))

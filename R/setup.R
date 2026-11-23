@@ -108,8 +108,8 @@ run_in_study <- function(expr, root) {
 
 #' The variables a fresh R outside any project gets
 #'
-#' renv saves each startup variable it changes as `RENV_DEFAULT_<key>` when it
-#' activates, and none when the variable was unset. The fresh R gets those
+#' renv saves each startup variable as `RENV_DEFAULT_<key>` when it
+#' activates, writing `"<NA>"` for one that was unset. The fresh R gets those
 #' saved values back, so it starts on the user's own libraries, not the
 #' study's. `HVTIR_SETUP_CHILD` marks it, so it never starts another.
 #' @return A named character vector; `NA` means unset.
@@ -123,6 +123,9 @@ outside_project_env <- function() {
   values <- Sys.getenv(saved, unset = NA, names = FALSE)
   env <- c(RENV_PROJECT = NA_character_, HVTIR_SETUP_CHILD = "1")
   if (all(is.na(values))) return(env)
+  # renv's own marker for "was unset"; set literally it would hide the user's
+  # profile.
+  values[values %in% "<NA>"] <- NA_character_
   names(values) <- keys
   cleared <- rep(NA_character_, length(saved))
   names(cleared) <- saved
@@ -180,6 +183,33 @@ write_script <- function(lines, path) {
   con <- file(path, open = "w", encoding = "UTF-8")
   on.exit(close(con), add = TRUE)
   writeLines(lines, con)
+}
+
+#' Make a path absolute against this session's working directory
+#'
+#' The fresh R runs in a folder of its own, where a relative path would mean
+#' somewhere else.
+#' @noRd
+absolute_path <- function(path) {
+  path <- path.expand(path)
+  if (!grepl("^([/\\\\]|[A-Za-z]:)", path)) path <- file.path(getwd(), path)
+  normalizePath(path, winslash = "/", mustWork = FALSE)
+}
+
+#' `.Platform$OS.type`, as a seam the tests replace
+#' @noRd
+os_type <- function() .Platform$OS.type
+
+#' Whether this session holds a DLL open from inside the study, on Windows
+#'
+#' Windows locks a loaded DLL, and this session stays alive while the fresh R
+#' runs, so the fresh R could not replace that package (see [install()]).
+#' @param target The study root.
+#' @noRd
+holds_study_dlls <- function(target) {
+  if (os_type() != "windows") return(FALSE)
+  paths <- vapply(getLoadedDLLs(), function(d) d[["path"]], character(1))
+  any(vapply(paths, path_within, logical(1), dir = target))
 }
 
 #' Whether a fresh R outside any project can load hvtiR
@@ -1523,8 +1553,9 @@ adopt_before_rerun <- function(target, adopt) {
 #' `setup()` replaces packages this session has loaded and would install into
 #' the study library through this session. So from inside a project it runs
 #' itself again in a fresh R outside any project, and returns what that
-#' returned. It stops instead when that fresh R cannot load hvtiR, or when
-#' this session is already that fresh R.
+#' returned. It stops instead when that fresh R cannot load hvtiR, when this
+#' session is already that fresh R, or on Windows when this session holds a
+#' DLL from the study's library open.
 #' @param root The study root, or `NULL`.
 #' @param study,study_tracker_id,adopt,workspace_prefs,upgrade As passed to
 #'   [setup()], quoted back in the command the fresh R runs.
@@ -1545,6 +1576,11 @@ guard_session <- function(root, study, study_tracker_id,
     Sys.getenv("RENV_PROJECT")
   } else {
     guess
+  }
+  # The fresh R runs elsewhere, so relative paths are fixed here.
+  target <- absolute_path(target)
+  if (is.character(dots[["template_dir"]])) {
+    dots$template_dir <- absolute_path(dots[["template_dir"]])
   }
   # Read by cli's glue below, which lintr cannot see.
   # nolint next: object_usage_linter.
@@ -1567,7 +1603,8 @@ guard_session <- function(root, study, study_tracker_id,
     )
   }
   child <- nzchar(Sys.getenv("HVTIR_SETUP_CHILD", ""))
-  if (!child && fresh_r_loads_hvtir()) {
+  locked <- !child && holds_study_dlls(target)
+  if (!child && !locked && fresh_r_loads_hvtir()) {
     adopt <- adopt_before_rerun(target, adopt)
     cmd <- setup_command(
       target, study, study_tracker_id, adopt, workspace_prefs, upgrade, dots
@@ -1579,7 +1616,12 @@ guard_session <- function(root, study, study_tracker_id,
   }
   cli::cli_abort(c(
     reason,
-    if (!child) {
+    if (locked) {
+      c(x = paste(
+        "On Windows this session holds the study library's compiled",
+        "packages open, so a fresh R session could not replace them."
+      ))
+    } else if (!child) {
       c(x = "A fresh R session outside any project cannot load {.pkg hvtiR}.")
     },
     i = "Run it from a session started outside any project: {.code {cmd}}",
