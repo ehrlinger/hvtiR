@@ -455,6 +455,39 @@ If you are coming from SAS,
 [From SAS descriptive jobs to R](https://ehrlinger.github.io/hvtiRtemplates/articles/sas-to-r-descriptive.html)
 sets the descriptive templates beside the `tp.dc.*` jobs they replace.
 
+## Try the family without a study {#scratch}
+
+`install()` and `update()` refuse to install into your personal library, and
+they say so. They accept any renv project, though, so to test the family, or a
+package branch against it, without touching a study, make a scratch project:
+
+```r
+dir <- path.expand("~/hvtiR-scratch")
+dir.create(dir)
+setwd(dir)
+renv::init(bare = TRUE)   # activates the project, with an empty library
+```
+
+In RStudio, R restarts inside the project; in a terminal, the project is
+active in the same session. Then:
+
+```r
+renv::install(c("pak", "ehrlinger/hvtiR"))
+hvtiR::install()
+```
+
+The scratch library starts empty, so hvtiR and pak go in first. Keep the
+folder out of `tempdir()`: R deletes it if the session restarts.
+On lri, put it in your home directory, not on a study share.
+
+When you are done, close the session and delete the folder from outside it:
+
+```r
+unlink(path.expand("~/hvtiR-scratch"), recursive = TRUE)
+```
+
+Your personal library is never touched, and no study's lockfile moves.
+
 ## Common errors {#common-errors}
 
 R's error messages are terse. These are the ones new users of the family meet

@@ -27,6 +27,18 @@ installing anything and says what to do: open the study's \code{.Rproj}, or,
 in a study or project folder with no renv library yet, run
 \code{\link[=setup]{setup()}} there.
 
+Any renv project counts, so to try the family without a study, install into
+a scratch project and delete it afterwards. Keep it out of \code{\link[=tempdir]{tempdir()}},
+which R removes if \code{renv::init()} restarts the session:
+
+\if{html}{\out{<div class="sourceCode r">}}\preformatted{dir <- path.expand("~/hvtiR-scratch")
+dir.create(dir)
+setwd(dir)
+renv::init(bare = TRUE)        # RStudio restarts R inside the project
+renv::install(c("pak", "ehrlinger/hvtiR"))
+hvtiR::install()
+}\if{html}{\out{</div>}}
+
 Members are installed from GitHub rather than CRAN because GitHub is where
 family releases land first. CRAN is a downstream republication for members
 that are published there.

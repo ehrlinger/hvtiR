@@ -422,6 +422,19 @@ warn_shared_cache <- function() {
 #' in a study or project folder with no renv library yet, run
 #' [hvtiR::setup()] there.
 #'
+#' Any renv project counts, so to try the family without a study, install into
+#' a scratch project and delete it afterwards. Keep it out of [tempdir()],
+#' which R removes if `renv::init()` restarts the session:
+#'
+#' ```r
+#' dir <- path.expand("~/hvtiR-scratch")
+#' dir.create(dir)
+#' setwd(dir)
+#' renv::init(bare = TRUE)        # RStudio restarts R inside the project
+#' renv::install(c("pak", "ehrlinger/hvtiR"))
+#' hvtiR::install()
+#' ```
+#'
 #' Members are installed from GitHub rather than CRAN because GitHub is where
 #' family releases land first. CRAN is a downstream republication for members
 #' that are published there.
