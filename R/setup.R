@@ -1528,16 +1528,23 @@ setup_command <- function(root, study, study_tracker_id, adopt = FALSE,
 #' than ask whether to adopt a study that already has a `_study.yml`.
 #' @param target The study root.
 #' @param adopt As passed to [setup()].
+#' @param cleanup `cleanup` from the call's `...`, or `NULL`.
 #' @return `adopt`, or `TRUE` once confirmed.
 #' @noRd
-adopt_before_rerun <- function(target, adopt) {
+adopt_before_rerun <- function(target, adopt, cleanup = NULL) {
   if (isTRUE(adopt) || !is_interactive() ||
         !file.exists(file.path(target, "_study.yml"))) {
     return(adopt)
   }
   question <- paste0(
     target, " already has a _study.yml. ",
-    "Adopt it, adding only what is missing?"
+    "Adopt it, adding what is missing?",
+    if (!isFALSE(cleanup)) {
+      paste(
+        " Adopting deletes the tp.* files, binder.summaries.doc and exact",
+        "template copies it holds; pass cleanup = FALSE to keep them."
+      )
+    }
   )
   if (!isTRUE(ask_adopt_project(question))) {
     cli::cli_abort(
@@ -1605,7 +1612,7 @@ guard_session <- function(root, study, study_tracker_id,
   child <- nzchar(Sys.getenv("HVTIR_SETUP_CHILD", ""))
   locked <- !child && holds_study_dlls(target)
   if (!child && !locked && fresh_r_loads_hvtir()) {
-    adopt <- adopt_before_rerun(target, adopt)
+    adopt <- adopt_before_rerun(target, adopt, dots[["cleanup"]])
     cmd <- setup_command(
       target, study, study_tracker_id, adopt, workspace_prefs, upgrade, dots
     )

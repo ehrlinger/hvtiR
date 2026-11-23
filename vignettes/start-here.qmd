@@ -278,13 +278,14 @@ When the study already has a `_study.yml`, it first asks here, because the
 fresh session cannot:
 
 ```
-/path/to/study already has a _study.yml. Adopt it, adding only what is missing?
-(yes/No/cancel)
+/path/to/study already has a _study.yml. Adopt it, adding what is missing?
+Adopting deletes the tp.* files, binder.summaries.doc and exact template copies
+it holds; pass cleanup = FALSE to keep them. (yes/No/cancel)
 ```
 
-Type `yes` and press Enter. The question does not say so, but adopting deletes
-the files listed in [What adopting deletes](#what-adopting-deletes), as it does
-for a first setup. To keep them, add `cleanup = FALSE` to the call. When the
+Type `yes` and press Enter. Adopting deletes the files listed in
+[What adopting deletes](#what-adopting-deletes), as it does for a first setup.
+To keep them, add `cleanup = FALSE` to the call. When the
 fresh session finishes, the project reopens on the study's library.
 
 The fresh session needs `hvtiR` in your own library. If it is installed only in

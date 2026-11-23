@@ -1708,9 +1708,36 @@ test_that("the adopt question the fresh R cannot ask is asked here", {
   withr::local_envvar(RENV_PROJECT = root, HVTIR_SETUP_CHILD = NA)
   setup("A study", 7L)
   expect_match(asked, "already has a _study.yml", fixed = TRUE)
+  # Adopting cleans by default, so the question says what it deletes.
+  expect_match(asked, "deletes the tp.* files", fixed = TRUE)
   expect_match(
     paste(log$scripts[[2L]], collapse = " "), "adopt = TRUE", fixed = TRUE
   )
+})
+
+test_that("cleanup = FALSE reaches the fresh R and leaves the question", {
+  root <- withr::local_tempdir()
+  writeLines("study: x", file.path(root, "_study.yml"))
+  log <- new.env()
+  log$result <- list()
+  asked <- NULL
+  local_mocked_bindings(
+    renv_state = function(...) "active",
+    run_outside_project = fresh_r(log),
+    is_interactive = function() TRUE,
+    ask_adopt_project = function(question) {
+      asked <<- question
+      TRUE
+    },
+    open_project = function(root) NULL,
+    set_workspace_prefs = function() NULL
+  )
+  withr::local_envvar(RENV_PROJECT = root, HVTIR_SETUP_CHILD = NA)
+  setup("A study", 7L, cleanup = FALSE)
+  expect_false(grepl("deletes", asked, fixed = TRUE))
+  run <- paste(log$scripts[[2L]], collapse = " ")
+  expect_match(run, "adopt = TRUE", fixed = TRUE)
+  expect_match(run, "cleanup = FALSE", fixed = TRUE)
 })
 
 test_that("declining to adopt before the rerun runs nothing", {
