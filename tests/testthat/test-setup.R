@@ -72,6 +72,10 @@ local_setup <- function(run_status = 0L,
   # nolint next: object_usage_linter.
   local_mocked_bindings(
     utilities_fn = function(name) fns[[name]],
+    # A fresh R that cannot load hvtiR, so no test starts a real one.
+    run_outside_project = function(script, capture = FALSE) {
+      list(status = 0L, output = "FALSE")
+    },
     run_in_study = function(expr, root) {
       if (grepl("HVTIR_LOCKED", expr, fixed = TRUE)) {
         step("read_lock")
@@ -1460,8 +1464,17 @@ test_that("a workspace_prefs that is not a flag stops before any step", {
   expect_identical(log$steps, character(0))
 })
 
+# A fresh R outside any project that cannot load hvtiR: setup() then refuses,
+# as it did before it could start that session itself.
+no_fresh_r <- function(script, capture = FALSE) {
+  list(status = 0L, output = "FALSE")
+}
+
 test_that("the guard's offered command keeps workspace_prefs = FALSE", {
-  local_mocked_bindings(renv_state = function(...) "active")
+  local_mocked_bindings(
+    renv_state = function(...) "active",
+    run_outside_project = no_fresh_r
+  )
   withr::local_envvar(RENV_PROJECT = "/studies/demo")
   err <- tryCatch(
     setup("A study", 7L, workspace_prefs = FALSE),
@@ -1471,7 +1484,10 @@ test_that("the guard's offered command keeps workspace_prefs = FALSE", {
 })
 
 test_that("the guard's offered command keeps upgrade = FALSE", {
-  local_mocked_bindings(renv_state = function(...) "active")
+  local_mocked_bindings(
+    renv_state = function(...) "active",
+    run_outside_project = no_fresh_r
+  )
   withr::local_envvar(RENV_PROJECT = "/studies/demo")
   err <- tryCatch(
     setup("A study", 7L, upgrade = FALSE),
@@ -1482,7 +1498,10 @@ test_that("the guard's offered command keeps upgrade = FALSE", {
 })
 
 test_that("the guard's offered command binds ... as setup() bound it", {
-  local_mocked_bindings(renv_state = function(...) "active")
+  local_mocked_bindings(
+    renv_state = function(...) "active",
+    run_outside_project = no_fresh_r
+  )
   withr::local_envvar(RENV_PROJECT = "/studies/demo")
   offered <- function(...) {
     err <- gsub("\\s+", " ", tryCatch(setup(...), error = conditionMessage))
@@ -1506,7 +1525,10 @@ test_that("the guard's offered command binds ... as setup() bound it", {
 })
 
 test_that("the guard's offered command keeps what ... carries", {
-  local_mocked_bindings(renv_state = function(...) "active")
+  local_mocked_bindings(
+    renv_state = function(...) "active",
+    run_outside_project = no_fresh_r
+  )
   withr::local_envvar(RENV_PROJECT = "/studies/demo")
   err <- tryCatch(
     setup("A study", 7L, cleanup = FALSE, identity_source = "manual"),
@@ -1526,6 +1548,7 @@ test_that("setup aborts with renv active, before anything can install", {
   seen <- character(0)
   local_mocked_bindings(
     renv_state = function(...) "active",
+    run_outside_project = no_fresh_r,
     utilities_fn = function(name) {
       seen <<- c(seen, "utilities_fn")
       stop("must not be reached")
@@ -1554,6 +1577,7 @@ test_that("setup aborts with renv active, before anything can install", {
 test_that("an explicit root is named in the message when renv is active", {
   local_mocked_bindings(
     renv_state = function(...) "active",
+    run_outside_project = no_fresh_r,
     utilities_fn = function(name) stop("must not be reached")
   )
   withr::local_envvar(RENV_PROJECT = "/studies/demo")
@@ -1572,6 +1596,7 @@ test_that("an explicit root is named in the message when renv is active", {
 test_that("a session in another project names that project, not loaded ones", {
   local_mocked_bindings(
     renv_state = function(...) "active",
+    run_outside_project = no_fresh_r,
     utilities_fn = function(name) stop("must not be reached")
   )
   withr::local_envvar(RENV_PROJECT = "/studies/demo")
@@ -1595,6 +1620,7 @@ test_that("an old hvtiRutilities and root NULL install nothing first", {
   dir.create(file.path(root, "renv", "library"), recursive = TRUE)
   local_mocked_bindings(
     renv_state = function(...) "installed",
+    run_outside_project = no_fresh_r,
     installed_version = function(pkg) "0.3.0",
     cheap_study_root = function() root,
     install_members = function(...) installed <<- TRUE,
@@ -1603,6 +1629,275 @@ test_that("an old hvtiRutilities and root NULL install nothing first", {
   )
   expect_error(setup("A study", 7L), "outside")
   expect_false(installed)
+})
+
+# setup() from inside a project starts a fresh R outside any project itself.
+
+# Stands in for run_outside_project(): records each script, answers the
+# check for hvtiR with `found`, and saves `result` where the run asks.
+fresh_r <- function(log, found = "TRUE", status = 0L) {
+  function(script, capture = FALSE) {
+    code <- readLines(script)
+    log$scripts <- c(log$scripts, list(code))
+    if (capture) return(list(status = 0L, output = found))
+    save_line <- grep("^saveRDS\\(", code, value = TRUE)
+    if (status == 0L) saveRDS(log$result, parse(text = save_line)[[1L]]$file)
+    list(status = status, output = "")
+  }
+}
+
+test_that("setup inside the study's project reruns itself outside it", {
+  log <- new.env()
+  log$result <- structure(list(n = 1L), healed = data.frame())
+  opened <- NULL
+  local_mocked_bindings(
+    renv_state = function(...) "active",
+    run_outside_project = fresh_r(log),
+    utilities_fn = function(name) stop("must not be reached"),
+    pak_install = function(specs) stop("must not be reached"),
+    open_project = function(root) opened <<- root,
+    set_workspace_prefs = function() log$prefs <- TRUE
+  )
+  withr::local_envvar(RENV_PROJECT = "/studies/demo", HVTIR_SETUP_CHILD = NA)
+  out <- setup("A study", 7L, adopt = TRUE, cleanup = FALSE)
+  expect_identical(out, log$result)
+  # The check for hvtiR, then the run.
+  expect_length(log$scripts, 2L)
+  run <- gsub("\\s+", " ", paste(log$scripts[[2L]], collapse = " "))
+  expect_match(run, 'hvtiR::setup(root = "/studies/demo"', fixed = TRUE)
+  expect_match(run, "adopt = TRUE", fixed = TRUE)
+  expect_match(run, "cleanup = FALSE", fixed = TRUE)
+  # RStudio's preferences belong to this session; the child has no RStudio.
+  expect_match(run, "workspace_prefs = FALSE", fixed = TRUE)
+  expect_true(isTRUE(log$prefs))
+  expect_identical(opened, "/studies/demo")
+})
+
+test_that("a session in another project reruns setup for the named root", {
+  log <- new.env()
+  log$result <- list()
+  local_mocked_bindings(
+    renv_state = function(...) "active",
+    run_outside_project = fresh_r(log),
+    open_project = function(root) NULL,
+    set_workspace_prefs = function() NULL
+  )
+  withr::local_envvar(RENV_PROJECT = "/studies/demo", HVTIR_SETUP_CHILD = NA)
+  setup("A study", 7L, root = "/studies/other")
+  run <- paste(log$scripts[[2L]], collapse = " ")
+  expect_match(run, 'root = "/studies/other"', fixed = TRUE)
+})
+
+test_that("the adopt question the fresh R cannot ask is asked here", {
+  root <- withr::local_tempdir()
+  writeLines("study: x", file.path(root, "_study.yml"))
+  log <- new.env()
+  log$result <- list()
+  asked <- NULL
+  local_mocked_bindings(
+    renv_state = function(...) "active",
+    run_outside_project = fresh_r(log),
+    is_interactive = function() TRUE,
+    ask_adopt_project = function(question) {
+      asked <<- question
+      TRUE
+    },
+    open_project = function(root) NULL,
+    set_workspace_prefs = function() NULL
+  )
+  withr::local_envvar(RENV_PROJECT = root, HVTIR_SETUP_CHILD = NA)
+  setup("A study", 7L)
+  expect_match(asked, "already has a _study.yml", fixed = TRUE)
+  # Adopting cleans by default, so the question says what it deletes.
+  expect_match(asked, "deletes the tp.* files", fixed = TRUE)
+  expect_match(
+    paste(log$scripts[[2L]], collapse = " "), "adopt = TRUE", fixed = TRUE
+  )
+})
+
+test_that("cleanup = FALSE reaches the fresh R and leaves the question", {
+  root <- withr::local_tempdir()
+  writeLines("study: x", file.path(root, "_study.yml"))
+  log <- new.env()
+  log$result <- list()
+  asked <- NULL
+  local_mocked_bindings(
+    renv_state = function(...) "active",
+    run_outside_project = fresh_r(log),
+    is_interactive = function() TRUE,
+    ask_adopt_project = function(question) {
+      asked <<- question
+      TRUE
+    },
+    open_project = function(root) NULL,
+    set_workspace_prefs = function() NULL
+  )
+  withr::local_envvar(RENV_PROJECT = root, HVTIR_SETUP_CHILD = NA)
+  setup("A study", 7L, cleanup = FALSE)
+  expect_false(grepl("deletes", asked, fixed = TRUE))
+  run <- paste(log$scripts[[2L]], collapse = " ")
+  expect_match(run, "adopt = TRUE", fixed = TRUE)
+  expect_match(run, "cleanup = FALSE", fixed = TRUE)
+})
+
+test_that("declining to adopt before the rerun runs nothing", {
+  root <- withr::local_tempdir()
+  writeLines("study: x", file.path(root, "_study.yml"))
+  log <- new.env()
+  local_mocked_bindings(
+    renv_state = function(...) "active",
+    run_outside_project = fresh_r(log),
+    is_interactive = function() TRUE,
+    ask_adopt_project = function(question) FALSE
+  )
+  withr::local_envvar(RENV_PROJECT = root, HVTIR_SETUP_CHILD = NA)
+  expect_error(setup("A study", 7L), class = "hvtiR_adopt_declined")
+  # Only the check for hvtiR ran.
+  expect_length(log$scripts, 1L)
+})
+
+test_that("setup refuses when a fresh R cannot load hvtiR", {
+  log <- new.env()
+  local_mocked_bindings(
+    renv_state = function(...) "active",
+    run_outside_project = fresh_r(log, found = "FALSE"),
+    utilities_fn = function(name) stop("must not be reached")
+  )
+  withr::local_envvar(RENV_PROJECT = "/studies/demo", HVTIR_SETUP_CHILD = NA)
+  err <- tryCatch(setup("A study", 7L), error = conditionMessage)
+  expect_match(err, "cannot load", fixed = TRUE)
+  expect_match(err, "Close Project", fixed = TRUE)
+  expect_match(err, "hvtiR::setup(root = \"/studies/demo\"", fixed = TRUE)
+  # Only the check ran.
+  expect_length(log$scripts, 1L)
+})
+
+test_that("a failed run in the fresh R stops and opens nothing", {
+  log <- new.env()
+  opened <- FALSE
+  local_mocked_bindings(
+    renv_state = function(...) "active",
+    run_outside_project = fresh_r(log, status = 1L),
+    open_project = function(root) opened <<- TRUE,
+    set_workspace_prefs = function() NULL
+  )
+  withr::local_envvar(RENV_PROJECT = "/studies/demo", HVTIR_SETUP_CHILD = NA)
+  err <- tryCatch(setup("A study", 7L), error = conditionMessage)
+  expect_match(err, "exit status 1", fixed = TRUE)
+  expect_match(err, "hvtiR::setup(root = \"/studies/demo\"", fixed = TRUE)
+  expect_false(opened)
+})
+
+test_that("the fresh R itself never starts another", {
+  started <- FALSE
+  local_mocked_bindings(
+    renv_state = function(...) "active",
+    run_outside_project = function(...) {
+      started <<- TRUE
+      list(status = 0L, output = "TRUE")
+    }
+  )
+  withr::local_envvar(RENV_PROJECT = "/studies/demo", HVTIR_SETUP_CHILD = "1")
+  expect_error(setup("A study", 7L), "outside")
+  expect_false(started)
+})
+
+test_that("relative paths reach the fresh R as this session's", {
+  here <- withr::local_tempdir()
+  withr::local_dir(here)
+  log <- new.env()
+  log$result <- list()
+  local_mocked_bindings(
+    renv_state = function(...) "active",
+    run_outside_project = fresh_r(log),
+    open_project = function(root) NULL,
+    set_workspace_prefs = function() NULL
+  )
+  withr::local_envvar(RENV_PROJECT = "/studies/demo", HVTIR_SETUP_CHILD = NA)
+  setup("A study", 7L, root = "new-study", adopt = TRUE, template_dir = "tpl")
+  run <- paste(log$scripts[[2L]], collapse = " ")
+  base <- normalizePath(here, winslash = "/")
+  expect_match(run, paste0('root = "', base, '/new-study"'), fixed = TRUE)
+  expect_match(run, paste0('template_dir = "', base, '/tpl"'), fixed = TRUE)
+})
+
+test_that("on Windows a session holding the study's DLLs is not rerun", {
+  log <- new.env()
+  local_mocked_bindings(
+    renv_state = function(...) "active",
+    run_outside_project = fresh_r(log),
+    holds_study_dlls = function(target) TRUE
+  )
+  withr::local_envvar(RENV_PROJECT = "/studies/demo", HVTIR_SETUP_CHILD = NA)
+  err <- tryCatch(setup("A study", 7L), error = conditionMessage)
+  expect_match(err, "On Windows", fixed = TRUE)
+  expect_match(err, "Close Project", fixed = TRUE)
+  expect_length(log$scripts, 0L)
+})
+
+test_that("holds_study_dlls looks at Windows only, and at DLLs in the study", {
+  local_mocked_bindings(os_type = function() "unix")
+  expect_false(holds_study_dlls(R.home()))
+  local_mocked_bindings(os_type = function() "windows")
+  expect_false(holds_study_dlls(withr::local_tempdir()))
+  # base R's own DLLs sit under R.home().
+  expect_true(holds_study_dlls(R.home()))
+})
+
+test_that("the fresh R gets the variables renv saved, not the project's", {
+  withr::local_envvar(
+    RENV_PROJECT = "/studies/demo",
+    R_LIBS_USER = "/studies/demo/renv/library",
+    RENV_DEFAULT_R_LIBS_USER = "/home/me/R/library",
+    R_PROFILE_USER = "/studies/demo/profile",
+    RENV_DEFAULT_R_PROFILE_USER = "<NA>",
+    RENV_DEFAULT_R_LIBS = NA, RENV_DEFAULT_R_LIBS_SITE = NA,
+    RENV_DEFAULT_R_PROFILE = NA, RENV_DEFAULT_R_ENVIRON = NA,
+    RENV_DEFAULT_R_ENVIRON_USER = NA
+  )
+  env <- outside_project_env()
+  expect_identical(env[["R_LIBS_USER"]], "/home/me/R/library")
+  # renv's "<NA>": the variable was unset before it activated.
+  expect_true(is.na(env[["R_PROFILE_USER"]]))
+  expect_true(is.na(env[["RENV_PROJECT"]]))
+  expect_true(is.na(env[["RENV_DEFAULT_R_LIBS_USER"]]))
+  expect_identical(env[["HVTIR_SETUP_CHILD"]], "1")
+})
+
+test_that("without renv's saved variables the session's own are kept", {
+  withr::local_envvar(
+    RENV_PROJECT = NA, R_LIBS_USER = "/home/me/R/library",
+    RENV_DEFAULT_R_LIBS_USER = NA, RENV_DEFAULT_R_LIBS = NA,
+    RENV_DEFAULT_R_LIBS_SITE = NA, RENV_DEFAULT_R_PROFILE = NA,
+    RENV_DEFAULT_R_PROFILE_USER = NA, RENV_DEFAULT_R_ENVIRON = NA,
+    RENV_DEFAULT_R_ENVIRON_USER = NA
+  )
+  env <- outside_project_env()
+  expect_false("R_LIBS_USER" %in% names(env))
+  expect_identical(env[["HVTIR_SETUP_CHILD"]], "1")
+})
+
+test_that("run_outside_project runs R in an empty folder without the project", {
+  skip_on_cran()
+  withr::local_envvar(
+    RENV_PROJECT = "/studies/demo", RENV_DEFAULT_R_LIBS_USER = NA
+  )
+  script <- withr::local_tempfile(fileext = ".R")
+  writeLines(c(
+    'cat("WD=", basename(getwd()), "\\n", sep = "")',
+    'cat("PROJECT=", Sys.getenv("RENV_PROJECT"), "\\n", sep = "")',
+    'cat("CHILD=", Sys.getenv("HVTIR_SETUP_CHILD"), "\\n", sep = "")'
+  ), script)
+  here <- getwd()
+  res <- run_outside_project(script, capture = TRUE)
+  expect_identical(res$status, 0L)
+  expect_match(res$output, "PROJECT=\n", fixed = TRUE)
+  expect_match(res$output, "CHILD=1", fixed = TRUE)
+  expect_match(res$output, "WD=hvtiR-setup-", fixed = TRUE)
+  # This session's directory and variables are left as they were.
+  expect_identical(getwd(), here)
+  expect_identical(Sys.getenv("RENV_PROJECT"), "/studies/demo")
+  expect_identical(Sys.getenv("HVTIR_SETUP_CHILD"), "")
 })
 
 test_that("cheap_study_root prefers RENV_PROJECT and installs nothing", {

@@ -106,6 +106,158 @@ run_in_study <- function(expr, root) {
   )
 }
 
+#' The variables a fresh R outside any project gets
+#'
+#' renv saves each startup variable as `RENV_DEFAULT_<key>` when it
+#' activates, writing `"<NA>"` for one that was unset. The fresh R gets those
+#' saved values back, so it starts on the user's own libraries, not the
+#' study's. `HVTIR_SETUP_CHILD` marks it, so it never starts another.
+#' @return A named character vector; `NA` means unset.
+#' @noRd
+outside_project_env <- function() {
+  keys <- c(
+    "R_PROFILE", "R_PROFILE_USER", "R_ENVIRON", "R_ENVIRON_USER",
+    "R_LIBS_USER", "R_LIBS_SITE", "R_LIBS"
+  )
+  saved <- paste0("RENV_DEFAULT_", keys)
+  values <- Sys.getenv(saved, unset = NA, names = FALSE)
+  env <- c(RENV_PROJECT = NA_character_, HVTIR_SETUP_CHILD = "1")
+  if (all(is.na(values))) return(env)
+  # renv's own marker for "was unset"; set literally it would hide the user's
+  # profile.
+  values[values %in% "<NA>"] <- NA_character_
+  names(values) <- keys
+  cleared <- rep(NA_character_, length(saved))
+  names(cleared) <- saved
+  c(values, cleared, env)
+}
+
+#' Set and unset environment variables
+#' @param env A named character vector; `NA` unsets.
+#' @noRd
+apply_env <- function(env) {
+  unset <- is.na(env)
+  if (any(unset)) Sys.unsetenv(names(env)[unset])
+  if (any(!unset)) do.call(Sys.setenv, as.list(env[!unset]))
+  invisible(NULL)
+}
+
+#' Run a script in a fresh R outside any project
+#'
+#' From an empty folder, so no project's `.Rprofile` activates renv, and with
+#' the variables of [outside_project_env()]. Not `--vanilla`: the user's own
+#' profile is what finds their library. Set here and restored, not through
+#' `system2(env =)`, which does not work on Windows.
+#' @param script Path to an R script.
+#' @param capture `TRUE` to return standard output; otherwise the run prints
+#'   to the console.
+#' @return A list: `status` (integer) and `output` (one string).
+#' @noRd
+run_outside_project <- function(script, capture = FALSE) {
+  env <- outside_project_env()
+  old <- Sys.getenv(names(env), unset = NA, names = TRUE)
+  apply_env(env)
+  on.exit(apply_env(old), add = TRUE)
+  dir <- tempfile("hvtiR-setup-")
+  dir.create(dir)
+  owd <- setwd(dir)
+  on.exit({
+    setwd(owd)
+    unlink(dir, recursive = TRUE)
+  }, add = TRUE)
+  out <- suppressWarnings(system2(
+    file.path(R.home("bin"), "Rscript"), shQuote(script),
+    stdout = if (capture) TRUE else "", stderr = if (capture) FALSE else ""
+  ))
+  if (!capture) return(list(status = as.integer(out), output = ""))
+  status <- attr(out, "status")
+  list(
+    status = if (is.null(status)) 0L else as.integer(status),
+    output = paste(out, collapse = "\n")
+  )
+}
+
+#' Write R code to a script file, as UTF-8
+#' @noRd
+write_script <- function(lines, path) {
+  con <- file(path, open = "w", encoding = "UTF-8")
+  on.exit(close(con), add = TRUE)
+  writeLines(lines, con)
+}
+
+#' Make a path absolute against this session's working directory
+#'
+#' The fresh R runs in a folder of its own, where a relative path would mean
+#' somewhere else.
+#' @noRd
+absolute_path <- function(path) {
+  path <- path.expand(path)
+  if (!grepl("^([/\\\\]|[A-Za-z]:)", path)) path <- file.path(getwd(), path)
+  normalizePath(path, winslash = "/", mustWork = FALSE)
+}
+
+#' `.Platform$OS.type`, as a seam the tests replace
+#' @noRd
+os_type <- function() .Platform$OS.type
+
+#' Whether this session holds a DLL open from inside the study, on Windows
+#'
+#' Windows locks a loaded DLL, and this session stays alive while the fresh R
+#' runs, so the fresh R could not replace that package (see [install()]).
+#' @param target The study root.
+#' @noRd
+holds_study_dlls <- function(target) {
+  if (os_type() != "windows") return(FALSE)
+  paths <- vapply(getLoadedDLLs(), function(d) d[["path"]], character(1))
+  any(vapply(paths, path_within, logical(1), dir = target))
+}
+
+#' Whether a fresh R outside any project can load hvtiR
+#' @noRd
+fresh_r_loads_hvtir <- function() {
+  script <- tempfile(fileext = ".R")
+  on.exit(unlink(script), add = TRUE)
+  write_script('cat(requireNamespace("hvtiR", quietly = TRUE), "\\n")', script)
+  run <- run_outside_project(script, capture = TRUE)
+  lines <- trimws(strsplit(run$output, "\n", fixed = TRUE)[[1L]])
+  run$status == 0L && "TRUE" %in% lines
+}
+
+#' Run `setup()` in a fresh R outside any project, then open the study
+#' @param child_cmd The call the fresh R runs, deparsed.
+#' @param cmd The call to offer the user if it fails, deparsed.
+#' @param target The study root.
+#' @param workspace_prefs As for [setup()]. Applied here: RStudio's
+#'   preferences belong to this session, and the fresh R has no RStudio.
+#' @return What `setup()` returned in the fresh R.
+#' @noRd
+relaunch_setup <- function(child_cmd, cmd, target, workspace_prefs) {
+  cli::cli_alert_info(
+    "Running {.fn setup} in a fresh R session outside the project."
+  )
+  rds <- tempfile(fileext = ".rds")
+  script <- tempfile(fileext = ".R")
+  on.exit(unlink(c(rds, script)), add = TRUE)
+  write_script(c(
+    paste("res <-", child_cmd),
+    paste0("saveRDS(res, file = ", deparse1(rds), ")")
+  ), script)
+  run <- run_outside_project(script)
+  if (run$status != 0L || !file.exists(rds)) {
+    cli::cli_abort(c(
+      paste(
+        "{.fn setup} stopped in the fresh R session",
+        "(exit status {run$status}); its output is above."
+      ),
+      i = "Rerun it from a session started outside any project: {.code {cmd}}"
+    ))
+  }
+  res <- readRDS(rds)
+  if (isTRUE(workspace_prefs)) set_workspace_prefs()
+  open_project(target)
+  res
+}
+
 rstudio_available <- function() {
   requireNamespace("rstudioapi", quietly = TRUE) && rstudioapi::isAvailable()
 }
@@ -1370,15 +1522,54 @@ setup_command <- function(root, study, study_tracker_id, adopt = FALSE,
   )))
 }
 
-#' Refuse to run from inside the study
+#' Ask here the question the fresh R cannot
+#'
+#' The fresh R is not interactive, so `study_setup()` there would stop rather
+#' than ask whether to adopt a study that already has a `_study.yml`.
+#' @param target The study root.
+#' @param adopt As passed to [setup()].
+#' @param cleanup `cleanup` from the call's `...`, or `NULL`.
+#' @return `adopt`, or `TRUE` once confirmed.
+#' @noRd
+adopt_before_rerun <- function(target, adopt, cleanup = NULL) {
+  if (isTRUE(adopt) || !is_interactive() ||
+        !file.exists(file.path(target, "_study.yml"))) {
+    return(adopt)
+  }
+  question <- paste0(
+    target, " already has a _study.yml. ",
+    "Adopt it, adding what is missing?",
+    if (!isFALSE(cleanup)) {
+      paste(
+        " Adopting deletes the tp.* files, binder.summaries.doc and exact",
+        "template copies it holds; pass cleanup = FALSE to keep them."
+      )
+    }
+  )
+  if (!isTRUE(ask_adopt_project(question))) {
+    cli::cli_abort(
+      "Not adopted. Nothing was changed.",
+      class = "hvtiR_adopt_declined", call = NULL
+    )
+  }
+  TRUE
+}
+
+#' Rerun `setup()` outside the project when this session is inside one
 #'
 #' `setup()` replaces packages this session has loaded and would install into
-#' the study library through this session.
+#' the study library through this session. So from inside a project it runs
+#' itself again in a fresh R outside any project, and returns what that
+#' returned. It stops instead when that fresh R cannot load hvtiR, when this
+#' session is already that fresh R, or on Windows when this session holds a
+#' DLL from the study's library open.
 #' @param root The study root, or `NULL`.
 #' @param study,study_tracker_id,adopt,workspace_prefs,upgrade As passed to
-#'   [setup()], quoted back in the command the message offers.
+#'   [setup()], quoted back in the command the fresh R runs.
 #' @param dots `list(...)` from [setup()], quoted back likewise. A list, because
 #'   forwarded as `...` a short name would partially match a formal here.
+#' @return `NULL` when the session may run `setup()` itself; otherwise the
+#'   result of the rerun.
 #' @noRd
 guard_session <- function(root, study, study_tracker_id,
                           adopt = FALSE, workspace_prefs = TRUE,
@@ -1392,6 +1583,11 @@ guard_session <- function(root, study, study_tracker_id,
     Sys.getenv("RENV_PROJECT")
   } else {
     guess
+  }
+  # The fresh R runs elsewhere, so relative paths are fixed here.
+  target <- absolute_path(target)
+  if (is.character(dots[["template_dir"]])) {
+    dots$template_dir <- absolute_path(dots[["template_dir"]])
   }
   # Read by cli's glue below, which lintr cannot see.
   # nolint next: object_usage_linter.
@@ -1413,8 +1609,28 @@ guard_session <- function(root, study, study_tracker_id,
       "install into the study's library through this session."
     )
   }
+  child <- nzchar(Sys.getenv("HVTIR_SETUP_CHILD", ""))
+  locked <- !child && holds_study_dlls(target)
+  if (!child && !locked && fresh_r_loads_hvtir()) {
+    adopt <- adopt_before_rerun(target, adopt, dots[["cleanup"]])
+    cmd <- setup_command(
+      target, study, study_tracker_id, adopt, workspace_prefs, upgrade, dots
+    )
+    child_cmd <- setup_command(
+      target, study, study_tracker_id, adopt, FALSE, upgrade, dots
+    )
+    return(relaunch_setup(child_cmd, cmd, target, workspace_prefs))
+  }
   cli::cli_abort(c(
     reason,
+    if (locked) {
+      c(x = paste(
+        "On Windows this session holds the study library's compiled",
+        "packages open, so a fresh R session could not replace them."
+      ))
+    } else if (!child) {
+      c(x = "A fresh R session outside any project cannot load {.pkg hvtiR}.")
+    },
     i = "Run it from a session started outside any project: {.code {cmd}}",
     i = paste(
       "In RStudio, File > Close Project; check that",
@@ -1462,10 +1678,13 @@ guard_session <- function(root, study, study_tracker_id,
 #' step to have them; anything beyond them is added with
 #' `hvtiRutilities::study_need()`.
 #'
-#' Once the study's renv is active in a session, `setup()` replaces packages
-#' that session has loaded, so rerun it from a session started outside the
-#' project, passing `root`. From inside an active project it stops before
-#' installing anything, and names the command to run.
+#' Once the study's renv is active in a session, `setup()` would replace
+#' packages that session has loaded. So from inside an active project it
+#' installs nothing there: it runs itself again in a fresh R session started
+#' outside any project, prints that session's output, and then opens the
+#' project. When that fresh session cannot load `hvtiR` (installed only in a
+#' study's library), it stops and names the command to run from a session
+#' started outside the project.
 #'
 #' In the install, the study stops using renv's per-user cache
 #' (`renv::settings$use.cache(FALSE)`, kept in `renv/settings.json`, so it
@@ -1584,9 +1803,10 @@ setup <- function(study, study_tracker_id = NULL, root = NULL, adopt = FALSE,
       adopt <- TRUE
     }
   }
-  guard_session(
+  rerun <- guard_session(
     root, study, study_tracker_id, adopt, workspace_prefs, upgrade, dots
   )
+  if (!is.null(rerun)) return(invisible(rerun))
   if (is.null(root)) {
     # Before utilities_fn(), which can install into this session's library.
     if (is.null(enclosing_study())) abort_no_study()
@@ -1917,6 +2137,8 @@ setup <- function(study, study_tracker_id = NULL, root = NULL, adopt = FALSE,
   }
   attr(status, "healed") <- heal$healed
   attr(status, "missing") <- missing
-  open_project(root)
+  # A fresh R started by setup() leaves the opening to the session that
+  # started it.
+  if (!nzchar(Sys.getenv("HVTIR_SETUP_CHILD", ""))) open_project(root)
   invisible(status)
 }

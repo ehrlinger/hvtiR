@@ -96,10 +96,13 @@ The standard analysis packages are \code{tidyverse}, \code{haven}, \code{gtsumma
 step to have them; anything beyond them is added with
 \code{hvtiRutilities::study_need()}.
 
-Once the study's renv is active in a session, \code{setup()} replaces packages
-that session has loaded, so rerun it from a session started outside the
-project, passing \code{root}. From inside an active project it stops before
-installing anything, and names the command to run.
+Once the study's renv is active in a session, \code{setup()} would replace
+packages that session has loaded. So from inside an active project it
+installs nothing there: it runs itself again in a fresh R session started
+outside any project, prints that session's output, and then opens the
+project. When that fresh session cannot load \code{hvtiR} (installed only in a
+study's library), it stops and names the command to run from a session
+started outside the project.
 
 In the install, the study stops using renv's per-user cache
 (\code{renv::settings$use.cache(FALSE)}, kept in \code{renv/settings.json}, so it
