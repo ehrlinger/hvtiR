@@ -209,8 +209,9 @@ files can also come from an older
 [`renv::init()`](https://rstudio.github.io/renv/reference/init.html),
 which brings neither the family nor the standard packages. If
 [`hvtiR::status()`](https://ehrlinger.github.io/hvtiR/reference/status.md)
-there shows members missing, adopt the study from outside the project,
-as [If it says to run from outside the project](#from-outside)
+there shows members missing, run
+[`setup()`](https://ehrlinger.github.io/hvtiR/reference/setup.md) there
+to adopt it, as [If the study already has a library](#from-outside)
 describes.
 
 A new study may have been set up when its directory was made, because
@@ -296,30 +297,42 @@ each move. In revision those versions must not move, so with
 `upgrade = FALSE` a package the install would move stops the run
 instead, and `renv.lock` stays as it was.
 
-### If it says to run from outside the project
+### If the study already has a library
 
 A study that already has a package library of its own, from an older
 [`renv::init()`](https://rstudio.github.io/renv/reference/init.html),
 loads that library when you open the project.
 [`setup()`](https://ehrlinger.github.io/hvtiR/reference/setup.md)
 replaces packages in it, which it cannot do from a session that has them
-loaded. So it stops, after you answer `yes` if it asked, before
-installing anything, and prints the call to run instead:
+loaded. So it installs nothing in this session. After you answer `yes`
+if it asked, it runs itself again in a fresh R session started outside
+any project, and prints that session’s output in the Console:
+
+    ℹ Running `setup()` in a fresh R session outside the project.
+
+When the study already has a `_study.yml`, it first asks here, because
+the fresh session cannot:
+
+    /path/to/study already has a _study.yml. Adopt it, adding what is missing?
+    Adopting deletes the tp.* files, binder.summaries.doc and exact template copies
+    it holds; pass cleanup = FALSE to keep them. (yes/No/cancel)
+
+Type `yes` and press Enter. Adopting deletes the files listed in [What
+adopting deletes](#what-adopting-deletes), as it does for a first setup.
+To keep them, add `cleanup = FALSE` to the call. When the fresh session
+finishes, the project reopens on the study’s library.
+
+The fresh session needs `hvtiR` in your own library. If it is installed
+only in a study’s library,
+[`setup()`](https://ehrlinger.github.io/hvtiR/reference/setup.md) stops
+before installing anything and prints the call to run instead:
 
     Run it from a session started outside any project: hvtiR::setup(root = "...", ...)
 
 Close the project (**File \> Close Project**). Check that
-`Sys.getenv("RENV_PROJECT")` prints `""`, then paste the call it printed
-into the Console. That call names the directory with `root`. When the
-study already has a `_study.yml`, it asks before changing anything:
-
-    /path/to/study already has a _study.yml for this study. Adopt it, adding only
-    what is missing? (yes/No/cancel)
-
-Type `yes` and press Enter. The question does not say so, but adopting
-deletes the files listed in [What adopting
-deletes](#what-adopting-deletes), as it does for a first setup. To keep
-them, add `cleanup = FALSE` to the call before you run it.
+`Sys.getenv("RENV_PROJECT")` prints `""`, install the installer with
+`pak::pak("ehrlinger/hvtiR")`, then paste the call it printed into the
+Console.
 
 ### A new directory
 

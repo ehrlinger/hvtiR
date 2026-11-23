@@ -177,10 +177,13 @@ locked versions.</p>
 <code>pacman</code>, all from the configured repositories. A study needs no separate
 step to have them; anything beyond them is added with
 <code>hvtiRutilities::study_need()</code>.</p>
-<p>Once the study's renv is active in a session, <code>setup()</code> replaces packages
-that session has loaded, so rerun it from a session started outside the
-project, passing <code>root</code>. From inside an active project it stops before
-installing anything, and names the command to run.</p>
+<p>Once the study's renv is active in a session, <code>setup()</code> would replace
+packages that session has loaded. So from inside an active project it
+installs nothing there: it runs itself again in a fresh R session started
+outside any project, prints that session's output, and then opens the
+project. When that fresh session cannot load <code>hvtiR</code> (installed only in a
+study's library), it stops and names the command to run from a session
+started outside the project.</p>
 <p>In the install, the study stops using renv's per-user cache
 (<code>renv::settings$use.cache(FALSE)</code>, kept in <code>renv/settings.json</code>, so it
 applies to everyone), links already in the library are copied in
