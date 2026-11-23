@@ -278,6 +278,29 @@ it holds; pass cleanup = FALSE to keep them. (yes/No/cancel)</code></pre>
 <strong>Choose the next template.</strong> The <a href="https://ehrlinger.github.io/hvtiRtemplates/gallery/">template gallery</a> shows what each one produces on a synthetic study.</li>
 </ol>
 <p>If you are coming from SAS, <a href="https://ehrlinger.github.io/hvtiRtemplates/articles/sas-to-r-descriptive.html">From SAS descriptive jobs to R</a> sets the descriptive templates beside the <code>tp.dc.*</code> jobs they replace.</p>
+</section><section class="level2"><h2 id="scratch">Try the family without a study<a class="anchor" aria-label="anchor" href="#scratch"></a>
+</h2>
+<p><code><a href="../reference/install.html">install()</a></code> and <code><a href="../reference/update.html">update()</a></code> refuse to install into your personal library, and they say so. They accept any renv project, though, so to test the family, or a package branch against it, without touching a study, make a scratch project:</p>
+<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">dir</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/path.expand.html" class="external-link">path.expand</a></span><span class="op">(</span><span class="st">"~"</span><span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"hvtiR-scratch-"</span>, <span class="fu"><a href="https://rdrr.io/r/base/format.html" class="external-link">format</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Sys.time.html" class="external-link">Sys.time</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"%Y%m%d-%H%M%S"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/stopifnot.html" class="external-link">stopifnot</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/files2.html" class="external-link">dir.create</a></span><span class="op">(</span><span class="va">dir</span><span class="op">)</span><span class="op">)</span>   <span class="co"># a new folder, never one that exists</span></span>
+<span><span class="fu">renv</span><span class="fu">::</span><span class="fu"><a href="https://rstudio.github.io/renv/reference/init.html" class="external-link">init</a></span><span class="op">(</span><span class="va">dir</span>, bare <span class="op">=</span> <span class="cn">TRUE</span>, restart <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<span><span class="fu">renv</span><span class="fu">::</span><span class="fu"><a href="https://rstudio.github.io/renv/reference/load.html" class="external-link">load</a></span><span class="op">(</span><span class="va">dir</span><span class="op">)</span>              <span class="co"># active now, in RStudio or a terminal</span></span>
+<span><span class="va">dir</span>                          <span class="co"># note it: later sessions need it</span></span></code></pre></div>
+<p>Then install hvtiR and pak into the empty library, and the family after them:</p>
+<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">renv</span><span class="fu">::</span><span class="fu"><a href="https://rstudio.github.io/renv/reference/install.html" class="external-link">install</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"pak"</span>, <span class="st">"ehrlinger/hvtiR"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu">hvtiR</span><span class="fu">::</span><span class="fu"><a href="../reference/install.html">install</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<p>The folder is new and dated, so it holds nothing but the scratch project. <code><a href="https://rdrr.io/r/base/files2.html" class="external-link">dir.create()</a></code> returns <code>FALSE</code> for a folder that already exists, and <code><a href="https://rdrr.io/r/base/stopifnot.html" class="external-link">stopifnot()</a></code> stops there rather than going on into it.</p>
+<p>Don’t count on a restart to activate the project. In a terminal, <code><a href="https://rstudio.github.io/renv/reference/init.html" class="external-link">renv::init()</a></code> asks you to restart R and leaves this session on your personal library. Where renv’s autoloader is turned off, a restart doesn’t activate it either. <code><a href="https://rstudio.github.io/renv/reference/load.html" class="external-link">renv::load()</a></code> works in both cases. In a later session, run <code><a href="https://rstudio.github.io/renv/reference/load.html" class="external-link">renv::load()</a></code> with the folder you noted.</p>
+<p>Keep the folder out of <code><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir()</a></code>, which R deletes when the session ends. On lri, use your home directory, not a study share.</p>
+<p>When you are done, quit that session. From a new session, delete the folder you noted, and only that folder:</p>
+<div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/unlink.html" class="external-link">unlink</a></span><span class="op">(</span><span class="st">"~/hvtiR-scratch-20261123-134500"</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>   <span class="co"># your folder</span></span></code></pre></div>
+<p>Your personal library is never touched, and no study’s lockfile moves.</p>
 </section><section class="level2"><h2 id="common-errors">Common errors<a class="anchor" aria-label="anchor" href="#common-errors"></a>
 </h2>
 <p>R’s error messages are terse. These are the ones new users of the family meet most, word for word as R prints them, with what each means.</p>
@@ -286,10 +309,10 @@ it holds; pass cleanup = FALSE to keep them. (yes/No/cancel)</code></pre>
 </h3>
 <pre><code>Error in read_built() : could not find function "read_built"</code></pre>
 <p>R knows a function only once its package is attached, and a new session attaches none of the family. Either name the package in the call, as this page does:</p>
-<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb27"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">d</span> <span class="op">&lt;-</span> <span class="fu">hvtiRutilities</span><span class="fu">::</span><span class="fu">read_built</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <p>or attach the package once per session, then call the function by its name:</p>
-<div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb28"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">hvtiRutilities</span><span class="op">)</span></span>
 <span><span class="va">d</span> <span class="op">&lt;-</span> <span class="fu">read_built</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <p>Attaching lasts until R restarts, and <code><a href="../reference/setup.html">hvtiR::setup()</a></code> restarts it, so attach again afterwards. The functions you will use most come from three packages:</p>
@@ -328,7 +351,7 @@ it holds; pass cleanup = FALSE to keep them. (yes/No/cancel)</code></pre>
 <pre><code>Error in library(c("hvtiRutilities", "hvtiRtemplates")) :
   'package' must be of length 1</code></pre>
 <p><code><a href="https://rdrr.io/r/base/library.html" class="external-link">library()</a></code> attaches one package per call. To attach all three at once:</p>
-<div class="sourceCode" id="cb27"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb30"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/invisible.html" class="external-link">invisible</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"hvtiR"</span>, <span class="st">"hvtiRutilities"</span>, <span class="st">"hvtiRtemplates"</span><span class="op">)</span>, <span class="va">library</span>, character.only <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 </section><section class="level3"><h3 id="the-following-object-is-masked-from-packagestats-update">
 <code>The following object is masked from ‘package:stats’: update</code><a class="anchor" aria-label="anchor" href="#the-following-object-is-masked-from-packagestats-update"></a>
@@ -339,7 +362,7 @@ it holds; pass cleanup = FALSE to keep them. (yes/No/cancel)</code></pre>
 </h3>
 <pre><code>Error in library(cmprsk) : there is no package called ‘cmprsk’</code></pre>
 <p>Each study has a library of its own, and that package is not in this one, even if another study or your own library has it. From inside the study’s project, install it into the study:</p>
-<div class="sourceCode" id="cb29"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb32"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">hvtiRutilities</span><span class="fu">::</span><span class="fu">study_need</span><span class="op">(</span><span class="st">"cmprsk"</span><span class="op">)</span></span></code></pre></div>
 <p>When the missing package is one of the family, run <code><a href="../reference/status.html">hvtiR::status()</a></code> instead.</p>
 </section><section class="level3"><h3 id="no-_study-yml-found">
@@ -350,7 +373,7 @@ it holds; pass cleanup = FALSE to keep them. (yes/No/cancel)</code></pre>
 </section></section><section class="level2"><h2 id="when-something-goes-wrong">When something goes wrong<a class="anchor" aria-label="anchor" href="#when-something-goes-wrong"></a>
 </h2>
 <p>Start with the doctor:</p>
-<div class="sourceCode" id="cb31"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb34"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">hvtiR</span><span class="fu">::</span><span class="fu"><a href="../reference/doctor.html">doctor</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <p>It reports your R version, your platform, whether pak is available, the repositories R is configured to use and whether an renv project is active, and <a href="hvtiR.html#when-something-will-not-install">Install, update and check the family</a> explains the failures we see most. If that does not settle it, tell the team. Send the code you ran, what you expected, what happened instead, and the doctor’s output. A failure you hit is usually a gap in the tools or in this page, so report it early.</p>
 <p>Never send patient data. Column names and <code><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim()</a></code> are fine; rows are not.</p>

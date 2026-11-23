@@ -31,6 +31,24 @@ before installing anything and says what to do: open the study's
 `.Rproj`, or, in a study or project folder with no renv library yet, run
 [`setup()`](https://ehrlinger.github.io/hvtiR/reference/setup.md) there.
 
+Any renv project counts, so to try the family without a study, install
+into a new scratch project.
+[`dir.create()`](https://rdrr.io/r/base/files2.html) refuses a folder
+that already exists, so the project never lands in one that holds other
+files. `restart = FALSE` and
+[`renv::load()`](https://rstudio.github.io/renv/reference/load.html)
+activate it in this session, whatever the front end:
+
+    dir <- file.path(
+      path.expand("~"),
+      paste0("hvtiR-scratch-", format(Sys.time(), "%Y%m%d-%H%M%S"))
+    )
+    stopifnot(dir.create(dir))
+    renv::init(dir, bare = TRUE, restart = FALSE)
+    renv::load(dir)
+    renv::install(c("pak", "ehrlinger/hvtiR"))
+    hvtiR::install()
+
 Members are installed from GitHub rather than CRAN because GitHub is
 where family releases land first. CRAN is a downstream republication for
 members that are published there.

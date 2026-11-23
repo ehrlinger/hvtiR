@@ -512,6 +512,66 @@ If you are coming from SAS, [From SAS descriptive jobs to
 R](https://ehrlinger.github.io/hvtiRtemplates/articles/sas-to-r-descriptive.html)
 sets the descriptive templates beside the `tp.dc.*` jobs they replace.
 
+## Try the family without a study
+
+[`install()`](https://ehrlinger.github.io/hvtiR/reference/install.md)
+and [`update()`](https://ehrlinger.github.io/hvtiR/reference/update.md)
+refuse to install into your personal library, and they say so. They
+accept any renv project, though, so to test the family, or a package
+branch against it, without touching a study, make a scratch project:
+
+``` r
+
+dir <- file.path(
+  path.expand("~"),
+  paste0("hvtiR-scratch-", format(Sys.time(), "%Y%m%d-%H%M%S"))
+)
+stopifnot(dir.create(dir))   # a new folder, never one that exists
+renv::init(dir, bare = TRUE, restart = FALSE)
+renv::load(dir)              # active now, in RStudio or a terminal
+dir                          # note it: later sessions need it
+```
+
+Then install hvtiR and pak into the empty library, and the family after
+them:
+
+``` r
+
+renv::install(c("pak", "ehrlinger/hvtiR"))
+hvtiR::install()
+```
+
+The folder is new and dated, so it holds nothing but the scratch
+project. [`dir.create()`](https://rdrr.io/r/base/files2.html) returns
+`FALSE` for a folder that already exists, and
+[`stopifnot()`](https://rdrr.io/r/base/stopifnot.html) stops there
+rather than going on into it.
+
+Don’t count on a restart to activate the project. In a terminal,
+[`renv::init()`](https://rstudio.github.io/renv/reference/init.html)
+asks you to restart R and leaves this session on your personal library.
+Where renv’s autoloader is turned off, a restart doesn’t activate it
+either.
+[`renv::load()`](https://rstudio.github.io/renv/reference/load.html)
+works in both cases. In a later session, run
+[`renv::load()`](https://rstudio.github.io/renv/reference/load.html)
+with the folder you noted.
+
+Keep the folder out of
+[`tempdir()`](https://rdrr.io/r/base/tempfile.html), which R deletes
+when the session ends. On lri, use your home directory, not a study
+share.
+
+When you are done, quit that session. From a new session, delete the
+folder you noted, and only that folder:
+
+``` r
+
+unlink("~/hvtiR-scratch-20261123-134500", recursive = TRUE)   # your folder
+```
+
+Your personal library is never touched, and no study’s lockfile moves.
+
 ## Common errors
 
 R’s error messages are terse. These are the ones new users of the family
