@@ -462,28 +462,41 @@ they say so. They accept any renv project, though, so to test the family, or a
 package branch against it, without touching a study, make a scratch project:
 
 ```r
-dir <- path.expand("~/hvtiR-scratch")
-dir.create(dir)
-setwd(dir)
-renv::init(bare = TRUE)   # activates the project, with an empty library
+dir <- file.path(
+  path.expand("~"),
+  paste0("hvtiR-scratch-", format(Sys.time(), "%Y%m%d-%H%M%S"))
+)
+stopifnot(dir.create(dir))   # a new folder, never one that exists
+renv::init(dir, bare = TRUE, restart = FALSE)
+renv::load(dir)              # active now, in RStudio or a terminal
+dir                          # note it: later sessions need it
 ```
 
-In RStudio, R restarts inside the project; in a terminal, the project is
-active in the same session. Then:
+Then install hvtiR and pak into the empty library, and the family after them:
 
 ```r
 renv::install(c("pak", "ehrlinger/hvtiR"))
 hvtiR::install()
 ```
 
-The scratch library starts empty, so hvtiR and pak go in first. Keep the
-folder out of `tempdir()`: R deletes it if the session restarts.
-On lri, put it in your home directory, not on a study share.
+The folder is new and dated, so it holds nothing but the scratch project.
+`dir.create()` returns `FALSE` for a folder that already exists, and
+`stopifnot()` stops there rather than going on into it.
 
-When you are done, close the session and delete the folder from outside it:
+Don't count on a restart to activate the project. In a terminal,
+`renv::init()` asks you to restart R and leaves this session on your personal
+library. Where renv's autoloader is turned off, a restart doesn't activate it
+either. `renv::load()` works in both cases. In a later session, run
+`renv::load()` with the folder you noted.
+
+Keep the folder out of `tempdir()`, which R deletes when the session ends.
+On lri, use your home directory, not a study share.
+
+When you are done, quit that session. From a new session, delete the folder
+you noted, and only that folder:
 
 ```r
-unlink(path.expand("~/hvtiR-scratch"), recursive = TRUE)
+unlink("~/hvtiR-scratch-20261123-134500", recursive = TRUE)   # your folder
 ```
 
 Your personal library is never touched, and no study's lockfile moves.

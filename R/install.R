@@ -423,14 +423,18 @@ warn_shared_cache <- function() {
 #' [hvtiR::setup()] there.
 #'
 #' Any renv project counts, so to try the family without a study, install into
-#' a scratch project and delete it afterwards. Keep it out of [tempdir()],
-#' which R removes if `renv::init()` restarts the session:
+#' a new scratch project. `dir.create()` refuses a folder that already exists,
+#' so the project never lands in one that holds other files. `restart = FALSE`
+#' and [renv::load()] activate it in this session, whatever the front end:
 #'
 #' ```r
-#' dir <- path.expand("~/hvtiR-scratch")
-#' dir.create(dir)
-#' setwd(dir)
-#' renv::init(bare = TRUE)        # RStudio restarts R inside the project
+#' dir <- file.path(
+#'   path.expand("~"),
+#'   paste0("hvtiR-scratch-", format(Sys.time(), "%Y%m%d-%H%M%S"))
+#' )
+#' stopifnot(dir.create(dir))
+#' renv::init(dir, bare = TRUE, restart = FALSE)
+#' renv::load(dir)
 #' renv::install(c("pak", "ehrlinger/hvtiR"))
 #' hvtiR::install()
 #' ```
