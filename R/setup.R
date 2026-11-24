@@ -1458,8 +1458,9 @@ adopt_project <- function(candidate, study, study_tracker_id, adopt,
     "\" (", ident, ")?",
     if (!isFALSE(dots[["cleanup"]])) {
       paste(
-        " Adopting deletes the tp.* files, binder.summaries.doc and exact",
-        "template copies it holds; pass cleanup = FALSE to keep them."
+        " Adopting deletes the tp.* files, binder.summaries.doc,",
+        "config.fixtemplates and exact template copies it holds;",
+        "pass cleanup = FALSE to keep them."
       )
     }
   )
@@ -1544,8 +1545,9 @@ adopt_before_rerun <- function(target, adopt, cleanup = NULL) {
     "Adopt it, adding what is missing?",
     if (!isFALSE(cleanup)) {
       paste(
-        " Adopting deletes the tp.* files, binder.summaries.doc and exact",
-        "template copies it holds; pass cleanup = FALSE to keep them."
+        " Adopting deletes the tp.* files, binder.summaries.doc,",
+        "config.fixtemplates and exact template copies it holds;",
+        "pass cleanup = FALSE to keep them."
       )
     }
   )

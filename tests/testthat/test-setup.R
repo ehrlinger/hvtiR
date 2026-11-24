@@ -1710,6 +1710,7 @@ test_that("the adopt question the fresh R cannot ask is asked here", {
   expect_match(asked, "already has a _study.yml", fixed = TRUE)
   # Adopting cleans by default, so the question says what it deletes.
   expect_match(asked, "deletes the tp.* files", fixed = TRUE)
+  expect_match(asked, "config.fixtemplates", fixed = TRUE)
   expect_match(
     paste(log$scripts[[2L]], collapse = " "), "adopt = TRUE", fixed = TRUE
   )
@@ -2675,6 +2676,7 @@ test_that("in a project with no study, Yes adopts the project folder", {
   )
   expect_true(log$setup_args$adopt)
   expect_match(asked, "tp.*", fixed = TRUE)
+  expect_match(asked, "config.fixtemplates", fixed = TRUE)
   expect_match(asked, "Study Tracker 7", fixed = TRUE)
 })
 

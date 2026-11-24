@@ -5,3 +5,6 @@
   deletes. `?setup`, the README and both adopt prompts in
   `vignette("start-here")` say so. `no` and `cancel` still change
   nothing.
+* Both adopt prompts, and the vignette's "What adopting deletes", now name
+  `config.fixtemplates`, which `hvtiRutilities::study_setup()` cleanup deletes
+  by name (hvtiRutilities#321).
