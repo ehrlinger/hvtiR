@@ -1756,6 +1756,19 @@ test_that("declining to adopt before the rerun runs nothing", {
   expect_length(log$scripts, 1L)
 })
 
+test_that("the adopt question defaults to Yes, so Enter alone adopts", {
+  asked <- NULL
+  local_mocked_bindings(
+    askYesNo = function(msg, default = TRUE, ...) {
+      asked <<- default
+      default
+    },
+    .package = "utils"
+  )
+  expect_true(ask_adopt_project("Adopt it?"))
+  expect_true(asked)
+})
+
 test_that("setup refuses when a fresh R cannot load hvtiR", {
   log <- new.env()
   local_mocked_bindings(

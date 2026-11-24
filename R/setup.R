@@ -1405,12 +1405,15 @@ refuse_candidate <- function(candidate) {
 #' @noRd
 is_interactive <- function() interactive()
 
-#' Ask whether to adopt the project folder, defaulting to No
+#' Ask whether to adopt the project folder, defaulting to Yes
+#'
+#' Yes is the default because adopting is what `setup()` was called to do;
+#' the question shows the folder, title and ID to check before pressing Enter.
 #' @param question The prompt.
 #' @return `TRUE`, `FALSE` or `NA` (cancelled).
 #' @noRd
 ask_adopt_project <- function(question) {
-  utils::askYesNo(question, default = FALSE)
+  utils::askYesNo(question, default = TRUE)
 }
 
 #' Confirm adopting the project folder as the study

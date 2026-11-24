@@ -243,13 +243,13 @@ that directory has no `_study.yml` yet, it asks before changing anything:
 ```
 /path/to/study has no _study.yml. Adopt it as study "..." (Study Tracker ...)?
 Adopting deletes the tp.* files, binder.summaries.doc and exact template copies
-it holds; pass cleanup = FALSE to keep them. (yes/No/cancel)
+it holds; pass cleanup = FALSE to keep them. (Yes/no/cancel)
 ```
 
-Check the directory, title and ID in the question, then type `yes` and press
-Enter. The answer it shows in capitals, `No`, is what pressing Enter alone
-gives. `No` or `cancel` prints `Not adopted. Nothing was changed.`, and nothing
-was.
+Check the directory, title and ID in the question, then press Enter. The
+answer it shows in capitals, `Yes`, is what pressing Enter alone gives, so read
+the question first: adopting deletes the files it names. `no` or `cancel` prints
+`Not adopted. Nothing was changed.`, and nothing was.
 
 `identity_source = "manual"` is there because you typed the title and ID. The
 default says they came from a Study Tracker record, and a new `_study.yml` would
