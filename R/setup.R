@@ -1194,18 +1194,21 @@ compile_failures <- function(output) {
 #' The packages renv's restore reports it failed to install
 #'
 #' R cuts a long error message short, so a list that ends on a comma is
-#' marked incomplete.
+#' marked incomplete. Only a line that names a package counts: renv can
+#' print a traceback after its error, and the traceback quotes the format
+#' string `"failed to install %s"`, which names none.
 #' @param output A child's output.
 #' @return `list(pkgs, complete)` from the last such line, or `NULL`.
 #' @noRd
 restore_failures <- function(output) {
   lines <- grep("failed to install ", strsplit(output, "\n")[[1L]],
                 fixed = TRUE, value = TRUE)
+  pattern <- "[\"\u201c]([A-Za-z][A-Za-z0-9.]*[A-Za-z0-9])[\"\u201d]"
+  lines <- lines[grepl(pattern, lines)]
   if (!length(lines)) {
     return(NULL)
   }
   line <- trimws(lines[length(lines)])
-  pattern <- "[\"\u201c]([A-Za-z][A-Za-z0-9.]*[A-Za-z0-9])[\"\u201d]"
   hits <- regmatches(line, gregexpr(pattern, line))[[1L]]
   list(pkgs = sub(pattern, "\\1", hits), complete = !endsWith(line, ","))
 }
