@@ -229,11 +229,13 @@ directory](#a-new-directory) covers that case.
 ### What adopting deletes
 
 Setting up an existing directory is called adopting it. Adopting deletes
-three kinds of file anywhere in the study, and makes no backup:
+four kinds of file anywhere in the study, and makes no backup:
 
 - every file whose name starts with `tp.`, **matched by name alone**, so
   an edited or study-specific `tp.*` file goes too;
 - every `binder.summaries.doc`;
+- every `config.fixtemplates`, the legacy fixtemplates step’s settings,
+  also matched by name alone;
 - every other file whose name and exact content match one in the
   template corpus.
 
@@ -276,13 +278,13 @@ the project you have open. Because that directory has no `_study.yml`
 yet, it asks before changing anything:
 
     /path/to/study has no _study.yml. Adopt it as study "..." (Study Tracker ...)?
-    Adopting deletes the tp.* files, binder.summaries.doc and exact template copies
-    it holds; pass cleanup = FALSE to keep them. (yes/No/cancel)
+    Adopting deletes the tp.* files, binder.summaries.doc, config.fixtemplates and
+    exact template copies it holds; pass cleanup = FALSE to keep them. (Yes/no/cancel)
 
-Check the directory, title and ID in the question, then type `yes` and
-press Enter. The answer it shows in capitals, `No`, is what pressing
-Enter alone gives. `No` or `cancel` prints
-`Not adopted. Nothing was changed.`, and nothing was.
+Check the directory, title and ID in the question, then press Enter. The
+answer it shows in capitals, `Yes`, is what pressing Enter alone gives,
+so read the question first: adopting deletes the files it names. `no` or
+`cancel` prints `Not adopted. Nothing was changed.`, and nothing was.
 
 `identity_source = "manual"` is there because you typed the title and
 ID. The default says they came from a Study Tracker record, and a new
@@ -314,13 +316,14 @@ When the study already has a `_study.yml`, it first asks here, because
 the fresh session cannot:
 
     /path/to/study already has a _study.yml. Adopt it, adding what is missing?
-    Adopting deletes the tp.* files, binder.summaries.doc and exact template copies
-    it holds; pass cleanup = FALSE to keep them. (yes/No/cancel)
+    Adopting deletes the tp.* files, binder.summaries.doc, config.fixtemplates and
+    exact template copies it holds; pass cleanup = FALSE to keep them. (Yes/no/cancel)
 
-Type `yes` and press Enter. Adopting deletes the files listed in [What
-adopting deletes](#what-adopting-deletes), as it does for a first setup.
-To keep them, add `cleanup = FALSE` to the call. When the fresh session
-finishes, the project reopens on the study’s library.
+Press Enter, or type `yes`: Yes is the default. Adopting deletes the
+files listed in [What adopting deletes](#what-adopting-deletes), as it
+does for a first setup. To keep them, add `cleanup = FALSE` to the call.
+When the fresh session finishes, the project reopens on the study’s
+library.
 
 The fresh session needs `hvtiR` in your own library. If it is installed
 only in a study’s library,

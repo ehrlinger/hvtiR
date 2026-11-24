@@ -157,9 +157,10 @@ and the packages left out.</p>
 (File &gt; New Project &gt; Existing Directory): run
 <code>setup(study, study_tracker_id)</code> in that project's console. With no
 <code>_study.yml</code> there, <code>setup()</code> asks whether to adopt the project folder
-(the default answer is No), and adopting cleans up template copies unless
-<code>cleanup = FALSE</code> is passed. It refuses a project opened at one of a
-study's folders, such as <code>30_analyses</code>, or at a package. A
+(the default answer is Yes, so Enter alone adopts), and adopting cleans
+up template copies unless <code>cleanup = FALSE</code> is passed. It refuses a
+project opened at one of a study's folders, such as <code>30_analyses</code>, or
+at a package. A
 non-interactive session never adopts unasked: it stops and prints the
 <code>setup(root = ..., adopt = TRUE)</code> call to run. The step-by-step flow,
 with where to type each command, is in <code><a href="../articles/start-here.html">vignette("start-here")</a></code>.</p>

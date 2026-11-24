@@ -53,21 +53,22 @@ For an exploration of a registered study that Study Tracker has not
 registered yet, pass `derived_from = <its ID>` in place of
 `study_tracker_id`. With no `_study.yml` there,
 [`setup()`](https://ehrlinger.github.io/hvtiR/reference/setup.md) asks
-whether to adopt the folder; the default answer is No. Run this once per
-study, before anything else. Once the study’s renv is active, rerun it
-from an R session started outside the project, passing `root =`: from
-inside it stops before installing anything and names the command to run,
-because it replaces packages that session has loaded. It also stops the
-study using renv’s per-user cache, so the shared library holds real
-copies a teammate can read, and reinstalls any package that was only a
-link into someone’s home. It cleans up template copies first and only
-then locks the packages, so the lockfile records what the study declares
-and not what the templates happened to mention. Adopting an existing
-(legacy) study, by answering Yes or by passing `adopt = TRUE` with
-`root =`, is what cleans up its template copies. **That deletes every
-`tp.*` file by name, even an edited one, with no backup**, so rescue
-your own first or add `cleanup = FALSE`. A study that already has a
-`renv.lock` keeps its locked versions unless the declared family needs
+whether to adopt the folder; the default answer is Yes, so pressing
+Enter alone adopts it and deletes the template copies cleanup removes.
+Run this once per study, before anything else. Once the study’s renv is
+active, rerun it from an R session started outside the project, passing
+`root =`: from inside it stops before installing anything and names the
+command to run, because it replaces packages that session has loaded. It
+also stops the study using renv’s per-user cache, so the shared library
+holds real copies a teammate can read, and reinstalls any package that
+was only a link into someone’s home. It cleans up template copies first
+and only then locks the packages, so the lockfile records what the study
+declares and not what the templates happened to mention. Adopting an
+existing (legacy) study, by answering Yes or by passing `adopt = TRUE`
+with `root =`, is what cleans up its template copies. **That deletes
+every `tp.*` file by name, even an edited one, with no backup**, so
+rescue your own first or add `cleanup = FALSE`. A study that already has
+a `renv.lock` keeps its locked versions unless the declared family needs
 newer ones, in which case
 [`setup()`](https://ehrlinger.github.io/hvtiR/reference/setup.md) moves
 them, lists each move and records them (`upgrade = TRUE`, the default;

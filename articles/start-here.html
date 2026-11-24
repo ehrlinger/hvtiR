@@ -165,10 +165,11 @@
 <p>Most studies already have a directory, with folders and files of their own. Set one of those up from inside it, as an RStudio project. A study whose directory does not exist yet is set up from outside; <a href="#a-new-directory">A new directory</a> covers that case.</p>
 <section class="level3"><h3 id="what-adopting-deletes">What adopting deletes<a class="anchor" aria-label="anchor" href="#what-adopting-deletes"></a>
 </h3>
-<p>Setting up an existing directory is called adopting it. Adopting deletes three kinds of file anywhere in the study, and makes no backup:</p>
+<p>Setting up an existing directory is called adopting it. Adopting deletes four kinds of file anywhere in the study, and makes no backup:</p>
 <ul>
 <li>every file whose name starts with <code>tp.</code>, <strong>matched by name alone</strong>, so an edited or study-specific <code>tp.*</code> file goes too;</li>
 <li>every <code>binder.summaries.doc</code>;</li>
+<li>every <code>config.fixtemplates</code>, the legacy fixtemplates step’s settings, also matched by name alone;</li>
 <li>every other file whose name and exact content match one in the template corpus.</li>
 </ul>
 <p>Before you adopt, look through the study for <code>tp.*</code> files that hold work of your own, and rename or copy any you need. To adopt without deleting anything, add <code>cleanup = FALSE</code> to the call below.</p>
@@ -190,9 +191,9 @@
 <span><span class="op">)</span></span></code></pre></div>
 <p>The call names no directory: <code><a href="../reference/setup.html">setup()</a></code> takes the project you have open. Because that directory has no <code>_study.yml</code> yet, it asks before changing anything:</p>
 <pre><code>/path/to/study has no _study.yml. Adopt it as study "..." (Study Tracker ...)?
-Adopting deletes the tp.* files, binder.summaries.doc and exact template copies
-it holds; pass cleanup = FALSE to keep them. (yes/No/cancel)</code></pre>
-<p>Check the directory, title and ID in the question, then type <code>yes</code> and press Enter. The answer it shows in capitals, <code>No</code>, is what pressing Enter alone gives. <code>No</code> or <code>cancel</code> prints <code>Not adopted. Nothing was changed.</code>, and nothing was.</p>
+Adopting deletes the tp.* files, binder.summaries.doc, config.fixtemplates and
+exact template copies it holds; pass cleanup = FALSE to keep them. (Yes/no/cancel)</code></pre>
+<p>Check the directory, title and ID in the question, then press Enter. The answer it shows in capitals, <code>Yes</code>, is what pressing Enter alone gives, so read the question first: adopting deletes the files it names. <code>no</code> or <code>cancel</code> prints <code>Not adopted. Nothing was changed.</code>, and nothing was.</p>
 <p><code>identity_source = "manual"</code> is there because you typed the title and ID. The default says they came from a Study Tracker record, and a new <code>_study.yml</code> would then record them as verified. A <code>_study.yml</code> the study already has is not rewritten.</p>
 <p>A study in revision needs one more argument, <code>upgrade = FALSE</code>. By default, <code><a href="../reference/setup.html">setup()</a></code> moves a version the lockfile pins when the family needs a newer one, and lists each move. In revision those versions must not move, so with <code>upgrade = FALSE</code> a package the install would move stops the run instead, and <code>renv.lock</code> stays as it was.</p>
 </section><section class="level3"><h3 id="from-outside">If the study already has a library<a class="anchor" aria-label="anchor" href="#from-outside"></a>
@@ -201,9 +202,9 @@ it holds; pass cleanup = FALSE to keep them. (yes/No/cancel)</code></pre>
 <pre><code>ℹ Running `setup()` in a fresh R session outside the project.</code></pre>
 <p>When the study already has a <code>_study.yml</code>, it first asks here, because the fresh session cannot:</p>
 <pre><code>/path/to/study already has a _study.yml. Adopt it, adding what is missing?
-Adopting deletes the tp.* files, binder.summaries.doc and exact template copies
-it holds; pass cleanup = FALSE to keep them. (yes/No/cancel)</code></pre>
-<p>Type <code>yes</code> and press Enter. Adopting deletes the files listed in <a href="#what-adopting-deletes">What adopting deletes</a>, as it does for a first setup. To keep them, add <code>cleanup = FALSE</code> to the call. When the fresh session finishes, the project reopens on the study’s library.</p>
+Adopting deletes the tp.* files, binder.summaries.doc, config.fixtemplates and
+exact template copies it holds; pass cleanup = FALSE to keep them. (Yes/no/cancel)</code></pre>
+<p>Press Enter, or type <code>yes</code>: Yes is the default. Adopting deletes the files listed in <a href="#what-adopting-deletes">What adopting deletes</a>, as it does for a first setup. To keep them, add <code>cleanup = FALSE</code> to the call. When the fresh session finishes, the project reopens on the study’s library.</p>
 <p>The fresh session needs <code>hvtiR</code> in your own library. If it is installed only in a study’s library, <code><a href="../reference/setup.html">setup()</a></code> stops before installing anything and prints the call to run instead:</p>
 <pre><code>Run it from a session started outside any project: hvtiR::setup(root = "...", ...)</code></pre>
 <p>Close the project (<strong>File &gt; Close Project</strong>). Check that <code>Sys.getenv("RENV_PROJECT")</code> prints <code>""</code>, install the installer with <code>pak::pak("ehrlinger/hvtiR")</code>, then paste the call it printed into the Console.</p>
