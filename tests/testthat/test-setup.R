@@ -1015,6 +1015,48 @@ test_that("restore_failures() reads renv's failed list in both quote styles", {
   expect_null(restore_failures("boom\n"))
 })
 
+# The tail of a real setup log (2026-11-24): renv failed on a pin the
+# repository no longer had, then printed a traceback whose last frame quotes
+# the format string. Read from that frame, the failure named no package and
+# healing aborted on its first round instead of leaving arrow out.
+test_that("restore_failures() reads past renv's traceback to the package", {
+  out <- paste(
+    paste0(
+      "- [arrow]: failed to find source for 'arrow 22.0.0.1' ",
+      "in package repositories"
+    ),
+    "You may need to manually download and install these packages.",
+    "\033[?25hError: failed to install \"arrow\"",
+    "Traceback (most recent calls last):",
+    "4: renv::restore(project = \"/studies/x\",",
+    " prompt = FALSE, repos = hvtir_repos)",
+    "3: renv_restore_run_actions(project, diff, current, lockfile, rebuild,",
+    " strict, descriptions, retry)",
+    paste0(
+      "2: stopf(\"failed to install %s\", ",
+      "paste(dQuote(failed), collapse = \", \"))"
+    ),
+    "1: stop(sprintf(fmt, ...), call. = call.)",
+    "Execution halted",
+    sep = "\n"
+  )
+  expect_identical(
+    restore_failures(out), list(pkgs = "arrow", complete = TRUE)
+  )
+  failures <- classify_failures(out)
+  expect_identical(failures$package, "arrow")
+  plan <- plan_round(
+    failures, c(arrow = NA_character_), character(), character(),
+    essential = "hvtiR", upgrade = TRUE, stuck = FALSE
+  )
+  expect_identical(plan$drop$package, "arrow")
+  expect_length(plan$stop, 0L)
+  # A traceback alone names no package.
+  expect_null(restore_failures(
+    "2: stopf(\"failed to install %s\", paste(dQuote(failed)))\n"
+  ))
+})
+
 auth_out <- function(failed) {
   paste(
     "- GitHub authentication credentials are not available.",
