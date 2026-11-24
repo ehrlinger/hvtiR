@@ -1710,6 +1710,7 @@ test_that("the adopt question the fresh R cannot ask is asked here", {
   expect_match(asked, "already has a _study.yml", fixed = TRUE)
   # Adopting cleans by default, so the question says what it deletes.
   expect_match(asked, "deletes the tp.* files", fixed = TRUE)
+  expect_match(asked, "config.fixtemplates", fixed = TRUE)
   expect_match(
     paste(log$scripts[[2L]], collapse = " "), "adopt = TRUE", fixed = TRUE
   )
@@ -1754,6 +1755,19 @@ test_that("declining to adopt before the rerun runs nothing", {
   expect_error(setup("A study", 7L), class = "hvtiR_adopt_declined")
   # Only the check for hvtiR ran.
   expect_length(log$scripts, 1L)
+})
+
+test_that("the adopt question defaults to Yes, so Enter alone adopts", {
+  asked <- NULL
+  local_mocked_bindings(
+    askYesNo = function(msg, default = TRUE, ...) {
+      asked <<- default
+      default
+    },
+    .package = "utils"
+  )
+  expect_true(ask_adopt_project("Adopt it?"))
+  expect_true(asked)
 })
 
 test_that("setup refuses when a fresh R cannot load hvtiR", {
@@ -2662,6 +2676,7 @@ test_that("in a project with no study, Yes adopts the project folder", {
   )
   expect_true(log$setup_args$adopt)
   expect_match(asked, "tp.*", fixed = TRUE)
+  expect_match(asked, "config.fixtemplates", fixed = TRUE)
   expect_match(asked, "Study Tracker 7", fixed = TRUE)
 })
 

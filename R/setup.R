@@ -1405,12 +1405,15 @@ refuse_candidate <- function(candidate) {
 #' @noRd
 is_interactive <- function() interactive()
 
-#' Ask whether to adopt the project folder, defaulting to No
+#' Ask whether to adopt the project folder, defaulting to Yes
+#'
+#' Yes is the default because adopting is what `setup()` was called to do;
+#' the question shows the folder, title and ID to check before pressing Enter.
 #' @param question The prompt.
 #' @return `TRUE`, `FALSE` or `NA` (cancelled).
 #' @noRd
 ask_adopt_project <- function(question) {
-  utils::askYesNo(question, default = FALSE)
+  utils::askYesNo(question, default = TRUE)
 }
 
 #' Confirm adopting the project folder as the study
@@ -1455,8 +1458,9 @@ adopt_project <- function(candidate, study, study_tracker_id, adopt,
     "\" (", ident, ")?",
     if (!isFALSE(dots[["cleanup"]])) {
       paste(
-        " Adopting deletes the tp.* files, binder.summaries.doc and exact",
-        "template copies it holds; pass cleanup = FALSE to keep them."
+        " Adopting deletes the tp.* files, binder.summaries.doc,",
+        "config.fixtemplates and exact template copies it holds;",
+        "pass cleanup = FALSE to keep them."
       )
     }
   )
@@ -1541,8 +1545,9 @@ adopt_before_rerun <- function(target, adopt, cleanup = NULL) {
     "Adopt it, adding what is missing?",
     if (!isFALSE(cleanup)) {
       paste(
-        " Adopting deletes the tp.* files, binder.summaries.doc and exact",
-        "template copies it holds; pass cleanup = FALSE to keep them."
+        " Adopting deletes the tp.* files, binder.summaries.doc,",
+        "config.fixtemplates and exact template copies it holds;",
+        "pass cleanup = FALSE to keep them."
       )
     }
   )
@@ -1655,9 +1660,10 @@ guard_session <- function(root, study, study_tracker_id,
 #' (File > New Project > Existing Directory): run
 #' `setup(study, study_tracker_id)` in that project's console. With no
 #' `_study.yml` there, `setup()` asks whether to adopt the project folder
-#' (the default answer is No), and adopting cleans up template copies unless
-#' `cleanup = FALSE` is passed. It refuses a project opened at one of a
-#' study's folders, such as `30_analyses`, or at a package. A
+#' (the default answer is Yes, so Enter alone adopts), and adopting cleans
+#' up template copies unless `cleanup = FALSE` is passed. It refuses a
+#' project opened at one of a study's folders, such as `30_analyses`, or
+#' at a package. A
 #' non-interactive session never adopts unasked: it stops and prints the
 #' `setup(root = ..., adopt = TRUE)` call to run. The step-by-step flow,
 #' with where to type each command, is in `vignette("start-here")`.
