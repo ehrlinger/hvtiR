@@ -2,5 +2,6 @@
   pressing Enter alone adopts it. Adopting is what `setup()` was called to do,
   and having to type `yes` added a step without making the check any closer: the
   question still names the folder, the title, the ID and the files cleanup
-  deletes. `vignette("start-here")` says so. `no` and `cancel` still change
+  deletes. `?setup`, the README and both adopt prompts in
+  `vignette("start-here")` say so. `no` and `cancel` still change
   nothing.

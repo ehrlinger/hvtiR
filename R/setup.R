@@ -1658,9 +1658,10 @@ guard_session <- function(root, study, study_tracker_id,
 #' (File > New Project > Existing Directory): run
 #' `setup(study, study_tracker_id)` in that project's console. With no
 #' `_study.yml` there, `setup()` asks whether to adopt the project folder
-#' (the default answer is No), and adopting cleans up template copies unless
-#' `cleanup = FALSE` is passed. It refuses a project opened at one of a
-#' study's folders, such as `30_analyses`, or at a package. A
+#' (the default answer is Yes, so Enter alone adopts), and adopting cleans
+#' up template copies unless `cleanup = FALSE` is passed. It refuses a
+#' project opened at one of a study's folders, such as `30_analyses`, or
+#' at a package. A
 #' non-interactive session never adopts unasked: it stops and prints the
 #' `setup(root = ..., adopt = TRUE)` call to run. The step-by-step flow,
 #' with where to type each command, is in `vignette("start-here")`.

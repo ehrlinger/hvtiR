@@ -55,7 +55,8 @@ hvtiR::setup(
 For an exploration of a registered study that Study Tracker has not registered
 yet, pass `derived_from = <its ID>` in place of `study_tracker_id`.
 With no `_study.yml` there, `setup()` asks whether to adopt the folder; the
-default answer is No. Run this once per study, before anything else. Once the
+default answer is Yes, so pressing Enter alone adopts it and deletes the template copies cleanup
+removes. Run this once per study, before anything else. Once the
 study's renv is active, rerun it from an R session started outside the
 project, passing `root =`: from inside it stops before installing anything and
 names the command to run, because it replaces packages that session has loaded.
