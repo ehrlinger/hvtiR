@@ -1,5 +1,77 @@
 Package: hvtiR
-Version: 1.3.11
+Version: 1.3.12
+
+# hvtiR 1.3.12
+
+* `update()` stops before updating any member when hvtiR itself is behind
+  GitHub, and names `pak::pak("ehrlinger/hvtiR")`. An old installer resolves
+  members against its own release's registry and dependency edges. Pass
+  `stale_installer = TRUE` to update with it anyway (#98). It also stops when
+  hvtiR was updated on disk but the session, not yet restarted, still runs
+  the older copy.
+* `status()` prints the "hvtiR is behind" line before the member table, where
+  it is read first, and its closing line says to update hvtiR before running
+  `update()` (#98).
+
+* Catalog versions refreshed from `main`: `ggRandomForests` dev 4.0.0 to
+  4.0.1; `ggBoostedTrees` dev 0.10.0 to 0.10.2; `hvtiRtemplates` dev 1.6.1
+  to 1.6.2. The catalog ships in the package and is published as
+  `members.json`, so its recorded versions are content rather than
+  bookkeeping.
+
+* Family floors refreshed from `main`: `hvtiRtemplates` Suggests
+  `ggBoostedTrees` (>= 0.9.1) to (>= 0.10.2); `hvtiRtemplates` Suggests
+  `ggRandomForests` (>= 4.0.0) to (>= 4.0.1). `family-floors.csv` ships in
+  the package and records the version floors members declare on one another.
+
+* `setup()` run from inside a project no longer stops and asks for a session
+  outside it: it starts that session itself. It runs `setup()` again in a
+  fresh R from an empty folder, with the startup variables renv saved when it
+  activated, prints that session's output, then sets the RStudio preferences
+  and opens the project. Whether to adopt a study that already has a
+  `_study.yml` is asked first, in the session you typed in, since the fresh R
+  is not interactive. It still stops, naming the command, when the fresh R
+  cannot load hvtiR (installed only in a study's library).
+
+* `install()`'s help and the start-here vignette show how to try the family
+  outside a study: make a scratch renv project, install pak and hvtiR into it,
+  then run `install()`. The guard against installing into your personal
+  library is unchanged.
+
+* `setup()`'s question whether to adopt a study folder now defaults to Yes, so
+  pressing Enter alone adopts it. Adopting is what `setup()` was called to do,
+  and having to type `yes` added a step without making the check any closer: the
+  question still names the folder, the title, the ID and the files cleanup
+  deletes. `?setup`, the README and both adopt prompts in
+  `vignette("start-here")` say so. `no` and `cancel` still change
+  nothing.
+* Both adopt prompts, and the vignette's "What adopting deletes", now name
+  `config.fixtemplates`, which `hvtiRutilities::study_setup()` cleanup deletes
+  by name (hvtiRutilities#321).
+
+* `setup()` again leaves out a package that fails to install rather than
+  stopping, when renv prints a traceback after its error. The failed-package
+  reader took the last line mentioning "failed to install", which was then the
+  traceback's quoted format string, so it found no package and healing aborted
+  on its first round. A study whose `renv.lock` pinned an `arrow` version the
+  repository no longer served stopped there, with all 103 packages rolled
+  back. It now reads the last such line that names a package.
+
+* Catalog versions refreshed from `main`: `hvtiRimputation` dev 0.1.4 to
+  0.1.5; `hvtiRpropensity` dev 0.2.3 to 0.2.4; `hvtiRtables` dev 1.0.14 to
+  1.0.15; `hvtiRtemplates` dev 1.6.2 to 1.6.3; `hvtiRutilities` dev 1.5.26
+  to 1.5.29. The catalog ships in the package and is published as
+  `members.json`, so its recorded versions are content rather than
+  bookkeeping.
+
+* Family floors refreshed from `main`: `hvtiRtemplates` Imports
+  `hvtiRutilities` (>= 1.5.24) to (>= 1.5.27). `family-floors.csv` ships in
+  the package and records the version floors members declare on one another.
+
+* Catalog versions refreshed from `main`: `ggBoostedTrees` dev 0.10.2 to
+  0.10.3. The catalog ships in the package and is published as
+  `members.json`, so its recorded versions are content rather than
+  bookkeeping.
 
 # hvtiR 1.3.11
 
